@@ -1,0 +1,4 @@
+reports
+playwright-report
+test-results
+*.log

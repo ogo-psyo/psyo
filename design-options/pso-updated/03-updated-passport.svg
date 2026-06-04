@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1170" height="2532" viewBox="0 0 1170 2532">
+<defs>
+<filter id="blur"><feGaussianBlur stdDeviation="32"/></filter>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EAF4FF"/><stop offset="0.55" stop-color="#FFF7EC"/><stop offset="1" stop-color="#EAF4D3"/></linearGradient>
+<linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".92"/><stop offset="1" stop-color="#FFFFFF" stop-opacity=".58"/></linearGradient>
+<linearGradient id="accent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5A8CFF"/><stop offset="1" stop-color="#49A078"/></linearGradient>
+</defs>
+<rect width="100%" height="100%" fill="url(#bg)"/>
+<circle cx="230" cy="360" r="260" fill="#B7E4FF" opacity=".72" filter="url(#blur)"/>
+<circle cx="950" cy="720" r="340" fill="#FFD6B6" opacity=".58" filter="url(#blur)"/>
+<circle cx="250" cy="1950" r="360" fill="#B8E986" opacity=".36" filter="url(#blur)"/>
+<text x="72" y="112.0" font-size="46" font-weight="850" fill="#172133" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Псё updated / Passport</text>
+<text x="72" y="170.0" font-size="26" font-weight="600" fill="#607080" opacity="0.72" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">забота без анкеты: паспорт, напоминания, ассистент</text>
+<rect x="92" y="300" width="986" height="1830" rx="82" fill="#111827" opacity=".10"/>
+<rect x="104" y="288" width="962" height="1830" rx="78" fill="url(#glass)" stroke="#FFFFFF" stroke-width="4"/>
+<rect x="154" y="342" width="862" height="1720" rx="54" fill="#FDFBF6"/>
+<text x="190" y="430.0" font-size="42" font-weight="900" fill="#172133" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Псё</text>
+<text x="190" y="470.0" font-size="20" font-weight="720" fill="#73808B" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">живой центр собаки</text>
+<circle cx="930" cy="435" r="34" fill="#EAF4D3" stroke="#FFFFFF" stroke-width="4"/>
+<text x="930" y="448" font-size="35" text-anchor="middle">🐶</text>
+<rect x="190" y="535" width="780" height="360" rx="52" fill="#172133"/>
+<text x="235" y="630.0" font-size="26" font-weight="900" fill="#8ED6A2" opacity="1" text-anchor="start" letter-spacing="2" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">ПАСПОРТ</text>
+<text x="235" y="745.0" font-size="86" font-weight="900" fill="#FFFFFF" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Мята</text>
+<text x="235" y="815.0" font-size="25" font-weight="700" fill="#B8C5D1" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">метис · city walk · осторожно с крупными собаками</text>
+<rect x="190" y="955" width="780" height="170" rx="38" fill="#FFF2DB"/>
+<text x="235" y="1035.0" font-size="38" font-weight="850" fill="#172133" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">⏰  защита от клещей</text>
+<text x="235" y="1085.0" font-size="24" font-weight="700" fill="#7A6758" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">завтра утром · напомнить</text>
+<rect x="190" y="1175" width="370" height="260" rx="38" fill="#FFFFFF" stroke="#E7E2D8"/>
+<rect x="600" y="1175" width="370" height="260" rx="38" fill="#FFFFFF" stroke="#E7E2D8"/>
+<text x="230" y="1260.0" font-size="33" font-weight="850" fill="#172133" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">здоровье</text>
+<text x="230" y="1320.0" font-size="25" font-weight="700" fill="#607080" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">вес · прививки
+аллергии</text>
+<text x="640" y="1260.0" font-size="33" font-weight="850" fill="#172133" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">вещи</text>
+<text x="640" y="1320.0" font-size="25" font-weight="700" fill="#607080" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">корм · шлейка
+игрушки</text>
+<rect x="190" y="1490" width="780" height="270" rx="46" fill="#EEF7FF"/>
+<text x="235" y="1580.0" font-size="38" font-weight="850" fill="#172133" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Ассистент</text>
+<text x="235" y="1640.0" font-size="28" font-weight="700" fill="#607080" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">“Как понять, что прогулка была перегрузом?”</text>
+<rect x="180" y="1938" width="800" height="78" rx="34" fill="#FFFFFF" stroke="#E7E2D8"/>
+<text x="280.0" y="1987.0" font-size="19" font-weight="820" fill="#7A828A" opacity="1" text-anchor="middle" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Сегодня</text>
+<rect x="388.0" y="1946" width="184.0" height="62" rx="26" fill="url(#accent)"/>
+<text x="480.0" y="1987.0" font-size="19" font-weight="820" fill="#FFFFFF" opacity="1" text-anchor="middle" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Паспорт</text>
+<text x="680.0" y="1987.0" font-size="19" font-weight="820" fill="#7A828A" opacity="1" text-anchor="middle" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Карта</text>
+<text x="880.0" y="1987.0" font-size="19" font-weight="820" fill="#7A828A" opacity="1" text-anchor="middle" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Ассистент</text>
+</svg>

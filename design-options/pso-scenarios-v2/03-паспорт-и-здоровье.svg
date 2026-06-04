@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1170" height="2532" viewBox="0 0 1170 2532">
+<defs><filter id="blur"><feGaussianBlur stdDeviation="30"/></filter><linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".94"/><stop offset="1" stop-color="#FFFFFF" stop-opacity=".62"/></linearGradient></defs>
+<rect width="100%" height="100%" fill="#F3F8F5"/>
+<circle cx="240" cy="390" r="260" fill="#49A078" opacity=".20" filter="url(#blur)"/>
+<circle cx="920" cy="920" r="360" fill="#49A078" opacity=".14" filter="url(#blur)"/>
+<text x="72" y="110.0" font-size="42" font-weight="900" fill="#183028" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">03 / Паспорт и здоровье</text>
+<text x="72" y="168.0" font-size="26" font-weight="620" fill="#183028" opacity="0.65" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Псё как медицинская карточка без тревоги</text>
+<rect x="92" y="300" width="986" height="1780" rx="82" fill="#000" opacity=".08"/>
+<rect x="104" y="286" width="962" height="1780" rx="78" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="4"/>
+<rect x="154" y="340" width="862" height="1670" rx="54" fill="#F3F8F5"/>
+<text x="190" y="430.0" font-size="42" font-weight="900" fill="#183028" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Псё</text>
+<text x="190" y="472.0" font-size="20" font-weight="780" fill="#183028" opacity="0.58" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Vet/passport OS</text>
+<circle cx="930" cy="435" r="36" fill="#FFFFFF" stroke="#49A078" stroke-width="5"/>
+<text x="930" y="450" font-size="38" text-anchor="middle">🐶</text>
+<rect x="190" y="535" width="780" height="360" rx="54" fill="#FFFFFF" stroke="#49A078" stroke-opacity=".18"/>
+<text x="230" y="680.0" font-size="76" font-weight="900" fill="#183028" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Паспорт Мяты</text>
+<text x="230" y="815.0" font-size="28" font-weight="700" fill="#183028" opacity="0.66" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">прививки · клещи · аллергии</text>
+<rect x="190" y="950" width="780" height="250" rx="44" fill="#FFFFFF" opacity=".96"/>
+<text x="235" y="1035.0" font-size="22" font-weight="900" fill="#183028" opacity="0.72" text-anchor="start" letter-spacing="1.6" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">ГЛАВНЫЙ СЦЕНАРИЙ</text>
+<text x="235" y="1130.0" font-size="43" font-weight="900" fill="#183028" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Напоминание: обработка</text>
+<text x="235" y="1175.15" font-size="43" font-weight="900" fill="#183028" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">завтра утром</text>
+<rect x="190" y="1260" width="240" height="180" rx="38" fill="#FFFFFF" stroke="#49A078" stroke-opacity=".16"/>
+<text x="310" y="1365.0" font-size="28" font-weight="850" fill="#183028" opacity="1" text-anchor="middle" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">прививки</text>
+<rect x="460" y="1260" width="240" height="180" rx="38" fill="#FFFFFF" stroke="#49A078" stroke-opacity=".16"/>
+<text x="580" y="1365.0" font-size="28" font-weight="850" fill="#183028" opacity="1" text-anchor="middle" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">клещи</text>
+<rect x="730" y="1260" width="240" height="180" rx="38" fill="#FFFFFF" stroke="#49A078" stroke-opacity=".16"/>
+<text x="850" y="1365.0" font-size="28" font-weight="850" fill="#183028" opacity="1" text-anchor="middle" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">клиника</text>
+<rect x="190" y="1500" width="780" height="260" rx="44" fill="#FFFFFF" stroke="#49A078" stroke-opacity=".18"/>
+<text x="235" y="1585.0" font-size="22" font-weight="900" fill="#49A078" opacity="1" text-anchor="start" letter-spacing="1.8" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">ЗАЧЕМ ЭТО</text>
+<text x="235" y="1680.0" font-size="38" font-weight="800" fill="#183028" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">доверие, здоровье, забота</text>
+<rect x="190" y="1870" width="780" height="84" rx="38" fill="#FFFFFF" stroke="#000" stroke-opacity=".06"/>
+<text x="287" y="1924.0" font-size="22" font-weight="900" fill="#49A078" opacity="1" text-anchor="middle" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Today</text>
+<text x="467" y="1924.0" font-size="22" font-weight="900" fill="#183028" opacity="0.42" text-anchor="middle" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Dog</text>
+<text x="647" y="1924.0" font-size="22" font-weight="900" fill="#183028" opacity="0.42" text-anchor="middle" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Map</text>
+<text x="827" y="1924.0" font-size="22" font-weight="900" fill="#183028" opacity="0.42" text-anchor="middle" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">AI</text>
+<text x="72" y="2225.0" font-size="34" font-weight="850" fill="#183028" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Выбор сценария важнее красоты:</text>
+<text x="72" y="2285.0" font-size="29" font-weight="620" fill="#183028" opacity="0.65" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">если цепляет — под него уже делаем стиль и структуру.</text>
+</svg>

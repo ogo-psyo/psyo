@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1170" height="2532" viewBox="0 0 1170 2532">
+<defs>
+<filter id="blur"><feGaussianBlur stdDeviation="28"/></filter>
+<linearGradient id="holo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00E5FF"/><stop offset="0.48" stop-color="#7B61FF"/><stop offset="1" stop-color="#FF2FB3"/></linearGradient>
+<linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".88"/><stop offset="1" stop-color="#FFFFFF" stop-opacity=".36"/></linearGradient>
+</defs>
+<rect width="100%" height="100%" fill="#F1E8D5"/>
+<text x="72" y="112.0" font-size="42" font-weight="900" fill="#101010" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">07 / Bauhaus Dog Tokens</text>
+<text x="72" y="168.0" font-size="25" font-weight="600" fill="#101010" opacity="0.62" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">geometric playful system / visual primitives</text>
+<circle cx="880" cy="480" r="175" fill="#2557A7"/><rect x="110" y="420" width="360" height="360" fill="#D8332A"/><circle cx="320" cy="1010" r="200" fill="#E7B400"/>
+<text x="560" y="640.0" font-size="104" font-weight="900" fill="#101010" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">DOG
+CARE</text>
+<text x="135" y="1240.0" font-size="48" font-weight="800" fill="#101010" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">паспорт / карта / корм / игра</text>
+<rect x="135" y="1350" width="890" height="145" fill="#101010"/>
+<text x="175" y="1445.0" font-size="50" font-weight="900" fill="#F1E8D5" opacity="1" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">dog care tokens</text>
+<text x="72" y="2050.0" font-size="34" font-weight="900" fill="#101010" opacity="1" text-anchor="start" letter-spacing="1.2" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">UI KIT RULES</text>
+<text x="92" y="2130.0" font-size="34" font-weight="650" fill="#101010" opacity="0.76" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">• geometric tokens as navigation</text>
+<text x="92" y="2188.0" font-size="34" font-weight="650" fill="#101010" opacity="0.76" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">• primary colors, bold shapes</text>
+<text x="92" y="2246.0" font-size="34" font-weight="650" fill="#101010" opacity="0.76" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">• playful but systemized</text>
+<text x="92" y="2304.0" font-size="34" font-weight="650" fill="#101010" opacity="0.76" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">• best for memorable brand language</text>
+<rect x="72" y="2360" width="1026" height="6" rx="3" fill="#D8332A"/>
+<text x="72" y="2430.0" font-size="28" font-weight="650" fill="#101010" opacity="0.58" text-anchor="start" letter-spacing="0" font-family="-apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI, sans-serif">Выбираем стиль → потом внедряем в реальный pso-mvp.</text>
+</svg>
