@@ -2,3 +2,15 @@ reports
 playwright-report
 test-results
 *.log
+.env
+.env.*
+!.env.example
+.secrets
+.vercel
+.vercel-*
+.next
+node_modules
+out
+tmp-*.png
+prod-*.png
+.DS_Store
