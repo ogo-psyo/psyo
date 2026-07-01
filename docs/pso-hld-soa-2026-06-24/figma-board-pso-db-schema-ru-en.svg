@@ -1,0 +1,233 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3000" height="1800" viewBox="0 0 3000 1800">
+<rect width="3000" height="1800" fill="#F7F1E8"/>
+<text x="80" y="110" font-family="Inter, Arial, sans-serif" font-size="54" font-weight="850" fill="#201A16">
+<tspan x="80" dy="0">Псё DB schema</tspan>
+</text>
+<text x="82" y="172" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="500" fill="#6E6258">
+<tspan x="82" dy="0">RU/EN таблица сущностей, доменов, назначения и ключевых полей</tspan>
+</text>
+<rect x="80" y="240" width="2840" height="80" rx="22" fill="#201A16" stroke="#201A16" stroke-width="2"/>
+<text x="110" y="290" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#FFF8ED">
+<tspan x="110" dy="0">RU сущность</tspan>
+</text>
+<text x="520" y="290" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#FFF8ED">
+<tspan x="520" dy="0">EN entity / table</tspan>
+</text>
+<text x="980" y="290" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#FFF8ED">
+<tspan x="980" dy="0">Домен</tspan>
+</text>
+<text x="1240" y="290" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#FFF8ED">
+<tspan x="1240" dy="0">Назначение</tspan>
+</text>
+<text x="1900" y="290" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#FFF8ED">
+<tspan x="1900" dy="0">Ключевые поля</tspan>
+</text>
+<rect x="80" y="340" width="2840" height="96" rx="18" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2"/>
+<rect x="80" y="340" width="10" height="96" rx="0" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="110" y="376" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#201A16">
+<tspan x="110" dy="0">Профиль владельца</tspan>
+</text>
+<text x="520" y="376" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#6E6258">
+<tspan x="520" dy="0">Profile / profiles</tspan>
+</text>
+<text x="980" y="376" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="980" dy="0">Identity</tspan>
+</text>
+<text x="1240" y="376" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1240" dy="0">Владелец и owner boundary</tspan>
+</text>
+<text x="1900" y="376" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1900" dy="0">id, display_name, created_at</tspan>
+</text>
+<rect x="80" y="452" width="2840" height="96" rx="18" fill="#FFF8ED" stroke="#FFF8ED" stroke-width="2"/>
+<rect x="80" y="452" width="10" height="96" rx="0" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="110" y="488" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#201A16">
+<tspan x="110" dy="0">Собака</tspan>
+</text>
+<text x="520" y="488" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#6E6258">
+<tspan x="520" dy="0">Pet / pets</tspan>
+</text>
+<text x="980" y="488" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="980" dy="0">Dog Profile</tspan>
+</text>
+<text x="1240" y="488" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1240" dy="0">Базовая identity собаки</tspan>
+</text>
+<text x="1900" y="488" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1900" dy="0">owner_id, name, breed, avatar, public_slug</tspan>
+</text>
+<rect x="80" y="564" width="2840" height="96" rx="18" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2"/>
+<rect x="80" y="564" width="10" height="96" rx="0" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="110" y="600" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#201A16">
+<tspan x="110" dy="0">Паспорт собаки</tspan>
+</text>
+<text x="520" y="600" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#6E6258">
+<tspan x="520" dy="0">PetPassport / pet_passports</tspan>
+</text>
+<text x="980" y="600" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="980" dy="0">Dog Profile</tspan>
+</text>
+<text x="1240" y="600" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1240" dy="0">Здоровье, уход, питание, вет заметки</tspan>
+</text>
+<text x="1900" y="600" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1900" dy="0">vaccine_status, parasite_status, diet, allergies</tspan>
+</text>
+<rect x="80" y="676" width="2840" height="96" rx="18" fill="#FFF8ED" stroke="#FFF8ED" stroke-width="2"/>
+<rect x="80" y="676" width="10" height="96" rx="0" fill="#BFA7EA" stroke="#BFA7EA" stroke-width="2"/>
+<text x="110" y="712" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#201A16">
+<tspan x="110" dy="0">Социальный профиль</tspan>
+</text>
+<text x="520" y="712" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#6E6258">
+<tspan x="520" dy="0">SocialProfile / social_profiles</tspan>
+</text>
+<text x="980" y="712" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="980" dy="0">Dog Profile</tspan>
+</text>
+<text x="1240" y="712" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1240" dy="0">Как знакомиться и что учитывать рядом</tspan>
+</text>
+<text x="1900" y="712" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1900" dy="0">social_mode, temperament, triggers, friendliness</tspan>
+</text>
+<rect x="80" y="788" width="2840" height="96" rx="18" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2"/>
+<rect x="80" y="788" width="10" height="96" rx="0" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="110" y="824" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#201A16">
+<tspan x="110" dy="0">Напоминание</tspan>
+</text>
+<text x="520" y="824" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#6E6258">
+<tspan x="520" dy="0">Reminder / reminders</tspan>
+</text>
+<text x="980" y="824" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="980" dy="0">Care Loop</tspan>
+</text>
+<text x="1240" y="824" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1240" dy="0">Задача ухода с датой</tspan>
+</text>
+<text x="1900" y="824" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1900" dy="0">type, title, due_at, recurrence, status</tspan>
+</text>
+<rect x="80" y="900" width="2840" height="96" rx="18" fill="#FFF8ED" stroke="#FFF8ED" stroke-width="2"/>
+<rect x="80" y="900" width="10" height="96" rx="0" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="110" y="936" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#201A16">
+<tspan x="110" dy="0">Событие напоминания</tspan>
+</text>
+<text x="520" y="936" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#6E6258">
+<tspan x="520" dy="0">ReminderEvent / reminder_events</tspan>
+</text>
+<text x="980" y="936" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="980" dy="0">Care Loop</tspan>
+</text>
+<text x="1240" y="936" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1240" dy="0">История действий по care loop</tspan>
+</text>
+<text x="1900" y="936" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1900" dy="0">event_type, payload, created_at</tspan>
+</text>
+<rect x="80" y="1012" width="2840" height="96" rx="18" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2"/>
+<rect x="80" y="1012" width="10" height="96" rx="0" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="110" y="1048" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#201A16">
+<tspan x="110" dy="0">Место / зона</tspan>
+</text>
+<text x="520" y="1048" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#6E6258">
+<tspan x="520" dy="0">MapZone / map_zones</tspan>
+</text>
+<text x="980" y="1048" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="980" dy="0">Places</tspan>
+</text>
+<text x="1240" y="1048" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1240" dy="0">Примерные safe/risk/service места</tspan>
+</text>
+<text x="1900" y="1048" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1900" dy="0">type, title, approximate_lat/lng, radius</tspan>
+</text>
+<rect x="80" y="1124" width="2840" height="96" rx="18" fill="#FFF8ED" stroke="#FFF8ED" stroke-width="2"/>
+<rect x="80" y="1124" width="10" height="96" rx="0" fill="#BFA7EA" stroke="#BFA7EA" stroke-width="2"/>
+<text x="110" y="1160" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#201A16">
+<tspan x="110" dy="0">Вещь / список нужного</tspan>
+</text>
+<text x="520" y="1160" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#6E6258">
+<tspan x="520" dy="0">WishlistItem / wishlist_items</tspan>
+</text>
+<text x="980" y="1160" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="980" dy="0">Things</tspan>
+</text>
+<text x="1240" y="1160" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1240" dy="0">Корм, амуниция, лекарства, сервисы</tspan>
+</text>
+<text x="1900" y="1160" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1900" dy="0">category, reason, priority, status</tspan>
+</text>
+<rect x="80" y="1236" width="2840" height="96" rx="18" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2"/>
+<rect x="80" y="1236" width="10" height="96" rx="0" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="110" y="1272" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#201A16">
+<tspan x="110" dy="0">Тред ассистента</tspan>
+</text>
+<text x="520" y="1272" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#6E6258">
+<tspan x="520" dy="0">AssistantThread / assistant_threads</tspan>
+</text>
+<text x="980" y="1272" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="980" dy="0">Assistant</tspan>
+</text>
+<text x="1240" y="1272" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1240" dy="0">Сессия диалога по собаке</tspan>
+</text>
+<text x="1900" y="1272" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1900" dy="0">pet_id, kind, title</tspan>
+</text>
+<rect x="80" y="1348" width="2840" height="96" rx="18" fill="#FFF8ED" stroke="#FFF8ED" stroke-width="2"/>
+<rect x="80" y="1348" width="10" height="96" rx="0" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="110" y="1384" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#201A16">
+<tspan x="110" dy="0">Сообщение ассистента</tspan>
+</text>
+<text x="520" y="1384" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#6E6258">
+<tspan x="520" dy="0">AssistantMessage / assistant_messages</tspan>
+</text>
+<text x="980" y="1384" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="980" dy="0">Assistant</tspan>
+</text>
+<text x="1240" y="1384" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1240" dy="0">Сообщения и future safety metadata</tspan>
+</text>
+<text x="1900" y="1384" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1900" dy="0">thread_id, role, content</tspan>
+</text>
+<rect x="80" y="1460" width="2840" height="96" rx="18" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2"/>
+<rect x="80" y="1460" width="10" height="96" rx="0" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="110" y="1496" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#201A16">
+<tspan x="110" dy="0">Telegram-сессия</tspan>
+</text>
+<text x="520" y="1496" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#6E6258">
+<tspan x="520" dy="0">TelegramSession / no table yet</tspan>
+</text>
+<text x="980" y="1496" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="980" dy="0">Identity</tspan>
+</text>
+<text x="1240" y="1496" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1240" dy="0">Псевдонимная Mini App сессия</tspan>
+</text>
+<text x="1900" y="1496" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1900" dy="0">psyoUserId, authDate</tspan>
+</text>
+<rect x="80" y="1572" width="2840" height="96" rx="18" fill="#FFF8ED" stroke="#FFF8ED" stroke-width="2"/>
+<rect x="80" y="1572" width="10" height="96" rx="0" fill="#BFA7EA" stroke="#BFA7EA" stroke-width="2"/>
+<text x="110" y="1608" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#201A16">
+<tspan x="110" dy="0">Публичная карточка</tspan>
+</text>
+<text x="520" y="1608" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#6E6258">
+<tspan x="520" dy="0">PublicDogCard / target dog_cards</tspan>
+</text>
+<text x="980" y="1608" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="980" dy="0">Share / Export</tspan>
+</text>
+<text x="1240" y="1608" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1240" dy="0">Безопасный export subset</tspan>
+</text>
+<text x="1900" y="1608" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="550" fill="#6E6258">
+<tspan x="1900" dy="0">slug, fields, is_active, revoked_at</tspan>
+</text>
+<text x="84" y="1710" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="800" fill="#E86F3A">
+<tspan x="84" dy="0">Privacy rule: всё приватно по умолчанию; public/export использует только owner-selected safe subset. MapZone хранит</tspan>
+<tspan x="84" dy="28.32">approximate location, не точный публичный GPS.</tspan>
+</text>
+</svg>

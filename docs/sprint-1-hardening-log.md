@@ -85,3 +85,26 @@ Package scripts:
 - Wishlist UI still not connected; API is safer but feature is not product-ready.
 - Public dog card remains demo/query-backed until DB-backed public-safe route/policy exists.
 - Avatar generation still lacks persistent storage.
+
+## 2026-06-25 UI kit + DB foundation pass
+
+- Updated the Today foundation screen toward the imported UI kit direction:
+  - cream/mint soft iOS surface;
+  - large dog-first hero;
+  - compact profile/reminder/place metrics;
+  - next-care action card;
+  - quick Calendar/Map/Passport actions.
+- Moved the v1 BFF/ProfileService readiness into a quieter DB/BFF status panel instead of making it the visual focus.
+- Fixed onboarding CTA clickability by preventing the decorative preview layer from intercepting taps.
+- Removed symbolic tab labels that created a noisy bottom-nav artifact in screenshots.
+- Screenshot evidence: `reports/ui-kit-db-foundation-390.png`.
+- Verification: `npm run qa:local` passed.
+
+### Follow-up
+
+- Replaced the low-value `profile / reminders / places` counter strip with a daily-status strip:
+  - walk context;
+  - care/reminder context;
+  - mood/social context.
+- Screenshot evidence: `reports/ui-kit-daily-status-390.png`.
+- Verification: `npm run qa:local` passed.

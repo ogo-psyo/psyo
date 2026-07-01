@@ -5,10 +5,5 @@ node_modules
 !.env.example
 .secrets/
 .vercel
+.vercel-*
 .DS_Store
-reports/
-playwright-report/
-test-results/
-out/
-*.log
-*.tsbuildinfo

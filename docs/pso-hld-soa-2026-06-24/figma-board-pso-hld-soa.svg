@@ -1,0 +1,406 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3200" height="2200" viewBox="0 0 3200 2200">
+<rect width="3200" height="2200" fill="#F7F1E8"/>
+<rect x="60" y="60" width="1480" height="980" rx="34" fill="#F7F1E8" stroke="#F7F1E8" stroke-width="2"/>
+<text x="106" y="1006" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" fill="#6E6258">
+<tspan x="106" dy="0">01 / HLD</tspan>
+</text>
+<text x="120" y="120" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#E86F3A">
+<tspan x="120" dy="0">ПСЁ HLD</tspan>
+</text>
+<text x="120" y="172" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="850" fill="#201A16">
+<tspan x="120" dy="0">High-level architecture</tspan>
+</text>
+<text x="120" y="270" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="500" fill="#6E6258">
+<tspan x="120" dy="0">Telegram Mini App / Next.js product slice: companion-first UI,</tspan>
+<tspan x="120" dy="25.959999999999997">privacy boundary, local guest start, Supabase persistence.</tspan>
+</text>
+<rect x="120" y="338" width="150" height="7" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<rect x="140" y="390" width="220" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="140" y="390" width="220" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="158" y="424" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="158" dy="0">Telegram user</tspan>
+</text>
+<text x="158" y="460" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="158" dy="0">opens @psyoo_bot</tspan>
+<tspan x="158" dy="18.88">menu / Mini App</tspan>
+</text>
+<rect x="460" y="390" width="260" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="460" y="390" width="260" height="8" rx="4" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="478" y="424" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="478" dy="0">Web shell</tspan>
+</text>
+<text x="478" y="460" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="478" dy="0">Next.js App Router,</tspan>
+<tspan x="478" dy="18.88">client state, Telegram</tspan>
+<tspan x="478" dy="18.88">WebApp bootstrap</tspan>
+</text>
+<rect x="820" y="390" width="250" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="820" y="390" width="250" height="8" rx="4" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="838" y="424" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="838" dy="0">API boundary</tspan>
+</text>
+<text x="838" y="460" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="838" dy="0">Next route handlers</tspan>
+<tspan x="838" dy="18.88">validate auth,</tspan>
+<tspan x="838" dy="18.88">ownership and payload</tspan>
+<tspan x="838" dy="18.88">shape</tspan>
+</text>
+<rect x="1170" y="390" width="230" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="1170" y="390" width="230" height="8" rx="4" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="1188" y="424" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="1188" dy="0">Data layer</tspan>
+</text>
+<text x="1188" y="460" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="1188" dy="0">Supabase Auth +</tspan>
+<tspan x="1188" dy="18.88">Postgres + RLS owner</tspan>
+<tspan x="1188" dy="18.88">policies</tspan>
+</text>
+<line x1="360" y1="450" x2="460" y2="450" stroke="#6E6258" stroke-width="4" stroke-linecap="round"/>
+<path d="M 460 450 L 447 457 L 447 443 Z" fill="#6E6258"/>
+<line x1="720" y1="450" x2="820" y2="450" stroke="#6E6258" stroke-width="4" stroke-linecap="round"/>
+<path d="M 820 450 L 807 457 L 807 443 Z" fill="#6E6258"/>
+<line x1="1070" y1="450" x2="1170" y2="450" stroke="#6E6258" stroke-width="4" stroke-linecap="round"/>
+<path d="M 1170 450 L 1157 457 L 1157 443 Z" fill="#6E6258"/>
+<rect x="460" y="640" width="260" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="460" y="640" width="260" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="478" y="674" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="478" dy="0">Guest/local mode</tspan>
+</text>
+<text x="478" y="710" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="478" dy="0">localStorage profile,</tspan>
+<tspan x="478" dy="18.88">reminders, zones,</tspan>
+<tspan x="478" dy="18.88">wishlist draft</tspan>
+</text>
+<rect x="820" y="640" width="250" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="820" y="640" width="250" height="8" rx="4" fill="#BFA7EA" stroke="#BFA7EA" stroke-width="2"/>
+<text x="838" y="674" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="838" dy="0">Provider layer</tspan>
+</text>
+<text x="838" y="710" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="838" dy="0">avatar generation,</tspan>
+<tspan x="838" dy="18.88">assistant</tspan>
+<tspan x="838" dy="18.88">fallback/rules,</tspan>
+<tspan x="838" dy="18.88">Telegram webhook</tspan>
+</text>
+<rect x="1170" y="640" width="230" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="1170" y="640" width="230" height="8" rx="4" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="1188" y="674" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="1188" dy="0">Vercel runtime</tspan>
+</text>
+<text x="1188" y="710" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="1188" dy="0">production alias,</tspan>
+<tspan x="1188" dy="18.88">serverless APIs, env</tspan>
+<tspan x="1188" dy="18.88">contracts, QA gates</tspan>
+</text>
+<line x1="590" y1="510" x2="590" y2="640" stroke="#6E6258" stroke-width="4" stroke-linecap="round"/>
+<path d="M 590 640 L 583 627 L 597 627 Z" fill="#6E6258"/>
+<line x1="945" y1="510" x2="945" y2="640" stroke="#6E6258" stroke-width="4" stroke-linecap="round"/>
+<path d="M 945 640 L 938 627 L 952 627 Z" fill="#6E6258"/>
+<line x1="1070" y1="700" x2="1170" y2="700" stroke="#6E6258" stroke-width="4" stroke-linecap="round"/>
+<path d="M 1170 700 L 1157 707 L 1157 693 Z" fill="#6E6258"/>
+<rect x="140" y="820" width="1260" height="130" rx="26" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="140" y="820" width="10" height="130" rx="0" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="170" y="864" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="800" fill="#201A16">
+<tspan x="170" dy="0">Architecture principles</tspan>
+</text>
+<text x="170" y="912" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#6E6258">
+<tspan x="170" dy="0">1. Dog context first. 2. No raw Telegram ID in UI. 3. Local mode must be useful. 4. Private data behind owner/auth</tspan>
+<tspan x="170" dy="21.24">boundary. 5. Assistant is safety-bounded and context-aware.</tspan>
+</text>
+<rect x="1660" y="60" width="1480" height="980" rx="34" fill="#F7F1E8" stroke="#F7F1E8" stroke-width="2"/>
+<text x="1706" y="1006" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" fill="#6E6258">
+<tspan x="1706" dy="0">02 / SOA domains</tspan>
+</text>
+<text x="1720" y="120" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#E86F3A">
+<tspan x="1720" dy="0">SOA MAP</tspan>
+</text>
+<text x="1720" y="172" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="850" fill="#201A16">
+<tspan x="1720" dy="0">Domains and services</tspan>
+</text>
+<text x="1720" y="270" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="500" fill="#6E6258">
+<tspan x="1720" dy="0">Service map by product domain. Current implementation is mostly</tspan>
+<tspan x="1720" dy="25.959999999999997">app/page.tsx + route handlers; this board shows target ownership</tspan>
+<tspan x="1720" dy="25.959999999999997">boundaries.</tspan>
+</text>
+<rect x="1720" y="338" width="150" height="7" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<rect x="1720" y="365" width="570" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="1720" y="365" width="570" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="1738" y="399" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="1738" dy="0">Identity</tspan>
+</text>
+<text x="1738" y="435" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="1738" dy="0">Telegram session, email auth, profile, owner boundary</tspan>
+<tspan x="1738" dy="18.88">lib/server/auth.ts lib/server/telegram.ts</tspan>
+<tspan x="1738" dy="18.88">/api/telegram/session</tspan>
+</text>
+<rect x="2370" y="365" width="570" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="2370" y="365" width="570" height="8" rx="4" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="2388" y="399" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="2388" dy="0">Dog Profile</tspan>
+</text>
+<text x="2388" y="435" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="2388" dy="0">Pet core, passport, social behavior, public card source</tspan>
+<tspan x="2388" dy="18.88">pets pet_passports social_profiles /api/pets</tspan>
+</text>
+<rect x="1720" y="520" width="570" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="1720" y="520" width="570" height="8" rx="4" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="1738" y="554" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="1738" dy="0">Care Loop</tspan>
+</text>
+<text x="1738" y="590" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="1738" dy="0">Reminders, due actions, snooze/done/delete, daily return</tspan>
+<tspan x="1738" dy="18.88">reason reminders reminder_events /api/reminders/*</tspan>
+</text>
+<rect x="2370" y="520" width="570" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="2370" y="520" width="570" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="2388" y="554" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="2388" dy="0">Places</tspan>
+</text>
+<text x="2388" y="590" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="2388" dy="0">Approximate zones, safe/risk places, clinic/shop/grooming</tspan>
+<tspan x="2388" dy="18.88">notes map_zones LiveMap /api/zones/*</tspan>
+</text>
+<rect x="1720" y="675" width="570" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="1720" y="675" width="570" height="8" rx="4" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="1738" y="709" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="1738" dy="0">Assistant</tspan>
+</text>
+<text x="1738" y="745" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="1738" dy="0">Context-aware care/training answers with no diagnosis</tspan>
+<tspan x="1738" dy="18.88">promise assistant route assistant_threads</tspan>
+<tspan x="1738" dy="18.88">assistant_messages</tspan>
+</text>
+<rect x="2370" y="675" width="570" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="2370" y="675" width="570" height="8" rx="4" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="2388" y="709" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="2388" dy="0">Things</tspan>
+</text>
+<text x="2388" y="745" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="2388" dy="0">Wishlist, gear/food/health/grooming items, future commerce</tspan>
+<tspan x="2388" dy="18.88">wishlist_items /api/wishlist/*</tspan>
+</text>
+<rect x="1720" y="830" width="570" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="1720" y="830" width="570" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="1738" y="864" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="1738" dy="0">Share/Export</tspan>
+</text>
+<text x="1738" y="900" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="1738" dy="0">Public card, print/PDF version, Telegram share fallback</tspan>
+<tspan x="1738" dy="18.88">/dog/[slug] DogCardActions publicCardHref</tspan>
+</text>
+<rect x="2370" y="830" width="570" height="120" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="2370" y="830" width="570" height="8" rx="4" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="2388" y="864" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="2388" dy="0">Quality Gates</tspan>
+</text>
+<text x="2388" y="900" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="2388" dy="0">Build, env/auth/readiness/UX surface contracts scripts/qa/*</tspan>
+<tspan x="2388" dy="18.88">npm run qa:local</tspan>
+</text>
+<rect x="60" y="1120" width="1480" height="980" rx="34" fill="#F7F1E8" stroke="#F7F1E8" stroke-width="2"/>
+<text x="106" y="2066" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" fill="#6E6258">
+<tspan x="106" dy="0">03 / Entities</tspan>
+</text>
+<text x="120" y="1180" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#E86F3A">
+<tspan x="120" dy="0">ENTITY MAP</tspan>
+</text>
+<text x="120" y="1232" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="850" fill="#201A16">
+<tspan x="120" dy="0">Core entities and ownership</tspan>
+</text>
+<text x="120" y="1330" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="500" fill="#6E6258">
+<tspan x="120" dy="0">Current schema: owner-scoped private data; public sharing is</tspan>
+<tspan x="120" dy="25.959999999999997">query-backed today and should move to DB-backed public-safe cards.</tspan>
+</text>
+<rect x="120" y="1398" width="150" height="7" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<rect x="130" y="1440" width="560" height="90" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="130" y="1440" width="560" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="148" y="1474" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="148" dy="0">Profile</tspan>
+</text>
+<text x="148" y="1510" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="148" dy="0">auth user mirror 1 → many Pets</tspan>
+</text>
+<rect x="780" y="1440" width="560" height="90" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="780" y="1440" width="560" height="8" rx="4" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="798" y="1474" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="798" dy="0">Pet</tspan>
+</text>
+<text x="798" y="1510" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="798" dy="0">dog identity breed, avatar, public_slug</tspan>
+</text>
+<rect x="130" y="1558" width="560" height="90" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="130" y="1558" width="560" height="8" rx="4" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="148" y="1592" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="148" dy="0">Passport</tspan>
+</text>
+<text x="148" y="1628" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="148" dy="0">health notes vaccine / parasite status</tspan>
+</text>
+<rect x="780" y="1558" width="560" height="90" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="780" y="1558" width="560" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="798" y="1592" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="798" dy="0">SocialProfile</tspan>
+</text>
+<text x="798" y="1628" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="798" dy="0">temperament, triggers how to approach</tspan>
+</text>
+<rect x="130" y="1676" width="560" height="90" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="130" y="1676" width="560" height="8" rx="4" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="148" y="1710" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="148" dy="0">Reminder</tspan>
+</text>
+<text x="148" y="1746" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="148" dy="0">care task due_at, recurrence, status</tspan>
+</text>
+<rect x="780" y="1676" width="560" height="90" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="780" y="1676" width="560" height="8" rx="4" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="798" y="1710" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="798" dy="0">MapZone</tspan>
+</text>
+<text x="798" y="1746" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="798" dy="0">approximate place lat/lng/radius, type</tspan>
+</text>
+<rect x="130" y="1794" width="560" height="90" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="130" y="1794" width="560" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="148" y="1828" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="148" dy="0">WishlistItem</tspan>
+</text>
+<text x="148" y="1864" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="148" dy="0">thing to buy/use priority, status</tspan>
+</text>
+<rect x="780" y="1794" width="560" height="90" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="780" y="1794" width="560" height="8" rx="4" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="798" y="1828" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="798" dy="0">AssistantThread</tspan>
+</text>
+<text x="798" y="1864" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="798" dy="0">conversation kind, title</tspan>
+</text>
+<rect x="130" y="1912" width="560" height="90" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="130" y="1912" width="560" height="8" rx="4" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="148" y="1946" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="148" dy="0">AssistantMessage</tspan>
+</text>
+<text x="148" y="1982" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="148" dy="0">thread messages role/content/metadata future</tspan>
+</text>
+<rect x="780" y="1912" width="560" height="90" rx="20" fill="#FFFFFF" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="780" y="1912" width="560" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="798" y="1946" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="798" dy="0">PublicDogCard</tspan>
+</text>
+<text x="798" y="1982" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="798" dy="0">future DB-backed safe export subset</tspan>
+</text>
+<line x1="690" y1="1485" x2="780" y2="1485" stroke="#D6C7B6" stroke-width="4" stroke-linecap="round"/>
+<path d="M 780 1485 L 767 1492 L 767 1478 Z" fill="#D6C7B6"/>
+<line x1="410" y1="1530" x2="410" y2="1560" stroke="#D6C7B6" stroke-width="4" stroke-linecap="round"/>
+<path d="M 410 1560 L 403 1547 L 417 1547 Z" fill="#D6C7B6"/>
+<line x1="1060" y1="1530" x2="1060" y2="1560" stroke="#D6C7B6" stroke-width="4" stroke-linecap="round"/>
+<path d="M 1060 1560 L 1053 1547 L 1067 1547 Z" fill="#D6C7B6"/>
+<rect x="1660" y="1120" width="1480" height="980" rx="34" fill="#F7F1E8" stroke="#F7F1E8" stroke-width="2"/>
+<text x="1706" y="2066" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" fill="#6E6258">
+<tspan x="1706" dy="0">04 / Screen to services</tspan>
+</text>
+<text x="1720" y="1180" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#E86F3A">
+<tspan x="1720" dy="0">SCREEN MAP</tspan>
+</text>
+<text x="1720" y="1232" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="850" fill="#201A16">
+<tspan x="1720" dy="0">Screens → domains → states</tspan>
+</text>
+<text x="1720" y="1330" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="500" fill="#6E6258">
+<tspan x="1720" dy="0">Useful for redesign: every screen must justify its blocks by user</tspan>
+<tspan x="1720" dy="25.959999999999997">value, not internal implementation status.</tspan>
+</text>
+<rect x="1720" y="1398" width="150" height="7" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="1740" y="1450" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="1740" dy="0">Screen</tspan>
+</text>
+<text x="2020" y="1450" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="2020" dy="0">Domain</tspan>
+</text>
+<text x="2320" y="1450" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800" fill="#201A16">
+<tspan x="2320" dy="0">UX contract</tspan>
+</text>
+<rect x="1725" y="1472" width="1340" height="54" rx="14" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2"/>
+<text x="1745" y="1500" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800" fill="#201A16">
+<tspan x="1745" dy="0">Onboarding</tspan>
+</text>
+<text x="2020" y="1500" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="650" fill="#6E6258">
+<tspan x="2020" dy="0">Identity + Dog Profile</tspan>
+</text>
+<text x="2320" y="1500" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#6E6258">
+<tspan x="2320" dy="0">create local pet identity; no dead end</tspan>
+</text>
+<rect x="1725" y="1544" width="1340" height="54" rx="14" fill="#FFF8ED" stroke="#FFF8ED" stroke-width="2"/>
+<text x="1745" y="1572" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800" fill="#201A16">
+<tspan x="1745" dy="0">Today</tspan>
+</text>
+<text x="2020" y="1572" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="650" fill="#6E6258">
+<tspan x="2020" dy="0">Care Loop + Dog Profile</tspan>
+</text>
+<text x="2320" y="1572" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#6E6258">
+<tspan x="2320" dy="0">one next action, reminders, PDF/share shortcuts</tspan>
+</text>
+<rect x="1725" y="1616" width="1340" height="54" rx="14" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2"/>
+<text x="1745" y="1644" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800" fill="#201A16">
+<tspan x="1745" dy="0">Profile</tspan>
+</text>
+<text x="2020" y="1644" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="650" fill="#6E6258">
+<tspan x="2020" dy="0">Dog Profile + Passport +</tspan>
+<tspan x="2020" dy="21.24">Social</tspan>
+</text>
+<text x="2320" y="1644" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#6E6258">
+<tspan x="2320" dy="0">bubbles, prompts, progressive detail</tspan>
+</text>
+<rect x="1725" y="1688" width="1340" height="54" rx="14" fill="#FFF8ED" stroke="#FFF8ED" stroke-width="2"/>
+<text x="1745" y="1716" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800" fill="#201A16">
+<tspan x="1745" dy="0">Map</tspan>
+</text>
+<text x="2020" y="1716" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="650" fill="#6E6258">
+<tspan x="2020" dy="0">Places</tspan>
+</text>
+<text x="2320" y="1716" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#6E6258">
+<tspan x="2320" dy="0">approximate zones, privacy text, no exact public</tspan>
+<tspan x="2320" dy="21.24">GPS</tspan>
+</text>
+<rect x="1725" y="1760" width="1340" height="54" rx="14" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2"/>
+<text x="1745" y="1788" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800" fill="#201A16">
+<tspan x="1745" dy="0">Assistant</tspan>
+</text>
+<text x="2020" y="1788" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="650" fill="#6E6258">
+<tspan x="2020" dy="0">Assistant + Care Loop</tspan>
+</text>
+<text x="2320" y="1788" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#6E6258">
+<tspan x="2320" dy="0">answers from dog context, no diagnoses</tspan>
+</text>
+<rect x="1725" y="1832" width="1340" height="54" rx="14" fill="#FFF8ED" stroke="#FFF8ED" stroke-width="2"/>
+<text x="1745" y="1860" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800" fill="#201A16">
+<tspan x="1745" dy="0">Things</tspan>
+</text>
+<text x="2020" y="1860" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="650" fill="#6E6258">
+<tspan x="2020" dy="0">Wishlist</tspan>
+</text>
+<text x="2320" y="1860" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#6E6258">
+<tspan x="2320" dy="0">care/gear list, future commerce hidden until</tspan>
+<tspan x="2320" dy="21.24">useful</tspan>
+</text>
+<rect x="1725" y="1904" width="1340" height="54" rx="14" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2"/>
+<text x="1745" y="1932" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800" fill="#201A16">
+<tspan x="1745" dy="0">Public Card</tspan>
+</text>
+<text x="2020" y="1932" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="650" fill="#6E6258">
+<tspan x="2020" dy="0">Share/Export</tspan>
+</text>
+<text x="2320" y="1932" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#6E6258">
+<tspan x="2320" dy="0">preview before share, print/PDF wording</tspan>
+</text>
+<rect x="1730" y="2028" width="1280" height="90" rx="26" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="1730" y="2028" width="10" height="90" rx="0" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="1760" y="2072" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="800" fill="#201A16">
+<tspan x="1760" dy="0">Mandatory UX gate</tspan>
+</text>
+<text x="1760" y="2120" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" fill="#6E6258">
+<tspan x="1760" dy="0">check-ux-surface-contract blocks technical statuses/internal service labels from returning to user screens.</tspan>
+</text>
+</svg>

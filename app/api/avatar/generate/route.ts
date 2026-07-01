@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getBreedCare, type BreedId } from '@/lib/data';
+import { getRequestAuth } from '@/lib/server/auth';
+import { rc1Config } from '@/lib/rc1';
 
 export const runtime = 'nodejs';
 
@@ -53,6 +55,15 @@ function fallbackResponse(prompt: string, dogName: string, styleId: string, bree
 }
 
 export async function POST(request: Request) {
+  if (!rc1Config.flags.avatar_generation_enabled) {
+    return NextResponse.json({ error: 'AVATAR_GENERATION_DISABLED' }, { status: 403 });
+  }
+
+  const auth = await getRequestAuth(request);
+  if (!auth.user) {
+    return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
+  }
+
   const input = await request.formData();
   const photo = input.get('photo');
   const prompt = String(input.get('prompt') || '').trim();

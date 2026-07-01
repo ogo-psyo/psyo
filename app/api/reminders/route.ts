@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getRequestAuth } from '@/lib/server/auth';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
+import { getAppSessionFromRequest } from '@/lib/server/appSession';
 
 export const runtime = 'nodejs';
 
@@ -12,16 +13,18 @@ function mapReminder(row: any) {
 
 export async function GET(request: Request) {
   const auth = await getRequestAuth(request);
+  const appSession = getAppSessionFromRequest(request);
   const supabase = auth.supabase ?? getSupabaseAdmin();
+  const ownerId = auth.user?.id ?? appSession?.ownerId;
   const url = new URL(request.url);
   const petId = url.searchParams.get('petId');
   const status = url.searchParams.get('status');
   const due = url.searchParams.get('due') as DueFilter | null;
 
   if (!supabase) return NextResponse.json({ reminders: [], ...demoModeResponse('Set Supabase env.') });
-  if (!auth.user) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
+  if (!ownerId) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
 
-  let query = supabase.from('reminders').select('*, pets!inner(owner_id)').eq('pets.owner_id', auth.user.id).order('due_at', { ascending: true });
+  let query = supabase.from('reminders').select('*, pets!inner(owner_id)').eq('pets.owner_id', ownerId).order('due_at', { ascending: true });
   if (petId) query = query.eq('pet_id', petId);
   if (status) query = query.eq('status', status);
   const now = new Date();
@@ -39,13 +42,15 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const auth = await getRequestAuth(request);
+  const appSession = getAppSessionFromRequest(request);
   const supabase = auth.supabase ?? getSupabaseAdmin();
+  const ownerId = auth.user?.id ?? appSession?.ownerId;
   const body = await request.json().catch(() => null);
   if (!body?.title || !body?.dueAt || !body?.petId) return NextResponse.json({ error: 'petId, title and dueAt are required' }, { status: 400 });
   if (!supabase) return NextResponse.json({ reminder: { id: crypto.randomUUID(), status: 'active', ...body }, ...demoModeResponse('Connect Supabase.') }, { status: 201 });
-  if (!auth.user) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
+  if (!ownerId) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
 
-  const { data: pet, error: petError } = await supabase.from('pets').select('id').eq('id', body.petId).eq('owner_id', auth.user.id).single();
+  const { data: pet, error: petError } = await supabase.from('pets').select('id').eq('id', body.petId).eq('owner_id', ownerId).single();
   if (petError || !pet) return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
 
   const { data, error } = await supabase.from('reminders').insert({

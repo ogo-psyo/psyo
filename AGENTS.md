@@ -16,6 +16,20 @@ This file is the agent decision layer for this project. It is not marketing docs
 - API routes under `app/api/`
 - Vercel deployment
 
+## Required reading for RC1 work
+
+Before changing product scope, auth, billing, reminders, privacy, or release
+behavior, read:
+
+1. `IMPLEMENTATION.md`
+2. `DESIGN_DIRECTION.md`
+3. `docs/pso-hld-soa-2026-06-24/01-HLD.md`
+4. current package manifests, migrations and QA scripts
+
+`IMPLEMENTATION.md` is the owner-facing RC1 target. Current code can move toward
+it incrementally, but unfinished billing, reminder dispatch, legal, or storage
+behavior must stay behind feature flags and honest UI copy.
+
 ## Directory map
 
 - `app/page.tsx` — main client app shell, onboarding, tabs and local UI state
@@ -30,12 +44,34 @@ This file is the agent decision layer for this project. It is not marketing docs
 
 ## Layer boundaries
 
+- Current service-logic reset:
+  `docs/service-logic-reset-2026-06-06.md`.
+- Shared OpenClaw skills practices research:
+  `/Users/ogoruslan/.openclaw/workspace/reports/openclaw-skills-practices-for-leadgen-and-pso-2026-06-06.md`.
 - UI screens may use components, client helpers and API routes.
 - UI must not bypass API privacy rules.
 - API routes may use server helpers and Supabase; they must not import UI components.
 - `localStorage` is guest/demo fallback, not authenticated source of truth.
 - Auth/session changes are high-risk and require QA.
 - Visual-only CSS work must not change API, auth, storage or external provider behavior.
+- Non-trivial UI rebuilds must start from a readiness/view-model contract, not
+  from adding more cards/tabs.
+- Treat the OpenClaw skills ecosystem as a pattern source, not an install list.
+  Do not install community avatar, browser, commerce, scraping, assistant, or
+  automation skills without source review, local vetting, a test task, and
+  explicit approval.
+
+## Source of truth for redesign inputs
+
+- Руслан may provide an external codebase/reference for design, UI structure,
+  screen composition, and scenario inspiration.
+- If that reference differs from current database/domain/service contracts,
+  the current DB and entity/service contracts are the source of truth.
+- Pure visual differences may be adapted directly to the current model.
+- Scenario differences, missing entities, new fields, new relations, or new
+  persistence/API requirements must become explicit backlog tasks before
+  changing DB/auth/API behavior.
+- Do not silently reshape the DB/domain model to match a design reference.
 
 ## Dependency map
 
@@ -64,6 +100,10 @@ Forbidden shortcuts:
 - Do not weaken unauthenticated privacy checks.
 - Do not introduce external sends/emails except through existing approved QA scripts and explicit approval.
 - Do not broaden scope silently; report blocker or ask.
+- Do not let a visible screen imply production readiness unless its service,
+  persistence, privacy/safety state, and QA evidence exist.
+- Do not call assistant, health, map, wishlist, avatar, or public-card behavior
+  production-ready without explicit readiness evidence.
 
 ## Workflow and commands
 
@@ -108,6 +148,7 @@ vercel --prod
 | API/auth/privacy | `npm run qa:local` + targeted auth/bootstrap/API smoke | QA required |
 | dependencies/config | approval + build + rollback note | QA required |
 | deploy | explicit approval + prod smoke | QA required |
+| readiness/service contract | `npm run qa:local` + fixture/smoke for blocked and ready states | QA required |
 
 ## Agent handoff rules
 
@@ -128,6 +169,10 @@ Designer handoff must include:
 
 QA verifies acceptance criteria and proof, not vibes.
 
+Any agent handoff for Pso must name which service contract it touches:
+`ProfileService`, `TodayService`, `ReminderService`, `AssistantService`,
+`AvatarService`, `MapZoneService`, `WishlistService`, or `ReadinessService`.
+
 ## Design/product rules
 
 - Mobile-first; phone shell is primary.
@@ -135,6 +180,8 @@ QA verifies acceptance criteria and proof, not vibes.
 - Visual hierarchy should make the next useful action obvious.
 - Prefer small design-system slices over whole-app rewrites.
 - Respect `prefers-reduced-motion` for motion changes.
+- Demo/local/blocked states must be visibly honest; UI copy cannot compensate
+  for missing backend or safety gates.
 
 ## Known risk zones
 

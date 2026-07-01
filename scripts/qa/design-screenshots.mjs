@@ -36,4 +36,21 @@ for (const size of sizes) {
 }
 await browser.close();
 await fs.writeFile(`${outDir}/metrics.json`, JSON.stringify(results, null, 2));
+const failures = results.flatMap((result) => {
+  const items = [];
+  if (result.metrics.scrollWidth > result.metrics.innerWidth) {
+    items.push({ size: result.size.name, issue: 'document overflow', metrics: result.metrics });
+  }
+  if (result.metrics.overflowEls.length) {
+    items.push({ size: result.size.name, issue: 'element overflow', elements: result.metrics.overflowEls });
+  }
+  if (result.metrics.tinyTapTargets.length) {
+    items.push({ size: result.size.name, issue: 'tiny tap targets', elements: result.metrics.tinyTapTargets });
+  }
+  return items;
+});
+if (failures.length) {
+  console.error(JSON.stringify({ ok: false, failures }, null, 2));
+  process.exit(1);
+}
 console.log(JSON.stringify(results, null, 2));

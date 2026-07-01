@@ -18,15 +18,15 @@ export function GeneratedAvatar({
   const source = imageUrl || profile.avatarImageUrl || (ready || demo ? '/demo-avatar.png' : '');
 
   return (
-    <div className={`generated-avatar ${size} style-${profile.selectedStyle} ${ready ? 'ready' : 'idle'}`} aria-label="Avatar собаки">
+    <div className={`generated-avatar ${size} style-${profile.selectedStyle} ${ready ? 'ready' : 'idle'}`} aria-label="Портрет собаки">
       <span className="avatar-aura" />
       {source ? (
-        <img className="avatar-image" src={source} alt={profile.avatarSource === 'uploaded' ? 'Фото собаки' : 'Avatar собаки'} />
+        <img className="avatar-image" src={source} alt={profile.avatarSource === 'uploaded' ? 'Фото собаки' : 'Портрет собаки'} />
       ) : (
         <div className="avatar-placeholder"><span>{breed.emoji}</span><b>фото</b></div>
       )}
       <span className="avatar-chip breed-chip">{breed.title}</span>
-      <span className="avatar-chip style-chip">{style.title}</span>
+      <span className="avatar-chip style-chip">{demo ? 'пример' : style.title}</span>
     </div>
   );
 }

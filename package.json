@@ -7,10 +7,12 @@
     "build": "next build",
     "start": "next start",
     "check": "next build",
-    "qa:local": "npm run check && node scripts/qa/check-env-contract.mjs && node scripts/qa/check-auth-redirect-source.mjs",
+    "qa:local": "npm run check && node scripts/qa/check-env-contract.mjs && node scripts/qa/check-auth-redirect-source.mjs && node scripts/qa/check-readiness-contract.mjs && node scripts/qa/check-v1-bff-contract.mjs && node scripts/qa/check-rc1-foundation.mjs && node scripts/qa/check-design-concept-contract.mjs && node scripts/qa/check-prod-risk-gates.mjs && node scripts/qa/check-ux-surface-contract.mjs && node scripts/qa/check-human-copy-contract.mjs && node scripts/qa/check-ui-copy-kit-contract.mjs && node scripts/qa/check-ai-safety-contract.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/qa/check-telegram-initdata-contract.mjs && node scripts/qa/check-agentic-orchestration-contract.mjs",
     "qa:auth:generate-link": "node scripts/qa/smoke-auth-generate-link.mjs",
     "qa:auth:send": "node scripts/qa/smoke-auth-send-email.mjs",
-    "qa:bootstrap": "node scripts/qa/smoke-bootstrap-auth.mjs"
+    "qa:bootstrap": "node scripts/qa/smoke-bootstrap-auth.mjs",
+    "qa:visual": "node scripts/qa/design-screenshots.mjs && node scripts/qa/design-state-screenshots.mjs",
+    "qa:prod:smoke": "node scripts/qa/smoke-prod-release.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
@@ -19,14 +21,23 @@
     "@types/node": "^20.12.12",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "better-auth": "^1.6.22",
+    "better-auth-telegram": "^1.5.0",
     "leaflet": "^1.9.4",
     "next": "^16.2.5",
+    "pg": "^8.22.0",
+    "postcss": "^8.5.16",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
+    "react-leaflet": "^5.0.0",
     "sharp": "^0.34.5",
     "typescript": "^5.4.5"
   },
+  "devDependencies": {
+    "@types/pg": "^8.20.0",
+    "playwright": "^1.61.1"
+  },
   "overrides": {
-    "postcss": "8.5.10"
+    "postcss": "^8.5.16"
   }
 }

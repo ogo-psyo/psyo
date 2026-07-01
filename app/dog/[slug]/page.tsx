@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { DogCardActions } from './DogCardActions';
 
 export const metadata: Metadata = {
-  title: 'Карточка собаки — Псё',
-  description: 'Публичная карточка собаки в Псё.',
+  title: 'Памятка собаки — Псё',
+  description: 'Короткая памятка для человека, который гуляет или сидит с собакой.',
 };
 
 export default async function DogCardPage({
@@ -17,31 +18,103 @@ export default async function DogCardPage({
     const value = query[key];
     return typeof value === 'string' && value.trim() ? value : fallback;
   };
+  const displayMap: Record<string, string> = {
+    ok: 'можно знакомиться',
+    ask_first: 'сначала спросить',
+    calm_dogs_only: 'только спокойные собаки',
+    do_not_approach: 'лучше не подходить',
+    known_only: 'только свои',
+    unknown: 'не указано',
+  };
+  const cleanDisplay = (value: string, fallback: string) => {
+    const clean = value.trim();
+    if (!clean) return fallback;
+    return displayMap[clean] ?? clean.replaceAll('_', ' ');
+  };
+  const contactCopy: Record<string, { title: string; detail: string }> = {
+    ok: {
+      title: 'Можно поздороваться',
+      detail: 'Подходите спокойно, лучше сбоку. Без резких рук и нависания сверху.',
+    },
+    ask_first: {
+      title: 'Сначала спросите хозяина',
+      detail: 'Окликните человека и дождитесь “можно”. Руки к морде не тяните.',
+    },
+    calm_dogs_only: {
+      title: 'Только спокойно и по одному',
+      detail: 'Без толпы, рывков и подбегающих собак. Дайте время освоиться.',
+    },
+    do_not_approach: {
+      title: 'Лучше не подходить',
+      detail: 'Просто пройдите мимо спокойно. Не гладьте и не зовите к себе.',
+    },
+    known_only: {
+      title: 'Общается только со своими',
+      detail: 'Если вы не знакомы, держите дистанцию и не пытайтесь знакомить собак.',
+    },
+  };
 
-  const name = read('name', 'Собака');
-  const breed = read('breed', 'Метис / не знаю');
-  const style = read('style', 'городской исследователь');
-  const bio = read('bio', 'Можно знакомиться спокойно и без резких движений.');
-  const social = read('social', 'можно знакомиться');
-  const area = read('area', 'район скрыт');
+  const name = cleanDisplay(read('name', 'Собака'), 'Собака');
+  const breed = cleanDisplay(read('breed', 'Метис / не знаю'), 'Метис / не знаю');
+  const character = cleanDisplay(read('character', read('style', 'спокойный, любопытный')), 'спокойный, любопытный');
+  const bio = cleanDisplay(read('bio', 'Можно знакомиться спокойно и без резких движений.'), 'Можно знакомиться спокойно и без резких движений.');
+  const rawSocial = read('social', 'ask_first').trim();
+  const socialKey = displayMap[rawSocial] ? rawSocial : Object.entries(displayMap).find(([, label]) => label === rawSocial)?.[0] || '';
+  const social = contactCopy[socialKey]?.title || cleanDisplay(rawSocial, 'Сначала спросите хозяина');
+  const socialDetail = contactCopy[socialKey]?.detail || 'Подойдите спокойно и сначала уточните у человека рядом.';
+  const area = cleanDisplay(read('area', 'район скрыт'), 'район скрыт');
+  const triggers = cleanDisplay(read('triggers', ''), '');
   const demo = read('demo', '0') === '1';
+  const rawImage = read('image', '');
+  const image = /^(https?:\/\/|data:image\/(png|jpe?g|webp);base64,)/i.test(rawImage) ? rawImage : '';
+  const avoidText = triggers || (bio.toLowerCase() === social.toLowerCase()
+    ? 'резкие движения, шум, руки к морде'
+    : bio);
 
   return (
     <main className="share-page">
       <section className="share-card">
-        <div className="card-top"><span>Псё карточка</span><b>{demo ? 'DEMO' : 'PUBLIC'}</b></div>
-        <div className="share-avatar" aria-hidden="true">
-          <span className="share-dog"><span /><i /><b /></span>
+        <div className="card-top">
+          <span>Псё</span>
+          <b>{demo ? 'пример памятки' : 'памятка для человека'}</b>
         </div>
-        <h1>{name}</h1>
-        <p>{breed} · {style}</p>
-        <blockquote>{bio}</blockquote>
-        <div className="trait-grid">
-          <span>{social}</span>
-          <span>{area}</span>
-          <span>без точной геолокации</span>
+
+        <div className="share-hero">
+          <div className={`share-avatar ${image ? 'has-image' : ''}`} aria-label={`Фото собаки ${name}`}>
+            {image && <img src={image} alt="" />}
+          </div>
+          <div className="share-hero-glass">
+            <span>собака</span>
+            <h1>{name}</h1>
+            <p>{breed}</p>
+          </div>
         </div>
-        <Link className="primary" href="/">Создать карточку своей собаки</Link>
+
+        <div className="share-safety-stack" aria-label="Правила контакта с собакой">
+          <div className="share-approach">
+            <span>главное правило</span>
+            <b>{social}</b>
+            <p>{socialDetail}</p>
+          </div>
+
+          <div className="share-character">
+            <span>характер</span>
+            <b>{character}</b>
+          </div>
+
+          <div className="share-avoid">
+            <span>не делать</span>
+            <b>{avoidText}</b>
+          </div>
+
+          <div className="share-place">
+            <span>район без точного адреса</span>
+            <b>{area}</b>
+          </div>
+        </div>
+
+        <DogCardActions name={name} />
+        <Link className="share-create-link" href="/">Создать карточку своей собаки</Link>
       </section>
     </main>
   );

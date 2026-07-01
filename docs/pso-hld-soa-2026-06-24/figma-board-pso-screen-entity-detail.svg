@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3600" height="2400" viewBox="0 0 3600 2400">
+<rect width="3600" height="2400" fill="#F7F1E8"/>
+<rect x="60" y="60" width="3480" height="1060" rx="34" fill="#F7F1E8" stroke="#F7F1E8" stroke-width="2"/>
+<text x="110" y="125" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="850" fill="#E86F3A">
+<tspan x="110" dy="0">SCREEN DETAIL</tspan>
+</text>
+<text x="110" y="171" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="850" fill="#201A16">
+<tspan x="110" dy="0">Псё screens: jobs, entities,</tspan>
+<tspan x="110" dy="44.88">actions</tspan>
+</text>
+<text x="110" y="257" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="500" fill="#6E6258">
+<tspan x="110" dy="0">This board turns the architecture into concrete product surfaces for</tspan>
+<tspan x="110" dy="24.15">redesign and implementation planning.</tspan>
+</text>
+<rect x="110" y="360" width="760" height="285" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="110" y="360" width="760" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="132" y="398" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="132" dy="0">Onboarding</tspan>
+</text>
+<text x="132" y="436" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="132" dy="0">Job: понять ценность и создать первую identity. Entities: GuestProfile, DogProfile,</tspan>
+<tspan x="132" dy="18.4">AvatarAsset. Actions: demo, photo, social rule, finishOnboarding. State: no dead end;</tspan>
+<tspan x="132" dy="18.4">local Pet id on exit.</tspan>
+</text>
+<rect x="950" y="360" width="760" height="285" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="950" y="360" width="760" height="8" rx="4" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="972" y="398" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="972" dy="0">Today</tspan>
+</text>
+<text x="972" y="436" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="972" dy="0">Job: что важно сейчас. Entities: Pet, Passport, Social, Reminder, Zone, Wishlist.</tspan>
+<tspan x="972" dy="18.4">Actions: add/complete/snooze reminder, share/print, route to domains. State: care loop</tspan>
+<tspan x="972" dy="18.4">before status.</tspan>
+</text>
+<rect x="1790" y="360" width="760" height="285" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="1790" y="360" width="760" height="8" rx="4" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="1812" y="398" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="1812" dy="0">Profile</tspan>
+</text>
+<text x="1812" y="436" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="1812" dy="0">Job: собрать память о собаке. Entities: Pet, Passport, SocialProfile, AvatarAsset.</tspan>
+<tspan x="1812" dy="18.4">Actions: bubbles, text details, save card, preview/share. State: progressive disclosure.</tspan>
+</text>
+<rect x="2630" y="360" width="760" height="285" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="2630" y="360" width="760" height="8" rx="4" fill="#BFA7EA" stroke="#BFA7EA" stroke-width="2"/>
+<text x="2652" y="398" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="2652" dy="0">Assistant</tspan>
+</text>
+<text x="2652" y="436" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="2652" dy="0">Job: спросить с контекстом. Entities: Pet context, Reminder, AssistantThread/Message</tspan>
+<tspan x="2652" dy="18.4">future. Actions: ask, preset prompt, future action proposal. State: no diagnosis.</tspan>
+</text>
+<rect x="110" y="710" width="760" height="285" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="110" y="710" width="760" height="8" rx="4" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="132" y="748" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="132" dy="0">Map</tspan>
+</text>
+<text x="132" y="786" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="132" dy="0">Job: помнить безопасные/рискованные места. Entities: MapZone. Actions:</tspan>
+<tspan x="132" dy="18.4">create/update/delete, pick approximate point. State: text fallback if map weak.</tspan>
+</text>
+<rect x="950" y="710" width="760" height="285" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="950" y="710" width="760" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="972" y="748" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="972" dy="0">Things</tspan>
+</text>
+<text x="972" y="786" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="972" dy="0">Job: не забыть нужное для ухода. Entities: WishlistItem. Actions: add, priority, bought,</tspan>
+<tspan x="972" dy="18.4">delete. State: care utility before commerce.</tspan>
+</text>
+<rect x="1790" y="710" width="760" height="285" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="1790" y="710" width="760" height="8" rx="4" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="1812" y="748" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="1812" dy="0">Public Card</tspan>
+</text>
+<text x="1812" y="786" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="1812" dy="0">Job: отдать понятную памятку человеку. Entities: PublicDogCard future, safe Pet/Social</tspan>
+<tspan x="1812" dy="18.4">subset. Actions: preview, share, print/PDF. State: owner opt-in fields.</tspan>
+</text>
+<rect x="2630" y="710" width="760" height="285" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="2630" y="710" width="760" height="8" rx="4" fill="#BFA7EA" stroke="#BFA7EA" stroke-width="2"/>
+<text x="2652" y="748" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="2652" dy="0">Auth / Session</tspan>
+</text>
+<text x="2652" y="786" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="2652" dy="0">Job: сохранить приватное состояние. Entities: Profile, TelegramSession. Actions: magic</tspan>
+<tspan x="2652" dy="18.4">link, sign out, Telegram bootstrap. State: no internal IDs in UI.</tspan>
+</text>
+<rect x="60" y="1220" width="3480" height="1060" rx="34" fill="#F7F1E8" stroke="#F7F1E8" stroke-width="2"/>
+<text x="110" y="1285" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="850" fill="#E86F3A">
+<tspan x="110" dy="0">ENTITY DETAIL</tspan>
+</text>
+<text x="110" y="1331" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="850" fill="#201A16">
+<tspan x="110" dy="0">Entities: lifecycle and</tspan>
+<tspan x="110" dy="44.88">ownership</tspan>
+</text>
+<text x="110" y="1417" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="500" fill="#6E6258">
+<tspan x="110" dy="0">Core entities grouped by domain. Use this to decide where screens</tspan>
+<tspan x="110" dy="24.15">read/write and what must stay private.</tspan>
+</text>
+<rect x="110" y="1520" width="760" height="250" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="110" y="1520" width="760" height="8" rx="4" fill="#BFA7EA" stroke="#BFA7EA" stroke-width="2"/>
+<text x="132" y="1558" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="132" dy="0">Identity</tspan>
+</text>
+<text x="132" y="1596" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="132" dy="0">Profile TelegramSession GuestProfile Owner boundary, auth, session linking. No dog-care</tspan>
+<tspan x="132" dy="18.4">logic here.</tspan>
+</text>
+<rect x="950" y="1520" width="760" height="250" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="950" y="1520" width="760" height="8" rx="4" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="972" y="1558" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="972" dy="0">Dog Profile</tspan>
+</text>
+<text x="972" y="1596" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="972" dy="0">Pet PetPassport SocialProfile AvatarAsset Stable dog facts, care notes, behavior,</tspan>
+<tspan x="972" dy="18.4">public-safe summary source.</tspan>
+</text>
+<rect x="1790" y="1520" width="760" height="250" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="1790" y="1520" width="760" height="8" rx="4" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="1812" y="1558" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="1812" dy="0">Care Loop</tspan>
+</text>
+<text x="1812" y="1596" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="1812" dy="0">Reminder ReminderEvent Time-based return loop: due, done, snoozed, recurrence, history.</tspan>
+</text>
+<rect x="2630" y="1520" width="760" height="250" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="2630" y="1520" width="760" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="2652" y="1558" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="2652" dy="0">Places</tspan>
+</text>
+<text x="2652" y="1596" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="2652" dy="0">MapZone Approximate safe/risk/clinic/shop/grooming notes. No exact public GPS.</tspan>
+</text>
+<rect x="110" y="1830" width="760" height="250" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="110" y="1830" width="760" height="8" rx="4" fill="#BFA7EA" stroke="#BFA7EA" stroke-width="2"/>
+<text x="132" y="1868" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="132" dy="0">Assistant</tspan>
+</text>
+<text x="132" y="1906" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="132" dy="0">AssistantThread AssistantMessage Context-aware answers; future persisted threads and</tspan>
+<tspan x="132" dy="18.4">action proposals.</tspan>
+</text>
+<rect x="950" y="1830" width="760" height="250" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="950" y="1830" width="760" height="8" rx="4" fill="#5F8D5A" stroke="#5F8D5A" stroke-width="2"/>
+<text x="972" y="1868" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="972" dy="0">Things</tspan>
+</text>
+<text x="972" y="1906" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="972" dy="0">WishlistItem Food, gear, health, grooming, service list; commerce later.</tspan>
+</text>
+<rect x="1790" y="1830" width="760" height="250" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="1790" y="1830" width="760" height="8" rx="4" fill="#4E6E91" stroke="#4E6E91" stroke-width="2"/>
+<text x="1812" y="1868" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="1812" dy="0">Share/Export</tspan>
+</text>
+<text x="1812" y="1906" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="1812" dy="0">PublicDogCard Owner-selected safe subset for preview/share/print; revocable future.</tspan>
+</text>
+<rect x="2630" y="1830" width="760" height="250" rx="24" fill="#FFF8ED" stroke="#D6C7B6" stroke-width="2"/>
+<rect x="2630" y="1830" width="760" height="8" rx="4" fill="#E86F3A" stroke="#E86F3A" stroke-width="2"/>
+<text x="2652" y="1868" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="850" fill="#201A16">
+<tspan x="2652" dy="0">Quality</tspan>
+</text>
+<text x="2652" y="1906" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" fill="#6E6258">
+<tspan x="2652" dy="0">Build gates UX surface gate Env/auth contracts Protect release from broken build, leaked</tspan>
+<tspan x="2652" dy="18.4">internal UI, bad auth/env drift.</tspan>
+</text>
+<rect x="110" y="2190" width="190" height="34" rx="17" fill="#FFFFFF" stroke="#5F8D5A" stroke-width="2"/>
+<text x="124" y="2212" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800" fill="#5F8D5A">
+<tspan x="124" dy="0">private by default</tspan>
+</text>
+<rect x="325" y="2190" width="150" height="34" rx="17" fill="#FFFFFF" stroke="#E86F3A" stroke-width="2"/>
+<text x="339" y="2212" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800" fill="#E86F3A">
+<tspan x="339" dy="0">guest useful</tspan>
+</text>
+<rect x="500" y="2190" width="205" height="34" rx="17" fill="#FFFFFF" stroke="#4E6E91" stroke-width="2"/>
+<text x="514" y="2212" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800" fill="#4E6E91">
+<tspan x="514" dy="0">owner opt-in share</tspan>
+</text>
+<rect x="730" y="2190" width="180" height="34" rx="17" fill="#FFFFFF" stroke="#BFA7EA" stroke-width="2"/>
+<text x="744" y="2212" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800" fill="#BFA7EA">
+<tspan x="744" dy="0">no technical UI</tspan>
+</text>
+</svg>

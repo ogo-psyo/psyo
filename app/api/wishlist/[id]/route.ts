@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getRequestAuth } from '@/lib/server/auth';
+import { getAppSessionFromRequest } from '@/lib/server/appSession';
+import { getSupabaseAdmin } from '@/lib/server/supabase';
 
 export const runtime = 'nodejs';
 
@@ -21,9 +23,12 @@ async function ownedWishlistItem(supabase: any, userId: string, id: string) {
 export async function PATCH(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const auth = await getRequestAuth(request);
-  if (!auth.user || !auth.supabase) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
+  const appSession = getAppSessionFromRequest(request);
+  const supabase = auth.supabase ?? getSupabaseAdmin();
+  const ownerId = auth.user?.id ?? appSession?.ownerId;
+  if (!ownerId || !supabase) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
 
-  const owned = await ownedWishlistItem(auth.supabase, auth.user.id, id);
+  const owned = await ownedWishlistItem(supabase, ownerId, id);
   if (owned.error) return NextResponse.json({ error: 'WISHLIST_ITEM_NOT_FOUND' }, { status: 404 });
 
   const body = await request.json().catch(() => ({}));
@@ -38,7 +43,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
 
   if (Object.keys(patch).length === 0) return NextResponse.json({ error: 'NO_VALID_FIELDS' }, { status: 400 });
 
-  const { data, error } = await auth.supabase.from('wishlist_items').update(patch).eq('id', id).select('*').single();
+  const { data, error } = await supabase.from('wishlist_items').update(patch).eq('id', id).select('*').single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ item: data, mode: 'supabase' });
 }
@@ -46,12 +51,15 @@ export async function PATCH(request: Request, ctx: Ctx) {
 export async function DELETE(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const auth = await getRequestAuth(request);
-  if (!auth.user || !auth.supabase) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
+  const appSession = getAppSessionFromRequest(request);
+  const supabase = auth.supabase ?? getSupabaseAdmin();
+  const ownerId = auth.user?.id ?? appSession?.ownerId;
+  if (!ownerId || !supabase) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
 
-  const owned = await ownedWishlistItem(auth.supabase, auth.user.id, id);
+  const owned = await ownedWishlistItem(supabase, ownerId, id);
   if (owned.error) return NextResponse.json({ error: 'WISHLIST_ITEM_NOT_FOUND' }, { status: 404 });
 
-  const { error } = await auth.supabase.from('wishlist_items').delete().eq('id', id);
+  const { error } = await supabase.from('wishlist_items').delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

@@ -35,7 +35,7 @@ export async function requireUser(request: Request) {
   return auth as Required<RequestAuth>;
 }
 
-export async function ensureProfile(user: User) {
+export async function ensureProfile(user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> }) {
   const admin = getSupabaseAdmin();
   if (!admin) return;
   await admin.from('profiles').upsert({

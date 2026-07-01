@@ -62,6 +62,7 @@ export type DogProfile = {
   backendPetId?: string;
   avatarImageUrl: string;
   avatarSource: 'none' | 'uploaded' | 'generated' | 'demo';
+  photoUrls: string[];
   dogName: string;
   breedId: BreedId;
   breedGroupId: BreedGroupId;
@@ -117,6 +118,7 @@ export const defaultHabits: DogHabit[] = [
 export const defaultProfile: DogProfile = {
   avatarImageUrl: '',
   avatarSource: 'none',
+  photoUrls: [],
   dogName: '',
   breedId: 'mixed',
   breedGroupId: 'mixed',

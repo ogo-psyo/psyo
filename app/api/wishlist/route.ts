@@ -1,21 +1,24 @@
 import { NextResponse } from 'next/server';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
 import { getRequestAuth } from '@/lib/server/auth';
+import { getAppSessionFromRequest } from '@/lib/server/appSession';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
   const auth = await getRequestAuth(request);
+  const appSession = getAppSessionFromRequest(request);
   const supabase = auth.supabase ?? getSupabaseAdmin();
+  const ownerId = auth.user?.id ?? appSession?.ownerId;
   const petId = new URL(request.url).searchParams.get('petId');
 
   if (!supabase) {
     return NextResponse.json({ wishlist: [], ...demoModeResponse('Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.') });
   }
 
-  if (!auth.user) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
+  if (!ownerId) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
 
-  let query = supabase.from('wishlist_items').select('*, pets!inner(owner_id)').eq('pets.owner_id', auth.user.id).order('created_at', { ascending: false });
+  let query = supabase.from('wishlist_items').select('*, pets!inner(owner_id)').eq('pets.owner_id', ownerId).order('created_at', { ascending: false });
   if (petId) query = query.eq('pet_id', petId);
   const { data, error } = await query;
 
@@ -30,15 +33,17 @@ export async function POST(request: Request) {
   }
 
   const auth = await getRequestAuth(request);
+  const appSession = getAppSessionFromRequest(request);
   const supabase = auth.supabase ?? getSupabaseAdmin();
+  const ownerId = auth.user?.id ?? appSession?.ownerId;
   if (!supabase) {
     return NextResponse.json({ item: { id: crypto.randomUUID(), priority: 'medium', status: 'wanted', ...body }, ...demoModeResponse('Connect Supabase to persist wishlist items.') }, { status: 201 });
   }
 
-  if (!auth.user) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
+  if (!ownerId) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
   if (!body.petId) return NextResponse.json({ error: 'petId is required when Supabase is enabled' }, { status: 400 });
 
-  const { data: pet, error: petError } = await supabase.from('pets').select('id').eq('id', body.petId).eq('owner_id', auth.user.id).single();
+  const { data: pet, error: petError } = await supabase.from('pets').select('id').eq('id', body.petId).eq('owner_id', ownerId).single();
   if (petError || !pet) return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
 
   const { data, error } = await supabase

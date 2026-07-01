@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { AppBootstrap } from '@/lib/domain';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
 import { ensureProfile, getRequestAuth } from '@/lib/server/auth';
+import { getAppSessionFromRequest } from '@/lib/server/appSession';
 
 export const runtime = 'nodejs';
 
@@ -24,12 +25,14 @@ function mapReminder(row: any) {
 
 export async function GET(request: Request) {
   const auth = await getRequestAuth(request);
+  const appSession = getAppSessionFromRequest(request);
   const supabase = auth.supabase ?? getSupabaseAdmin();
 
   if (!supabase) return NextResponse.json({ ...demoBootstrap(), ...demoModeResponse('Configure Supabase env to load real app state.') });
   if (auth.user) await ensureProfile(auth.user);
 
-  if (!auth.user) {
+  const ownerId = auth.user?.id ?? appSession?.ownerId;
+  if (!ownerId) {
     return NextResponse.json({
       mode: 'supabase',
       connected: true,
@@ -42,12 +45,12 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const requestedPetId = url.searchParams.get('petId');
 
-  let petQuery = supabase.from('pets').select('*').order('created_at', { ascending: true }).limit(1).eq('owner_id', auth.user.id);
+  let petQuery = supabase.from('pets').select('*').order('created_at', { ascending: true }).limit(1).eq('owner_id', ownerId);
   if (requestedPetId) petQuery = petQuery.eq('id', requestedPetId);
   const petResult = await petQuery.maybeSingle();
 
   if (petResult.error) return NextResponse.json({ mode: 'user', connected: true, error: petResult.error.message }, { status: 500 });
-  if (!petResult.data) return NextResponse.json({ mode: 'user', connected: true, empty: true, user: { id: auth.user.id, email: auth.user.email }, message: 'No pets yet.' });
+  if (!petResult.data) return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', connected: true, empty: true, user: { id: ownerId, email: auth.user?.email ?? null }, message: 'No pets yet.' });
 
   const petId = petResult.data.id;
   const [passportResult, socialResult, remindersResult, zonesResult, wishlistResult] = await Promise.all([
@@ -59,9 +62,9 @@ export async function GET(request: Request) {
   ]);
 
   return NextResponse.json({
-    mode: 'user',
+    mode: auth.user ? 'user' : 'telegram',
     connected: true,
-    user: { id: auth.user.id, email: auth.user.email },
+    user: { id: ownerId, email: auth.user?.email ?? null },
     pet: petResult.data,
     passport: passportResult.data,
     social: socialResult.data,
