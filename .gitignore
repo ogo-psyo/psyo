@@ -7,3 +7,10 @@ node_modules
 .vercel
 .vercel-*
 .DS_Store
+reports/
+playwright-report/
+test-results/
+out/
+tmp-*.png
+prod-*.png
+*.log
