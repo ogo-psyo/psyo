@@ -79,11 +79,23 @@ GitHub: `https://github.com/ogo-psyo/psyo`
 - Legal/support placeholders.
 - Map zones scaffold.
 - Wishlist scaffold.
-- Assistant safety scaffold.
+- Assistant safety scaffold: сейчас это rules-based backend endpoint `/api/assistant`, без подключённой LLM в production.
 - Internal health endpoint.
 - QA contract suite.
 
 Важно: часть поверхностей уже есть как foundation, но не вся целевая функциональность считается production-ready. Этот документ описывает полный целевой scope, а не только готовый RC1.
+
+### Текущий статус ассистента
+
+На 2026-07-01 в production нет подключённой LLM и нет собственной языковой модели. Есть backend endpoint `/api/assistant`, который:
+
+- берёт контекст профиля, паспорта, социальности и напоминаний;
+- классифицирует вопрос по простым правилам;
+- возвращает заранее ограниченный rules-based ответ;
+- предлагает действия вроде создания напоминания, wishlist item или map note;
+- не вызывает OpenAI, Claude, Gemini или другую внешнюю LLM в production.
+
+Все упоминания AI-ассистента ниже относятся к целевому продукту, а не к уже включённой production-функции.
 
 ## 4. Платформы
 
@@ -284,6 +296,8 @@ GitHub: `https://github.com/ogo-psyo/psyo`
 ## 5.7 Assistant / Ассистент заботы
 
 Цель: не общий чат, а безопасный action engine вокруг конкретной собаки.
+
+Текущий статус: в production включён только rules-based endpoint без LLM. Полноценный AI-ассистент — целевой слой, который нужно подключать отдельно после safety QA.
 
 Функциональность:
 
