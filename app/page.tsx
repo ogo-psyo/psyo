@@ -48,6 +48,8 @@ type WishlistView = { id: string; petId: string; title: string; category: string
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; created_at?: string };
 type MapFeatureView = { id: string; type: 'point' | 'route'; title: string; lat?: number | null; lng?: number | null; zone_type?: string | null; path?: { type?: string; coordinates?: number[][] } | null; visibility: 'private' | 'shared' | 'public' };
 type AuthSession = { access_token: string; user: { email?: string } };
+type ObservationView = { id: string; petId?: string; mood: string; appetite: string; stool: string; energy: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
+type ObservationDraft = Pick<ObservationView, 'mood' | 'appetite' | 'stool' | 'energy' | 'note'>;
 type Tab = 'today' | 'calendar' | 'assistant' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
 type MapLayer = 'personal' | 'community';
 type DrawMode = 'none' | 'point' | 'route';
@@ -76,8 +78,21 @@ declare global {
 
 const styleOptions = avatarStyles.slice(0, 4);
 const onboardingKey = 'pso.topapp.onboarding.v1';
+const observationsStorageKey = 'pso.topapp.observations.v1';
 const heroStyleOptions = avatarStyles.filter((style) => ['city', 'space', 'sticker'].includes(style.id));
 const viralFactOrder: ViralFactKey[] = ['social', 'energy', 'care', 'triggers', 'area', 'breed'];
+
+const observationMoodOptions = ['спокойное', 'радостное', 'тревожное', 'вялое'];
+const observationAppetiteOptions = ['обычный', 'ниже обычного', 'выше обычного', 'не ела'];
+const observationStoolOptions = ['обычный', 'мягкий', 'жидкий', 'не было'];
+const observationEnergyOptions = ['обычная', 'много', 'мало', 'сонная'];
+const defaultObservationDraft: ObservationDraft = {
+  mood: observationMoodOptions[0],
+  appetite: observationAppetiteOptions[0],
+  stool: observationStoolOptions[0],
+  energy: observationEnergyOptions[0],
+  note: '',
+};
 
 const viralCardFormats: { id: ViralCardFormat; label: string; caption: string; size: string }[] = [
   { id: 'story', label: 'История', caption: 'вертикально для Telegram и Instagram', size: '1080x1920' },
@@ -124,6 +139,17 @@ function SuggestionBubbles({ label, options, onPick }: { label: string; options:
 
 function MiniMetric({ label, value, fallback = '—' }: { label: string; value?: string; fallback?: string }) {
   return <div className="mini-metric"><span>{label}</span><b>{value || fallback}</b></div>;
+}
+
+function ObservationChoice({ label, value, options, onChange }: { label: string; value: string; options: readonly string[]; onChange: (value: string) => void }) {
+  return (
+    <div className="observation-choice" aria-label={label}>
+      <b>{label}</b>
+      <div>
+        {options.map((option) => <button key={option} type="button" className={value === option ? 'active' : ''} onClick={() => onChange(option)} aria-pressed={value === option}>{option}</button>)}
+      </div>
+    </div>
+  );
 }
 
 function TaskCard({ emoji, title, caption, action, onClick }: { emoji: string; title: string; caption: string; action: string; onClick?: () => void }) {
@@ -344,6 +370,9 @@ export default function Home() {
   const [reminders, setReminders] = useState<ReminderView[]>([]);
   const [wishlist, setWishlist] = useState<WishlistView[]>([]);
   const [zones, setZones] = useState<ZoneView[]>([]);
+  const [observations, setObservations] = useState<ObservationView[]>([]);
+  const [observationDraft, setObservationDraft] = useState<ObservationDraft>(defaultObservationDraft);
+  const [observationSaving, setObservationSaving] = useState(false);
   const [newReminderTitle, setNewReminderTitle] = useState('');
   const [newReminderType, setNewReminderType] = useState('custom');
   const [newReminderDueDate, setNewReminderDueDate] = useState(() => dateInputValue(new Date()));
@@ -375,6 +404,7 @@ export default function Home() {
   const [onboardingCareChoice, setOnboardingCareChoice] = useState<OnboardingCareChoice>(onboardingCareOptions[0]);
   const [telegramSession, setTelegramSession] = useState<TelegramSessionView>({ mode: 'loading' });
   const guestPetIdRef = useRef<string | null>(null);
+  const observationsLoadedRef = useRef(false);
 
   function authHeaders(): Record<string, string> {
     return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
@@ -438,6 +468,10 @@ export default function Home() {
       setReminders(payload.reminders ?? []);
       setWishlist(payload.wishlist ?? []);
       setZones(payload.zones ?? []);
+      if (Array.isArray(payload.observations)) {
+        const bootObservations = payload.observations.map(normalizeObservation).filter(Boolean) as ObservationView[];
+        if (bootObservations.length) setObservations(bootObservations.slice(0, 12));
+      }
       setNotice('loaded');
       window.setTimeout(() => setNotice('idle'), 1400);
     } else if (payload.empty) {
@@ -445,6 +479,7 @@ export default function Home() {
       setReminders([]);
       setWishlist([]);
       setZones([]);
+      setObservations([]);
     }
   }
 
@@ -452,6 +487,11 @@ export default function Home() {
     const local = loadProfile();
     setProfile(local);
     setHeroNameDraft(local.dogName || '');
+    try {
+      const savedObservations = JSON.parse(window.localStorage.getItem(observationsStorageKey) || '[]');
+      if (Array.isArray(savedObservations)) setObservations(savedObservations.map(normalizeObservation).filter(Boolean).slice(0, 12) as ObservationView[]);
+    } catch {}
+    observationsLoadedRef.current = true;
     try { if (window.localStorage.getItem(onboardingKey) === 'done') setOnboardingStage('done'); } catch {}
     const supabase = getSupabaseBrowser();
     if (!supabase) { setAuthLoading(false); loadBootstrap().catch(() => null); return; }
@@ -519,6 +559,14 @@ export default function Home() {
     return () => { cancelled = true; };
   }, []);
   useEffect(() => { const result = saveProfile(profile); if (!result.ok) setError(result.message); }, [profile]);
+  useEffect(() => {
+    if (!observationsLoadedRef.current) return;
+    try { window.localStorage.setItem(observationsStorageKey, JSON.stringify(observations.slice(0, 24))); } catch {}
+  }, [observations]);
+  useEffect(() => {
+    if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) return;
+    loadObservations().catch(() => null);
+  }, [profile.backendPetId, session?.access_token, telegramSession.ownerId]);
   useEffect(() => {
     if (authCooldown <= 0) return;
     const timer = window.setInterval(() => setAuthCooldown((current) => Math.max(0, current - 1)), 1000);
@@ -703,6 +751,10 @@ export default function Home() {
     if (activeReminders.length === 0) return { emoji: '⏰', title: `Запланировать первую заботу ${petNameDatv}`, caption: 'Выберите дело, дату и тип. Псё не будет придумывать напоминания без вашего решения.', action: 'Открыть календарь', target: 'calendar' as Tab };
     return { emoji: '🐾', title: `У ${petNameGent} всё спокойно`, caption: `${formatCount(activeReminders.length, ['активное дело', 'активных дела', 'активных дел'])} · профиль готов ${completionCount} из 6`, action: 'Открыть историю', target: 'calendar' as Tab };
   }, [activeReminders.length, completionCount, groupedReminders.overdue, missingProfileSummary, petNameDatv, petNameGent, profile.backendPetId, profileReady]);
+  const latestObservation = observations[0];
+  const observationNextStepLine = latestObservation
+    ? `Последняя запись: ${latestObservation.mood}, аппетит ${latestObservation.appetite}, энергия ${latestObservation.energy}. Следующий шаг: ${nextBestAction.title.toLowerCase()}.`
+    : `Запиши короткое наблюдение перед шагом «${nextBestAction.title}», чтобы видеть, что меняется день за днём.`;
   const appReadiness = useMemo(() => buildAppReadiness({
     profile,
     isAuthenticated: Boolean(session?.access_token || telegramSession.ownerId),
@@ -723,6 +775,101 @@ export default function Home() {
   const showAuthPanel = showEmailAuth || telegramSession.mode === 'error';
   const visibleMapFeatures = activeMapLayer === 'community' ? mapFeatures : [];
 
+
+  function normalizeObservation(raw: any): ObservationView | null {
+    if (!raw || typeof raw !== 'object') return null;
+    const metadata = raw.metadata && typeof raw.metadata === 'object' && !Array.isArray(raw.metadata) ? raw.metadata : {};
+    const createdAt = String(raw.observedAt || raw.observed_at || raw.createdAt || raw.created_at || new Date().toISOString());
+    const date = new Date(createdAt);
+    const type = String(raw.type || '');
+    const value = String(raw.value || '');
+    return {
+      id: String(raw.id || guestId('observation')),
+      petId: raw.petId || raw.pet_id ? String(raw.petId || raw.pet_id) : undefined,
+      mood: String(raw.mood || metadata.mood || (type === 'mood' ? value : '') || defaultObservationDraft.mood),
+      appetite: String(raw.appetite || metadata.appetite || (type === 'appetite' ? value : '') || defaultObservationDraft.appetite),
+      stool: String(raw.stool || metadata.stool || (type === 'stool' ? value : '') || defaultObservationDraft.stool),
+      energy: String(raw.energy || metadata.energy || (type === 'energy' ? value : '') || defaultObservationDraft.energy),
+      note: String(raw.note || '').trim() || undefined,
+      createdAt: Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString(),
+      syncStatus: raw.syncStatus === 'saved' ? 'saved' : 'local',
+    };
+  }
+
+  function updateObservationDraft(patch: Partial<ObservationDraft>) {
+    setObservationDraft((current) => ({ ...current, ...patch }));
+    setError('');
+  }
+
+  async function loadObservations() {
+    const params = new URLSearchParams({ limit: '12' });
+    if (profile.backendPetId) params.set('petId', profile.backendPetId);
+    const response = await fetch(`/api/observations?${params.toString()}`, { headers: authHeaders() });
+    if (!response.ok) return;
+    const payload = await response.json().catch(() => ({}));
+    const source = Array.isArray(payload?.observations) ? payload.observations : Array.isArray(payload) ? payload : [];
+    const remote = source.map(normalizeObservation).filter(Boolean) as ObservationView[];
+    if (!remote.length) return;
+    setObservations((current) => {
+      const byId = new Map<string, ObservationView>();
+      [...remote.map((item) => ({ ...item, syncStatus: 'saved' as const })), ...current].forEach((item) => byId.set(item.id, item));
+      return Array.from(byId.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 12);
+    });
+  }
+
+  async function submitObservation() {
+    if (observationSaving) return;
+    const note = observationDraft.note?.trim();
+    const petId = profile.backendPetId || (isGuestMode() ? ensureGuestPetId() : undefined);
+    const createdAt = new Date().toISOString();
+    const optimistic: ObservationView = {
+      id: guestId('observation'),
+      petId,
+      mood: observationDraft.mood,
+      appetite: observationDraft.appetite,
+      stool: observationDraft.stool,
+      energy: observationDraft.energy,
+      note: note || undefined,
+      createdAt,
+      syncStatus: 'local',
+    };
+    setObservationSaving(true);
+    setObservations((current) => [optimistic, ...current].slice(0, 12));
+    setObservationDraft(defaultObservationDraft);
+    setError('');
+
+    if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) {
+      setObservationSaving(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/observations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          petId: profile.backendPetId,
+          type: 'note',
+          value: `настроение ${optimistic.mood}, аппетит ${optimistic.appetite}, стул ${optimistic.stool}, энергия ${optimistic.energy}`,
+          note: optimistic.note || null,
+          observedAt: createdAt,
+          source: 'manual',
+          metadata: {
+            mood: optimistic.mood,
+            appetite: optimistic.appetite,
+            stool: optimistic.stool,
+            energy: optimistic.energy,
+          },
+        }),
+      });
+      if (!response.ok) return;
+      const payload = await response.json().catch(() => ({}));
+      const saved = normalizeObservation(payload?.observation || payload);
+      setObservations((current) => current.map((item) => item.id === optimistic.id ? { ...(saved || item), id: saved?.id || item.id, syncStatus: 'saved' } : item));
+    } finally {
+      setObservationSaving(false);
+    }
+  }
 
   function updateProfile(patch: Partial<DogProfile>) {
     setProfile((current) => ({ ...current, ...patch }));
@@ -873,6 +1020,7 @@ export default function Home() {
     setReminders([]);
     setWishlist([]);
     setZones([]);
+    setObservations([]);
   }
 
   async function createReminder(title?: string, type = newReminderType, dueInDays = 0, explicitDueDate?: string) {
@@ -1589,6 +1737,32 @@ export default function Home() {
             </div>
             <button onClick={() => nextBestAction.reminderId ? completeReminder(nextBestAction.reminderId) : nextBestAction.target === 'today' ? document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus() : setTab(nextBestAction.target)}>{nextBestAction.action}</button>
           </article>
+
+          <section className="observation-panel" aria-label="Быстрое наблюдение">
+            <div className="section-title observation-title">
+              <div><span className="eyebrow">наблюдение</span><h3>Как {petName ? petName : 'собака'} сейчас</h3></div>
+              <span>{observations.length ? formatCount(observations.length, ['запись', 'записи', 'записей']) : 'первая запись'}</span>
+            </div>
+            <p className="observation-next-line">{observationNextStepLine}</p>
+            <form className="observation-form" onSubmit={(event) => { event.preventDefault(); submitObservation(); }}>
+              <ObservationChoice label="Настроение" value={observationDraft.mood} options={observationMoodOptions} onChange={(value) => updateObservationDraft({ mood: value })} />
+              <ObservationChoice label="Аппетит" value={observationDraft.appetite} options={observationAppetiteOptions} onChange={(value) => updateObservationDraft({ appetite: value })} />
+              <ObservationChoice label="Стул" value={observationDraft.stool} options={observationStoolOptions} onChange={(value) => updateObservationDraft({ stool: value })} />
+              <ObservationChoice label="Энергия" value={observationDraft.energy} options={observationEnergyOptions} onChange={(value) => updateObservationDraft({ energy: value })} />
+              <textarea value={observationDraft.note || ''} onChange={(event) => updateObservationDraft({ note: event.target.value })} placeholder="Короткая заметка: прогулка, корм, сон, что заметили" aria-label="Заметка наблюдения" />
+              <button className="primary" type="submit" disabled={observationSaving}>{observationSaving ? 'Сохраняю…' : 'Записать наблюдение'}</button>
+            </form>
+            <div className="observation-history" aria-label="Последние наблюдения">
+              {observations.length === 0 ? <article className="observation-empty"><b>История начнётся с первой записи</b><p>Достаточно одного короткого наблюдения в день: настроение, аппетит, стул, энергия и заметка.</p></article> : observations.slice(0, 4).map((item) => <article key={item.id}>
+                <div>
+                  <b>{new Date(item.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })} · {new Date(item.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</b>
+                  <p>{item.mood} · аппетит {item.appetite} · стул {item.stool} · энергия {item.energy}</p>
+                  {item.note && <small>{item.note}</small>}
+                </div>
+                <span>{item.syncStatus === 'saved' ? 'сохранено' : 'локально'}</span>
+              </article>)}
+            </div>
+          </section>
 
           <section className="kit-daily-status action-first" aria-label="Быстрые действия">
             <button onClick={() => setTab('calendar')}>

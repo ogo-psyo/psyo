@@ -2862,12 +2862,132 @@ body::before { opacity: .12; background-size: 48px 48px; }
   font-size: 12px;
   font-weight: 760;
 }
-.today-reminder-panel, .today-add-care, .profile-nudge-card, .share-mini-card, .readiness-details {
+.today-reminder-panel, .today-add-care, .profile-nudge-card, .share-mini-card, .readiness-details, .observation-panel {
   border: 1px solid oklch(1 0 0 / .70);
   border-radius: 28px;
   padding: 13px;
   background: oklch(1 0.006 84 / .62);
   box-shadow: inset 0 1px 0 oklch(1 0 0 / .86), 0 10px 28px oklch(0.28 0.045 70 / .08);
+}
+.observation-panel {
+  display: grid;
+  gap: 12px;
+  background:
+    radial-gradient(ellipse at 4% 2%, oklch(0.84 0.09 196 / .24), transparent 42%),
+    radial-gradient(ellipse at 100% 16%, oklch(0.92 0.08 82 / .34), transparent 40%),
+    oklch(1 0.006 84 / .66);
+}
+.observation-title > span {
+  flex: 0 0 auto;
+  border: 1px solid oklch(0.13 0.05 292 / .10);
+  border-radius: 999px;
+  padding: 7px 9px;
+  color: var(--muted);
+  background: oklch(1 0 0 / .52);
+  font-size: 11px;
+  font-weight: 820;
+  white-space: nowrap;
+}
+.observation-next-line {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.42;
+  font-weight: 620;
+}
+.observation-form {
+  display: grid;
+  gap: 9px;
+}
+.observation-choice {
+  display: grid;
+  gap: 6px;
+}
+.observation-choice b {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+}
+.observation-choice > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.observation-choice button {
+  min-width: 0;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  padding: 0 6px;
+  color: var(--ink);
+  background: oklch(1 0 0 / .56);
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1.08;
+}
+.observation-choice button.active {
+  border-color: oklch(0.50 0.105 198 / .42);
+  color: var(--primary-ink);
+  background: var(--primary);
+  box-shadow: 0 7px 16px oklch(0.20 0.04 268 / .13);
+}
+.observation-form textarea {
+  min-height: 76px;
+  border-radius: 18px !important;
+  font-size: 13px;
+}
+.observation-form > button {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 18px;
+}
+.observation-history {
+  display: grid;
+  gap: 8px;
+}
+.observation-history article,
+.observation-empty {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: start;
+  border: 1px solid oklch(0.13 0.05 292 / .08);
+  border-radius: 20px;
+  padding: 10px;
+  background: oklch(1 0 0 / .50);
+}
+.observation-empty {
+  grid-template-columns: 1fr;
+}
+.observation-history b,
+.observation-empty b {
+  display: block;
+  font-size: 13px;
+  line-height: 1.15;
+}
+.observation-history p,
+.observation-empty p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.36;
+  font-weight: 620;
+}
+.observation-history small {
+  display: block;
+  margin-top: 5px;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 650;
+}
+.observation-history article > span {
+  border-radius: 999px;
+  padding: 5px 7px;
+  color: var(--soft);
+  background: oklch(0.94 0.015 82 / .76);
+  font-size: 10px;
+  font-weight: 820;
+  white-space: nowrap;
 }
 .today-reminder-panel { display: grid; gap: 10px; }
 .today-reminder-list { display: grid; gap: 8px; }

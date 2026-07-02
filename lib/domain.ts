@@ -85,6 +85,40 @@ export type WishlistItem = {
   status: 'wanted' | 'bought' | 'not_suitable';
 };
 
+export type PetObservation = {
+  id: EntityId;
+  petId: EntityId;
+  type:
+    | 'mood'
+    | 'energy'
+    | 'appetite'
+    | 'stool'
+    | 'sleep'
+    | 'weight'
+    | 'activity'
+    | 'fear_trigger'
+    | 'dog_reaction'
+    | 'people_reaction'
+    | 'walk'
+    | 'training'
+    | 'medication'
+    | 'procedure'
+    | 'symptom'
+    | 'behavior_change'
+    | 'note';
+  value: string;
+  note?: string;
+  observedAt: ISODateString;
+  mood?: string;
+  appetite?: string;
+  stool?: string;
+  energy?: string;
+  source?: 'manual' | 'assistant' | 'import' | 'demo';
+  metadata?: Record<string, unknown>;
+  createdAt?: ISODateString;
+  updatedAt?: ISODateString;
+};
+
 export type AssistantThread = {
   id: EntityId;
   petId: EntityId;
@@ -102,4 +136,5 @@ export type AppBootstrap = {
   reminders: Reminder[];
   zones: MapZone[];
   wishlist: WishlistItem[];
+  observations: PetObservation[];
 };
