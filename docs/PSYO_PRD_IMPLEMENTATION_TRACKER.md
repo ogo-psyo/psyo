@@ -9,7 +9,7 @@ This tracker separates the target PRD from the current production state. It must
 - Production URL: `https://pso-mvp-uglanovrms-projects.vercel.app/`
 - Current release: `c5054e16c4d2a7a5df0f1cf011cbc385abf28a70`
 - Current deploy: `dpl_8qwHAc6WQ8nbbpaos8mDTZn6PXRU`
-- Latest local slice: PRD navigation, `things` screen, basic tracking/observations, owner-scoped active dog switching, and public-card field controls.
+- Latest local slice: PRD navigation, `things` screen, basic tracking/observations, owner-scoped active dog switching, public-card field controls, and explicit map privacy modes.
 
 ## P0 Product Shape
 
@@ -40,7 +40,7 @@ Support surfaces must stay reachable, but not dominate the main navigation:
 | Reminders/care history | Partial | Basic reminders, completion and calendar exist; notifications and recurrence UX need work. |
 | Tracking/observations | Partial | `pet_observations` schema/API/bootstrap and quick UI on `всё` are implemented; deeper history on `псё`, charts and attachments are still open. |
 | Public dog card | Partial | Card/share/PDF surfaces exist; owner can now choose visible preview/share fields; persisted slug-based dog-specific sharing still needs productization. |
-| Map/routes | Partial | Private places and map features exist; route sharing/public layer moderation are not production-ready. |
+| Map/routes | Partial | Private places, route drawing and explicit save modes exist; shared links/public moderation backend exists, but public share pages and moderation ops are still incomplete. |
 | `рядом` socialization | Partial | Static candidate surface exists; real matching, privacy and invitations are not production-ready. |
 | `вещи` wishlist | Partial | Dedicated tab shipped; needs sharing, repeat purchases and partner labeling. |
 | Partners/services/clinics | Gap | PRD target only; no production partner directory or booking flow yet. |
@@ -100,7 +100,7 @@ Acceptance criteria:
 - [x] Public card has explicit field visibility controls for breed, character, triggers and area.
 - Exact address, sensitive health notes, documents and owner contact are private by default.
 - [x] Sharing actions show a preview of what will be exposed before opening/sending.
-- Map/routes have clear private/shared/public states.
+- [x] Map/routes have clear private/shared/moderated states in the owner UI.
 - [x] QA covers the public-card privacy contract.
 
 Shipped locally in the current slice:
@@ -114,6 +114,7 @@ Remaining:
 
 - Field controls are client-side for the current preview/share flow; persisted per-dog visibility settings still need backend storage.
 - Map/routes need separate private/shared/public UI states and moderation flow.
+- Public map/share pages and moderation operations are still incomplete.
 
 ### Slice 4: Map Routes And Sharing
 
@@ -121,10 +122,24 @@ Goal: move the map from saved places to useful routes.
 
 Acceptance criteria:
 
-- Owner can draw/save a route.
-- Owner can share a selected route by link.
-- Public layer is opt-in and separate from private map data.
-- Risk/safe places remain approximate by default.
+- [x] Owner can draw/save a route.
+- [x] Owner can choose private, link-only or moderation-required save mode before saving a route/point.
+- [x] Public layer is opt-in and separate from private map data.
+- [x] Risk/safe places remain approximate by default.
+- [x] QA covers the map privacy contract.
+
+Shipped locally in the current slice:
+
+- Added map save modes: `Только мне`, `По ссылке`, `На модерацию`.
+- Route/point saves use explicit visibility: private, shared, or public-pending.
+- Shared saves copy the generated share URL when backend returns it.
+- Public/general map text stays gated behind moderation and separate consent.
+- Added `scripts/qa/check-map-privacy-contract.mjs` to `npm run qa:local`.
+
+Remaining:
+
+- `/map/share/[id]` page is not implemented yet.
+- Public moderation queue/admin flow is not implemented yet.
 
 ### Slice 5: Real Assistant Layer
 

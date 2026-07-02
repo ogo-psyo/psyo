@@ -54,6 +54,7 @@ type ObservationDraft = Pick<ObservationView, 'mood' | 'appetite' | 'stool' | 'e
 type Tab = 'today' | 'calendar' | 'assistant' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
 type MapLayer = 'personal' | 'community';
 type DrawMode = 'none' | 'point' | 'route';
+type MapSaveMode = 'private' | 'shared' | 'public_pending';
 type ViralCardFormat = 'story' | 'square' | 'poster';
 type ViralCardMood = 'soft' | 'bold' | 'safety' | 'club';
 type ViralFactKey = 'social' | 'energy' | 'care' | 'triggers' | 'area' | 'breed';
@@ -396,6 +397,7 @@ export default function Home() {
   const [pickedZonePoint, setPickedZonePoint] = useState<{ lat: number; lng: number } | null>(null);
   const [activeMapLayer, setActiveMapLayer] = useState<MapLayer>('personal');
   const [drawMode, setDrawMode] = useState<DrawMode>('none');
+  const [mapSaveMode, setMapSaveMode] = useState<MapSaveMode>('private');
   const [routePoints, setRoutePoints] = useState<number[][]>([]);
   const [mapFeatures, setMapFeatures] = useState<MapFeatureView[]>([]);
   const [newWishTitle, setNewWishTitle] = useState('');
@@ -1220,7 +1222,7 @@ export default function Home() {
   }
 
   async function saveRoute() {
-    await createMapFeature(activeMapLayer === 'community' ? 'public' : 'private');
+    await createMapFeature(mapSaveMode === 'public_pending' ? 'public' : mapSaveMode);
   }
 
   async function updateZone(id: string, patch: Partial<ZoneView> & { radiusMeters?: number; approximateLat?: number; approximateLng?: number }) {
@@ -2216,6 +2218,20 @@ export default function Home() {
         </WatercolorScreen>}
 
         {tab === 'map' && <WatercolorScreen className="places-composition" tone="green" eyebrow="места" title="Куда можно" caption="Места для прогулок, рисков и клиник." aside={<span className="watercolor-hero-mark">⌖</span>}>
+          <section className="map-privacy-modes" aria-label="Приватность карты">
+            <button type="button" className={mapSaveMode === 'private' ? 'active' : ''} onClick={() => setMapSaveMode('private')} aria-pressed={mapSaveMode === 'private'}>
+              <b>Только мне</b>
+              <span>личное место или маршрут</span>
+            </button>
+            <button type="button" className={mapSaveMode === 'shared' ? 'active' : ''} onClick={() => setMapSaveMode('shared')} aria-pressed={mapSaveMode === 'shared'}>
+              <b>По ссылке</b>
+              <span>скопировать ссылку после сохранения</span>
+            </button>
+            <button type="button" className={mapSaveMode === 'public_pending' ? 'active' : ''} onClick={() => setMapSaveMode('public_pending')} aria-pressed={mapSaveMode === 'public_pending'}>
+              <b>На модерацию</b>
+              <span>появится для других только после проверки</span>
+            </button>
+          </section>
           <section className="places-field">
             <PaperSheet className="map-sheet"><LiveMap zones={zones} features={visibleMapFeatures} picked={pickedZonePoint} onPick={handleMapPick} drawMode={drawMode} routePoints={routePoints} onMapClick={handleMapClick} /></PaperSheet>
             <FloatingNote className="map-help"><b>{drawMode === 'route' ? 'Рисуешь маршрут' : 'Добавь место'}</b><p>{drawMode === 'route' ? `Точек в маршруте: ${routePoints.length}` : 'Сохраним примерно, без точного адреса.'}</p>{pickedZonePoint && <small>Примерное место выбрано</small>}</FloatingNote>
@@ -2233,10 +2249,11 @@ export default function Home() {
             <input value={newZoneNote} onChange={(event) => setNewZoneNote(event.target.value)} placeholder="Заметка: самокаты, тихо утром, хороший врач…" />
             <button className="primary full" onClick={() => createZone()} disabled={!newZoneTitle.trim()}>{!newZoneTitle.trim() ? 'Добавь название места' : pickedZonePoint ? 'Сохранить примерное место' : 'Сохранить без отметки на карте'}</button>
             <div className="care-actions">
-              {drawMode === 'route' && routePoints.length > 1 && <button onClick={saveRoute}>Сохранить маршрут</button>}
+              {drawMode === 'route' && routePoints.length > 1 && <button onClick={saveRoute}>{mapSaveMode === 'private' ? 'Сохранить лично' : mapSaveMode === 'shared' ? 'Сохранить и получить ссылку' : 'Отправить на проверку'}</button>}
+              {drawMode !== 'route' && pickedZonePoint && <button onClick={() => createMapFeature(mapSaveMode === 'public_pending' ? 'public' : mapSaveMode)}>{mapSaveMode === 'private' ? 'Сохранить точку лично' : mapSaveMode === 'shared' ? 'Сохранить точку для ссылки' : 'Отправить точку на проверку'}</button>}
               {routePoints.length > 0 && <button onClick={() => setRoutePoints([])}>Очистить маршрут</button>}
             </div>
-            <p className="privacy-hint">Публичный слой карты скрыт до отдельной модерации и согласия. Сейчас это личные места владельца.</p>
+            <p className="privacy-hint">Точные координаты не показываются: Псё хранит примерную область. Общий слой карты остаётся закрытым до модерации и отдельного согласия.</p>
           </FloatingNote>
           {zones.length === 0 && <article className="empty-state"><b>Мест пока нет</b><p>Добавь клинику, парк или любое важное место.</p></article>}
           {zones.length > 0 && <div className="place-ribbon">{zones.map((zone) => <article key={zone.id} className={`zone-card ${zone.type}`}><div><b>{zone.title}</b><p>{formatZoneMeta(zone)}</p></div><div className="wishlist-actions"><button onClick={() => updateZone(zone.id, { type: zone.type === 'risk_zone' ? 'safe_place' : 'risk_zone' })}>{zone.type === 'risk_zone' ? 'Сделать спокойным местом' : 'Отметить как риск'}</button>{pickedZonePoint && <button onClick={() => updateZone(zone.id, { approximateLat: pickedZonePoint.lat, approximateLng: pickedZonePoint.lng })}>Переставить</button>}<button onClick={() => updateZone(zone.id, { radiusMeters: (zone.radius_meters || zone.radiusMeters || 500) + 250 })}>Увеличить радиус</button><button onClick={() => deleteZone(zone.id)}>Удалить</button></div></article>)}</div>}
