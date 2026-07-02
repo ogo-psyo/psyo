@@ -9,7 +9,7 @@ This tracker separates the target PRD from the current production state. It must
 - Production URL: `https://pso-mvp-uglanovrms-projects.vercel.app/`
 - Current release: `c5054e16c4d2a7a5df0f1cf011cbc385abf28a70`
 - Current deploy: `dpl_8qwHAc6WQ8nbbpaos8mDTZn6PXRU`
-- Latest local slice: PRD navigation, `things` screen, basic tracking/observations, and owner-scoped active dog switching.
+- Latest local slice: PRD navigation, `things` screen, basic tracking/observations, owner-scoped active dog switching, and public-card field controls.
 
 ## P0 Product Shape
 
@@ -39,7 +39,7 @@ Support surfaces must stay reachable, but not dominate the main navigation:
 | `псё` screen | Partial | Living profile exists; active dog switching is implemented; needs richer history, documents and privacy controls. |
 | Reminders/care history | Partial | Basic reminders, completion and calendar exist; notifications and recurrence UX need work. |
 | Tracking/observations | Partial | `pet_observations` schema/API/bootstrap and quick UI on `всё` are implemented; deeper history on `псё`, charts and attachments are still open. |
-| Public dog card | Partial | Card/share/PDF surfaces exist; user-controlled fields and privacy review need stronger productization. |
+| Public dog card | Partial | Card/share/PDF surfaces exist; owner can now choose visible preview/share fields; persisted slug-based dog-specific sharing still needs productization. |
 | Map/routes | Partial | Private places and map features exist; route sharing/public layer moderation are not production-ready. |
 | `рядом` socialization | Partial | Static candidate surface exists; real matching, privacy and invitations are not production-ready. |
 | `вещи` wishlist | Partial | Dedicated tab shipped; needs sharing, repeat purchases and partner labeling. |
@@ -97,10 +97,23 @@ Goal: make public sharing trustworthy.
 
 Acceptance criteria:
 
-- Public card has explicit field visibility controls.
+- [x] Public card has explicit field visibility controls for breed, character, triggers and area.
 - Exact address, sensitive health notes, documents and owner contact are private by default.
-- Sharing actions show what will be exposed before opening/sending.
+- [x] Sharing actions show a preview of what will be exposed before opening/sending.
 - Map/routes have clear private/shared/public states.
+- [x] QA covers the public-card privacy contract.
+
+Shipped locally in the current slice:
+
+- Added owner controls for what appears in the public-card preview/share URL.
+- Hidden fields are removed or replaced with safe placeholders in the generated card URL.
+- The public-card screen states that exact address, owner contacts, medication and internal notes are not included.
+- Added `scripts/qa/check-public-card-privacy-contract.mjs` to `npm run qa:local`.
+
+Remaining:
+
+- Field controls are client-side for the current preview/share flow; persisted per-dog visibility settings still need backend storage.
+- Map/routes need separate private/shared/public UI states and moderation flow.
 
 ### Slice 4: Map Routes And Sharing
 

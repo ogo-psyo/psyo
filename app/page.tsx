@@ -57,6 +57,7 @@ type DrawMode = 'none' | 'point' | 'route';
 type ViralCardFormat = 'story' | 'square' | 'poster';
 type ViralCardMood = 'soft' | 'bold' | 'safety' | 'club';
 type ViralFactKey = 'social' | 'energy' | 'care' | 'triggers' | 'area' | 'breed';
+type PublicCardFieldKey = 'breed' | 'character' | 'triggers' | 'area';
 type PublicCardCheck = { label: string; done: boolean; missing: string };
 type OnboardingCareChoice = { type: string; title: string; dueInDays: number; label: string; dueLabel: string };
 type TelegramSessionView = { mode: 'loading' | 'browser' | 'telegram' | 'error'; psyoUserId?: string; ownerId?: string; firstName?: string; username?: string; message?: string };
@@ -82,6 +83,13 @@ const onboardingKey = 'pso.topapp.onboarding.v1';
 const observationsStorageKey = 'pso.topapp.observations.v1';
 const heroStyleOptions = avatarStyles.filter((style) => ['city', 'space', 'sticker'].includes(style.id));
 const viralFactOrder: ViralFactKey[] = ['social', 'energy', 'care', 'triggers', 'area', 'breed'];
+const defaultPublicCardFields: PublicCardFieldKey[] = ['breed', 'character', 'triggers', 'area'];
+const publicCardFieldOptions: { key: PublicCardFieldKey; label: string; detail: string }[] = [
+  { key: 'breed', label: 'Порода', detail: 'помогает узнать собаку' },
+  { key: 'character', label: 'Характер', detail: 'ритм и темперамент' },
+  { key: 'triggers', label: 'Что не делать', detail: 'важно для безопасности' },
+  { key: 'area', label: 'Район', detail: 'только район, без адреса' },
+];
 
 const observationMoodOptions = ['спокойное', 'радостное', 'тревожное', 'вялое'];
 const observationAppetiteOptions = ['обычный', 'ниже обычного', 'выше обычного', 'не ела'];
@@ -397,6 +405,7 @@ export default function Home() {
   const [viralCardMood, setViralCardMood] = useState<ViralCardMood>('bold');
   const [viralCardHeadline, setViralCardHeadline] = useState('');
   const [viralSelectedFacts, setViralSelectedFacts] = useState<ViralFactKey[]>(['social', 'energy', 'care', 'triggers']);
+  const [publicCardVisibleFields, setPublicCardVisibleFields] = useState<PublicCardFieldKey[]>(defaultPublicCardFields);
   const [assistantQuestion, setAssistantQuestion] = useState('');
   const [assistantAnswer, setAssistantAnswer] = useState('');
   const [assistantActions, setAssistantActions] = useState<ActionSuggestion[]>([]);
@@ -646,6 +655,7 @@ export default function Home() {
   const profileReady = completionCount >= profileChecklist.length;
   const missingProfileFields = useMemo(() => profileChecklist.filter((item) => !item.done).map((item) => item.label), [profileChecklist]);
   const publicCardHref = useMemo(() => {
+    const show = (key: PublicCardFieldKey) => publicCardVisibleFields.includes(key);
     const publicImageUrl = /^https?:\/\//i.test(generatedAvatarUrl)
       ? generatedAvatarUrl
       : /^https?:\/\//i.test(profile.avatarImageUrl)
@@ -655,18 +665,18 @@ export default function Home() {
     const shareImageUrl = publicImageUrl || localImageUrl;
     const params = new URLSearchParams({
       name: profile.dogName.trim() || 'Моя собака',
-      breed: breedLabel,
-      character: profile.temperament || profile.energyLevel || 'спокойный друг',
+      breed: show('breed') ? breedLabel : 'не указано',
+      character: show('character') ? profile.temperament || profile.energyLevel || 'спокойный друг' : 'не указано',
       bio: profile.bio || 'Подходите спокойно, без резких движений.',
       social: displaySocialMode(profile.socialMode) || 'сначала спросить владельца',
-      triggers: profile.triggers || 'резкие движения, шум',
-      area: safePublicArea(profile.neighborhood),
+      triggers: show('triggers') ? profile.triggers || 'резкие движения, шум' : '',
+      area: show('area') ? safePublicArea(profile.neighborhood) : 'район скрыт',
     });
     if (/^https?:\/\//i.test(shareImageUrl) || (/^data:image\//i.test(shareImageUrl) && shareImageUrl.length < 12000)) {
       params.set('image', shareImageUrl);
     }
     return `/dog/card?${params.toString()}`;
-  }, [breedLabel, generatedAvatarUrl, profile.avatarImageUrl, profile.bio, profile.dogName, profile.energyLevel, profile.neighborhood, profile.photoUrls, profile.photos, profile.socialMode, profile.temperament, profile.triggers]);
+  }, [breedLabel, generatedAvatarUrl, profile.avatarImageUrl, profile.bio, profile.dogName, profile.energyLevel, profile.neighborhood, profile.photoUrls, profile.photos, profile.socialMode, profile.temperament, profile.triggers, publicCardVisibleFields]);
   const viralFacts = useMemo<Record<ViralFactKey, { label: string; value: string; ready: boolean }>>(() => ({
     social: { label: 'контакт', value: displaySocialMode(profile.socialMode) || 'сначала спросить', ready: Boolean(profile.socialMode) },
     energy: { label: 'ритм', value: profile.energyLevel || profile.temperament || 'спокойный режим', ready: Boolean(profile.energyLevel || profile.temperament) },
@@ -758,6 +768,7 @@ export default function Home() {
   const publicCardReadyCount = useMemo(() => publicCardChecks.filter((item) => item.done).length, [publicCardChecks]);
   const publicCardReady = Boolean(profile.dogName.trim() && profile.socialMode && (profile.triggers || profile.bio) && profile.neighborhood);
   const publicCardMissing = useMemo(() => publicCardChecks.filter((item) => !item.done).map((item) => item.missing), [publicCardChecks]);
+  const publicCardShows = (key: PublicCardFieldKey) => publicCardVisibleFields.includes(key);
   const todayOwnerChips = useMemo(() => [
     `${completionCount}/6 в профиле`,
     activeReminders.length ? formatCount(activeReminders.length, ['дело в плане', 'дела в плане', 'дел в плане']) : 'план пуст',
@@ -1472,6 +1483,13 @@ export default function Home() {
     });
   }
 
+  function togglePublicCardField(key: PublicCardFieldKey) {
+    setPublicCardVisibleFields((current) => {
+      if (current.includes(key)) return current.length > 1 ? current.filter((item) => item !== key) : current;
+      return [...current, key];
+    });
+  }
+
   async function renderViralCardBlob() {
     const format = viralCardFormats.find((item) => item.id === viralCardFormat) ?? viralCardFormats[0];
     const [width, height] = format.size.split('x').map(Number);
@@ -2001,17 +2019,17 @@ export default function Home() {
                 <GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="large" />
                 <div>
                   <h3>{petName || 'Добавить имя'}</h3>
-                  <p>{selectedBreed.id === 'mixed' ? 'порода необязательна' : breedLabel}</p>
+                  <p>{publicCardShows('breed') ? selectedBreed.id === 'mixed' ? 'порода необязательна' : breedLabel : 'порода скрыта'}</p>
                 </div>
               </div>
               <div className="public-card-rule">
                 <span>главное правило</span>
                 <b>{displaySocialMode(profile.socialMode) || 'сначала спросить владельца'}</b>
-                <p>{profile.triggers ? `Не делать: ${profile.triggers}.` : profile.bio || 'Лучше подходить спокойно, без резких рук и еды без разрешения.'}</p>
+                <p>{publicCardShows('triggers') ? profile.triggers ? `Не делать: ${profile.triggers}.` : profile.bio || 'Лучше подходить спокойно, без резких рук и еды без разрешения.' : 'Дополнительные детали скрыты владельцем.'}</p>
               </div>
               <div className="public-card-preview-grid">
-                <article><span>характер</span><b>{profile.temperament || profile.energyLevel || 'Добавить характер'}</b></article>
-                <article><span>район</span><b>{profile.neighborhood ? safePublicArea(profile.neighborhood) : 'Указать район без адреса'}</b></article>
+                <article><span>характер</span><b>{publicCardShows('character') ? profile.temperament || profile.energyLevel || 'Добавить характер' : 'скрыт'}</b></article>
+                <article><span>район</span><b>{publicCardShows('area') ? profile.neighborhood ? safePublicArea(profile.neighborhood) : 'Указать район без адреса' : 'скрыт'}</b></article>
               </div>
             </article>
 
@@ -2022,6 +2040,20 @@ export default function Home() {
               </div>
               {publicCardChecks.map((item) => <div key={item.label} className={item.done ? 'done' : ''}><span>{item.done ? '✓' : '•'}</span><b>{item.label}</b><small>{item.done ? 'готово' : `добавить: ${item.missing}`}</small></div>)}
             </article>
+          </section>
+
+          <section className="public-card-fields-panel" aria-label="Что показать в памятке">
+            <div className="section-title">
+              <div><span className="eyebrow">что показать</span><h3>Поля памятки</h3></div>
+              <span>{publicCardVisibleFields.length} из {publicCardFieldOptions.length}</span>
+            </div>
+            <div>
+              {publicCardFieldOptions.map((item) => <button key={item.key} type="button" className={publicCardShows(item.key) ? 'active' : ''} onClick={() => togglePublicCardField(item.key)} aria-pressed={publicCardShows(item.key)}>
+                <b>{item.label}</b>
+                <small>{item.detail}</small>
+              </button>)}
+            </div>
+            <p>Имя и главное правило контакта остаются обязательными. Точный адрес, контакты владельца, лекарства и внутренние заметки сюда не попадают.</p>
           </section>
 
           <section className="public-card-actions-panel" aria-label="Действия с памяткой">

@@ -3920,6 +3920,7 @@ body::before,
 
 .public-card-preview-panel,
 .public-card-checklist,
+.public-card-fields-panel,
 .public-card-privacy-note {
   border: 1px solid #DDE7DD;
   border-radius: 28px;
@@ -4031,6 +4032,46 @@ body::before,
 
 .public-card-checklist {
   padding: 16px;
+}
+
+.public-card-fields-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.public-card-fields-panel > div:last-of-type {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.public-card-fields-panel button {
+  min-height: 68px;
+  border: 1px solid #DDE7DD;
+  border-radius: 18px;
+  padding: 10px;
+  text-align: left;
+  color: #19231D;
+  background: #F5F7F2;
+}
+
+.public-card-fields-panel button.active {
+  border-color: #82B68C;
+  background: #E8F5E8;
+}
+
+.public-card-fields-panel b,
+.public-card-fields-panel small {
+  display: block;
+}
+
+.public-card-fields-panel small,
+.public-card-fields-panel p {
+  color: #7A837C;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 650;
 }
 
 .public-card-checklist > div:not(.section-title) {
