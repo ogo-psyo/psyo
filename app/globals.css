@@ -2471,6 +2471,56 @@ body::before { opacity: .12; background-size: 48px 48px; }
 .readiness-ring span { margin-top: -20px; color: var(--muted); font-size: 10px; font-weight: 850; }
 .smart-profile-readiness > div:last-child b { display: block; font-size: 17px; letter-spacing: -.02em; }
 .smart-profile-readiness p { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.35; font-weight: 620; }
+
+.profile-observation-timeline {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #DDE7DD;
+  border-radius: 28px;
+  padding: 16px;
+  background: #FFFFFF;
+  box-shadow: var(--shadow-soft);
+}
+
+.profile-observation-timeline > div:last-child {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-observation-timeline article:not(.empty-state) {
+  display: grid;
+  grid-template-columns: 54px 1fr auto;
+  gap: 10px;
+  align-items: start;
+  border-top: 1px solid #E8EEE8;
+  padding-top: 10px;
+}
+
+.profile-observation-timeline article:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.profile-observation-timeline article > span,
+.profile-observation-timeline small {
+  color: #7A837C;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.profile-observation-timeline b {
+  color: #19231D;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.profile-observation-timeline p {
+  margin-top: 3px;
+  color: #53615A;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 650;
+}
 .profile-smart-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
 .profile-smart-actions button {
   min-height: 104px;

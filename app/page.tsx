@@ -2086,6 +2086,23 @@ export default function Home() {
             </div>
           </section>
 
+          <section className="profile-observation-timeline" aria-label="История наблюдений собаки">
+            <div className="section-title">
+              <div><span className="eyebrow">динамика</span><h3>Наблюдения в профиле</h3></div>
+              <button className="secondary" onClick={() => setTab('today')}>Записать</button>
+            </div>
+            {observations.length === 0 ? <article className="empty-state"><b>История пока пустая</b><p>Записи с главной появятся здесь: настроение, аппетит, стул, энергия и заметки владельца.</p></article> : <div>
+              {observations.slice(0, 6).map((item) => <article key={item.id}>
+                <span>{new Date(item.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
+                <div>
+                  <b>{item.mood} · энергия {item.energy}</b>
+                  <p>Аппетит {item.appetite}; стул {item.stool}.{item.note ? ` ${item.note}` : ''}</p>
+                </div>
+                <small>{item.syncStatus === 'saved' ? 'сохранено' : 'локально'}</small>
+              </article>)}
+            </div>}
+          </section>
+
           <PaperSheet className="profile-minimum-panel">
             <div className="profile-panel-head"><span>01</span><div><b>Быстрый портрет</b><p>Отвечай как в чате: пару тапов уже дают полезную карточку.</p></div></div>
             <div className="smart-field-grid">

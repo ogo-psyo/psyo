@@ -9,7 +9,7 @@ This tracker separates the target PRD from the current production state. It must
 - Production URL: `https://pso-mvp-uglanovrms-projects.vercel.app/`
 - Current release: `c5054e16c4d2a7a5df0f1cf011cbc385abf28a70`
 - Current deploy: `dpl_8qwHAc6WQ8nbbpaos8mDTZn6PXRU`
-- Latest local slice: PRD navigation, `things` screen, basic tracking/observations, owner-scoped active dog switching, public-card field controls, and explicit map privacy modes.
+- Latest local slice: PRD navigation, `things` screen, tracking/observations on `всё` and `псё`, owner-scoped active dog switching, public-card field controls, and explicit map privacy modes.
 
 ## P0 Product Shape
 
@@ -36,9 +36,9 @@ Support surfaces must stay reachable, but not dominate the main navigation:
 | Telegram/web app shell | Partial | Mini App/session foundation exists; production session behavior still needs end-to-end Telegram verification. |
 | Owner-only auth model | Partial | Supabase + Telegram owner bridge exist; bootstrap now returns owner-scoped pets and rejects non-owned active dog requests; privacy controls still need hardening. |
 | `всё` screen | Partial | Main care summary exists; quick observations now feed the screen, but stronger "one next step" logic still needs work. |
-| `псё` screen | Partial | Living profile exists; active dog switching is implemented; needs richer history, documents and privacy controls. |
+| `псё` screen | Partial | Living profile, active dog switching and observation timeline are implemented; documents and deeper health/history views are still open. |
 | Reminders/care history | Partial | Basic reminders, completion and calendar exist; notifications and recurrence UX need work. |
-| Tracking/observations | Partial | `pet_observations` schema/API/bootstrap and quick UI on `всё` are implemented; deeper history on `псё`, charts and attachments are still open. |
+| Tracking/observations | Partial | `pet_observations` schema/API/bootstrap, quick UI on `всё`, and profile timeline on `псё` are implemented; charts and attachments are still open. |
 | Public dog card | Partial | Card/share/PDF surfaces exist; owner can now choose visible preview/share fields; persisted slug-based dog-specific sharing still needs productization. |
 | Map/routes | Partial | Private places, route drawing and explicit save modes exist; shared links/public moderation backend exists, but public share pages and moderation ops are still incomplete. |
 | `рядом` socialization | Partial | Static candidate surface exists; real matching, privacy and invitations are not production-ready. |
@@ -61,10 +61,16 @@ Acceptance criteria:
 - [x] Owner can add a quick observation from `всё`.
 - [x] Observation has type, value, note and timestamp.
 - [x] Recent observations appear on `всё`.
-- [ ] Observation history is connected deeply to `псё`.
+- [x] Observation history is connected deeply to `псё`.
 - [x] Data persists for authenticated/Telegram owners.
 - [x] Guest/demo mode still works locally.
 - [x] QA covers the UI surface and API contract.
+
+Shipped locally in the latest tracking slice:
+
+- Added observation timeline to the living profile `псё`.
+- Recent observations now show mood, appetite, stool, energy, note and local/saved state outside the main `всё` capture flow.
+- Updated `scripts/qa/check-observations-contract.mjs` so tracking must remain connected to both `всё` and `псё`.
 
 ### Slice 2: Multi-Dog Foundation
 

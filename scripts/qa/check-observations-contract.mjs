@@ -67,6 +67,8 @@ for (const token of [
   "submitObservation",
   "{tab === 'today'",
   'className="observation-panel"',
+  'className="profile-observation-timeline"',
+  'aria-label="История наблюдений собаки"',
   'Записать наблюдение',
 ]) {
   if (!files.page.includes(token)) failures.push(`today observation UI missing: ${token}`);
