@@ -130,6 +130,7 @@ export type AssistantThread = {
 
 export type AppBootstrap = {
   user: AppUser;
+  pets?: Pet[];
   pet: Pet;
   passport: PetPassport;
   social: SocialProfile;

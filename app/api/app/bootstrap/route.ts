@@ -10,6 +10,10 @@ function demoBootstrap(): AppBootstrap {
   const now = new Date().toISOString();
   return {
     user: { id: 'demo-user', displayName: 'Владелец', createdAt: now },
+    pets: [
+      { id: 'demo-pet', ownerId: 'demo-user', name: 'Мята', species: 'dog', breedId: 'mixed', breedGroupId: 'mixed', photoUrls: [], publicSlug: 'myata', createdAt: now, updatedAt: now },
+      { id: 'demo-pet-2', ownerId: 'demo-user', name: 'Груша', species: 'dog', breedId: 'corgi', breedGroupId: 'herding', photoUrls: [], publicSlug: 'grusha', createdAt: now, updatedAt: now },
+    ],
     pet: { id: 'demo-pet', ownerId: 'demo-user', name: 'Мята', species: 'dog', breedId: 'mixed', breedGroupId: 'mixed', photoUrls: [], publicSlug: 'myata', createdAt: now, updatedAt: now },
     passport: { petId: 'demo-pet', vaccineStatus: 'unknown', parasiteStatus: 'unknown' },
     social: { petId: 'demo-pet', socialMode: 'ask_first', triggers: [] },
@@ -51,14 +55,17 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const requestedPetId = url.searchParams.get('petId');
 
-  let petQuery = supabase.from('pets').select('*').order('created_at', { ascending: true }).limit(1).eq('owner_id', ownerId);
-  if (requestedPetId) petQuery = petQuery.eq('id', requestedPetId);
-  const petResult = await petQuery.maybeSingle();
+  const petsResult = await supabase.from('pets').select('*').eq('owner_id', ownerId).order('created_at', { ascending: true });
+  if (petsResult.error) return NextResponse.json({ mode: 'user', connected: true, error: petsResult.error.message }, { status: 500 });
+  const pets = petsResult.data ?? [];
+  const selectedPet = requestedPetId ? pets.find((pet) => pet.id === requestedPetId) : pets[0];
+  if (requestedPetId && !selectedPet) {
+    return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', connected: true, error: 'PET_NOT_FOUND_OR_NOT_OWNED' }, { status: 404 });
+  }
 
-  if (petResult.error) return NextResponse.json({ mode: 'user', connected: true, error: petResult.error.message }, { status: 500 });
-  if (!petResult.data) return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', connected: true, empty: true, user: { id: ownerId, email: auth.user?.email ?? null }, message: 'No pets yet.' });
+  if (!selectedPet) return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', connected: true, empty: true, pets: [], user: { id: ownerId, email: auth.user?.email ?? null }, message: 'No pets yet.' });
 
-  const petId = petResult.data.id;
+  const petId = selectedPet.id;
   const [passportResult, socialResult, remindersResult, zonesResult, wishlistResult, observationsResult] = await Promise.all([
     supabase.from('pet_passports').select('*').eq('pet_id', petId).maybeSingle(),
     supabase.from('social_profiles').select('*').eq('pet_id', petId).maybeSingle(),
@@ -72,7 +79,9 @@ export async function GET(request: Request) {
     mode: auth.user ? 'user' : 'telegram',
     connected: true,
     user: { id: ownerId, email: auth.user?.email ?? null },
-    pet: petResult.data,
+    pets,
+    activePetId: petId,
+    pet: selectedPet,
     passport: passportResult.data,
     social: socialResult.data,
     reminders: (remindersResult.data ?? []).map(mapReminder),

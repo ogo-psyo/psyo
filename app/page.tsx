@@ -47,6 +47,7 @@ type ReminderView = { id: string; petId: string; type: string; title: string; du
 type WishlistView = { id: string; petId: string; title: string; category: string; reason?: string; url?: string; priority: string; status: string; created_at?: string };
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; created_at?: string };
 type MapFeatureView = { id: string; type: 'point' | 'route'; title: string; lat?: number | null; lng?: number | null; zone_type?: string | null; path?: { type?: string; coordinates?: number[][] } | null; visibility: 'private' | 'shared' | 'public' };
+type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; photo_urls?: string[] };
 type AuthSession = { access_token: string; user: { email?: string } };
 type ObservationView = { id: string; petId?: string; mood: string; appetite: string; stool: string; energy: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
 type ObservationDraft = Pick<ObservationView, 'mood' | 'appetite' | 'stool' | 'energy' | 'note'>;
@@ -370,6 +371,8 @@ export default function Home() {
   const [reminders, setReminders] = useState<ReminderView[]>([]);
   const [wishlist, setWishlist] = useState<WishlistView[]>([]);
   const [zones, setZones] = useState<ZoneView[]>([]);
+  const [pets, setPets] = useState<PetSwitchOption[]>([]);
+  const [activePetId, setActivePetId] = useState('');
   const [observations, setObservations] = useState<ObservationView[]>([]);
   const [observationDraft, setObservationDraft] = useState<ObservationDraft>(defaultObservationDraft);
   const [observationSaving, setObservationSaving] = useState(false);
@@ -458,13 +461,27 @@ export default function Home() {
     completeOnboarding(nextTab);
   }
 
-  async function loadBootstrap(accessToken?: string) {
+  async function loadBootstrap(accessToken?: string, petId?: string) {
     const headers: Record<string, string> = accessToken ? { Authorization: `Bearer ${accessToken}` } : authHeaders();
-    const response = await fetch('/api/app/bootstrap', { headers });
+    const params = new URLSearchParams();
+    if (petId) params.set('petId', petId);
+    const response = await fetch(`/api/app/bootstrap${params.size ? `?${params.toString()}` : ''}`, { headers });
     const payload = await response.json();
     const dbProfile = dbToProfile(payload);
+    if (Array.isArray(payload.pets)) setPets(payload.pets.map((pet: any) => ({
+      id: String(pet.id),
+      name: String(pet.name || 'Собака'),
+      breed_id: pet.breed_id,
+      breed_group_id: pet.breed_group_id,
+      avatar_url: pet.avatar_url,
+      photo_urls: Array.isArray(pet.photo_urls) ? pet.photo_urls : [],
+    })));
     if (dbProfile) {
-      setProfile((current) => ({ ...current, ...dbProfile, photos: current.photos, selectedStyle: current.selectedStyle }));
+      setActivePetId(String(payload.activePetId || payload.pet?.id || dbProfile.backendPetId || ''));
+      setProfile((current) => {
+        const samePet = !petId || current.backendPetId === dbProfile.backendPetId;
+        return { ...current, ...dbProfile, photos: samePet ? current.photos : [], selectedStyle: current.selectedStyle };
+      });
       setReminders(payload.reminders ?? []);
       setWishlist(payload.wishlist ?? []);
       setZones(payload.zones ?? []);
@@ -475,6 +492,8 @@ export default function Home() {
       setNotice('loaded');
       window.setTimeout(() => setNotice('idle'), 1400);
     } else if (payload.empty) {
+      setPets([]);
+      setActivePetId('');
       setProfile((current) => ({ ...current, backendPetId: undefined }));
       setReminders([]);
       setWishlist([]);
@@ -775,6 +794,19 @@ export default function Home() {
   const showAuthPanel = showEmailAuth || telegramSession.mode === 'error';
   const visibleMapFeatures = activeMapLayer === 'community' ? mapFeatures : [];
 
+  async function switchActivePet(nextPetId: string) {
+    if (!nextPetId || nextPetId === activePetId) return;
+    setError('');
+    setActivePetId(nextPetId);
+    setReminders([]);
+    setWishlist([]);
+    setZones([]);
+    setObservations([]);
+    setPickedZonePoint(null);
+    setRoutePoints([]);
+    await loadBootstrap(undefined, nextPetId).catch(() => setError('Не удалось переключить собаку'));
+  }
+
 
   function normalizeObservation(raw: any): ObservationView | null {
     if (!raw || typeof raw !== 'object') return null;
@@ -975,8 +1007,10 @@ export default function Home() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result?.error || 'Не удалось сохранить карточку');
-      updateProfile({ backendPetId: result.pet?.id || profile.backendPetId, isPublic: true });
-      await loadBootstrap();
+      const savedPetId = result.pet?.id || profile.backendPetId;
+      updateProfile({ backendPetId: savedPetId, isPublic: true });
+      if (savedPetId) setActivePetId(savedPetId);
+      await loadBootstrap(undefined, savedPetId);
       setNotice('saved');
       window.setTimeout(() => setNotice('idle'), 1600);
     } catch (error) {
@@ -1679,6 +1713,16 @@ export default function Home() {
           <TelegramPill session={telegramSession} />
           {session ? <button onClick={signOut}>Выйти</button> : <button onClick={() => setTab(tab === 'profile' ? 'today' : 'profile')}>{tab === 'profile' ? 'всё' : 'псё'}</button>}
         </header>
+
+        {pets.length > 1 && <section className="pet-switcher" aria-label="Активная собака">
+          <span>активная собака</span>
+          <div>
+            {pets.map((pet) => <button key={pet.id} className={pet.id === activePetId ? 'active' : ''} type="button" onClick={() => switchActivePet(pet.id)} aria-pressed={pet.id === activePetId}>
+              {pet.name}
+            </button>)}
+          </div>
+          <p>Профиль, дела, места, вещи и наблюдения ниже относятся только к выбранной собаке.</p>
+        </section>}
 
         {showAuthPanel && <section className={`auth-inline-panel mode-${authPanelMode} state-${authUiState}`} aria-label="Вход и синхронизация">
           {hasConnectedAccount ? <>

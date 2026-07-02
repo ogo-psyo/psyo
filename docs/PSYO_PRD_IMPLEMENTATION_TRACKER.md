@@ -9,7 +9,7 @@ This tracker separates the target PRD from the current production state. It must
 - Production URL: `https://pso-mvp-uglanovrms-projects.vercel.app/`
 - Current release: `c5054e16c4d2a7a5df0f1cf011cbc385abf28a70`
 - Current deploy: `dpl_8qwHAc6WQ8nbbpaos8mDTZn6PXRU`
-- Latest local slice: PRD navigation, `things` screen, and basic tracking/observations.
+- Latest local slice: PRD navigation, `things` screen, basic tracking/observations, and owner-scoped active dog switching.
 
 ## P0 Product Shape
 
@@ -34,9 +34,9 @@ Support surfaces must stay reachable, but not dominate the main navigation:
 | PRD Area | Status | Notes |
 | --- | --- | --- |
 | Telegram/web app shell | Partial | Mini App/session foundation exists; production session behavior still needs end-to-end Telegram verification. |
-| Owner-only auth model | Partial | Supabase + Telegram owner bridge exist; multi-dog ownership and privacy controls need hardening. |
+| Owner-only auth model | Partial | Supabase + Telegram owner bridge exist; bootstrap now returns owner-scoped pets and rejects non-owned active dog requests; privacy controls still need hardening. |
 | `всё` screen | Partial | Main care summary exists; quick observations now feed the screen, but stronger "one next step" logic still needs work. |
-| `псё` screen | Partial | Living profile exists; needs richer history, documents, multi-dog switching and privacy controls. |
+| `псё` screen | Partial | Living profile exists; active dog switching is implemented; needs richer history, documents and privacy controls. |
 | Reminders/care history | Partial | Basic reminders, completion and calendar exist; notifications and recurrence UX need work. |
 | Tracking/observations | Partial | `pet_observations` schema/API/bootstrap and quick UI on `всё` are implemented; deeper history on `псё`, charts and attachments are still open. |
 | Public dog card | Partial | Card/share/PDF surfaces exist; user-controlled fields and privacy review need stronger productization. |
@@ -72,11 +72,24 @@ Goal: support more than one dog without confusing ownership or active context.
 
 Acceptance criteria:
 
-- Bootstrap can return multiple pets.
-- User can switch active dog.
-- Each dog has separate profile, reminders, wishlist, zones and observations.
+- [x] Bootstrap can return multiple pets.
+- [x] User can switch active dog.
+- [x] Each dog has separate profile, reminders, wishlist, zones and observations in the active app context.
 - Public card and share URLs stay dog-specific.
-- No cross-dog data leakage.
+- [x] No cross-dog data leakage in bootstrap: requested `petId` must belong to the current owner.
+- [x] QA covers the multi-dog contract.
+
+Shipped locally in the current slice:
+
+- `/api/app/bootstrap` returns `pets[]`, `activePetId`, and the selected dog's scoped reminders, zones, wishlist and observations.
+- `petId` query param is owner-scoped; non-owned ids return `PET_NOT_FOUND_OR_NOT_OWNED`.
+- App shell shows an active dog switcher when the owner has more than one dog.
+- Switching active dog clears stale local lists before loading the selected dog's state.
+- Added `scripts/qa/check-multidog-contract.mjs` to `npm run qa:local`.
+
+Remaining:
+
+- Public card URLs need a persisted slug-based dog-specific share flow, not only the current generated preview URL.
 
 ### Slice 3: Privacy Controls
 
