@@ -48,7 +48,7 @@ type WishlistView = { id: string; petId: string; title: string; category: string
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; created_at?: string };
 type MapFeatureView = { id: string; type: 'point' | 'route'; title: string; lat?: number | null; lng?: number | null; zone_type?: string | null; path?: { type?: string; coordinates?: number[][] } | null; visibility: 'private' | 'shared' | 'public' };
 type AuthSession = { access_token: string; user: { email?: string } };
-type Tab = 'today' | 'calendar' | 'assistant' | 'nearby' | 'map' | 'card' | 'profile';
+type Tab = 'today' | 'calendar' | 'assistant' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
 type MapLayer = 'personal' | 'community';
 type DrawMode = 'none' | 'point' | 'route';
 type ViralCardFormat = 'story' | 'square' | 'poster';
@@ -1529,7 +1529,7 @@ export default function Home() {
             <h1>{profile.dogName ? `Псё · ${profile.dogName}` : 'Псё'}</h1>
           </div>
           <TelegramPill session={telegramSession} />
-          {session ? <button onClick={signOut}>Выйти</button> : <button onClick={() => setTab(tab === 'profile' ? 'today' : 'profile')}>{tab === 'profile' ? 'Псё' : 'Профиль'}</button>}
+          {session ? <button onClick={signOut}>Выйти</button> : <button onClick={() => setTab(tab === 'profile' ? 'today' : 'profile')}>{tab === 'profile' ? 'всё' : 'псё'}</button>}
         </header>
 
         {showAuthPanel && <section className={`auth-inline-panel mode-${authPanelMode} state-${authUiState}`} aria-label="Вход и синхронизация">
@@ -1600,6 +1600,11 @@ export default function Home() {
               <span>Для людей</span>
               <b>Памятка</b>
               <small>что увидит другой человек</small>
+            </button>
+            <button onClick={() => setTab('things')}>
+              <span>Вещи</span>
+              <b>Что нужно</b>
+              <small>покупки, услуги и подарки</small>
             </button>
             <button onClick={() => askAssistant('Что мне важно проверить по уходу на этой неделе?')}>
               <span>Ассистент</span>
@@ -1908,6 +1913,58 @@ export default function Home() {
           </details>
         </WatercolorScreen>}
 
+        {tab === 'things' && <WatercolorScreen className="things-composition" tone="gold" eyebrow="вещи" title="Что нужно именно этой собаке" caption="Wishlist, уход, повторные покупки и подарки без превращения Псё в магазин." aside={<span className="watercolor-hero-mark">◈</span>}>
+          <PaperSheet className="thing-capture">
+            <div className="section-title">
+              <div><span className="eyebrow">быстро добавить</span><h3>Вещь, услуга или повторная покупка</h3></div>
+              <span>{formatCount(wantedWishlist.length, ['позиция', 'позиции', 'позиций'])}</span>
+            </div>
+            <input value={newWishTitle} onChange={(event) => setNewWishTitle(event.target.value)} placeholder="Адресник, корм, груминг, игрушка…" />
+            <select value={newWishCategory} onChange={(event) => setNewWishCategory(event.target.value)}>
+              <option value="gear">амуниция</option>
+              <option value="food">корм</option>
+              <option value="treats">лакомства</option>
+              <option value="toy">игрушка</option>
+              <option value="health">здоровье</option>
+              <option value="grooming">груминг</option>
+              <option value="service">сервис</option>
+              <option value="other">другое</option>
+            </select>
+            <input value={newWishReason} onChange={(event) => setNewWishReason(event.target.value)} placeholder="Зачем это нужно собаке" />
+            <button className="primary full" onClick={() => createWishlistItem()} disabled={!newWishTitle.trim()}>{newWishTitle.trim() ? 'Добавить в вещи' : 'Напиши название'}</button>
+          </PaperSheet>
+
+          {wishlistHints.length > 0 && <section className="things-hint-shelf" aria-label="Подсказки вещей">
+            {wishlistHints.map((hint) => <article key={hint.title}><b>{hint.title}</b><p>{hint.reason}</p><button className="secondary" onClick={() => createWishlistItem(hint)}>Добавить</button></article>)}
+          </section>}
+
+          {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <article className="empty-state"><b>Вещей пока нет</b><p>Добавь адресник, корм, груминг, игрушку или услугу. Псё будет связывать это с профилем, триггерами и уходом.</p></article>}
+
+          {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Wishlist собаки">
+            {wantedWishlist.map((item) => <article key={item.id} className={`wishlist-item priority-${item.priority}`}>
+              <div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div>
+              <div className="wishlist-actions">
+                {item.url && <a href={item.url} target="_blank" rel="noreferrer">Открыть</a>}
+                <button onClick={() => updateWishlistItem(item.id, { status: 'bought' })}>Куплено</button>
+                <button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button>
+              </div>
+            </article>)}
+          </section>}
+
+          {boughtWishlist.length > 0 && <section className="wishlist-list" aria-label="История вещей">
+            <div className="section-title"><div><span className="eyebrow">история</span><h3>Уже закрыто</h3></div></div>
+            {boughtWishlist.slice(0, 4).map((item) => <article key={item.id} className="wishlist-item">
+              <div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div>
+              <div className="wishlist-actions"><button onClick={() => updateWishlistItem(item.id, { status: 'wanted' })}>Вернуть</button><button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Удалить</button></div>
+            </article>)}
+          </section>}
+
+          <article className="public-card-privacy-note">
+            <b>Не магазин вместо заботы</b>
+            <p>Партнёрские рекомендации должны быть помечены отдельно. Сейчас это личный список хозяина: что купить, повторить, подарить или проверить для конкретной собаки.</p>
+          </article>
+        </WatercolorScreen>}
+
         {tab === 'map' && <WatercolorScreen className="places-composition" tone="green" eyebrow="места" title="Куда можно" caption="Места для прогулок, рисков и клиник." aside={<span className="watercolor-hero-mark">⌖</span>}>
           <section className="places-field">
             <PaperSheet className="map-sheet"><LiveMap zones={zones} features={visibleMapFeatures} picked={pickedZonePoint} onPick={handleMapPick} drawMode={drawMode} routePoints={routePoints} onMapClick={handleMapClick} /></PaperSheet>
@@ -1941,7 +1998,7 @@ export default function Home() {
 
       <nav className="app-tabs" aria-label="Основные разделы">
         {[
-          ['today', 'Главная'], ['calendar', 'План'], ['assistant', 'Ассистент'], ['nearby', 'Рядом'], ['map', 'Карта'], ['card', 'Памятка'], ['profile', 'Профиль'],
+          ['today', 'всё'], ['profile', 'псё'], ['map', 'карта'], ['nearby', 'рядом'], ['things', 'вещи'],
         ].map(([id, title]) => <button key={id} onClick={() => setTab(id as Tab)} className={tab === id ? 'active' : ''} aria-label={`Открыть раздел ${title}`} aria-current={tab === id ? 'page' : undefined}>{title}</button>)}
       </nav>
 

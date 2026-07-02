@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs/promises';
 
-const base = process.env.BASE_URL || 'http://127.0.0.1:3101';
+const base = process.env.BASE_URL || 'http://localhost:3101';
 const outDir = process.env.OUT_DIR || 'test-results/design-state-audit';
 await fs.mkdir(outDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
@@ -14,13 +14,11 @@ const profile = {
   photos: [], selectedStyle: 'city', bio: 'Нежная, активная, иногда тревожится на шумных улицах.', backendPetId: 'guest-pet-qa', isPublic: false
 };
 const tabs = [
-  { id: 'today', button: 'Открыть раздел Главная' },
-  { id: 'calendar', button: 'Открыть раздел План' },
-  { id: 'assistant', button: 'Открыть раздел Ассистент' },
-  { id: 'nearby', button: 'Открыть раздел Рядом' },
-  { id: 'map', button: 'Открыть раздел Карта' },
-  { id: 'card', button: 'Открыть раздел Памятка' },
-  { id: 'profile', button: 'Открыть раздел Профиль' },
+  { id: 'today', button: 'Открыть раздел всё' },
+  { id: 'profile', button: 'Открыть раздел псё' },
+  { id: 'map', button: 'Открыть раздел карта' },
+  { id: 'nearby', button: 'Открыть раздел рядом' },
+  { id: 'things', button: 'Открыть раздел вещи' },
 ];
 const sizes = [{name:'m360', width:360, height:900},{name:'m390', width:390, height:950},{name:'d1280', width:1280, height:1000}];
 const results=[];

@@ -53,7 +53,7 @@ for (const token of [
 const navStart = files.page.indexOf('<nav className="app-tabs"');
 const navEnd = files.page.indexOf('</nav>', navStart);
 const navBlock = navStart >= 0 && navEnd > navStart ? files.page.slice(navStart, navEnd) : '';
-for (const section of ['Главная', 'План', 'Ассистент', 'Рядом', 'Карта', 'Памятка', 'Профиль']) {
+for (const section of ['всё', 'псё', 'карта', 'рядом', 'вещи']) {
   if (!navBlock.includes(section)) failures.push(`primary nav must keep section: ${section}`);
 }
 

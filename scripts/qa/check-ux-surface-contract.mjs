@@ -100,9 +100,10 @@ const navStart = files.page.indexOf('<nav className="app-tabs"');
 const navEnd = files.page.indexOf('</nav>', navStart);
 const navBlock = navStart >= 0 && navEnd > navStart ? files.page.slice(navStart, navEnd) : '';
 if (!navBlock) failures.push('primary app nav missing');
-for (const token of ['Главная', 'План', 'Ассистент', 'Рядом', 'Карта', 'Памятка', 'Профиль']) {
+for (const token of ['всё', 'псё', 'карта', 'рядом', 'вещи']) {
   if (!navBlock.includes(token)) failures.push(`primary nav missing section: ${token}`);
 }
+if (!files.page.includes("{tab === 'things'")) failures.push('things/wishlist tab surface missing');
 if (!files.page.includes("{tab === 'assistant'")) failures.push('assistant tab surface missing');
 if (!files.page.includes("{tab === 'nearby'")) failures.push('socialization/nearby tab surface missing');
 

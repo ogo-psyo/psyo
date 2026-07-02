@@ -1834,14 +1834,14 @@ input, textarea, select {
 .place-ribbon { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 12px; scroll-snap-type: x mandatory; }
 .place-ribbon .zone-card { flex: 0 0 78%; scroll-snap-align: start; border-radius: 30px !important; }
 .thing-capture { display: grid; gap: 9px; border-radius: 18px 36px 24px 32px !important; transform: rotate(-1.2deg) !important; }
-.things-hint-shelf { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; }
-.things-hint-shelf article { flex: 0 0 72%; border: 1px solid oklch(1 0 0 / .72); border-radius: 30px; padding: 14px; background: oklch(1 0.004 84 / .58); box-shadow: inset 0 1px 0 oklch(1 0 0 / .88), 0 10px 28px oklch(0.28 0.045 70 / .09); }
+.things-hint-shelf { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 10px; padding-bottom: 8px; }
+.things-hint-shelf article { min-width: 0; border: 1px solid oklch(1 0 0 / .72); border-radius: 30px; padding: 14px; background: oklch(1 0.004 84 / .58); box-shadow: inset 0 1px 0 oklch(1 0 0 / .88), 0 10px 28px oklch(0.28 0.045 70 / .09); }
 .things-masonry { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
 .things-masonry .wishlist-item { min-height: 154px; border-radius: 30px !important; align-content: space-between; }
 .things-masonry .wishlist-item:nth-child(3n+1) { grid-row: span 2; min-height: 218px; background: radial-gradient(ellipse at 20% 0%, oklch(0.84 0.11 18 / .26), transparent 42%), oklch(1 0.004 84 / .58) !important; }
 .things-masonry .wishlist-actions { display: grid; gap: 6px; }
 @media (max-width: 390px) {
-  .prompt-river, .things-masonry { grid-template-columns: 1fr; }
+  .prompt-river, .things-masonry, .things-hint-shelf { grid-template-columns: 1fr; }
   .prompt-river .task-card:first-child { grid-row: auto; min-height: 150px; }
   .places-field .map-help { right: 18px; }
   .place-chips { position: relative; top: auto; right: auto; width: auto; grid-template-columns: 1fr 1fr 1fr; padding-top: 8px; }
