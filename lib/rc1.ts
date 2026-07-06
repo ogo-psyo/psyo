@@ -29,6 +29,17 @@ export type EntitlementSnapshot = {
   features: string[];
 };
 
+export type PlanSnapshot = {
+  code: 'free' | 'plus';
+  name: string;
+  priceStars: number;
+  periodSeconds: number | null;
+  headline: string;
+  cta: string;
+  included: string[];
+  notPaywalled: string[];
+};
+
 export const rc1Config = {
   botUsername: process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'psyoo_bot',
   supportContact: process.env.SUPPORT_CONTACT || 'TBD',
@@ -52,6 +63,48 @@ export const rc1Config = {
   } satisfies Record<FeatureFlagName, boolean>,
 };
 
+export const freePlanSnapshot: PlanSnapshot = {
+  code: 'free',
+  name: 'Псё Free',
+  priceStars: 0,
+  periodSeconds: null,
+  headline: 'Базовая забота, памятка и безопасность остаются бесплатными.',
+  cta: 'Продолжить бесплатно',
+  included: [
+    '1 собака',
+    '3 активных дела ухода',
+    '30 дней истории',
+    'базовая публичная памятка',
+    '1 PDF/печать в месяц',
+  ],
+  notPaywalled: [
+    'базовый профиль',
+    'базовая памятка',
+    'lost/safety минимум',
+    'отзыв публичной ссылки',
+    'удаление данных',
+  ],
+};
+
+export const plusPlanSnapshot: PlanSnapshot = {
+  code: 'plus',
+  name: 'Псё Плюс',
+  priceStars: rc1Config.priceStars,
+  periodSeconds: rc1Config.subscriptionPeriodSeconds,
+  headline: 'Для владельца, который ведёт уход регулярно и хочет больше контекста вокруг собаки.',
+  cta: 'Оформить через Telegram Stars',
+  included: [
+    'до 5 собак',
+    'безлимитные активные дела ухода',
+    'полная история наблюдений и ухода',
+    'расширенные public-card/PDF шаблоны',
+    'weekly summary',
+    'caregiver access',
+    'расширенный экспорт',
+  ],
+  notPaywalled: freePlanSnapshot.notPaywalled,
+};
+
 export const freeEntitlementSnapshot: EntitlementSnapshot = {
   planCode: 'free',
   status: 'active',
@@ -65,6 +118,21 @@ export const freeEntitlementSnapshot: EntitlementSnapshot = {
     documents: 3,
   },
   features: ['notes', 'public_card', 'qr', 'first_reminder'],
+};
+
+export const plusEntitlementSnapshot: EntitlementSnapshot = {
+  planCode: 'plus',
+  status: 'active',
+  validUntil: null,
+  limits: {
+    pets: 5,
+    activeReminders: null,
+    historyDays: null,
+    caregivers: 3,
+    pdfExportsPerMonth: null,
+    documents: null,
+  },
+  features: ['notes', 'public_card', 'qr', 'reminders', 'full_history', 'weekly_summary', 'caregivers', 'extended_exports', 'premium_cards'],
 };
 
 function readBoolean(value: string | undefined, fallback: boolean) {

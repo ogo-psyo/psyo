@@ -62,6 +62,12 @@ type PublicCardFieldKey = 'breed' | 'character' | 'triggers' | 'area';
 type PublicCardCheck = { label: string; done: boolean; missing: string };
 type OnboardingCareChoice = { type: string; title: string; dueInDays: number; label: string; dueLabel: string };
 type TelegramSessionView = { mode: 'loading' | 'browser' | 'telegram' | 'error'; psyoUserId?: string; ownerId?: string; firstName?: string; username?: string; message?: string };
+type BillingView = {
+  entitlements?: { tier?: 'free' | 'plus'; expiresAt?: string | null };
+  plans?: { plus?: { name: string; priceStars: number; headline: string; included: string[]; cta: string } };
+  upgrade?: { available: boolean; disabledReason?: string | null };
+  meta?: { billingEnabled: boolean; newInvoicesEnabled?: boolean; priceStars: number };
+};
 type TelegramWebApp = {
   initData?: string;
   platform?: string;
@@ -419,6 +425,7 @@ export default function Home() {
   const [heroNameDraft, setHeroNameDraft] = useState('');
   const [onboardingCareChoice, setOnboardingCareChoice] = useState<OnboardingCareChoice>(onboardingCareOptions[0]);
   const [telegramSession, setTelegramSession] = useState<TelegramSessionView>({ mode: 'loading' });
+  const [billing, setBilling] = useState<BillingView | null>(null);
   const guestPetIdRef = useRef<string | null>(null);
   const observationsLoadedRef = useRef(false);
 
@@ -540,6 +547,15 @@ export default function Home() {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/billing/entitlements', { headers: authHeaders() })
+      .then((response) => response.json())
+      .then((payload) => { if (!cancelled) setBilling(payload); })
+      .catch(() => null);
+    return () => { cancelled = true; };
+  }, [session?.access_token, telegramSession.ownerId]);
   useEffect(() => {
     let cancelled = false;
     async function connectTelegramSession() {
@@ -815,6 +831,13 @@ export default function Home() {
   const showEmailAuth = !hasConnectedAccount && telegramSession.mode === 'browser';
   const authPanelMode = hasConnectedAccount ? 'connected' : hasTelegramSession ? 'telegram-sync' : showEmailAuth ? 'email' : telegramSession.mode;
   const showAuthPanel = showEmailAuth || telegramSession.mode === 'error';
+  const plusPlan = billing?.plans?.plus;
+  const isPlusActive = billing?.entitlements?.tier === 'plus';
+  const plusIncluded = plusPlan?.included?.slice(0, 4) ?? ['несколько собак', 'полная история', 'расширенные карточки', 'weekly summary'];
+  const plusPriceLabel = plusPlan?.priceStars ? `${plusPlan.priceStars} Stars / 30 дней` : 'цена готовится';
+  const plusGateLine = isPlusActive
+    ? billing?.entitlements?.expiresAt ? `Плюс активен до ${new Date(billing.entitlements.expiresAt).toLocaleDateString('ru-RU')}.` : 'Плюс активен.'
+    : billing?.upgrade?.available ? 'Оплата готова через Telegram Stars.' : 'Оплата закрыта до legal и payment smoke; пакет уже можно проверять продуктово.';
   const visibleMapFeatures = activeMapLayer === 'community' ? mapFeatures : [];
 
   async function switchActivePet(nextPetId: string) {
@@ -1395,6 +1418,22 @@ export default function Home() {
     window.setTimeout(() => setNotice('idle'), 1400);
   }
 
+  async function startPlusCheckout() {
+    setError('');
+    const response = await fetch('/api/billing/telegram-stars/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result?.invoiceLink) {
+      const reason = result?.meta?.disabledReason || billing?.upgrade?.disabledReason || 'Оплата Псё Плюс пока закрыта до release gate.';
+      setError(reason);
+      return;
+    }
+    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('medium');
+    window.Telegram?.WebApp?.openTelegramLink?.(result.invoiceLink) ?? window.open(result.invoiceLink, '_blank', 'noopener,noreferrer');
+  }
+
   function seedDemoExperience() {
     const now = Date.now();
     const petId = profile.backendPetId || guestPetIdRef.current || `guest-pet-${crypto.randomUUID()}`;
@@ -1964,6 +2003,19 @@ export default function Home() {
               {activeReminders.length === 0 && doneReminders.length === 0 && <p>Выбери конкретное дело и дату. После выполнения оно останется в истории, чтобы не вспоминать по памяти, когда была обработка, вакцина или груминг.</p>}
               {activeReminders.length > 0 && <div className="care-history-list active-care-list">{visibleCareReminders.slice(0, 3).map((reminder) => <article key={reminder.id}><b>{reminder.title}</b><span>{new Date(reminder.snoozedUntil || reminder.dueAt).toLocaleDateString('ru-RU')} · ждёт</span><button onClick={() => completeReminder(reminder.id)}>Готово</button></article>)}</div>}
               {doneReminders.length > 0 && <div className="care-history-list">{doneReminders.slice(0, 3).map((reminder) => <article key={reminder.id}><b>{reminder.title}</b><span>{new Date(reminder.completedAt || reminder.dueAt).toLocaleDateString('ru-RU')} · готово</span></article>)}</div>}
+            </section>
+
+            <section className="plus-gate-card" aria-label="Псё Плюс">
+              <div>
+                <span className="eyebrow">{isPlusActive ? 'подписка активна' : 'псё плюс'}</span>
+                <h3>{plusPlan?.name || 'Псё Плюс'} · {plusPriceLabel}</h3>
+                <p>{plusPlan?.headline || 'Больше истории, собак, карточек и экспорта без продажи базовой безопасности.'}</p>
+                <div className="plus-plan-list">
+                  {plusIncluded.map((item) => <span key={item}>{item}</span>)}
+                </div>
+                <small className="plus-gate-note">{plusGateLine}</small>
+              </div>
+              <button className="primary" onClick={isPlusActive ? () => setTab('profile') : startPlusCheckout}>{isPlusActive ? 'Открыть профиль' : plusPlan?.cta || 'Оформить'}</button>
             </section>
 
             <section className="today-action-hub" aria-label="Быстрые действия на сегодня">

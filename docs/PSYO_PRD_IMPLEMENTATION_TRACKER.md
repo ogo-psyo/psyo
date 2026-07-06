@@ -9,7 +9,7 @@ This tracker separates the target PRD from the current production state. It must
 - Production URL: `https://pso-mvp-uglanovrms-projects.vercel.app/`
 - Current release: see `/api/internal/health`
 - Current deploy: see Vercel production deployment for `https://pso-mvp-uglanovrms-projects.vercel.app/`
-- Latest production slice: PRD navigation, `things` screen, tracking/observations on `всё` and `псё`, owner-scoped active dog switching, public-card field controls, explicit map privacy modes, privacy-safe map share page, persisted dog-specific public card links, owner revoke/regenerate controls for public-card links, and PSYO product design context for UI gates.
+- Latest production slice: PRD navigation, `things` screen, tracking/observations on `всё` and `псё`, owner-scoped active dog switching, public-card field controls, explicit map privacy modes, privacy-safe map share page, persisted dog-specific public card links, owner revoke/regenerate controls for public-card links, PSYO product design context for UI gates, and the first Plus/Telegram Stars subscription readiness contour.
 
 ## P0 Product Shape
 
@@ -46,7 +46,7 @@ Support surfaces must stay reachable, but not dominate the main navigation:
 | Partners/services/clinics | Gap | PRD target only; no production partner directory or booking flow yet. |
 | Telemedicine/red button | Gap | PRD target only; needs explicit safety/legal design before implementation. |
 | Assistant | Gap/Stub | Current `/api/assistant` is rules/templates only; no production LLM integration. |
-| Monetization/Plus/Stars | Stub | Flags and entitlements exist; product/paywall flow is off. |
+| Monetization/Plus/Stars | Partial | Free/Plus package is defined in the final PRD and entitlements API; main UI shows the Plus package; Telegram Stars checkout intent and server-side payment reconciliation exist behind billing/new-invoice flags. Payment smoke/legal gates are still required before enabling invoices in production. |
 | Privacy/legal controls | Partial | Legal pages exist; per-card/per-route/per-field controls need UI and backend enforcement. |
 | QA/release gates | Partial | Build, contract, visual and prod smoke gates exist; PRD-specific gates need expansion. |
 
@@ -173,6 +173,26 @@ Acceptance criteria:
 - Assistant can propose actions, but user confirms writes.
 - Medical safety rules are enforced.
 - Production copy never claims veterinary diagnosis.
+
+### Slice 6: Plus Subscription Readiness
+
+Goal: make PRD section 18 sellable without enabling unsafe production billing.
+
+Acceptance criteria:
+
+- [x] Final PRD defines Free, Plus, limits, price source, Stars provider and non-paywalled safety basics.
+- [x] Entitlements API returns Free/Plus plan package, upgrade readiness and invoice state.
+- [x] Main `всё` screen exposes a concrete Plus package and price without claiming billing is enabled.
+- [x] Checkout endpoint creates Telegram Stars invoice links only when billing and new-invoice flags are enabled.
+- [x] Telegram webhook handles `pre_checkout_query` and `successful_payment`.
+- [x] Plus entitlement activation is server-side only after signed payload verification and Telegram charge id receipt.
+- [x] QA covers the subscription contract and keeps billing disabled by default.
+
+Remaining:
+
+- Legal/payment/refund/support texts still need owner approval.
+- Real Telegram Stars payment smoke must pass before enabling `BILLING_ENABLED=true` and `NEW_INVOICES_ENABLED=true` in production.
+- Refund/cancel reconciliation needs a follow-up operational slice.
 
 ## Release Rule
 
