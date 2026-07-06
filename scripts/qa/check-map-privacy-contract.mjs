@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 const files = {
   page: readFileSync('app/page.tsx', 'utf8'),
   mapApi: readFileSync('app/api/map/features/route.ts', 'utf8'),
+  mapSharePage: readFileSync('app/map/share/[id]/page.tsx', 'utf8'),
   zonesApi: readFileSync('app/api/zones/route.ts', 'utf8'),
 };
 
@@ -29,6 +30,16 @@ for (const token of [
   "shareUrl: visibility === 'shared' ? shareUrl(request, data.id) : null",
 ]) {
   if (!files.mapApi.includes(token)) failures.push(`map feature API privacy boundary missing: ${token}`);
+}
+
+for (const token of [
+  "eq('visibility', 'shared')",
+  'Приватная карта не раскрывается',
+  'не показывает точные координаты',
+  'Открыто только по ссылке',
+  'Детальная география остаётся у владельца',
+]) {
+  if (!files.mapSharePage.includes(token)) failures.push(`map share page privacy boundary missing: ${token}`);
 }
 
 for (const token of [

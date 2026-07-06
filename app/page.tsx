@@ -408,6 +408,8 @@ export default function Home() {
   const [viralCardHeadline, setViralCardHeadline] = useState('');
   const [viralSelectedFacts, setViralSelectedFacts] = useState<ViralFactKey[]>(['social', 'energy', 'care', 'triggers']);
   const [publicCardVisibleFields, setPublicCardVisibleFields] = useState<PublicCardFieldKey[]>(defaultPublicCardFields);
+  const [publishedPublicCardPath, setPublishedPublicCardPath] = useState('');
+  const [publicCardLinkBusy, setPublicCardLinkBusy] = useState(false);
   const [assistantQuestion, setAssistantQuestion] = useState('');
   const [assistantAnswer, setAssistantAnswer] = useState('');
   const [assistantActions, setAssistantActions] = useState<ActionSuggestion[]>([]);
@@ -656,7 +658,7 @@ export default function Home() {
   const completionCount = useMemo(() => profileChecklist.filter((item) => item.done).length, [profileChecklist]);
   const profileReady = completionCount >= profileChecklist.length;
   const missingProfileFields = useMemo(() => profileChecklist.filter((item) => !item.done).map((item) => item.label), [profileChecklist]);
-  const publicCardHref = useMemo(() => {
+  const publicCardPayload = useMemo(() => {
     const show = (key: PublicCardFieldKey) => publicCardVisibleFields.includes(key);
     const publicImageUrl = /^https?:\/\//i.test(generatedAvatarUrl)
       ? generatedAvatarUrl
@@ -665,7 +667,7 @@ export default function Home() {
         : profile.photoUrls[0] || '';
     const localImageUrl = generatedAvatarUrl || profile.avatarImageUrl || profile.photos[0]?.dataUrl || '';
     const shareImageUrl = publicImageUrl || localImageUrl;
-    const params = new URLSearchParams({
+    return {
       name: profile.dogName.trim() || 'Моя собака',
       breed: show('breed') ? breedLabel : 'не указано',
       character: show('character') ? profile.temperament || profile.energyLevel || 'спокойный друг' : 'не указано',
@@ -673,12 +675,20 @@ export default function Home() {
       social: displaySocialMode(profile.socialMode) || 'сначала спросить владельца',
       triggers: show('triggers') ? profile.triggers || 'резкие движения, шум' : '',
       area: show('area') ? safePublicArea(profile.neighborhood) : 'район скрыт',
-    });
-    if (/^https?:\/\//i.test(shareImageUrl) || (/^data:image\//i.test(shareImageUrl) && shareImageUrl.length < 12000)) {
-      params.set('image', shareImageUrl);
+      image: shareImageUrl,
+    };
+  }, [breedLabel, generatedAvatarUrl, profile.avatarImageUrl, profile.bio, profile.dogName, profile.energyLevel, profile.neighborhood, profile.photoUrls, profile.photos, profile.socialMode, profile.temperament, profile.triggers, publicCardVisibleFields]);
+  const publicCardHref = useMemo(() => {
+    if (publishedPublicCardPath) return publishedPublicCardPath;
+    const params = new URLSearchParams(publicCardPayload);
+    if (!/^https?:\/\//i.test(publicCardPayload.image) && !(/^data:image\//i.test(publicCardPayload.image) && publicCardPayload.image.length < 12000)) {
+      params.delete('image');
     }
     return `/dog/card?${params.toString()}`;
-  }, [breedLabel, generatedAvatarUrl, profile.avatarImageUrl, profile.bio, profile.dogName, profile.energyLevel, profile.neighborhood, profile.photoUrls, profile.photos, profile.socialMode, profile.temperament, profile.triggers, publicCardVisibleFields]);
+  }, [publicCardPayload, publishedPublicCardPath]);
+  useEffect(() => {
+    setPublishedPublicCardPath('');
+  }, [publicCardPayload]);
   const viralFacts = useMemo<Record<ViralFactKey, { label: string; value: string; ready: boolean }>>(() => ({
     social: { label: 'контакт', value: displaySocialMode(profile.socialMode) || 'сначала спросить', ready: Boolean(profile.socialMode) },
     energy: { label: 'ритм', value: profile.energyLevel || profile.temperament || 'спокойный режим', ready: Boolean(profile.energyLevel || profile.temperament) },
@@ -1004,13 +1014,13 @@ export default function Home() {
   }
 
   async function saveCard() {
-    if (!profile.dogName.trim()) return setError('Сначала добавь имя собаки.');
+    if (!profile.dogName.trim()) { setError('Сначала добавь имя собаки.'); return null; }
     setError('');
     if (isGuestMode()) {
       ensureGuestPetId();
       setNotice('saved');
       window.setTimeout(() => setNotice('idle'), 1600);
-      return;
+      return profile.backendPetId || guestPetIdRef.current;
     }
     try {
       const response = await fetch('/api/pets', {
@@ -1026,8 +1036,10 @@ export default function Home() {
       await loadBootstrap(undefined, savedPetId);
       setNotice('saved');
       window.setTimeout(() => setNotice('idle'), 1600);
+      return savedPetId || null;
     } catch (error) {
       setError('Не удалось сохранить карточку');
+      return null;
     }
   }
   async function signIn() {
@@ -1437,12 +1449,93 @@ export default function Home() {
     return new URL(publicCardHref, window.location.origin).toString();
   }
 
+  async function publishPublicDogCard({ regenerate = false }: { regenerate?: boolean } = {}) {
+    if (!publicCardReady) {
+      setTab('profile');
+      return '';
+    }
+    if (publishedPublicCardPath && !regenerate) return publishedPublicCardPath;
+    if (isGuestMode()) return publicCardHref;
+
+    let petId = profile.backendPetId;
+    if (!petId) {
+      petId = await saveCard() || '';
+    }
+    if (!petId) {
+      setError('Сначала сохрани профиль собаки.');
+      setTab('profile');
+      return '';
+    }
+
+    setPublicCardLinkBusy(true);
+    setNotice('sharing');
+    try {
+      const response = await fetch('/api/dog-cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          petId,
+          visibility: 'unlisted',
+          fields: publicCardPayload,
+          regenerate,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.path) {
+        setError('Не удалось подготовить ссылку на памятку.');
+        setNotice('idle');
+        return '';
+      }
+      setPublishedPublicCardPath(result.path);
+      setNotice('saved');
+      window.setTimeout(() => setNotice('idle'), 1400);
+      return String(result.path);
+    } finally {
+      setPublicCardLinkBusy(false);
+    }
+  }
+
+  async function regeneratePublicDogCard() {
+    const path = await publishPublicDogCard({ regenerate: true });
+    if (path) window.open(path, '_blank', 'noopener,noreferrer');
+  }
+
+  async function revokePublicDogCard() {
+    if (isGuestMode()) {
+      setPublishedPublicCardPath('');
+      setNotice('saved');
+      window.setTimeout(() => setNotice('idle'), 1400);
+      return;
+    }
+    if (!profile.backendPetId) return setError('Сначала сохрани профиль собаки.');
+
+    setPublicCardLinkBusy(true);
+    try {
+      const response = await fetch('/api/dog-cards', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ petId: profile.backendPetId }),
+      });
+      if (!response.ok) {
+        setError('Не удалось отозвать ссылку.');
+        return;
+      }
+      setPublishedPublicCardPath('');
+      setNotice('saved');
+      window.setTimeout(() => setNotice('idle'), 1400);
+    } finally {
+      setPublicCardLinkBusy(false);
+    }
+  }
+
   async function shareDogCard() {
     if (!publicCardReady) {
       setTab('profile');
       return;
     }
-    const url = absolutePublicCardUrl();
+    const path = await publishPublicDogCard();
+    if (!path) return;
+    const url = new URL(path, window.location.origin).toString();
     const title = `Памятка ${profile.dogName.trim() || 'моей собаки'} в Псё`;
     const text = `${title}: ${displaySocialMode(profile.socialMode) || 'как знакомиться — спросить владельца'}`;
     window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
@@ -1460,22 +1553,26 @@ export default function Home() {
     window.Telegram?.WebApp?.openTelegramLink?.(shareUrl) ?? window.open(shareUrl, '_blank');
   }
 
-  function openDogCardPdf() {
+  async function openDogCardPdf() {
     if (!publicCardReady) {
       setTab('profile');
       return;
     }
+    const path = await publishPublicDogCard();
+    if (!path) return;
     window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('medium');
-    window.open(publicCardHref, '_blank', 'noopener,noreferrer');
+    window.open(path, '_blank', 'noopener,noreferrer');
   }
 
-  function openPublicCard() {
+  async function openPublicCard() {
     if (!publicCardReady) {
       setTab('profile');
       return;
     }
+    const path = await publishPublicDogCard();
+    if (!path) return;
     window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light');
-    window.open(publicCardHref, '_blank', 'noopener,noreferrer');
+    window.open(path, '_blank', 'noopener,noreferrer');
   }
 
   function toggleViralFact(key: ViralFactKey) {
@@ -2059,9 +2156,14 @@ export default function Home() {
           </section>
 
           <section className="public-card-actions-panel" aria-label="Действия с памяткой">
-            <button className="primary" onClick={publicCardReady ? shareDogCard : () => setTab('profile')}>{publicCardReady ? 'Поделиться' : 'Дозаполнить памятку'}</button>
-            <button className="secondary" onClick={publicCardReady ? openPublicCard : () => setTab('profile')}>{publicCardReady ? 'Открыть' : 'Заполнить'}</button>
-            <button className="secondary" onClick={publicCardReady ? openDogCardPdf : () => setTab('profile')}>{publicCardReady ? 'PDF / печать' : 'Заполнить перед печатью'}</button>
+            <button className="primary" disabled={publicCardLinkBusy} onClick={publicCardReady ? shareDogCard : () => setTab('profile')}>{publicCardReady ? 'Поделиться' : 'Дозаполнить памятку'}</button>
+            <button className="secondary" disabled={publicCardLinkBusy} onClick={publicCardReady ? openPublicCard : () => setTab('profile')}>{publicCardReady ? 'Открыть' : 'Заполнить'}</button>
+            <button className="secondary" disabled={publicCardLinkBusy} onClick={publicCardReady ? openDogCardPdf : () => setTab('profile')}>{publicCardReady ? 'PDF / печать' : 'Заполнить перед печатью'}</button>
+            {publishedPublicCardPath && <>
+              <button className="secondary" disabled={publicCardLinkBusy} onClick={regeneratePublicDogCard}>Пересоздать ссылку</button>
+              <button className="secondary danger" disabled={publicCardLinkBusy} onClick={revokePublicDogCard}>Отозвать</button>
+            </>}
+            {publishedPublicCardPath && <p>Активная ссылка: {publishedPublicCardPath}</p>}
           </section>
 
           <article className="public-card-privacy-note">

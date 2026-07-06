@@ -839,6 +839,65 @@ input::placeholder, textarea::placeholder { color: var(--soft); }
   text-align: center;
 }
 
+.map-share-card {
+  width: min(460px, 100%);
+}
+
+.map-share-hero {
+  --map-share-tone: var(--psyo-mint-600);
+  display: grid;
+  gap: 12px;
+  min-height: 270px;
+  border: 1px solid rgba(255, 255, 255, .72);
+  border-radius: 30px;
+  padding: 24px;
+  align-content: end;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(255, 255, 255, .74), transparent 30%),
+    radial-gradient(circle at 84% 12%, color-mix(in srgb, var(--map-share-tone) 22%, transparent), transparent 34%),
+    linear-gradient(145deg, rgba(255, 255, 255, .76), rgba(255, 255, 255, .28)),
+    linear-gradient(135deg, color-mix(in srgb, var(--map-share-tone) 18%, white), rgba(255, 255, 255, .52));
+  box-shadow:
+    0 20px 58px rgba(69, 95, 72, .12),
+    inset 0 1px 0 rgba(255, 255, 255, .84);
+}
+
+.map-share-hero span {
+  width: fit-content;
+  max-width: 100%;
+  min-height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .66);
+  border-radius: 999px;
+  padding: 0 12px;
+  color: var(--psyo-ink-soft);
+  background: rgba(255, 255, 255, .52);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.map-share-hero h1 {
+  color: var(--psyo-ink);
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  font-size: clamp(34px, 10vw, 58px);
+  line-height: .92;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.map-share-hero p {
+  max-width: 34ch;
+  color: var(--psyo-ink-soft);
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 720;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 390px) {
   .trait-grid {
     grid-template-columns: 1fr;

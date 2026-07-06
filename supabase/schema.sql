@@ -63,6 +63,21 @@ create table if not exists public.social_profiles (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.dog_cards (
+  id uuid primary key default gen_random_uuid(),
+  pet_id uuid not null references public.pets(id) on delete cascade,
+  title text not null,
+  subtitle text,
+  traits text[] not null default '{}',
+  style_id text,
+  visibility text not null default 'private' check (visibility in ('private','unlisted','public')),
+  public_slug text unique not null,
+  fields jsonb not null default '{}',
+  revoked_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.reminders (
   id uuid primary key default gen_random_uuid(),
   pet_id uuid not null references public.pets(id) on delete cascade,
@@ -135,6 +150,7 @@ alter table public.telegram_identities enable row level security;
 alter table public.pets enable row level security;
 alter table public.pet_passports enable row level security;
 alter table public.social_profiles enable row level security;
+alter table public.dog_cards enable row level security;
 alter table public.reminders enable row level security;
 alter table public.map_zones enable row level security;
 alter table public.wishlist_items enable row level security;
@@ -146,6 +162,7 @@ create policy "profiles owner" on public.profiles for all using (auth.uid() = id
 create policy "pets owner" on public.pets for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
 create policy "passports owner" on public.pet_passports for all using (exists (select 1 from public.pets p where p.id = pet_id and p.owner_id = auth.uid())) with check (exists (select 1 from public.pets p where p.id = pet_id and p.owner_id = auth.uid()));
 create policy "social owner" on public.social_profiles for all using (exists (select 1 from public.pets p where p.id = pet_id and p.owner_id = auth.uid())) with check (exists (select 1 from public.pets p where p.id = pet_id and p.owner_id = auth.uid()));
+create policy "dog cards owner" on public.dog_cards for all using (exists (select 1 from public.pets p where p.id = pet_id and p.owner_id = auth.uid())) with check (exists (select 1 from public.pets p where p.id = pet_id and p.owner_id = auth.uid()));
 create policy "reminders owner" on public.reminders for all using (exists (select 1 from public.pets p where p.id = pet_id and p.owner_id = auth.uid())) with check (exists (select 1 from public.pets p where p.id = pet_id and p.owner_id = auth.uid()));
 create policy "zones owner" on public.map_zones for all using (exists (select 1 from public.pets p where p.id = pet_id and p.owner_id = auth.uid())) with check (exists (select 1 from public.pets p where p.id = pet_id and p.owner_id = auth.uid()));
 create policy "wishlist owner" on public.wishlist_items for all using (exists (select 1 from public.pets p where p.id = pet_id and p.owner_id = auth.uid())) with check (exists (select 1 from public.pets p where p.id = pet_id and p.owner_id = auth.uid()));
@@ -168,6 +185,8 @@ drop trigger if exists pets_touch_updated_at on public.pets;
 create trigger pets_touch_updated_at before update on public.pets for each row execute function public.touch_updated_at();
 drop trigger if exists telegram_identities_touch_updated_at on public.telegram_identities;
 create trigger telegram_identities_touch_updated_at before update on public.telegram_identities for each row execute function public.touch_updated_at();
+drop trigger if exists dog_cards_touch_updated_at on public.dog_cards;
+create trigger dog_cards_touch_updated_at before update on public.dog_cards for each row execute function public.touch_updated_at();
 drop trigger if exists reminders_touch_updated_at on public.reminders;
 create trigger reminders_touch_updated_at before update on public.reminders for each row execute function public.touch_updated_at();
 drop trigger if exists wishlist_touch_updated_at on public.wishlist_items;

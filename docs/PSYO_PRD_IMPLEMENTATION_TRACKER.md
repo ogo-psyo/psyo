@@ -9,7 +9,7 @@ This tracker separates the target PRD from the current production state. It must
 - Production URL: `https://pso-mvp-uglanovrms-projects.vercel.app/`
 - Current release: `c5054e16c4d2a7a5df0f1cf011cbc385abf28a70`
 - Current deploy: `dpl_8qwHAc6WQ8nbbpaos8mDTZn6PXRU`
-- Latest local slice: PRD navigation, `things` screen, tracking/observations on `всё` and `псё`, owner-scoped active dog switching, public-card field controls, and explicit map privacy modes.
+- Latest local slice: PRD navigation, `things` screen, tracking/observations on `всё` and `псё`, owner-scoped active dog switching, public-card field controls, explicit map privacy modes, privacy-safe map share page, persisted dog-specific public card links, and owner revoke/regenerate controls for public-card links.
 
 ## P0 Product Shape
 
@@ -39,7 +39,7 @@ Support surfaces must stay reachable, but not dominate the main navigation:
 | `псё` screen | Partial | Living profile, active dog switching and observation timeline are implemented; documents and deeper health/history views are still open. |
 | Reminders/care history | Partial | Basic reminders, completion and calendar exist; notifications and recurrence UX need work. |
 | Tracking/observations | Partial | `pet_observations` schema/API/bootstrap, quick UI on `всё`, and profile timeline on `псё` are implemented; charts and attachments are still open. |
-| Public dog card | Partial | Card/share/PDF surfaces exist; owner can now choose visible preview/share fields; persisted slug-based dog-specific sharing still needs productization. |
+| Public dog card | Partial | Card/share/PDF surfaces exist; owner can choose visible preview/share fields; authenticated/Telegram owners now publish stable slug-based dog-specific links backed by `dog_cards`; owner can revoke or regenerate the active link. Version history and richer card scenarios are still open. |
 | Map/routes | Partial | Private places, route drawing and explicit save modes exist; shared links/public moderation backend exists, but public share pages and moderation ops are still incomplete. |
 | `рядом` socialization | Partial | Static candidate surface exists; real matching, privacy and invitations are not production-ready. |
 | `вещи` wishlist | Partial | Dedicated tab shipped; needs sharing, repeat purchases and partner labeling. |
@@ -93,9 +93,24 @@ Shipped locally in the current slice:
 - Switching active dog clears stale local lists before loading the selected dog's state.
 - Added `scripts/qa/check-multidog-contract.mjs` to `npm run qa:local`.
 
+Shipped locally in the current public-card persistence slice:
+
+- Added `dog_cards` schema/migration for stable public-card rows scoped to a specific dog.
+- Added `/api/dog-cards` to create/update the current owner's unlisted card link.
+- Public card actions now publish a stable `/dog/[slug]` link before opening/sharing for authenticated or Telegram owners.
+- `/dog/[slug]` can read persisted safe fields by slug, while still supporting the older query-param preview fallback.
+- Unlisted cards are served by the app route; they are not broadly exposed through public Supabase RLS.
+
+Shipped locally in the current revoke/regenerate slice:
+
+- Added owner-facing controls to revoke or regenerate the active public-card link.
+- `/api/dog-cards` now supports revoking active rows and regenerating a fresh slug while preserving owner checks.
+- Revoked or missing persisted slugs now return 404 instead of falling back to a generic public-card page.
+- Updated the public-card QA contract so revoked links cannot silently render as default cards.
+
 Remaining:
 
-- Public card URLs need a persisted slug-based dog-specific share flow, not only the current generated preview URL.
+- Need version history and richer card scenarios.
 
 ### Slice 3: Privacy Controls
 
@@ -118,7 +133,7 @@ Shipped locally in the current slice:
 
 Remaining:
 
-- Field controls are client-side for the current preview/share flow; persisted per-dog visibility settings still need backend storage.
+- Field controls now persist into `dog_cards.fields` when the owner publishes a stable link; revoke/regenerate controls exist for the active link.
 - Map/routes need separate private/shared/public UI states and moderation flow.
 - Public map/share pages and moderation operations are still incomplete.
 
@@ -144,7 +159,7 @@ Shipped locally in the current slice:
 
 Remaining:
 
-- `/map/share/[id]` page is not implemented yet.
+- `/map/share/[id]` page now exists as a production-safe first shared point/route surface without exact coordinates and without internal "sandbox/not ready" copy; it still needs a richer public projection before calling map sharing complete.
 - Public moderation queue/admin flow is not implemented yet.
 
 ### Slice 5: Real Assistant Layer

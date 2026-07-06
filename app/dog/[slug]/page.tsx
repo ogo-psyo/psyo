@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { DogCardActions } from './DogCardActions';
+import { publicDogCardFieldsFromRow } from '@/lib/server/publicDogCard';
+import { getSupabaseAdmin } from '@/lib/server/supabase';
 
 export const metadata: Metadata = {
   title: 'Памятка собаки — Псё',
@@ -8,11 +11,13 @@ export const metadata: Metadata = {
 };
 
 export default async function DogCardPage({
+  params,
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const { slug } = await params;
   const query = await searchParams;
   const read = (key: string, fallback: string) => {
     const value = query[key];
@@ -54,18 +59,29 @@ export default async function DogCardPage({
     },
   };
 
-  const name = cleanDisplay(read('name', 'Собака'), 'Собака');
-  const breed = cleanDisplay(read('breed', 'Метис / не знаю'), 'Метис / не знаю');
-  const character = cleanDisplay(read('character', read('style', 'спокойный, любопытный')), 'спокойный, любопытный');
-  const bio = cleanDisplay(read('bio', 'Можно знакомиться спокойно и без резких движений.'), 'Можно знакомиться спокойно и без резких движений.');
-  const rawSocial = read('social', 'ask_first').trim();
+  const supabase = getSupabaseAdmin();
+  const persisted = supabase ? await supabase
+    .from('dog_cards')
+    .select('title, subtitle, traits, fields, visibility, public_slug, revoked_at')
+    .eq('public_slug', slug)
+    .in('visibility', ['unlisted', 'public'])
+    .is('revoked_at', null)
+    .maybeSingle() : null;
+  const dbFields = persisted?.data ? publicDogCardFieldsFromRow(persisted.data) : null;
+  if (slug !== 'card' && !dbFields) notFound();
+
+  const name = cleanDisplay(dbFields?.name || read('name', 'Собака'), 'Собака');
+  const breed = cleanDisplay(dbFields?.breed || read('breed', 'Метис / не знаю'), 'Метис / не знаю');
+  const character = cleanDisplay(dbFields?.character || read('character', read('style', 'спокойный, любопытный')), 'спокойный, любопытный');
+  const bio = cleanDisplay(dbFields?.bio || read('bio', 'Можно знакомиться спокойно и без резких движений.'), 'Можно знакомиться спокойно и без резких движений.');
+  const rawSocial = (dbFields?.social || read('social', 'ask_first')).trim();
   const socialKey = displayMap[rawSocial] ? rawSocial : Object.entries(displayMap).find(([, label]) => label === rawSocial)?.[0] || '';
   const social = contactCopy[socialKey]?.title || cleanDisplay(rawSocial, 'Сначала спросите хозяина');
   const socialDetail = contactCopy[socialKey]?.detail || 'Подойдите спокойно и сначала уточните у человека рядом.';
-  const area = cleanDisplay(read('area', 'район скрыт'), 'район скрыт');
-  const triggers = cleanDisplay(read('triggers', ''), '');
+  const area = cleanDisplay(dbFields?.area || read('area', 'район скрыт'), 'район скрыт');
+  const triggers = cleanDisplay(dbFields?.triggers || read('triggers', ''), '');
   const demo = read('demo', '0') === '1';
-  const rawImage = read('image', '');
+  const rawImage = dbFields?.image || read('image', '');
   const image = /^(https?:\/\/|data:image\/(png|jpe?g|webp);base64,)/i.test(rawImage) ? rawImage : '';
   const avoidText = triggers || (bio.toLowerCase() === social.toLowerCase()
     ? 'резкие движения, шум, руки к морде'

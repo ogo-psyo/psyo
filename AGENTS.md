@@ -6,6 +6,16 @@ Mobile-first dog owner companion: dog profile/passport, reminders, assistant, ma
 
 This file is the agent decision layer for this project. It is not marketing docs.
 
+## Production posture
+
+Псё is being built for commercial use and real people, not as a sandbox toy.
+
+- Treat each slice as either production-safe product surface or explicitly unfinished.
+- Do not use "demo", "sandbox", or "prototype" language to excuse weak product behavior unless the UI truly labels that state for users.
+- A small slice is acceptable; a fake slice is not.
+- Prefer commercially honest UX: clear value, privacy boundaries, error states, support paths, and no overclaiming.
+- Local implementation can be incremental, but reporting must distinguish "built locally", "ready for deploy", and "production-ready".
+
 ## Stack
 
 - Next.js 16 / React 19 / TypeScript
@@ -182,6 +192,8 @@ Any agent handoff for Pso must name which service contract it touches:
 - Respect `prefers-reduced-motion` for motion changes.
 - Demo/local/blocked states must be visibly honest; UI copy cannot compensate
   for missing backend or safety gates.
+- Commercial readiness matters: a screen should feel useful to a real dog owner,
+  not like an internal scaffold.
 
 ## Known risk zones
 
