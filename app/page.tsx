@@ -765,18 +765,9 @@ export default function Home() {
     return Number.isFinite(date.getTime()) ? date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'long' }) : 'выбранный день';
   }, [selectedCalendarDate]);
   const petName = profile.dogName.trim();
-  const dogLabel = petName || 'собака';
   const petNameGent = inflectPetName(profile.dogName, 'gent');
   const petNameDatv = inflectPetName(profile.dogName, 'datv');
   const missingProfileSummary = missingProfileFields.slice(0, 3).join(', ');
-  const nextCareLabel = useMemo(() => {
-    const next = visibleCareReminders[0];
-    if (!next) return 'дел по уходу пока нет';
-    return `${next.title} · ${new Date(next.snoozedUntil || next.dueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}`;
-  }, [visibleCareReminders]);
-  const todayUtilityLine = activeReminders.length
-    ? `${formatCount(activeReminders.length, ['активное дело', 'активных дела', 'активных дел'])}. Ближайшее: ${nextCareLabel}.`
-    : `Нет активных дел. Добавь обработку, вакцину, груминг или своё дело для ${dogLabel}.`;
   const publicCardChecks = useMemo<PublicCardCheck[]>(() => [
     { label: 'Имя', done: Boolean(profile.dogName.trim()), missing: 'имя собаки' },
     { label: 'Правило контакта', done: Boolean(profile.socialMode), missing: 'как знакомиться' },
@@ -787,18 +778,17 @@ export default function Home() {
   const publicCardReady = Boolean(profile.dogName.trim() && profile.socialMode && (profile.triggers || profile.bio) && profile.neighborhood);
   const publicCardMissing = useMemo(() => publicCardChecks.filter((item) => !item.done).map((item) => item.missing), [publicCardChecks]);
   const publicCardShows = (key: PublicCardFieldKey) => publicCardVisibleFields.includes(key);
-  const todayOwnerChips = useMemo(() => [
-    `${completionCount}/6 в профиле`,
-    activeReminders.length ? formatCount(activeReminders.length, ['дело в плане', 'дела в плане', 'дел в плане']) : 'план пуст',
-    publicCardReady ? 'памятку можно показать' : 'памятка не готова',
-  ], [activeReminders.length, completionCount, publicCardReady]);
   const nextBestAction = useMemo(() => {
     if (!profile.backendPetId) return { emoji: '⏰', title: 'Запланировать первую заботу', caption: 'Добавь имя собаки и выбери первое дело: обработка, вакцина, груминг или своё.', action: 'Добавить питомца', target: 'profile' as Tab };
-    if (!profileReady) return { emoji: '🛡️', title: 'Проверить защиту и правила', caption: missingProfileSummary ? `Не хватает: ${missingProfileSummary}. Это поможет Псё напоминать точнее.` : 'Нужна пара деталей, чтобы советы были точнее.', action: 'Уточнить', target: 'profile' as Tab };
     if (groupedReminders.overdue.length) return { emoji: '🚩', title: 'Есть просроченная забота', caption: groupedReminders.overdue[0].title, action: 'Закрыть', target: 'today' as Tab, reminderId: groupedReminders.overdue[0].id };
+    if (visibleCareReminders.length) {
+      const next = visibleCareReminders[0];
+      const due = new Date(next.snoozedUntil || next.dueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+      return { emoji: '✓', title: next.title, caption: `Следующее дело в плане: ${due}. После выполнения оно уйдёт в историю ухода.`, action: 'Отметить готово', target: 'today' as Tab, reminderId: next.id };
+    }
     if (activeReminders.length === 0) return { emoji: '⏰', title: `Запланировать первую заботу ${petNameDatv}`, caption: 'Выберите дело, дату и тип. Псё не будет придумывать напоминания без вашего решения.', action: 'Открыть календарь', target: 'calendar' as Tab };
-    return { emoji: '🐾', title: `У ${petNameGent} всё спокойно`, caption: `${formatCount(activeReminders.length, ['активное дело', 'активных дела', 'активных дел'])} · профиль готов ${completionCount} из 6`, action: 'Открыть историю', target: 'calendar' as Tab };
-  }, [activeReminders.length, completionCount, groupedReminders.overdue, missingProfileSummary, petNameDatv, petNameGent, profile.backendPetId, profileReady]);
+    return { emoji: '🐾', title: 'Открыть историю ухода', caption: 'Посмотреть выполненные дела и добавить следующий шаг.', action: 'Открыть историю', target: 'calendar' as Tab };
+  }, [activeReminders.length, groupedReminders.overdue, petNameDatv, profile.backendPetId, visibleCareReminders]);
   const latestObservation = observations[0];
   const observationNextStepLine = latestObservation
     ? `Последняя запись: ${latestObservation.mood}, аппетит ${latestObservation.appetite}, энергия ${latestObservation.energy}. Следующий шаг: ${nextBestAction.title.toLowerCase()}.`
@@ -1867,21 +1857,6 @@ export default function Home() {
         </section>
 
         {tab === 'today' && <section className="screen-stack today-screen kit-today-screen">
-          <section className="kit-hero-card" aria-label="Псё — сегодня">
-            <div className="kit-hero-copy">
-              <span className="eyebrow">сводка владельца</span>
-              <h2>{petName ? `Что важно для ${petNameGent}` : 'Что важно сегодня'}</h2>
-              <p>{todayUtilityLine}</p>
-              <div className="kit-pill-row" aria-label="Что уже собрано">
-                {todayOwnerChips.map((chip) => <span key={chip}>{chip}</span>)}
-              </div>
-            </div>
-            <div className="kit-dog-card">
-              <GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="large" />
-              <button className="kit-edit-button" onClick={() => setTab('profile')} aria-label="Редактировать профиль">✎</button>
-            </div>
-          </section>
-
           <article className={`kit-next-card ${nextBestAction.reminderId ? 'warning' : ''}`}>
             <span>{nextBestAction.emoji}</span>
             <div>

@@ -12,7 +12,6 @@ const failures = [];
 for (const token of [
   'Living Companion OS',
   'cream/mint botanical base',
-  'large dog identity/status card',
   'simple daily action card',
 ]) {
   if (!files.direction.includes(token)) failures.push(`DESIGN_DIRECTION.md missing concept token: ${token}`);
@@ -33,13 +32,12 @@ for (const token of [
   if (!files.css.includes(token)) failures.push(`globals.css missing kit-alignment token: ${token}`);
 }
 
-const heroIndex = files.page.indexOf('className="kit-hero-card"');
 const nextIndex = files.page.indexOf('className={`kit-next-card');
 const actionsIndex = files.page.indexOf('className="kit-daily-status action-first"');
-if (heroIndex < 0 || nextIndex < 0 || actionsIndex < 0) {
-  failures.push('page.tsx missing Today hierarchy markers: kit hero, next card, action tiles');
-} else if (!(heroIndex < nextIndex && nextIndex < actionsIndex)) {
-  failures.push('Today hierarchy must be dog status card -> primary next step -> action tiles');
+if (nextIndex < 0 || actionsIndex < 0) {
+  failures.push('page.tsx missing Today hierarchy markers: primary next card, action tiles');
+} else if (!(nextIndex < actionsIndex)) {
+  failures.push('Today hierarchy must be primary next step -> action tiles');
 }
 
 for (const token of [

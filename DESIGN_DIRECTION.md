@@ -52,7 +52,7 @@ Working direction:
 **Living Companion OS**
 
 A warm iOS-native care companion with:
-- large dog identity/status card;
+- first useful care action instead of a dog identity/status card;
 - soft but structured surfaces;
 - expressive micro-states;
 - simple daily action card;
@@ -78,7 +78,6 @@ contracts stay more important than reference-screen scenarios.
 Redesign only the real Today screen first:
 
 - app header;
-- dog status card;
 - next care action;
 - care loop/progress;
 - map teaser;
@@ -105,7 +104,7 @@ Component rules:
 Copy rules:
 
 - Use “Пиши, сокращай” discipline: short sentences, one thought per line, active verbs.
-- Prefer owner language: `дело`, `план ухода`, `памятка`, `место`, `портрет`, `письмо для входа`.
+- Prefer owner language: `дело`, `план ухода`, `памятка`, `место`, `портрет`, `Демо без входа`.
 - Do not show technical words in primary UI: `backend`, `Supabase`, `magic-link`, `payload`, `session`, `raw`, `DEMO`, `GPS`, `Avatar`.
 - Error copy names the next step, not the implementation failure.
 - Loading states use the ellipsis character: `Думаю…`, `Отправляю…`.
