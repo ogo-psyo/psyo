@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { freeEntitlementSnapshot, freePlanSnapshot, plusEntitlementSnapshot, plusPlanSnapshot, rc1Config } from '@/lib/rc1';
 import { getRequestAuth } from '@/lib/server/auth';
+import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { defaultEntitlements, getUserEntitlements } from '@/lib/server/entitlements';
 
 export const runtime = 'nodejs';
@@ -8,7 +9,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   const auth = await getRequestAuth(request);
-  const entitlements = auth.user ? await getUserEntitlements(auth.user.id, auth.supabase) : defaultEntitlements;
+  const appSession = getAppSessionFromRequest(request);
+  const ownerId = auth.user?.id ?? appSession?.ownerId;
+  const entitlements = ownerId ? await getUserEntitlements(ownerId, auth.supabase ?? undefined) : defaultEntitlements;
   const isPlus = entitlements.tier === 'plus';
 
   return NextResponse.json({

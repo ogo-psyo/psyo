@@ -12,7 +12,8 @@ const designDirection = readFileSync('DESIGN_DIRECTION.md', 'utf8');
 const failures = [];
 
 const forbiddenVisibleSnippets = [
-  ['magic-link', 'email auth copy must say "письмо для входа"'],
+  ['magic-link', 'owner app must not expose email auth wording'],
+  ['письма со входом', 'owner app must not offer email auth as a primary scenario'],
   ['care loop', 'care flow must say "план ухода"'],
   ['care-passport', 'passport copy must be Russian owner language'],
   ['Avatar собаки', 'avatar copy must say "портрет" or "фото"'],
@@ -51,7 +52,8 @@ for (const token of requiredDesignKitTokens) {
 }
 
 const requiredHumanCopy = [
-  'письма со входом',
+  'Демо без входа',
+  'Личный профиль, Plus и сохранение включаются только внутри Telegram Mini App',
   'Портрет собаки',
   'пример памятки',
   'Примерное место выбрано',

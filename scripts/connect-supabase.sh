@@ -51,4 +51,4 @@ npx vercel deploy --prod --yes
 
 echo "Done. Verify:"
 echo "APP_URL=$APP_URL npm run qa:bootstrap"
-echo "EXPECTED_APP_URL=$APP_URL NEXT_PUBLIC_SUPABASE_URL=$SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY=*** npm run qa:auth:generate-link"
+echo "npm run qa:local"

@@ -41,7 +41,6 @@ import type { ActionSuggestion } from '@/packages/contracts';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
 type Notice = 'idle' | 'saved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
-type AuthUiState = 'idle' | 'sending' | 'sent' | 'rate_limited' | 'retryable_error';
 type OnboardingStage = 'intro' | 'photo' | 'style' | 'generating' | 'reveal' | 'done';
 type ReminderView = { id: string; petId: string; type: string; title: string; dueAt: string; status: string; snoozedUntil?: string; completedAt?: string };
 type WishlistView = { id: string; petId: string; title: string; category: string; reason?: string; url?: string; priority: string; status: string; created_at?: string };
@@ -378,10 +377,6 @@ export default function Home() {
   const [error, setError] = useState('');
   const [tab, setTab] = useState<Tab>('today');
   const [session, setSession] = useState<AuthSession | null>(null);
-  const [email, setEmail] = useState('');
-  const [sentEmail, setSentEmail] = useState('');
-  const [authUiState, setAuthUiState] = useState<AuthUiState>('idle');
-  const [authCooldown, setAuthCooldown] = useState(0);
   const [authLoading, setAuthLoading] = useState(true);
   const [reminders, setReminders] = useState<ReminderView[]>([]);
   const [wishlist, setWishlist] = useState<WishlistView[]>([]);
@@ -616,11 +611,6 @@ export default function Home() {
     loadObservations().catch(() => null);
   }, [profile.backendPetId, session?.access_token, telegramSession.ownerId]);
   useEffect(() => {
-    if (authCooldown <= 0) return;
-    const timer = window.setInterval(() => setAuthCooldown((current) => Math.max(0, current - 1)), 1000);
-    return () => window.clearInterval(timer);
-  }, [authCooldown]);
-  useEffect(() => {
     if (tab !== 'map' || activeMapLayer !== 'community') return;
     loadMapFeatures().catch(() => null);
   }, [activeMapLayer, tab, session?.access_token, telegramSession.ownerId]);
@@ -828,9 +818,8 @@ export default function Home() {
   const hasTelegramOwner = Boolean(telegramSession.ownerId);
   const hasTelegramSession = telegramSession.mode === 'telegram';
   const hasConnectedAccount = hasSupabaseSession || hasTelegramOwner;
-  const showEmailAuth = !hasConnectedAccount && telegramSession.mode === 'browser';
-  const authPanelMode = hasConnectedAccount ? 'connected' : hasTelegramSession ? 'telegram-sync' : showEmailAuth ? 'email' : telegramSession.mode;
-  const showAuthPanel = showEmailAuth || telegramSession.mode === 'error';
+  const authPanelMode = hasConnectedAccount ? 'connected' : hasTelegramSession ? 'telegram-sync' : telegramSession.mode;
+  const showAuthPanel = !hasConnectedAccount && (telegramSession.mode === 'browser' || telegramSession.mode === 'error' || telegramSession.mode === 'loading');
   const plusPlan = billing?.plans?.plus;
   const isPlusActive = billing?.entitlements?.tier === 'plus';
   const plusIncluded = plusPlan?.included?.slice(0, 4) ?? ['несколько собак', 'полная история', 'расширенные карточки', 'weekly summary'];
@@ -1065,34 +1054,6 @@ export default function Home() {
       return null;
     }
   }
-  async function signIn() {
-    const supabase = getSupabaseBrowser();
-    if (!supabase) return setError('Вход временно не настроен. Можно продолжить на этом устройстве.');
-    if (!email.trim()) return setError('Введи email для входа.');
-    if (authUiState === 'sending' || authCooldown > 0) return;
-    setError('');
-    setAuthUiState('sending');
-    const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL;
-    const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const redirectTo = isLocalHost ? window.location.origin : configuredAppUrl || window.location.origin;
-    const { error: signError } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: redirectTo } });
-    if (signError) {
-      const isRateLimit = signError.status === 429 || /rate limit|too many|429/i.test(signError.message);
-      setAuthUiState(isRateLimit ? 'rate_limited' : 'retryable_error');
-      setAuthCooldown(isRateLimit ? 600 : 60);
-      return setError(isRateLimit ? 'Слишком много писем за короткое время. Подожди 10–15 минут и запроси новую ссылку.' : 'Не удалось отправить письмо. Проверь email и интернет, потом попробуй ещё раз.');
-    }
-    setSentEmail(email.trim());
-    setAuthUiState('sent');
-    setAuthCooldown(60);
-  }
-
-  function changeAuthEmail() {
-    setAuthUiState('idle');
-    setSentEmail('');
-    setError('');
-  }
-
   async function signOut() {
     await getSupabaseBrowser()?.auth.signOut();
     await fetch('/api/v1/session/logout', { method: 'POST', credentials: 'include' }).catch(() => null);
@@ -1880,7 +1841,7 @@ export default function Home() {
           <p>Профиль, дела, места, вещи и наблюдения ниже относятся только к выбранной собаке.</p>
         </section>}
 
-        {showAuthPanel && <section className={`auth-inline-panel mode-${authPanelMode} state-${authUiState}`} aria-label="Вход и синхронизация">
+        {showAuthPanel && <section className={`auth-inline-panel mode-${authPanelMode}`} aria-label="Вход и синхронизация">
           {hasConnectedAccount ? <>
             <div><b>{hasTelegramOwner && !hasSupabaseSession ? 'Telegram подключён' : 'Аккаунт подключён'}</b><p>{session?.user.email || 'Профиль и дела сохраняются автоматически.'}</p></div>
             <button className="secondary" onClick={signOut}>Выйти</button>
@@ -1892,15 +1853,8 @@ export default function Home() {
           </> : telegramSession.mode === 'error' ? <>
             <div><b>Telegram не подключился</b><p>Открой Псё через кнопку бота. Email здесь не нужен.</p></div>
             <button className="secondary" onClick={() => window.location.reload()}>Повторить</button>
-          </> : showEmailAuth ? <>
-            <div><b>Открыто без Telegram</b><p>Основной вход — через Telegram. Email здесь нужен только для письма со входом и не открывает чужой профиль.</p></div>
-            <div className="auth-inline-actions">
-              {authUiState === 'sent' ? <p className="auth-inline-note">Письмо для входа отправлено на {sentEmail}. Профиль откроется после перехода из письма.</p> : <>
-                <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="email для письма со входом" aria-label="Email для письма со входом" />
-                <button className="primary" onClick={signIn} disabled={authUiState === 'sending' || authCooldown > 0}>{authUiState === 'sending' ? 'Отправляю…' : authCooldown > 0 ? `Подожди ${authCooldown}s` : 'Отправить'}</button>
-              </>}
-              {authUiState === 'sent' && <button className="secondary" onClick={changeAuthEmail}>Другой email</button>}
-            </div>
+          </> : telegramSession.mode === 'browser' ? <>
+            <div><b>Демо без входа</b><p>Личный профиль, Plus и сохранение включаются только внутри Telegram Mini App. В браузере можно спокойно посмотреть интерфейс без авторизации.</p></div>
           </> : <>
             <div><b>Локальный режим</b><p>Можно продолжить сейчас. Для сохранения открой через Telegram.</p></div>
           </>}

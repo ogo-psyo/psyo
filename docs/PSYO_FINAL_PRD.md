@@ -158,12 +158,32 @@ GitHub: `https://github.com/ogo-psyo/psyo`
 
 До основной навигации есть отдельный слой:
 
-- вход;
-- Telegram Mini App session;
+- вход только через Telegram Mini App session;
 - создание первой собаки;
 - выбор активной собаки, если собак несколько;
 - восстановление незавершённого onboarding;
 - privacy/legal consent.
+
+### 5.1 Авторизация, управление доступом и админка
+
+Production-сценарий авторизации для продаваемого Псё:
+
+- пользователь открывает приложение из Telegram Mini App;
+- клиент передаёт raw Telegram `initData` только на серверный BFF;
+- сервер проверяет подпись и свежесть `initData`;
+- сервер создаёт/находит owner через `telegram_identities`;
+- сервер ставит HttpOnly app-session cookie;
+- private data, Plus и сохранение работают через owner-scoped Telegram session.
+
+Email / magic-link не является основным пользовательским сценарием и не должен показываться на первом экране. Browser fallback нужен только для demo/preview без обещания “войти в профиль”.
+
+Для управления авторизациями должна существовать отдельная админская поверхность:
+
+- `/admin` — token-protected интерфейс для owner bindings;
+- `/api/admin/auth/owners` — token-protected API под `PSYO_ADMIN_TOKEN`;
+- админка показывает Telegram identity, owner id, профиль, собак и subscription state;
+- админка не должна быть доступна без `PSYO_ADMIN_TOKEN`;
+- raw Telegram ID не показывается пользователю приложения.
 
 ### Multi-dog
 
