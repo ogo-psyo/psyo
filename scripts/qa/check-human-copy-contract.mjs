@@ -36,6 +36,8 @@ const forbiddenUiSnippets = [
   ['памятка не готова', 'today screen must not expose internal public-card readiness tags'],
   ['/6 в профиле', 'today screen must not expose profile completion counters'],
   ['Что важно для', 'today screen must lead with a useful action, not a dog identity/status card'],
+  ['Экспорт в .ics', 'calendar CRUD must not expose export implementation copy'],
+  ['В календарь', 'calendar CRUD must keep actions focused on done, reschedule, edit, delete'],
   ['{item.category} · {item.priority}', 'wishlist must not expose raw category/priority enums'],
   ['{item.category}{item.reason', 'wishlist history must not expose raw category enum'],
   ['{zone.type} ·', 'zones must not expose raw zone type enum'],

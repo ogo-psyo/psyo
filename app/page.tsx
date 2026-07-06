@@ -392,6 +392,7 @@ export default function Home() {
   const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
   const [calendarCursor, setCalendarCursor] = useState(() => new Date());
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => dateInputValue(new Date()));
+  const [careView, setCareView] = useState<'active' | 'history'>('active');
   const [newZoneTitle, setNewZoneTitle] = useState('');
   const [newZoneNote, setNewZoneNote] = useState('');
   const [newZoneType, setNewZoneType] = useState('safe_place');
@@ -1289,6 +1290,12 @@ export default function Home() {
     await loadBootstrap();
   }
 
+  async function rescheduleReminder(id: string, days: number) {
+    const next = new Date();
+    next.setDate(next.getDate() + days);
+    await updateReminder(id, { dueAt: isoFromDateInput(dateInputValue(next)), status: 'active' });
+  }
+
   function exportReminderToCalendar(reminder: ReminderView) {
     const start = new Date(reminder.snoozedUntil || reminder.dueAt);
     if (!Number.isFinite(start.getTime())) return setError('У дела некорректная дата.');
@@ -1997,48 +2004,24 @@ export default function Home() {
           <article className="match-card"><span>!</span><div><b>Сначала безопасность</b><p>Псё не показывает точные адреса и не обещает встречу. Проверь памятку, правило контакта и триггеры перед знакомством.</p></div></article>
         </WatercolorScreen>}
 
-        {tab === 'calendar' && <WatercolorScreen className="calendar-composition" tone="gold" eyebrow="календарь" title="План заботы" caption="Даты, история и ближайшие дела отдельно от главного экрана." aside={<span className="watercolor-hero-mark">▣</span>}>
-          <article className="today-reminder-panel care-calendar-panel">
-            <div className="section-title"><div><span className="eyebrow">месяц</span><h3>{calendarTitle}</h3></div><button className="secondary" onClick={() => {
-              setNewReminderDueDate(selectedCalendarDate);
-              document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus();
-            }}>Новое дело</button></div>
-            <div className="calendar-toolbar" aria-label="Месяц календаря">
-              <button className="secondary" onClick={() => setCalendarCursor((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))} aria-label="Предыдущий месяц">‹</button>
-              <b>{calendarTitle}</b>
-              <button className="secondary" onClick={() => setCalendarCursor((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))} aria-label="Следующий месяц">›</button>
+        {tab === 'calendar' && <WatercolorScreen className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Добавить, перенести, закрыть или вернуть дело без отдельной возни с календарём." aside={<span className="watercolor-hero-mark">▣</span>}>
+          <section className="care-workbench" aria-label="Дела ухода">
+            <div className="care-workbench-head">
+              <div><span className="eyebrow">сейчас в плане</span><h3>{activeReminders.length ? formatCount(activeReminders.length, ['активное дело', 'активных дела', 'активных дел']) : 'Добавь первое дело'}</h3></div>
+              <button className="primary" onClick={() => document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus()}>Добавить дело</button>
             </div>
-            <div className="calendar-mode-row" aria-label="Быстрые действия календаря">
-              <button onClick={() => {
-                const today = new Date();
-                setCalendarCursor(today);
-                setSelectedCalendarDate(dateInputValue(today));
-                setNewReminderDueDate(dateInputValue(today));
-              }}>Сегодня</button>
-              <span>{formatCount(activeReminders.length, ['активное дело', 'активных дела', 'активных дел'])}</span>
+            <div className="care-view-toggle" aria-label="Раздел плана ухода">
+              <button className={careView === 'active' ? 'active' : ''} onClick={() => setCareView('active')} aria-pressed={careView === 'active'}>Ближайшие</button>
+              <button className={careView === 'history' ? 'active' : ''} onClick={() => setCareView('history')} aria-pressed={careView === 'history'}>История</button>
             </div>
-            <div className="care-calendar-grid" aria-label="Календарь задач ухода">
-              {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((day) => <span key={day} className="calendar-weekday">{day}</span>)}
-              {calendarDays.map((day) => <button key={day.key} className={`calendar-day ${day.inMonth ? '' : 'muted'} ${day.reminders.length ? 'has-care' : ''} ${day.isSelected ? 'selected' : ''} ${day.isToday ? 'today' : ''}`} onClick={() => {
-                setSelectedCalendarDate(day.key);
-                setNewReminderDueDate(day.key);
-                if (!day.inMonth) setCalendarCursor(new Date(day.date.getFullYear(), day.date.getMonth(), 1));
-              }} aria-pressed={day.isSelected} aria-label={`${day.date.toLocaleDateString('ru-RU')}: ${formatCount(day.reminders.length, ['дело', 'дела', 'дел'])}`}>
-                <span>{day.date.getDate()}</span>
-                {day.reminders.length > 0 && <b>{day.reminders.length}</b>}
-              </button>)}
-            </div>
-            <section className="selected-day-panel" aria-label="Дела выбранного дня">
-              <div><span className="eyebrow">выбранный день</span><b>{selectedDateLabel}</b></div>
-              <button className="secondary" onClick={() => document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus()}>Добавить на дату</button>
-            </section>
-            {selectedDateReminders.length === 0 && <article className="empty-state"><b>На эту дату дел нет</b><p>Можно добавить обработку, вакцину, груминг, корм или визит к врачу.</p></article>}
-            {selectedDateReminders.length > 0 && <div className="today-reminder-list">
-              {selectedDateReminders.map((reminder) => <article key={reminder.id} className={`reminder-card compact ${new Date(reminder.snoozedUntil || reminder.dueAt).getTime() < new Date().setHours(0, 0, 0, 0) ? 'warning' : ''}`}>
+
+            {careView === 'active' && <div className="care-task-list">
+              {visibleCareReminders.length === 0 && <article className="care-empty-state"><b>Добавь первое дело</b><p>Обработка, вакцина, груминг, корм, врач или своё напоминание. Дальше оно будет видно первым экраном и уйдёт в историю после выполнения.</p></article>}
+              {visibleCareReminders.map((reminder) => <article key={reminder.id} className={`care-task-card ${new Date(reminder.snoozedUntil || reminder.dueAt).getTime() < new Date().setHours(0, 0, 0, 0) ? 'warning' : ''}`}>
                 {editingReminderId === reminder.id ? <form className="reminder-edit-form" onSubmit={(event) => {
                   event.preventDefault();
                   const data = new FormData(event.currentTarget);
-                  updateReminder(reminder.id, { title: String(data.get('title') || reminder.title), type: String(data.get('type') || reminder.type), dueAt: isoFromDateInput(String(data.get('dueDate') || reminderDateInputValue(reminder))) });
+                  updateReminder(reminder.id, { title: String(data.get('title') || reminder.title), type: String(data.get('type') || reminder.type), dueAt: isoFromDateInput(String(data.get('dueDate') || reminderDateInputValue(reminder))), status: 'active' });
                   setEditingReminderId(null);
                 }}>
                   <input name="title" defaultValue={reminder.title} aria-label="Название дела" />
@@ -2046,27 +2029,52 @@ export default function Home() {
                     <select name="type" defaultValue={reminder.type} aria-label="Тип дела">{careTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
                     <input name="dueDate" type="date" defaultValue={reminderDateInputValue(reminder)} aria-label="Дата дела" />
                   </div>
-                  <div><button type="submit">Сохранить</button><button type="button" onClick={() => setEditingReminderId(null)}>Отмена</button></div>
+                  <div className="care-row-actions"><button type="submit">Сохранить</button><button type="button" onClick={() => setEditingReminderId(null)}>Отмена</button></div>
                 </form> : <>
-                  <div><b>{reminder.title}</b><p>{careTypeLabel(reminder.type)} · {new Date(reminder.snoozedUntil || reminder.dueAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</p></div>
-                  <div><button onClick={() => completeReminder(reminder.id)}>Готово</button><button onClick={() => exportReminderToCalendar(reminder)}>В календарь</button><button onClick={() => setEditingReminderId(reminder.id)}>Править</button><button className="danger-action" onClick={() => deleteReminder(reminder.id)}>Удалить</button></div>
+                  <div className="care-task-main">
+                    <span>{careTypeLabel(reminder.type)}</span>
+                    <b>{reminder.title}</b>
+                    <p>{new Date(reminder.snoozedUntil || reminder.dueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'short' })}</p>
+                  </div>
+                  <div className="care-row-actions">
+                    <button onClick={() => completeReminder(reminder.id)}>Готово</button>
+                    <button onClick={() => rescheduleReminder(reminder.id, 1)}>Завтра</button>
+                    <button onClick={() => setEditingReminderId(reminder.id)}>Править</button>
+                    <button className="danger-action" onClick={() => deleteReminder(reminder.id)}>Удалить</button>
+                  </div>
                 </>}
               </article>)}
             </div>}
-          </article>
-          <article className="today-add-care">
+
+            {careView === 'history' && <div className="care-task-list">
+              {doneReminders.length === 0 && <article className="care-empty-state"><b>История начнётся после первого “готово”</b><p>Так будет видно, когда была обработка, вакцина, груминг или визит.</p></article>}
+              {doneReminders.slice(0, 12).map((reminder) => <article key={reminder.id} className="care-task-card done">
+                <div className="care-task-main">
+                  <span>{careTypeLabel(reminder.type)}</span>
+                  <b>{reminder.title}</b>
+                  <p>{new Date(reminder.completedAt || reminder.dueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                </div>
+                <div className="care-row-actions">
+                  <button onClick={() => updateReminder(reminder.id, { status: 'active', dueAt: isoFromDateInput(dateInputValue(new Date())) })}>Вернуть</button>
+                  <button className="danger-action" onClick={() => deleteReminder(reminder.id)}>Удалить</button>
+                </div>
+              </article>)}
+            </div>}
+          </section>
+
+          <article className="today-add-care care-composer">
             <div className="today-add-copy">
-              <span className="eyebrow">быстро добавить</span>
-              <b>Новая забота {petNameDatv}</b>
-              <p>Выбранная дата уже подставлена. Экспорт в .ics остаётся в карточке дела.</p>
+              <span className="eyebrow">новое дело</span>
+              <b>Что нужно не забыть</b>
+              <p>Название, тип и дата. Всё остальное можно поправить прямо в списке.</p>
             </div>
             <div className="quick-add today-quick-add">
               <input value={newReminderTitle} onChange={(event) => setNewReminderTitle(event.target.value)} placeholder="Например: обработка от клещей" />
-              <button aria-label="Добавить заботу" onClick={() => createReminder()}>+</button>
+              <button aria-label="Добавить дело" onClick={() => createReminder()}>+</button>
             </div>
             <div className="care-form-row">
-              <select value={newReminderType} onChange={(event) => setNewReminderType(event.target.value)} aria-label="Тип заботы">{careTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
-              <input type="date" value={newReminderDueDate} onChange={(event) => setNewReminderDueDate(event.target.value)} aria-label="Дата заботы" />
+              <select value={newReminderType} onChange={(event) => setNewReminderType(event.target.value)} aria-label="Тип дела">{careTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
+              <input type="date" value={newReminderDueDate} onChange={(event) => setNewReminderDueDate(event.target.value)} aria-label="Дата дела" />
             </div>
             <div className="care-preset-grid" aria-label="Быстро добавить уход">
               <button onClick={() => createReminder('Обработка от клещей и паразитов', 'parasite', 30)}>Обработка</button>
@@ -2074,18 +2082,6 @@ export default function Home() {
               <button onClick={() => createReminder('Груминг: шерсть и когти', 'grooming', 14)}>Груминг</button>
             </div>
           </article>
-          {visibleCareReminders.length > selectedDateReminders.length && <details className="upcoming-care-details">
-            <summary>Ближайшие дела</summary>
-            <div>
-              {visibleCareReminders.map((reminder) => <button key={reminder.id} onClick={() => {
-                const key = reminderDateInputValue(reminder);
-                const date = new Date(`${key}T10:00:00`);
-                setSelectedCalendarDate(key);
-                setNewReminderDueDate(key);
-                if (Number.isFinite(date.getTime())) setCalendarCursor(new Date(date.getFullYear(), date.getMonth(), 1));
-              }}><b>{reminder.title}</b><span>{reminderDateInputValue(reminder)}</span></button>)}
-            </div>
-          </details>}
         </WatercolorScreen>}
 
         {tab === 'card' && <WatercolorScreen className="public-card-screen" tone="gold" eyebrow="памятка" title="Что увидит другой человек" caption="Короткая карточка для догситтера, грумера, друга или человека во дворе. Без точного адреса и без лишней анкеты." aside={<span className="watercolor-hero-mark">◇</span>}>
