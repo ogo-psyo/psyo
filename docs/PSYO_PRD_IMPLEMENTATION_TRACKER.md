@@ -7,9 +7,9 @@ This tracker separates the target PRD from the current production state. It must
 ## Current Production Baseline
 
 - Production URL: `https://pso-mvp-uglanovrms-projects.vercel.app/`
-- Current release: `c5054e16c4d2a7a5df0f1cf011cbc385abf28a70`
-- Current deploy: `dpl_8qwHAc6WQ8nbbpaos8mDTZn6PXRU`
-- Latest local slice: PRD navigation, `things` screen, tracking/observations on `всё` and `псё`, owner-scoped active dog switching, public-card field controls, explicit map privacy modes, privacy-safe map share page, persisted dog-specific public card links, and owner revoke/regenerate controls for public-card links.
+- Current release: `7b8104d563c5e9314c8e40d2afd057d5cc605e02`
+- Current deploy: `dpl_9vxd88kzsyezZSgpW6MWq7PmeUob`
+- Latest production slice: PRD navigation, `things` screen, tracking/observations on `всё` and `псё`, owner-scoped active dog switching, public-card field controls, explicit map privacy modes, privacy-safe map share page, persisted dog-specific public card links, owner revoke/regenerate controls for public-card links, and PSYO product design context for UI gates.
 
 ## P0 Product Shape
 
