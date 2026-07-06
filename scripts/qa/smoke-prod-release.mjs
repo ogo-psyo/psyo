@@ -100,14 +100,18 @@ for (const path of ['/legal/privacy', '/legal/terms', '/support']) {
   evidence.checks[path] = { status: page.res.status, bytes: page.text.length };
 }
 
-const dogCard = await fetchText('/dog/qa-smoke?name=%D0%9C%D1%8F%D1%82%D0%B0&breed=%D0%BC%D0%B5%D1%82%D0%B8%D1%81&social=ask_first&area=%D1%80%D0%B0%D0%B9%D0%BE%D0%BD%20%D1%81%D0%BA%D1%80%D1%8B%D1%82&triggers=%D1%88%D1%83%D0%BC');
-requireOk('/dog/[slug]', dogCard.res.status);
+const dogCard = await fetchText('/dog/card?demo=1&name=%D0%9C%D1%8F%D1%82%D0%B0&breed=%D0%BC%D0%B5%D1%82%D0%B8%D1%81&social=ask_first&area=%D1%80%D0%B0%D0%B9%D0%BE%D0%BD%20%D1%81%D0%BA%D1%80%D1%8B%D1%82&triggers=%D1%88%D1%83%D0%BC');
+requireOk('/dog/card preview', dogCard.res.status);
 evidence.checks.publicDogCard = {
   status: dogCard.res.status,
   hasName: dogCard.text.includes('Мята'),
   hasAllowlistedArea: dogCard.text.includes('район скрыт'),
 };
-if (!dogCard.text.includes('район скрыт')) failures.push('/dog/[slug] smoke must render allowlisted approximate area');
+if (!dogCard.text.includes('район скрыт')) failures.push('/dog/card smoke must render allowlisted approximate area');
+
+const missingDogCard = await fetchText('/dog/qa-smoke-missing-slug');
+evidence.checks.missingPublicDogCard = { status: missingDogCard.res.status };
+requireStatus('/dog/[missing-slug]', missingDogCard.res.status, 404);
 
 const webhook = await fetchJson('/api/telegram/webhook', {
   method: 'POST',
