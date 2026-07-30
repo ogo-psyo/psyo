@@ -8,6 +8,9 @@ import { AppNavigation } from '@/components/app/AppNavigation';
 import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
 import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
+import { CoreOnboarding, type CoreOnboardingStep, type OnboardingCareChoice } from '@/components/onboarding/CoreOnboarding';
+import { NextCareCard } from '@/components/today/NextCareCard';
+import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
 import {
   anchorCards,
   avatarStyles,
@@ -46,7 +49,7 @@ import type { ActionSuggestion } from '@/packages/contracts';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
 type Notice = 'idle' | 'saved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
-type OnboardingStage = 'intro' | 'photo' | 'style' | 'generating' | 'reveal' | 'done';
+type OnboardingStage = CoreOnboardingStep | 'done';
 type ReminderView = { id: string; petId: string; type: string; title: string; dueAt: string; status: string; snoozedUntil?: string; completedAt?: string };
 type WishlistView = { id: string; petId: string; title: string; category: string; reason?: string; url?: string; priority: string; status: string; created_at?: string };
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; created_at?: string };
@@ -64,7 +67,6 @@ type ViralCardMood = 'soft' | 'bold' | 'safety' | 'club';
 type ViralFactKey = 'social' | 'energy' | 'care' | 'triggers' | 'area' | 'breed';
 type PublicCardFieldKey = 'breed' | 'character' | 'triggers' | 'area';
 type PublicCardCheck = { label: string; done: boolean; missing: string };
-type OnboardingCareChoice = { type: string; title: string; dueInDays: number; label: string; dueLabel: string };
 type TelegramSessionView = { mode: 'loading' | 'browser' | 'telegram' | 'error'; psyoUserId?: string; ownerId?: string; firstName?: string; username?: string; message?: string };
 type BillingView = {
   entitlements?: { tier?: 'free' | 'plus'; expiresAt?: string | null };
@@ -460,34 +462,19 @@ export default function Home() {
     try { window.localStorage.setItem(onboardingKey, 'done'); } catch {}
   }
 
-  function finishOnboarding(nextTab: Tab = 'today') {
-    const nextName = heroNameDraft.trim();
-    const petId = ensureGuestPetId();
-    if (nextName) updateProfile({ dogName: nextName, backendPetId: petId, isPublic: false });
-    completeOnboarding(nextTab);
-  }
-
   function startHeroFlow() {
     setError('');
-    setOnboardingStage('photo');
-  }
-
-  function skipHeroPhoto() {
-    setError('');
-    setOnboardingStage('style');
-  }
-
-  async function createOnboardingHero() {
-    const nextName = heroNameDraft.trim();
-    if (nextName) updateProfile({ dogName: nextName });
-    setOnboardingStage('generating');
-    await createAvatar(nextName ? { dogName: nextName } : undefined);
-    setOnboardingStage('reveal');
+    setOnboardingStage('pet');
   }
 
   async function saveOnboardingCarePlan(nextTab: Tab = 'today') {
     const nextName = heroNameDraft.trim();
-    if (nextName) updateProfile({ dogName: nextName });
+    if (!nextName) {
+      setError('Напиши имя собаки, чтобы создать план.');
+      setOnboardingStage('pet');
+      return;
+    }
+    updateProfile({ dogName: nextName });
     ensureGuestPetId();
     if (activeReminders.length === 0) await createReminder(onboardingCareChoice.title, onboardingCareChoice.type, onboardingCareChoice.dueInDays);
     completeOnboarding(nextTab);
@@ -1802,18 +1789,15 @@ export default function Home() {
       <section className="phone-shell onboarding-shell">
         {onboardingStage === 'intro' && <section className="onboarding-screen hero-intro">
           <div className="hero-copy">
-            <p className="eyebrow">Псё · план ухода и памятка</p>
             <h1>Псё помнит всё важное о собаке.</h1>
-            <p>За пару минут: добавь питомца, поставь первое дело ухода, потом отмечай выполнение и держи историю под рукой.</p>
+            <p>Добавь питомца и первое дело ухода. Дальше Псё напомнит и сохранит историю.</p>
           </div>
           <div className="hero-product-shot passport-shot" aria-label="Превью памятки собаки">
             <div className="shot-toolbar"><span /> <b>Сегодня</b><i>уход</i></div>
             <div className="shot-hero-row">
               <GeneratedAvatar profile={profile} ready demo size="large" />
-            <div><small>что не забыть</small><b>{profile.dogName || 'Мята'}</b><p>обработка от клещей · завтра 10:00</p></div>
+              <div><small>что не забыть</small><b>{profile.dogName || 'Мята'}</b><p>обработка от клещей · завтра 10:00</p></div>
             </div>
-            <div className="passport-note"><b>Всё под контролем</b><p>Профиль готов, первое дело запланировано, история ухода сохраняется после выполнения.</p></div>
-            <div className="shot-grid"><span>профиль</span><span>дело</span><span>памятка</span></div>
           </div>
           <div className="hero-actions">
             <button className="primary full" onClick={startHeroFlow}>Создать питомца</button>
@@ -1829,49 +1813,18 @@ export default function Home() {
           <p>Фото можно пропустить. Главное сейчас — создать карточку и поставить первое напоминание.</p>
           <label className="photo-drop"><input type="file" accept="image/*" multiple onChange={handlePhotos} /><span>{hasPhoto ? 'Фото выбрано · можно дальше' : 'Выбрать фото'}</span></label>
           {hasPhoto && <GeneratedAvatar profile={profile} ready imageUrl={profile.avatarImageUrl || profile.photos[0]?.dataUrl} size="large" />}
-          <button className="primary full" onClick={() => setOnboardingStage('style')}>{hasPhoto ? 'Дальше к первому делу' : 'Продолжить без фото'}</button>
-          <button className="secondary full" onClick={skipHeroPhoto}>Заполнить сначала текст</button>
+          <button className="primary full" onClick={() => setOnboardingStage('style')}>{hasPhoto ? 'Дальше' : 'Продолжить без фото'}</button>
         </section>}
 
         {onboardingStage === 'style' && <section className="onboarding-screen">
-          <p className="eyebrow">шаг 2 / план ухода</p>
-          <h2>Имя, правило и первое дело</h2>
-          <p>Этого хватает для первой пользы: собака появляется в Псё, первое дело попадает в план, после выполнения останется история.</p>
+          <p className="eyebrow">последний шаг</p>
+          <h2>Имя и первое дело</h2>
+          <p>Выбери ближайшую заботу. Остальное можно заполнить позже.</p>
           <input className="hero-name-input" value={heroNameDraft} onChange={(event) => setHeroNameDraft(event.target.value)} placeholder="Как зовут собаку?" />
-          <div className="style-picker-grid passport-picker">
-            <button className={profile.socialMode === 'можно знакомиться' ? 'active' : ''} onClick={() => updateProfile({ socialMode: 'можно знакомиться' })}><span>🐕</span><b>Можно знакомиться</b><small>но лучше спокойно и по одному</small></button>
-            <button className={profile.socialMode === 'сначала спросить' ? 'active' : ''} onClick={() => updateProfile({ socialMode: 'сначала спросить' })}><span>✋</span><b>Сначала спросить</b><small>самый безопасный публичный вариант</small></button>
-            <button className={profile.socialMode === 'лучше не подходить' ? 'active' : ''} onClick={() => updateProfile({ socialMode: 'лучше не подходить' })}><span>⚠️</span><b>Лучше не подходить</b><small>для тревожных, реактивных или болеющих собак</small></button>
-          </div>
           <div className="onboarding-reminder-picks" aria-label="Первое напоминание">
             {onboardingCareOptions.map((option) => <button key={option.type} className={onboardingCareChoice.type === option.type ? 'active' : ''} onClick={() => setOnboardingCareChoice(option)} aria-pressed={onboardingCareChoice.type === option.type}>{option.label}<small>{option.dueLabel}</small></button>)}
           </div>
-          <article className="onboarding-care-confirmation">
-            <span>первое дело</span>
-            <b>{onboardingCareChoice.title}</b>
-            <p>Появится на главной и в плане ухода. Когда отметишь “готово”, останется в истории.</p>
-          </article>
-          <button className="primary full" onClick={() => saveOnboardingCarePlan('today')}>Сохранить план ухода</button>
-          <button className="secondary full" onClick={() => setOnboardingStage('reveal')}>Сначала посмотреть карточку</button>
-        </section>}
-
-        {onboardingStage === 'generating' && <section className="onboarding-screen generating-screen">
-          <GeneratedAvatar profile={{ ...profile, dogName: heroNameDraft || profile.dogName }} ready demo size="large" />
-          <p className="eyebrow">собираю героя</p>
-          <h2>Ищу выражение, которое похоже на неё…</h2>
-          <div className="generation-steps"><span>Смотрю на характер</span><span>Подбираю стиль</span><span>Собираю карточку</span></div>
-        </section>}
-
-        {onboardingStage === 'reveal' && <section className="onboarding-screen reveal-screen">
-          <p className="eyebrow">готово</p>
-          <h2>{heroNameDraft || profile.dogName ? `Профиль: ${heroNameDraft || profile.dogName}` : 'Профиль пса готов'}</h2>
-          <div className="collectible-card passport-card-preview">
-              <GeneratedAvatar profile={{ ...profile, dogName: heroNameDraft || profile.dogName }} ready imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="large" />
-            <div className="card-stats"><b>{heroNameDraft || profile.dogName || 'Мой пёс'}</b><span>{profile.socialMode || 'сначала спросить'}</span><p>{breedLabel} · {profile.bio || 'короткая памятка появится после заполнения'}</p></div>
-          </div>
-          <div className="launch-next-grid"><button onClick={() => saveOnboardingCarePlan('profile')}>Профиль</button><button onClick={() => saveOnboardingCarePlan('today')}>Напомнить</button><button onClick={() => saveOnboardingCarePlan('profile')}>Дозаполнить памятку</button></div>
-          <button className="primary full" onClick={() => saveOnboardingCarePlan('calendar')}>Поставить первое напоминание</button>
-          <button className="secondary full" onClick={() => saveOnboardingCarePlan('today')}>Открыть приложение с первым делом</button>
+          <button className="primary full" onClick={() => saveOnboardingCarePlan('today')}>Начать с этого дела</button>
         </section>}
 
         {error && <p className="error-text" role="alert">{error}</p>}
@@ -1937,31 +1890,32 @@ export default function Home() {
             <button onClick={() => nextBestAction.reminderId ? completeReminder(nextBestAction.reminderId) : nextBestAction.target === 'today' ? document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus() : setTab(nextBestAction.target)}>{nextBestAction.action}</button>
           </article>
 
-          <section className="observation-panel" aria-label="Быстрое наблюдение">
-            <div className="section-title observation-title">
-              <div><span className="eyebrow">наблюдение</span><h3>Как {petName ? petName : 'собака'} сейчас</h3></div>
-              <span>{observations.length ? formatCount(observations.length, ['запись', 'записи', 'записей']) : 'первая запись'}</span>
+          <details className="observation-panel" aria-label="Быстрое наблюдение">
+            <summary>
+              <span><b>Записать наблюдение</b><small>{observationNextStepLine}</small></span>
+              <span>{observations.length ? formatCount(observations.length, ['запись', 'записи', 'записей']) : 'нет записей'}</span>
+            </summary>
+            <div className="observation-panel-body">
+              <form className="observation-form" onSubmit={(event) => { event.preventDefault(); submitObservation(); }}>
+                <ObservationChoice label="Настроение" value={observationDraft.mood} options={observationMoodOptions} onChange={(value) => updateObservationDraft({ mood: value })} />
+                <ObservationChoice label="Аппетит" value={observationDraft.appetite} options={observationAppetiteOptions} onChange={(value) => updateObservationDraft({ appetite: value })} />
+                <ObservationChoice label="Стул" value={observationDraft.stool} options={observationStoolOptions} onChange={(value) => updateObservationDraft({ stool: value })} />
+                <ObservationChoice label="Энергия" value={observationDraft.energy} options={observationEnergyOptions} onChange={(value) => updateObservationDraft({ energy: value })} />
+                <textarea value={observationDraft.note || ''} onChange={(event) => updateObservationDraft({ note: event.target.value })} placeholder="Короткая заметка: прогулка, корм, сон, что заметили" aria-label="Заметка наблюдения" />
+                <button className="primary" type="submit" disabled={observationSaving}>{observationSaving ? 'Сохраняю…' : 'Записать наблюдение'}</button>
+              </form>
+              {observations.length > 0 && <div className="observation-history" aria-label="Последние наблюдения">
+                {observations.slice(0, 2).map((item) => <article key={item.id}>
+                  <div>
+                    <b>{new Date(item.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })} · {new Date(item.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</b>
+                    <p>{item.mood} · аппетит {item.appetite} · стул {item.stool} · энергия {item.energy}</p>
+                    {item.note && <small>{item.note}</small>}
+                  </div>
+                  <span>{item.syncStatus === 'saved' ? 'сохранено' : 'локально'}</span>
+                </article>)}
+              </div>}
             </div>
-            <p className="observation-next-line">{observationNextStepLine}</p>
-            <form className="observation-form" onSubmit={(event) => { event.preventDefault(); submitObservation(); }}>
-              <ObservationChoice label="Настроение" value={observationDraft.mood} options={observationMoodOptions} onChange={(value) => updateObservationDraft({ mood: value })} />
-              <ObservationChoice label="Аппетит" value={observationDraft.appetite} options={observationAppetiteOptions} onChange={(value) => updateObservationDraft({ appetite: value })} />
-              <ObservationChoice label="Стул" value={observationDraft.stool} options={observationStoolOptions} onChange={(value) => updateObservationDraft({ stool: value })} />
-              <ObservationChoice label="Энергия" value={observationDraft.energy} options={observationEnergyOptions} onChange={(value) => updateObservationDraft({ energy: value })} />
-              <textarea value={observationDraft.note || ''} onChange={(event) => updateObservationDraft({ note: event.target.value })} placeholder="Короткая заметка: прогулка, корм, сон, что заметили" aria-label="Заметка наблюдения" />
-              <button className="primary" type="submit" disabled={observationSaving}>{observationSaving ? 'Сохраняю…' : 'Записать наблюдение'}</button>
-            </form>
-            <div className="observation-history" aria-label="Последние наблюдения">
-              {observations.length === 0 ? <article className="observation-empty"><b>История начнётся с первой записи</b><p>Достаточно одного короткого наблюдения в день: настроение, аппетит, стул, энергия и заметка.</p></article> : observations.slice(0, 4).map((item) => <article key={item.id}>
-                <div>
-                  <b>{new Date(item.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })} · {new Date(item.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</b>
-                  <p>{item.mood} · аппетит {item.appetite} · стул {item.stool} · энергия {item.energy}</p>
-                  {item.note && <small>{item.note}</small>}
-                </div>
-                <span>{item.syncStatus === 'saved' ? 'сохранено' : 'локально'}</span>
-              </article>)}
-            </div>
-          </section>
+          </details>
 
           <section className="kit-daily-status action-first" aria-label="Быстрые действия">
             <button onClick={() => setTab('calendar')}>
@@ -1973,16 +1927,6 @@ export default function Home() {
               <span>Для людей</span>
               <b>Памятка</b>
               <small>что увидит другой человек</small>
-            </button>
-            <button onClick={() => setTab('things')}>
-              <span>Вещи</span>
-              <b>Что нужно</b>
-              <small>покупки, услуги и подарки</small>
-            </button>
-            <button onClick={() => askAssistant('Что мне важно проверить по уходу на этой неделе?')}>
-              <span>Ассистент</span>
-              <b>Спросить по уходу</b>
-              <small>без диагнозов и лишнего чата</small>
             </button>
           </section>
 

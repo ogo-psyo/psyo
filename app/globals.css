@@ -3156,6 +3156,41 @@ body::before { opacity: .12; background-size: 48px 48px; }
     radial-gradient(ellipse at 100% 16%, oklch(0.92 0.08 82 / .34), transparent 40%),
     oklch(1 0.006 84 / .66);
 }
+.observation-panel > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  list-style: none;
+}
+.observation-panel > summary::-webkit-details-marker {
+  display: none;
+}
+.observation-panel > summary > span:first-child {
+  display: grid;
+  gap: 4px;
+}
+.observation-panel > summary b {
+  color: var(--ink);
+  font-size: 15px;
+}
+.observation-panel > summary small,
+.observation-panel > summary > span:last-child {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 760;
+}
+.observation-panel > summary > span:last-child {
+  flex: 0 0 auto;
+}
+.observation-panel-body {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid oklch(0.13 0.05 292 / .08);
+}
 .observation-title > span {
   flex: 0 0 auto;
   border: 1px solid oklch(0.13 0.05 292 / .10);
