@@ -5775,3 +5775,80 @@ body::before,
     min-height: 40px;
   }
 }
+
+/* Tablet onboarding is a composed workspace, not a phone column beside empty space. */
+@media (min-width: 768px) {
+  .app-canvas.onboarding-canvas {
+    grid-template-areas: "main";
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    max-width: 1180px;
+    height: 100dvh;
+    padding: clamp(20px, 3vw, 36px);
+  }
+
+  .onboarding-canvas .onboarding-shell {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    align-content: center;
+    border-radius: 32px;
+    padding: 0;
+  }
+
+  .onboarding-screen.core-onboarding {
+    width: 100%;
+    max-width: 920px;
+    min-height: auto;
+    padding: clamp(30px, 5vw, 56px);
+  }
+
+  .onboarding-screen.core-onboarding.pet,
+  .onboarding-screen.core-onboarding.care {
+    max-width: 680px;
+  }
+
+  .onboarding-screen.core-onboarding.intro {
+    grid-template-areas:
+      "copy preview"
+      "primary preview"
+      "example preview";
+    grid-template-columns: minmax(0, .9fr) minmax(300px, 1.1fr);
+    grid-template-rows: auto auto auto;
+    align-content: center;
+    align-items: center;
+    column-gap: clamp(28px, 5vw, 64px);
+    row-gap: 14px;
+  }
+
+  .core-onboarding.intro .hero-copy {
+    grid-area: copy;
+    align-self: end;
+  }
+
+  .core-onboarding.intro .hero-copy h1 {
+    font-size: clamp(44px, 6vw, 58px);
+  }
+
+  .core-onboarding.intro .hero-product-shot {
+    grid-area: preview;
+    align-content: center;
+    min-height: clamp(280px, 38vh, 380px) !important;
+    padding: clamp(20px, 3vw, 32px);
+  }
+
+  .core-onboarding.intro > .primary {
+    grid-area: primary;
+  }
+
+  .core-onboarding.intro > .hero-example-link {
+    grid-area: example;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-canvas.onboarding-canvas {
+    grid-template-areas: "main";
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

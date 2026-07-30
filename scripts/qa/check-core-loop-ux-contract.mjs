@@ -49,6 +49,10 @@ for (const token of ['@media (min-width: 768px)', '@media (min-width: 1024px)', 
   if (!css.includes(token)) failures.push(`responsive shell missing: ${token}`);
 }
 
+for (const token of ['.app-canvas.onboarding-canvas', '"copy preview"', 'ipad-portrait-820', 'ipad-landscape-1180']) {
+  if (!(css + read('scripts/qa/design-screenshots.mjs')).includes(token)) failures.push(`tablet onboarding coverage missing: ${token}`);
+}
+
 for (const token of ['today-first-viewport', 'Сегодня с', 'Открыть план']) {
   if (!nextCareCard.includes(token)) failures.push(`focused Today missing: ${token}`);
 }
