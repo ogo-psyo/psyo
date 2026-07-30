@@ -9,6 +9,7 @@ const files = {
   domain: readFileSync('lib/domain.ts', 'utf8'),
   schema: readFileSync('supabase/schema.sql', 'utf8'),
   migration: readFileSync('supabase/migrations/20260702120000_pet_observations.sql', 'utf8'),
+  disclosure: readFileSync('components/today/ObservationDisclosure.tsx', 'utf8'),
 };
 
 const failures = [];
@@ -66,12 +67,16 @@ for (const token of [
   "ObservationChoice",
   "submitObservation",
   "{tab === 'today'",
-  'className="observation-panel"',
+  '<ObservationDisclosure',
   'className="profile-observation-timeline"',
   'aria-label="История наблюдений собаки"',
   'Записать наблюдение',
 ]) {
   if (!files.page.includes(token)) failures.push(`today observation UI missing: ${token}`);
+}
+
+for (const token of ['className="observation-disclosure"', 'Записать наблюдение', 'Последние записи']) {
+  if (!files.disclosure.includes(token)) failures.push(`observation disclosure missing: ${token}`);
 }
 
 if (failures.length) {

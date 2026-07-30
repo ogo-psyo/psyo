@@ -427,6 +427,7 @@ export default function Home() {
   const [onboardingStage, setOnboardingStage] = useState<OnboardingStage>('intro');
   const [heroNameDraft, setHeroNameDraft] = useState('');
   const [onboardingCareChoice, setOnboardingCareChoice] = useState<OnboardingCareChoice>(onboardingCareOptions[0]);
+  const [onboardingSaving, setOnboardingSaving] = useState(false);
   const [telegramSession, setTelegramSession] = useState<TelegramSessionView>({ mode: 'loading' });
   const [billing, setBilling] = useState<BillingView | null>(null);
   const [careFeedback, setCareFeedback] = useState<CareFeedback>(null);
@@ -436,11 +437,15 @@ export default function Home() {
   const observationsLoadedRef = useRef(false);
   const phoneShellRef = useRef<HTMLElement | null>(null);
 
-  useEffect(() => {
+  function resetViewScroll() {
     window.requestAnimationFrame(() => {
       phoneShellRef.current?.scrollTo({ top: 0, behavior: 'auto' });
       window.scrollTo({ top: 0, behavior: 'auto' });
     });
+  }
+
+  useEffect(() => {
+    resetViewScroll();
   }, [tab]);
 
   function authHeaders(): Record<string, string> {
@@ -468,16 +473,25 @@ export default function Home() {
   }
 
   async function saveOnboardingCarePlan(nextTab: Tab = 'today') {
+    if (onboardingSaving) return;
     const nextName = heroNameDraft.trim();
     if (!nextName) {
       setError('Напиши имя собаки, чтобы создать план.');
       setOnboardingStage('pet');
       return;
     }
-    updateProfile({ dogName: nextName });
-    ensureGuestPetId();
-    if (activeReminders.length === 0) await createReminder(onboardingCareChoice.title, onboardingCareChoice.type, onboardingCareChoice.dueInDays);
-    completeOnboarding(nextTab);
+    setOnboardingSaving(true);
+    try {
+      updateProfile({ dogName: nextName });
+      ensureGuestPetId();
+      if (activeReminders.length === 0) {
+        const created = await createReminder(onboardingCareChoice.title, onboardingCareChoice.type, onboardingCareChoice.dueInDays);
+        if (!created) return;
+      }
+      completeOnboarding(nextTab);
+    } finally {
+      setOnboardingSaving(false);
+    }
   }
 
   async function loadBootstrap(accessToken?: string, petId?: string) {
@@ -1070,10 +1084,16 @@ export default function Home() {
 
   async function createReminder(title?: string, type = newReminderType, dueInDays = 0, explicitDueDate?: string) {
     const reminderTitle = (title || newReminderTitle).trim();
-    if (!reminderTitle) return setError('Напиши, что нужно сделать для собаки.');
+    if (!reminderTitle) {
+      setError('Напиши, что нужно сделать для собаки.');
+      return false;
+    }
     const dueAt = explicitDueDate ? isoFromDateInput(explicitDueDate) : title ? new Date(Date.now() + dueInDays * 86400000).toISOString() : isoFromDateInput(newReminderDueDate);
     if (!profile.backendPetId) {
-      if (!isGuestMode()) return setError('Сначала сохрани профиль собаки.');
+      if (!isGuestMode()) {
+        setError('Сначала сохрани профиль собаки.');
+        return false;
+      }
       ensureGuestPetId();
     }
     if (isGuestMode()) {
@@ -1082,7 +1102,8 @@ export default function Home() {
       setReminders((current) => [{ id, petId, type, title: reminderTitle, dueAt, status: 'active' }, ...current]);
       setNewReminderTitle('');
       setCareFeedback({ kind: 'created', reminderId: id, title: reminderTitle });
-      return;
+      if (tab === 'today') resetViewScroll();
+      return true;
     }
     const response = await fetch('/api/reminders', {
       method: 'POST',
@@ -1090,10 +1111,15 @@ export default function Home() {
       body: JSON.stringify({ petId: profile.backendPetId, title: reminderTitle, dueAt, type, source: 'manual_calendar' }),
     });
     const result = await response.json();
-    if (!response.ok) return setError('Не удалось создать напоминание');
+    if (!response.ok) {
+      setError('Не удалось создать напоминание');
+      return false;
+    }
     setNewReminderTitle('');
     await loadBootstrap();
     setCareFeedback({ kind: 'created', reminderId: String(result.reminder?.id || ''), title: reminderTitle });
+    if (tab === 'today') resetViewScroll();
+    return true;
   }
 
   async function createWishlistItem(preset?: { title: string; category?: string; reason?: string; priority?: string }) {
@@ -1787,45 +1813,29 @@ export default function Home() {
   if (onboardingStage !== 'done') return (
     <main className="app-canvas onboarding-canvas">
       <section className="phone-shell onboarding-shell">
-        {onboardingStage === 'intro' && <section className="onboarding-screen hero-intro">
-          <div className="hero-copy">
-            <h1>Псё помнит всё важное о собаке.</h1>
-            <p>Добавь питомца и первое дело ухода. Дальше Псё напомнит и сохранит историю.</p>
-          </div>
-          <div className="hero-product-shot passport-shot" aria-label="Превью памятки собаки">
-            <div className="shot-toolbar"><span /> <b>Сегодня</b><i>уход</i></div>
+        <CoreOnboarding
+          step={onboardingStage}
+          dogName={heroNameDraft}
+          hasPhoto={hasPhoto}
+          careChoice={onboardingCareChoice}
+          careOptions={onboardingCareOptions}
+          busy={onboardingSaving}
+          preview={<div className="hero-product-shot passport-shot" aria-label="Пример ближайшего дела">
+            <div className="shot-toolbar"><span /><b>Сегодня</b><i>уход</i></div>
             <div className="shot-hero-row">
               <GeneratedAvatar profile={profile} ready demo size="large" />
-              <div><small>что не забыть</small><b>{profile.dogName || 'Мята'}</b><p>обработка от клещей · завтра 10:00</p></div>
+              <div><small>что не забыть</small><b>{profile.dogName || 'Мята'}</b><p>обработка от клещей · завтра</p></div>
             </div>
-          </div>
-          <div className="hero-actions">
-            <button className="primary full" onClick={startHeroFlow}>Создать питомца</button>
-          </div>
-          <button className="hero-example-link" onClick={seedDemoExperience}>Открыть пример без сохранения</button>
-          <div className="hero-trust-strip"><span>Без скачивания</span><span>Публично только выбранное</span><span>Гео — вручную</span></div>
-          <div className="hero-legal-links"><a href="/legal/privacy">Конфиденциальность</a><a href="/legal/terms">Условия</a><a href="/support">Поддержка</a></div>
-        </section>}
-
-        {onboardingStage === 'photo' && <section className="onboarding-screen">
-          <p className="eyebrow">шаг 1 / фото</p>
-          <h2>Добавь питомца</h2>
-          <p>Фото можно пропустить. Главное сейчас — создать карточку и поставить первое напоминание.</p>
-          <label className="photo-drop"><input type="file" accept="image/*" multiple onChange={handlePhotos} /><span>{hasPhoto ? 'Фото выбрано · можно дальше' : 'Выбрать фото'}</span></label>
-          {hasPhoto && <GeneratedAvatar profile={profile} ready imageUrl={profile.avatarImageUrl || profile.photos[0]?.dataUrl} size="large" />}
-          <button className="primary full" onClick={() => setOnboardingStage('style')}>{hasPhoto ? 'Дальше' : 'Продолжить без фото'}</button>
-        </section>}
-
-        {onboardingStage === 'style' && <section className="onboarding-screen">
-          <p className="eyebrow">последний шаг</p>
-          <h2>Имя и первое дело</h2>
-          <p>Выбери ближайшую заботу. Остальное можно заполнить позже.</p>
-          <input className="hero-name-input" value={heroNameDraft} onChange={(event) => setHeroNameDraft(event.target.value)} placeholder="Как зовут собаку?" />
-          <div className="onboarding-reminder-picks" aria-label="Первое напоминание">
-            {onboardingCareOptions.map((option) => <button key={option.type} className={onboardingCareChoice.type === option.type ? 'active' : ''} onClick={() => setOnboardingCareChoice(option)} aria-pressed={onboardingCareChoice.type === option.type}>{option.label}<small>{option.dueLabel}</small></button>)}
-          </div>
-          <button className="primary full" onClick={() => saveOnboardingCarePlan('today')}>Начать с этого дела</button>
-        </section>}
+          </div>}
+          onStart={startHeroFlow}
+          onSkip={seedDemoExperience}
+          onNameChange={(value) => { setHeroNameDraft(value); setError(''); }}
+          onPhotoChange={handlePhotos}
+          onCareChoice={setOnboardingCareChoice}
+          onBack={() => setOnboardingStage(onboardingStage === 'care' ? 'pet' : 'intro')}
+          onContinue={() => setOnboardingStage('care')}
+          onFinish={() => saveOnboardingCarePlan('today')}
+        />
 
         {error && <p className="error-text" role="alert">{error}</p>}
       </section>
@@ -1880,106 +1890,56 @@ export default function Home() {
         </section>
 
         {tab === 'today' && <section className="screen-stack today-screen kit-today-screen">
-          <article className={`kit-next-card ${nextBestAction.reminderId ? 'warning' : ''}`}>
-            <span>{nextBestAction.emoji}</span>
-            <div>
-              <p className="eyebrow">ближайший шаг</p>
-              <h3>{nextBestAction.title}</h3>
-              <p>{nextBestAction.caption}</p>
-            </div>
-            <button onClick={() => nextBestAction.reminderId ? completeReminder(nextBestAction.reminderId) : nextBestAction.target === 'today' ? document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus() : setTab(nextBestAction.target)}>{nextBestAction.action}</button>
-          </article>
+          <NextCareCard
+            care={todayCare}
+            dogName={petName || 'собакой'}
+            onPrimaryAction={() => todayCare.reminderId
+              ? completeReminder(todayCare.reminderId)
+              : todayCare.target === 'history'
+                ? (setCareView('history'), setTab('calendar'))
+                : setTab('calendar')}
+            onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
+          />
 
-          <details className="observation-panel" aria-label="Быстрое наблюдение">
-            <summary>
-              <span><b>Записать наблюдение</b><small>{observationNextStepLine}</small></span>
-              <span>{observations.length ? formatCount(observations.length, ['запись', 'записи', 'записей']) : 'нет записей'}</span>
-            </summary>
-            <div className="observation-panel-body">
-              <form className="observation-form" onSubmit={(event) => { event.preventDefault(); submitObservation(); }}>
-                <ObservationChoice label="Настроение" value={observationDraft.mood} options={observationMoodOptions} onChange={(value) => updateObservationDraft({ mood: value })} />
-                <ObservationChoice label="Аппетит" value={observationDraft.appetite} options={observationAppetiteOptions} onChange={(value) => updateObservationDraft({ appetite: value })} />
-                <ObservationChoice label="Стул" value={observationDraft.stool} options={observationStoolOptions} onChange={(value) => updateObservationDraft({ stool: value })} />
-                <ObservationChoice label="Энергия" value={observationDraft.energy} options={observationEnergyOptions} onChange={(value) => updateObservationDraft({ energy: value })} />
-                <textarea value={observationDraft.note || ''} onChange={(event) => updateObservationDraft({ note: event.target.value })} placeholder="Короткая заметка: прогулка, корм, сон, что заметили" aria-label="Заметка наблюдения" />
-                <button className="primary" type="submit" disabled={observationSaving}>{observationSaving ? 'Сохраняю…' : 'Записать наблюдение'}</button>
-              </form>
-              {observations.length > 0 && <div className="observation-history" aria-label="Последние наблюдения">
-                {observations.slice(0, 2).map((item) => <article key={item.id}>
-                  <div>
-                    <b>{new Date(item.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })} · {new Date(item.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</b>
-                    <p>{item.mood} · аппетит {item.appetite} · стул {item.stool} · энергия {item.energy}</p>
-                    {item.note && <small>{item.note}</small>}
-                  </div>
-                  <span>{item.syncStatus === 'saved' ? 'сохранено' : 'локально'}</span>
-                </article>)}
-              </div>}
-            </div>
-          </details>
-
-          <section className="kit-daily-status action-first" aria-label="Быстрые действия">
-            <button onClick={() => setTab('calendar')}>
-              <span>Уход</span>
-              <b>Добавить дело</b>
-              <small>создать дело в плане</small>
-            </button>
-            <button onClick={() => setTab('card')}>
-              <span>Для людей</span>
-              <b>Памятка</b>
-              <small>что увидит другой человек</small>
-            </button>
-          </section>
-
-          {activeReminders.length === 0 && <section className="today-care-presets" aria-label="Первое дело ухода">
-            <div><span className="eyebrow">быстро начать</span><b>Поставь первое дело в план</b></div>
+          {todayCare.state === 'empty' && <section className="today-care-presets" aria-label="Первое дело ухода">
+            <b>Выбери первое дело</b>
             <div>
               {onboardingCareOptions.map((option) => <button key={option.type} onClick={() => createReminder(option.title, option.type, option.dueInDays)}>{option.label}<small>{option.dueLabel}</small></button>)}
             </div>
+            <button className="text-action" type="button" onClick={() => setTab('calendar')}>Добавить своё</button>
           </section>}
 
-          <section className="kit-below">
-            <section className="care-history-panel" aria-label="История ухода">
-              <div className="section-title">
-                <div><span className="eyebrow">план и история ухода</span><h3>{activeReminders.length > 0 ? 'Что сделать и что уже закрыто' : 'Сначала добавь первое дело'}</h3></div>
-                <button className="secondary" onClick={() => setTab('calendar')}>План</button>
-              </div>
-              {activeReminders.length === 0 && doneReminders.length === 0 && <p>Выбери конкретное дело и дату. После выполнения оно останется в истории, чтобы не вспоминать по памяти, когда была обработка, вакцина или груминг.</p>}
-              {activeReminders.length > 0 && <div className="care-history-list active-care-list">{visibleCareReminders.slice(0, 3).map((reminder) => <article key={reminder.id}><b>{reminder.title}</b><span>{new Date(reminder.snoozedUntil || reminder.dueAt).toLocaleDateString('ru-RU')} · ждёт</span><button onClick={() => completeReminder(reminder.id)}>Готово</button></article>)}</div>}
-              {doneReminders.length > 0 && <div className="care-history-list">{doneReminders.slice(0, 3).map((reminder) => <article key={reminder.id}><b>{reminder.title}</b><span>{new Date(reminder.completedAt || reminder.dueAt).toLocaleDateString('ru-RU')} · готово</span></article>)}</div>}
-            </section>
-
-            <section className="plus-gate-card" aria-label="Псё Плюс">
-              <div>
-                <span className="eyebrow">{isPlusActive ? 'подписка активна' : 'псё плюс'}</span>
-                <h3>{plusPlan?.name || 'Псё Плюс'} · {plusPriceLabel}</h3>
-                <p>{plusPlan?.headline || 'Больше истории, собак, карточек и экспорта без продажи базовой безопасности.'}</p>
-                <div className="plus-plan-list">
-                  {plusIncluded.map((item) => <span key={item}>{item}</span>)}
+          <ObservationDisclosure
+            countLabel={observations.length ? formatCount(observations.length, ['запись', 'записи', 'записей']) : 'нет записей'}
+            hint={observationNextStepLine}
+            history={observations.length > 0 ? <div className="observation-history" aria-label="Последние наблюдения">
+              {observations.slice(0, 2).map((item) => <article key={item.id}>
+                <div>
+                  <b>{new Date(item.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })} · {new Date(item.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</b>
+                  <p>{item.mood} · аппетит {item.appetite} · стул {item.stool} · энергия {item.energy}</p>
+                  {item.note && <small>{item.note}</small>}
                 </div>
-                <small className="plus-gate-note">{plusGateLine}</small>
-              </div>
-              <button className="primary" onClick={isPlusActive ? () => setTab('profile') : startPlusCheckout}>{isPlusActive ? 'Открыть профиль' : plusPlan?.cta || 'Оформить'}</button>
-            </section>
+                <span>{item.syncStatus === 'saved' ? 'сохранено' : 'локально'}</span>
+              </article>)}
+            </div> : undefined}
+          >
+            <form className="observation-form" onSubmit={(event) => { event.preventDefault(); submitObservation(); }}>
+              <ObservationChoice label="Настроение" value={observationDraft.mood} options={observationMoodOptions} onChange={(value) => updateObservationDraft({ mood: value })} />
+              <ObservationChoice label="Аппетит" value={observationDraft.appetite} options={observationAppetiteOptions} onChange={(value) => updateObservationDraft({ appetite: value })} />
+              <ObservationChoice label="Стул" value={observationDraft.stool} options={observationStoolOptions} onChange={(value) => updateObservationDraft({ stool: value })} />
+              <ObservationChoice label="Энергия" value={observationDraft.energy} options={observationEnergyOptions} onChange={(value) => updateObservationDraft({ energy: value })} />
+              <textarea value={observationDraft.note || ''} onChange={(event) => updateObservationDraft({ note: event.target.value })} placeholder="Короткая заметка: прогулка, корм, сон, что заметили" aria-label="Заметка наблюдения" />
+              <button className="primary" type="submit" disabled={observationSaving}>{observationSaving ? 'Сохраняю…' : 'Записать наблюдение'}</button>
+            </form>
+          </ObservationDisclosure>
 
-            <section className="today-action-hub" aria-label="Быстрые действия на сегодня">
-              <div className="today-support-row">
-                {!profileReady && <article className="profile-nudge-card">
-                  <div>
-                    <b>В профиле {petNameGent} не хватает данных</b>
-                    <p>{missingProfileSummary ? `Добавьте: ${missingProfileSummary.toLowerCase()}. Так напоминания и ответы будут точнее.` : 'Добавьте пару деталей, чтобы Псё лучше понимал контекст.'}</p>
-                  </div>
-                  <button className="secondary" onClick={() => setTab('profile')}>Заполнить</button>
-                </article>}
-                <article className="share-mini-card">
-                  <div><b>Памятка для людей рядом</b><p>{publicCardReady ? 'Минимум готов: можно проверить и отправить человеку, который гуляет или сидит с собакой.' : `Не хватает: ${publicCardMissing.slice(0, 2).join(', ')}.`}</p></div>
-                  <div className="share-mini-actions">
-                    <button className="primary" onClick={() => setTab('card')}>Проверить</button>
-                    <button className="secondary" onClick={publicCardReady ? openPublicCard : () => setTab('profile')}>{publicCardReady ? 'Открыть' : 'Дозаполнить'}</button>
-                  </div>
-                </article>
-              </div>
-            </section>
-          </section>
+          <button
+            className="today-plan-link"
+            type="button"
+            onClick={() => { setCareView(doneReminders.length ? 'history' : 'active'); setTab('calendar'); }}
+          >
+            {doneReminders.length ? 'Посмотреть план и историю' : 'Открыть весь план'}
+          </button>
         </section>}
 
         {tab === 'assistant' && <WatercolorScreen className="assistant-composition" tone="green" eyebrow="помощник по уходу" title="Выбери безопасный сценарий" caption="Ответ должен закончиться действием: дело в план, обновление памятки или заметка владельца." aside={<span className="watercolor-hero-mark">✦</span>}>
@@ -2266,6 +2226,17 @@ export default function Home() {
               <button className="secondary full" onClick={() => setTab('calendar')}>Добавить дело в план</button>
             </div>
           </details>
+
+          <section className="plus-gate-card profile-plus-card" aria-label="Псё Плюс">
+            <div>
+              <span className="eyebrow">{isPlusActive ? 'подписка активна' : 'псё плюс'}</span>
+              <h3>{plusPlan?.name || 'Псё Плюс'} · {plusPriceLabel}</h3>
+              <p>{plusPlan?.headline || 'Больше истории, собак и карточек без ограничения базовой безопасности.'}</p>
+              <div className="plus-plan-list">{plusIncluded.map((item) => <span key={item}>{item}</span>)}</div>
+              <small className="plus-gate-note">{plusGateLine}</small>
+            </div>
+            <button className="primary" onClick={isPlusActive ? () => setTab('profile') : startPlusCheckout}>{isPlusActive ? 'Подписка активна' : plusPlan?.cta || 'Оформить'}</button>
+          </section>
         </WatercolorScreen>}
 
         {tab === 'things' && <WatercolorScreen className="things-composition" tone="gold" eyebrow="вещи" title="Что нужно именно этой собаке" caption="Wishlist, уход, повторные покупки и подарки без превращения Псё в магазин." aside={<span className="watercolor-hero-mark">◈</span>}>

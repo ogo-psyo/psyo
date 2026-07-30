@@ -11,6 +11,9 @@ const today = read('lib/today.ts');
 const careNotice = read('components/care/CareActionNotice.tsx');
 const deleteDialog = read('components/care/DeleteCareDialog.tsx');
 const desktopContext = read('components/app/DesktopContextPanel.tsx');
+const nextCareCard = read('components/today/NextCareCard.tsx');
+const observationDisclosure = read('components/today/ObservationDisclosure.tsx');
+const onboarding = read('components/onboarding/CoreOnboarding.tsx');
 const css = read('app/globals.css');
 const failures = [];
 
@@ -44,6 +47,26 @@ for (const token of ['Ближайшее дело', 'История ухода',
 
 for (const token of ['@media (min-width: 768px)', '@media (min-width: 1024px)', 'max-width: 1360px', 'grid-template-areas']) {
   if (!css.includes(token)) failures.push(`responsive shell missing: ${token}`);
+}
+
+for (const token of ['today-first-viewport', 'Сегодня с', 'Открыть план']) {
+  if (!nextCareCard.includes(token)) failures.push(`focused Today missing: ${token}`);
+}
+
+for (const token of ['<details', 'Записать наблюдение', 'Последние записи']) {
+  if (!observationDisclosure.includes(token)) failures.push(`observation disclosure missing: ${token}`);
+}
+
+for (const token of ['шаг 1 из 2', 'шаг 2 из 2', 'Назад', 'Добавить дело и открыть Сегодня', 'dog-photo-help']) {
+  if (!onboarding.includes(token)) failures.push(`onboarding contract missing: ${token}`);
+}
+
+if (page.includes('Имя, правило и первое дело')) failures.push('onboarding still overloads one step');
+const todayStart = page.indexOf("{tab === 'today'");
+const todayEnd = page.indexOf("{tab === 'assistant'", todayStart);
+const todayBlock = todayStart >= 0 && todayEnd > todayStart ? page.slice(todayStart, todayEnd) : '';
+if (todayBlock.includes('className="plus-gate-card"')) {
+  failures.push('Today still contains a Plus promotion');
 }
 
 if (failures.length) {

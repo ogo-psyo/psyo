@@ -33,6 +33,13 @@ async function runScenario(viewport, label) {
   }, profile);
   await page.reload({ waitUntil: 'networkidle' });
 
+  const firstViewport = page.getByTestId('today-first-viewport');
+  await firstViewport.getByRole('heading', { name: /Сегодня с/ }).waitFor();
+  const firstViewportPrimaryCount = await firstViewport.getByRole('button', { name: /Готово|Добавить дело|Открыть историю/ }).count();
+  if (firstViewportPrimaryCount !== 1) throw new Error(`expected one primary care action, got ${firstViewportPrimaryCount}`);
+  if (await page.getByText('Псё Плюс', { exact: false }).count()) throw new Error('Today still exposes Plus');
+  if (await page.locator('.observation-disclosure[open]').count()) throw new Error('observation disclosure is open by default');
+
   await page.evaluate(() => {
     const shell = document.querySelector('.phone-shell');
     if (!(shell instanceof HTMLElement)) throw new Error('phone shell is missing');
@@ -46,11 +53,16 @@ async function runScenario(viewport, label) {
   await page.getByRole('button', { name: 'Обработка', exact: true }).click();
   await page.getByRole('status').filter({ hasText: 'Добавлено: Обработка от клещей и паразитов' }).waitFor();
 
+  await page.locator('.app-tabs button', { hasText: 'Сегодня' }).click();
+  await firstViewport.getByRole('heading', { name: 'Обработка от клещей и паразитов' }).waitFor();
+  await firstViewport.getByRole('button', { name: 'Готово', exact: true }).click();
   const task = page.locator('.care-task-card').filter({ hasText: 'Обработка от клещей и паразитов' });
-  await task.getByRole('button', { name: 'Готово', exact: true }).click();
   const completedNotice = page.getByRole('status').filter({ hasText: 'Готово: Обработка от клещей и паразитов' });
   await completedNotice.waitFor();
+  await firstViewport.getByRole('heading', { name: 'На сегодня всё', exact: true }).waitFor();
   await completedNotice.getByRole('button', { name: 'Отменить', exact: true }).click();
+
+  await page.locator('.app-tabs button', { hasText: 'План' }).click();
   await task.getByRole('button', { name: 'Готово', exact: true }).waitFor();
 
   await task.getByRole('button', { name: 'Удалить', exact: true }).click();
@@ -67,8 +79,36 @@ async function runScenario(viewport, label) {
   return { label, routeScrollReset: true, create: true, completeUndo: true, protectedDelete: true };
 }
 
+async function runOnboardingScenario() {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => localStorage.clear());
+  await page.reload({ waitUntil: 'networkidle' });
+
+  await page.getByRole('button', { name: 'Создать питомца', exact: true }).click();
+  await page.getByText('шаг 1 из 2', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Назад', exact: true }).waitFor();
+  const continueButton = page.getByRole('button', { name: 'Продолжить', exact: true });
+  if (await continueButton.isEnabled()) throw new Error('onboarding allows an empty dog name');
+  await page.getByLabel('Имя', { exact: true }).fill('Мята');
+  await continueButton.click();
+
+  await page.getByText('шаг 2 из 2', { exact: true }).waitFor();
+  await page.locator('.core-onboarding.care').getByRole('button', { name: /Обработка/ }).click();
+  const finishButton = page.getByRole('button', { name: 'Добавить дело и открыть Сегодня', exact: true });
+  await finishButton.click();
+  await page.getByTestId('today-first-viewport').getByRole('heading', { name: 'Обработка от клещей и паразитов' }).waitFor();
+  if (await page.getByText('Обработка от клещей и паразитов', { exact: true }).count() !== 2) {
+    throw new Error('onboarding did not create exactly one reminder across Today and desktop context');
+  }
+
+  await page.close();
+  return { label: 'onboarding-mobile', nameRequired: true, backAvailable: true, createsOneCareItem: true };
+}
+
 try {
   const results = [];
+  results.push(await runOnboardingScenario());
   results.push(await runScenario({ width: 390, height: 844 }, 'mobile'));
   results.push(await runScenario({ width: 1280, height: 800 }, 'desktop'));
   console.log(JSON.stringify({ ok: true, results }));

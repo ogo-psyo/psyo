@@ -6,6 +6,7 @@ const files = {
   css: readFileSync('app/globals.css', 'utf8'),
   direction: readFileSync('DESIGN_DIRECTION.md', 'utf8'),
   navigation: readFileSync('components/app/AppNavigation.tsx', 'utf8'),
+  nextCare: readFileSync('components/today/NextCareCard.tsx', 'utf8'),
 };
 
 const failures = [];
@@ -33,20 +34,19 @@ for (const token of [
   if (!files.css.includes(token)) failures.push(`globals.css missing kit-alignment token: ${token}`);
 }
 
-const nextIndex = files.page.indexOf('className={`kit-next-card');
-const actionsIndex = files.page.indexOf('className="kit-daily-status action-first"');
-if (nextIndex < 0 || actionsIndex < 0) {
-  failures.push('page.tsx missing Today hierarchy markers: primary next card, action tiles');
-} else if (!(nextIndex < actionsIndex)) {
-  failures.push('Today hierarchy must be primary next step -> action tiles');
+if (!files.page.includes('<NextCareCard')) {
+  failures.push('page.tsx missing focused Today care card');
+}
+if (!files.nextCare.includes('data-testid="today-first-viewport"')) {
+  failures.push('NextCareCard missing first-viewport marker');
 }
 
 for (const token of [
   'план ухода и памятка',
-  'ближайший шаг',
+  'ближайшее дело',
   'Памятка',
 ]) {
-  if (!files.page.includes(token)) failures.push(`page.tsx missing concept copy: ${token}`);
+  if (!`${files.page}\n${files.nextCare}`.includes(token)) failures.push(`focused experience missing concept copy: ${token}`);
 }
 
 for (const section of ['Сегодня', 'План', 'Памятка', 'Профиль']) {

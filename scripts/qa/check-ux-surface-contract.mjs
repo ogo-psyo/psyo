@@ -7,6 +7,7 @@ const files = {
   dogCard: readFileSync('app/dog/[slug]/page.tsx', 'utf8'),
   dogCardActions: readFileSync('app/dog/[slug]/DogCardActions.tsx', 'utf8'),
   readiness: readFileSync('lib/readiness.ts', 'utf8'),
+  onboarding: readFileSync('components/onboarding/CoreOnboarding.tsx', 'utf8'),
 };
 
 const failures = [];
@@ -111,8 +112,8 @@ if (!files.page.includes("{tab === 'things'")) failures.push('things/wishlist ta
 if (!files.page.includes("{tab === 'assistant'")) failures.push('assistant tab surface missing');
 if (!files.page.includes("{tab === 'nearby'")) failures.push('socialization/nearby tab surface missing');
 
-for (const token of ["saveOnboardingCarePlan('today')", 'Начать с этого дела']) {
-  if (!files.page.includes(token)) failures.push(`onboarding must finish through the first care task, missing: ${token}`);
+for (const token of ["saveOnboardingCarePlan('today')", 'Добавить дело и открыть Сегодня']) {
+  if (!`${files.page}\n${files.onboarding}`.includes(token)) failures.push(`onboarding must finish through the first care task, missing: ${token}`);
 }
 for (const token of ["'generating'", "'reveal'", 'launch-next-grid']) {
   if (files.page.includes(token)) failures.push(`onboarding must not restore a bypass route: ${token}`);
