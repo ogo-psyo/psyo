@@ -5,6 +5,7 @@ const files = {
   page: readFileSync('app/page.tsx', 'utf8'),
   css: readFileSync('app/globals.css', 'utf8'),
   direction: readFileSync('DESIGN_DIRECTION.md', 'utf8'),
+  navigation: readFileSync('components/app/AppNavigation.tsx', 'utf8'),
 };
 
 const failures = [];
@@ -48,11 +49,12 @@ for (const token of [
   if (!files.page.includes(token)) failures.push(`page.tsx missing concept copy: ${token}`);
 }
 
-const navStart = files.page.indexOf('<nav className="app-tabs"');
-const navEnd = files.page.indexOf('</nav>', navStart);
-const navBlock = navStart >= 0 && navEnd > navStart ? files.page.slice(navStart, navEnd) : '';
-for (const section of ['всё', 'псё', 'карта', 'рядом', 'вещи']) {
-  if (!navBlock.includes(section)) failures.push(`primary nav must keep section: ${section}`);
+for (const section of ['Сегодня', 'План', 'Памятка', 'Профиль']) {
+  if (!files.navigation.includes(section)) failures.push(`primary nav must keep section: ${section}`);
+}
+
+for (const route of ["id: 'today'", "id: 'calendar'", "id: 'card'", "id: 'profile'"]) {
+  if (!files.navigation.includes(route)) failures.push(`primary nav must keep route: ${route}`);
 }
 
 for (const forbidden of [

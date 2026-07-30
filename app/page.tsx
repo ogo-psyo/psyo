@@ -4,6 +4,10 @@ import { ChangeEvent, type CSSProperties, useEffect, useMemo, useRef, useState }
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { LiveMap } from '@/components/LiveMap';
 import { FloatingNote, PaperSheet, WatercolorScreen } from '@/components/watercolor';
+import { AppNavigation } from '@/components/app/AppNavigation';
+import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
+import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
+import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
 import {
   anchorCards,
   avatarStyles,
@@ -37,6 +41,7 @@ import { getSupabaseBrowser } from '@/lib/clientSupabase';
 import { formatCount, formatReadinessLabel, formatReminderGroupLine, formatTodayTitle, formatWishlistMeta, formatZoneMeta, inflectPetName } from '@/lib/copy';
 import { fileToLocalAvatarDataUrl, filesToPhotos, loadProfile, resetProfileStorage, saveProfile } from '@/lib/profileStorage';
 import { buildAppReadiness, type ReadinessLevel } from '@/lib/readiness';
+import { buildTodayCareView } from '@/lib/today';
 import type { ActionSuggestion } from '@/packages/contracts';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
@@ -422,8 +427,19 @@ export default function Home() {
   const [onboardingCareChoice, setOnboardingCareChoice] = useState<OnboardingCareChoice>(onboardingCareOptions[0]);
   const [telegramSession, setTelegramSession] = useState<TelegramSessionView>({ mode: 'loading' });
   const [billing, setBilling] = useState<BillingView | null>(null);
+  const [careFeedback, setCareFeedback] = useState<CareFeedback>(null);
+  const [pendingCareDeletion, setPendingCareDeletion] = useState<PendingCareDeletion>(null);
+  const [careDeletionBusy, setCareDeletionBusy] = useState(false);
   const guestPetIdRef = useRef<string | null>(null);
   const observationsLoadedRef = useRef(false);
+  const phoneShellRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    window.requestAnimationFrame(() => {
+      phoneShellRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    });
+  }, [tab]);
 
   function authHeaders(): Record<string, string> {
     return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
@@ -779,17 +795,25 @@ export default function Home() {
   const publicCardReady = Boolean(profile.dogName.trim() && profile.socialMode && (profile.triggers || profile.bio) && profile.neighborhood);
   const publicCardMissing = useMemo(() => publicCardChecks.filter((item) => !item.done).map((item) => item.missing), [publicCardChecks]);
   const publicCardShows = (key: PublicCardFieldKey) => publicCardVisibleFields.includes(key);
+  const todayCare = useMemo(() => buildTodayCareView(reminders), [reminders]);
   const nextBestAction = useMemo(() => {
     if (!profile.backendPetId) return { emoji: '⏰', title: 'Запланировать первую заботу', caption: 'Добавь имя собаки и выбери первое дело: обработка, вакцина, груминг или своё.', action: 'Добавить питомца', target: 'profile' as Tab };
-    if (groupedReminders.overdue.length) return { emoji: '🚩', title: 'Есть просроченная забота', caption: groupedReminders.overdue[0].title, action: 'Закрыть', target: 'today' as Tab, reminderId: groupedReminders.overdue[0].id };
-    if (visibleCareReminders.length) {
-      const next = visibleCareReminders[0];
-      const due = new Date(next.snoozedUntil || next.dueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-      return { emoji: '✓', title: next.title, caption: `Следующее дело в плане: ${due}. После выполнения оно уйдёт в историю ухода.`, action: 'Отметить готово', target: 'today' as Tab, reminderId: next.id };
-    }
-    if (activeReminders.length === 0) return { emoji: '⏰', title: `Запланировать первую заботу ${petNameDatv}`, caption: 'Выберите дело, дату и тип. Псё не будет придумывать напоминания без вашего решения.', action: 'Открыть календарь', target: 'calendar' as Tab };
-    return { emoji: '🐾', title: 'Открыть историю ухода', caption: 'Посмотреть выполненные дела и добавить следующий шаг.', action: 'Открыть историю', target: 'calendar' as Tab };
-  }, [activeReminders.length, groupedReminders.overdue, petNameDatv, profile.backendPetId, visibleCareReminders]);
+    if (todayCare.reminderId) return {
+      emoji: todayCare.state === 'overdue' ? '🚩' : '✓',
+      title: todayCare.title,
+      caption: todayCare.detail,
+      action: todayCare.actionLabel,
+      target: 'today' as Tab,
+      reminderId: todayCare.reminderId,
+    };
+    return {
+      emoji: todayCare.state === 'complete' ? '🐾' : '⏰',
+      title: todayCare.state === 'empty' ? `Запланировать первую заботу ${petNameDatv}` : todayCare.title,
+      caption: todayCare.detail,
+      action: todayCare.actionLabel,
+      target: 'calendar' as Tab,
+    };
+  }, [petNameDatv, profile.backendPetId, todayCare]);
   const latestObservation = observations[0];
   const observationNextStepLine = latestObservation
     ? `Последняя запись: ${latestObservation.mood}, аппетит ${latestObservation.appetite}, энергия ${latestObservation.energy}. Следующий шаг: ${nextBestAction.title.toLowerCase()}.`
@@ -1067,8 +1091,10 @@ export default function Home() {
     }
     if (isGuestMode()) {
       const petId = ensureGuestPetId();
-      setReminders((current) => [{ id: guestId('reminder'), petId, type, title: reminderTitle, dueAt, status: 'active' }, ...current]);
+      const id = guestId('reminder');
+      setReminders((current) => [{ id, petId, type, title: reminderTitle, dueAt, status: 'active' }, ...current]);
       setNewReminderTitle('');
+      setCareFeedback({ kind: 'created', reminderId: id, title: reminderTitle });
       return;
     }
     const response = await fetch('/api/reminders', {
@@ -1080,6 +1106,7 @@ export default function Home() {
     if (!response.ok) return setError('Не удалось создать напоминание');
     setNewReminderTitle('');
     await loadBootstrap();
+    setCareFeedback({ kind: 'created', reminderId: String(result.reminder?.id || ''), title: reminderTitle });
   }
 
   async function createWishlistItem(preset?: { title: string; category?: string; reason?: string; priority?: string }) {
@@ -1256,30 +1283,66 @@ export default function Home() {
   }
 
   async function updateReminder(id: string, patch: Partial<ReminderView>) {
-    if (isGuestMode()) { setReminders((current) => current.map((reminder) => reminder.id === id ? { ...reminder, ...patch } : reminder)); return; }
+    if (isGuestMode()) {
+      setReminders((current) => current.map((reminder) => reminder.id === id ? { ...reminder, ...patch } : reminder));
+      return true;
+    }
     const response = await fetch(`/api/reminders/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(patch),
     });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) return setError('Не удалось обновить дело');
+    await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setError('Не получилось сохранить изменение. Проверь связь и попробуй ещё раз.');
+      return false;
+    }
     await loadBootstrap();
+    return true;
   }
 
   async function deleteReminder(id: string) {
-    if (isGuestMode()) { setReminders((current) => current.filter((reminder) => reminder.id !== id)); return; }
+    if (isGuestMode()) {
+      setReminders((current) => current.filter((reminder) => reminder.id !== id));
+      return true;
+    }
     const response = await fetch(`/api/reminders/${id}`, { method: 'DELETE', headers: authHeaders() });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) return setError('Не удалось удалить дело');
+    await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setError('Не получилось удалить дело. Проверь связь и попробуй ещё раз.');
+      return false;
+    }
     await loadBootstrap();
+    return true;
   }
 
   async function completeReminder(id: string) {
-    if (isGuestMode()) { setReminders((current) => current.map((reminder) => reminder.id === id ? { ...reminder, status: 'done', completedAt: new Date().toISOString() } : reminder)); return; }
+    const reminder = reminders.find((item) => item.id === id);
+    if (!reminder) return setError('Не удалось найти дело в плане.');
+    if (isGuestMode()) {
+      setReminders((current) => current.map((item) => item.id === id ? { ...item, status: 'done', completedAt: new Date().toISOString() } : item));
+      setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
+      return;
+    }
     const response = await fetch(`/api/reminders/${id}/complete`, { method: 'POST', headers: authHeaders() });
-    if (!response.ok) return setError('Не удалось закрыть напоминание');
+    if (!response.ok) return setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
     await loadBootstrap();
+    setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
+  }
+
+  async function undoLastCareCompletion() {
+    if (!careFeedback || careFeedback.kind !== 'completed') return;
+    const restored = await updateReminder(careFeedback.reminderId, { status: 'active' });
+    if (!restored) return;
+    setCareFeedback(null);
+  }
+
+  async function confirmCareDeletion(id: string) {
+    setCareDeletionBusy(true);
+    const deleted = await deleteReminder(id);
+    setCareDeletionBusy(false);
+    if (!deleted) return;
+    setPendingCareDeletion(null);
   }
 
   async function snoozeReminder(id: string) {
@@ -1818,14 +1881,14 @@ export default function Home() {
 
   return (
     <main className="app-canvas">
-      <section className={`phone-shell tab-${tab}`}>
+      <section ref={phoneShellRef} className={`phone-shell tab-${tab}`}>
         <header className="app-header">
           <div>
             <p>план ухода и памятка</p>
             <h1>{profile.dogName ? `Псё · ${profile.dogName}` : 'Псё'}</h1>
           </div>
           <TelegramPill session={telegramSession} />
-          {session ? <button onClick={signOut}>Выйти</button> : <button onClick={() => setTab(tab === 'profile' ? 'today' : 'profile')}>{tab === 'profile' ? 'всё' : 'псё'}</button>}
+          {session ? <button onClick={signOut}>Выйти</button> : <button onClick={() => setTab(tab === 'profile' ? 'today' : 'profile')}>{tab === 'profile' ? 'Сегодня' : 'Профиль'}</button>}
         </header>
 
         {pets.length > 1 && <section className="pet-switcher" aria-label="Активная собака">
@@ -2040,7 +2103,7 @@ export default function Home() {
                     <button onClick={() => completeReminder(reminder.id)}>Готово</button>
                     <button onClick={() => rescheduleReminder(reminder.id, 1)}>Завтра</button>
                     <button onClick={() => setEditingReminderId(reminder.id)}>Править</button>
-                    <button className="danger-action" onClick={() => deleteReminder(reminder.id)}>Удалить</button>
+                    <button className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button>
                   </div>
                 </>}
               </article>)}
@@ -2056,7 +2119,7 @@ export default function Home() {
                 </div>
                 <div className="care-row-actions">
                   <button onClick={() => updateReminder(reminder.id, { status: 'active', dueAt: isoFromDateInput(dateInputValue(new Date())) })}>Вернуть</button>
-                  <button className="danger-action" onClick={() => deleteReminder(reminder.id)}>Удалить</button>
+                  <button className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button>
                 </div>
               </article>)}
             </div>}
@@ -2359,11 +2422,35 @@ export default function Home() {
         {notice !== 'idle' && <div className="toast" role="status" aria-live="polite">{notice === 'loaded' ? 'Данные загружены' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
       </section>
 
-      <nav className="app-tabs" aria-label="Основные разделы">
-        {[
-          ['today', 'всё'], ['profile', 'псё'], ['map', 'карта'], ['nearby', 'рядом'], ['things', 'вещи'],
-        ].map(([id, title]) => <button key={id} onClick={() => setTab(id as Tab)} className={tab === id ? 'active' : ''} aria-label={`Открыть раздел ${title}`} aria-current={tab === id ? 'page' : undefined}>{title}</button>)}
-      </nav>
+      <DesktopContextPanel
+        dogName={petName || 'собаки'}
+        nearestTitle={nextBestAction.title}
+        nearestCaption={nextBestAction.caption}
+        nearestAction={nextBestAction.action}
+        activeCount={activeReminders.length}
+        completedCount={doneReminders.length}
+        cardReady={publicCardReady}
+        onNearestAction={() => nextBestAction.reminderId
+          ? completeReminder(nextBestAction.reminderId)
+          : nextBestAction.target === 'today'
+            ? document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus()
+            : setTab(nextBestAction.target)}
+        onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
+        onOpenHistory={() => { setCareView('history'); setTab('calendar'); }}
+        onOpenCard={() => setTab('card')}
+      />
+      <AppNavigation active={tab} onNavigate={setTab} />
+      <CareActionNotice
+        feedback={careFeedback}
+        onUndo={undoLastCareCompletion}
+        onDismiss={() => setCareFeedback(null)}
+      />
+      <DeleteCareDialog
+        reminder={pendingCareDeletion}
+        busy={careDeletionBusy}
+        onCancel={() => setPendingCareDeletion(null)}
+        onConfirm={confirmCareDeletion}
+      />
 
     </main>
   );

@@ -5180,3 +5180,295 @@ body::before,
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* UX-RC1: final core navigation, action recovery, and mobile safety overrides. */
+.app-canvas > .app-tabs {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 620px;
+}
+
+.app-tabs button,
+.care-action-notice button,
+.care-delete-dialog button {
+  min-height: 44px;
+}
+
+:focus-visible {
+  outline: 3px solid #2f7660;
+  outline-offset: 3px;
+}
+
+.kit-next-card.warning {
+  color: #352a14 !important;
+  background: #f5df9d !important;
+  box-shadow: 0 14px 34px rgb(83 61 14 / .14) !important;
+}
+
+.kit-next-card.warning .eyebrow,
+.kit-next-card.warning h3,
+.kit-next-card.warning p:not(.eyebrow) {
+  color: inherit;
+}
+
+.kit-next-card.warning button {
+  color: #fff;
+  background: #352a14 !important;
+}
+
+.care-action-notice {
+  position: fixed;
+  left: 50%;
+  bottom: calc(84px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 80;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  width: min(520px, calc(100% - 24px));
+  border: 1px solid #c9ddcf;
+  border-radius: 20px;
+  padding: 8px 10px 8px 14px;
+  color: #17231c;
+  background: rgb(255 255 255 / .96);
+  box-shadow: 0 18px 50px rgb(25 35 29 / .20);
+  backdrop-filter: blur(18px);
+}
+
+.care-action-notice span {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.care-action-notice button {
+  border: 0;
+  border-radius: 14px;
+  padding: 0 12px;
+  color: #245b47;
+  background: #eaf5ed;
+  font-weight: 850;
+}
+
+.care-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(15 24 19 / .42);
+  backdrop-filter: blur(8px);
+}
+
+.care-delete-dialog {
+  display: grid;
+  gap: 12px;
+  width: min(420px, 100%);
+  border: 1px solid #d9e3dc;
+  border-radius: 26px;
+  padding: 22px;
+  color: #17231c;
+  background: #fffdf8;
+  box-shadow: 0 28px 80px rgb(16 25 20 / .28);
+}
+
+.care-delete-dialog h2 {
+  font-size: 25px;
+  line-height: 1.05;
+}
+
+.care-delete-dialog > p:not(.eyebrow) {
+  color: #5d6961;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.care-delete-dialog > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.care-delete-dialog button {
+  border: 1px solid #d9e3dc;
+  border-radius: 16px;
+  background: #fff;
+  font-weight: 850;
+}
+
+.care-delete-dialog .danger-action {
+  color: #fff;
+  background: #8a342c;
+}
+
+.desktop-context-panel {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .app-canvas {
+    grid-template-areas: "main context";
+    grid-template-columns: minmax(0, 1fr) 260px;
+    align-items: stretch;
+    width: min(100%, 1360px);
+    max-width: 1360px;
+    height: 100vh;
+    min-height: 0;
+    gap: 14px;
+    padding: 18px 18px 88px;
+  }
+
+  .phone-shell {
+    grid-area: main;
+    width: 100%;
+    height: calc(100vh - 106px);
+    min-height: 0;
+    border: 1px solid #dce6de;
+    border-radius: 28px;
+    padding: 24px 24px 64px;
+    box-shadow: 0 24px 70px rgb(25 35 29 / .08);
+  }
+
+  .desktop-context-panel {
+    grid-area: context;
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    height: calc(100vh - 106px);
+    overflow: auto;
+    padding: 4px;
+    scrollbar-width: thin;
+  }
+
+  .desktop-context-heading {
+    display: grid;
+    gap: 2px;
+    padding: 4px 4px 8px;
+  }
+
+  .desktop-context-heading span,
+  .desktop-context-panel section > span {
+    color: #6c776f;
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .desktop-context-heading b {
+    font-size: 22px;
+  }
+
+  .desktop-context-panel section {
+    display: grid;
+    gap: 9px;
+    border: 1px solid #dce6de;
+    border-radius: 22px;
+    padding: 16px;
+    background: #fffdf8;
+    box-shadow: 0 14px 38px rgb(25 35 29 / .07);
+  }
+
+  .desktop-context-panel section b {
+    font-size: 17px;
+    line-height: 1.15;
+  }
+
+  .desktop-context-panel section p {
+    color: #667169;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .desktop-context-panel section > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+
+  .desktop-context-panel button {
+    min-height: 44px;
+    border: 1px solid #d7e2da;
+    border-radius: 14px;
+    padding: 8px 10px;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  .desktop-context-panel button.primary {
+    border-color: #132019;
+    color: #fff;
+    background: #132019;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-canvas {
+    grid-template-areas: "nav main context";
+    grid-template-columns: 180px minmax(0, 1fr) 280px;
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .phone-shell,
+  .desktop-context-panel {
+    height: calc(100vh - 36px);
+  }
+
+  .app-canvas > .app-tabs {
+    position: sticky !important;
+    grid-area: nav;
+    grid-template-columns: 1fr;
+    align-self: start;
+    top: 18px;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100%;
+    max-width: none;
+    margin: 0 !important;
+    transform: none !important;
+    border-radius: 24px !important;
+    padding: 8px;
+  }
+
+  .app-canvas > .app-tabs button {
+    justify-content: flex-start;
+    min-height: 52px;
+    padding: 0 16px;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .care-action-notice {
+    bottom: 24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .app-canvas {
+    grid-template-columns: 200px minmax(0, 1fr) 300px;
+  }
+}
+
+@media (max-width: 560px) {
+  .phone-shell {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .app-canvas > .app-tabs {
+    width: calc(100% - 20px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .care-dialog-backdrop,
+  .care-action-notice {
+    animation: none !important;
+    transition: none !important;
+  }
+}

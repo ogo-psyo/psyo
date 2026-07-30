@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 const files = {
   page: readFileSync('app/page.tsx', 'utf8'),
+  navigation: readFileSync('components/app/AppNavigation.tsx', 'utf8'),
   dogCard: readFileSync('app/dog/[slug]/page.tsx', 'utf8'),
   dogCardActions: readFileSync('app/dog/[slug]/DogCardActions.tsx', 'utf8'),
   readiness: readFileSync('lib/readiness.ts', 'utf8'),
@@ -96,12 +97,15 @@ if (!files.page.includes("profile.dogName.trim() && profile.socialMode && (profi
   failures.push('public card must require name, contact rule, bio/triggers, and safe neighborhood before sharing');
 }
 
-const navStart = files.page.indexOf('<nav className="app-tabs"');
-const navEnd = files.page.indexOf('</nav>', navStart);
-const navBlock = navStart >= 0 && navEnd > navStart ? files.page.slice(navStart, navEnd) : '';
+const navStart = files.navigation.indexOf('<nav className="app-tabs"');
+const navEnd = files.navigation.indexOf('</nav>', navStart);
+const navBlock = navStart >= 0 && navEnd > navStart ? files.navigation.slice(navStart, navEnd) : '';
 if (!navBlock) failures.push('primary app nav missing');
-for (const token of ['всё', 'псё', 'карта', 'рядом', 'вещи']) {
-  if (!navBlock.includes(token)) failures.push(`primary nav missing section: ${token}`);
+for (const token of ['Сегодня', 'План', 'Памятка', 'Профиль']) {
+  if (!files.navigation.includes(token)) failures.push(`primary nav missing section: ${token}`);
+}
+for (const token of ["label: 'всё'", "label: 'псё'"]) {
+  if (files.navigation.includes(token)) failures.push(`primary nav exposes unclear label: ${token}`);
 }
 if (!files.page.includes("{tab === 'things'")) failures.push('things/wishlist tab surface missing');
 if (!files.page.includes("{tab === 'assistant'")) failures.push('assistant tab surface missing');
