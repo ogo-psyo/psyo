@@ -61,7 +61,7 @@ for (const token of ['<details', 'Записать наблюдение', 'По�
   if (!observationDisclosure.includes(token)) failures.push(`observation disclosure missing: ${token}`);
 }
 
-for (const token of ['шаг 1 из 2', 'шаг 2 из 2', 'Назад', 'Добавить дело и открыть Сегодня', 'dog-photo-help']) {
+for (const token of ['шаг 1 из 2', 'шаг 2 из 2', 'Назад', 'Добавить дело и открыть Сегодня', 'dog-photo-help', 'Выбрать фото', 'Файл не выбран']) {
   if (!onboarding.includes(token)) failures.push(`onboarding contract missing: ${token}`);
 }
 

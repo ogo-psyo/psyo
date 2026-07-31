@@ -74,15 +74,22 @@ export function CoreOnboarding({
           placeholder="Например, Мята"
           autoComplete="off"
         />
-        <label htmlFor="dog-photo">Фото необязательно</label>
-        <input
-          id="dog-photo"
-          className="core-photo-input"
-          type="file"
-          accept="image/*"
-          onChange={onPhotoChange}
-          aria-describedby="dog-photo-help"
-        />
+        <span className="core-photo-heading">Фото необязательно</span>
+        <div className="core-photo-control">
+          <label className="core-photo-button">
+            Выбрать фото
+            <input
+              id="dog-photo"
+              className="core-photo-input"
+              type="file"
+              accept="image/*"
+              onChange={onPhotoChange}
+              aria-label="Выбрать фото"
+              aria-describedby="dog-photo-help"
+            />
+          </label>
+          <span className="core-photo-filename" aria-live="polite">{hasPhoto ? 'Фото выбрано' : 'Файл не выбран'}</span>
+        </div>
         <span id="dog-photo-help">{hasPhoto ? 'Фото выбрано. Его можно заменить позже в Профиле.' : 'Фото необязательно. Его можно добавить позже в Профиле.'}</span>
         <div className="onboarding-step-actions">
           <button type="button" onClick={onBack}>Назад</button>

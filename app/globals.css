@@ -5507,8 +5507,18 @@ body::before,
   line-height: 1.4;
 }
 
-.core-photo-input {
-  display: block !important;
+.core-photo-heading {
+  margin-bottom: -8px;
+  color: #4f5d54;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.core-photo-control {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
   width: 100%;
   min-height: 50px;
   border: 1px solid #d4dfd7;
@@ -5519,15 +5529,42 @@ body::before,
   font: inherit;
 }
 
-.core-photo-input::file-selector-button {
+.core-photo-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 38px;
-  margin-right: 10px;
   border: 0;
   border-radius: 10px;
   padding: 0 14px;
   color: #fff;
   background: #132019;
   font-weight: 850;
+  cursor: pointer;
+}
+
+.core-photo-button:focus-within {
+  outline: 3px solid rgba(40, 102, 70, .28);
+  outline-offset: 2px;
+}
+
+.core-photo-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.core-photo-filename {
+  overflow: hidden;
+  color: #657168;
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .onboarding-progress {

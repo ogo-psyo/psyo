@@ -18,6 +18,9 @@ const results = [];
 for (const size of sizes) {
   const page = await browser.newPage({ viewport: { width: size.width, height: size.height }, deviceScaleFactor: 1 });
   await page.goto(base, { waitUntil: 'networkidle' });
+  // The dev server can finish network activity before React attaches delegated events.
+  // Give hydration a brief deterministic window before exercising onboarding actions.
+  await page.waitForTimeout(750);
   await page.screenshot({ path: `${outDir}/${size.name}.png`, fullPage: true });
   const metrics = await page.evaluate(() => {
     const doc = document.documentElement;
@@ -45,6 +48,7 @@ for (const size of sizes) {
   results.push({ size, metrics });
   if (size.name === 'mobile-390' || size.name === 'ipad-portrait-820') {
     await page.getByRole('button', { name: 'Создать питомца', exact: true }).click();
+    await page.getByText('шаг 1 из 2', { exact: true }).waitFor();
     await page.screenshot({ path: `${outDir}/${size.name}-pet.png`, fullPage: true });
     await page.getByLabel('Имя', { exact: true }).fill('Мята');
     await page.getByRole('button', { name: 'Продолжить', exact: true }).click();
