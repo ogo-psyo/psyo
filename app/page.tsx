@@ -1226,11 +1226,11 @@ export default function Home() {
   const showAuthPanel = !hasConnectedAccount && (telegramSession.mode === 'browser' || telegramSession.mode === 'error' || telegramSession.mode === 'loading');
   const plusPlan = billing?.plans?.plus;
   const isPlusActive = billing?.entitlements?.tier === 'plus';
-  const plusIncluded = plusPlan?.included?.slice(0, 4) ?? ['несколько собак', 'полная история', 'расширенные карточки', 'weekly summary'];
-  const plusPriceLabel = plusPlan?.priceStars ? `${plusPlan.priceStars} Stars / 30 дней` : 'цена готовится';
+  const plusIncluded = plusPlan?.included?.slice(0, 4) ?? ['несколько собак', 'полная история', 'расширенные карточки', 'сводка недели'];
+  const plusPriceLabel = plusPlan?.priceStars ? `${plusPlan.priceStars} звёзд Telegram / 30 дней` : 'цена готовится';
   const plusGateLine = isPlusActive
     ? billing?.entitlements?.expiresAt ? `Плюс активен до ${new Date(billing.entitlements.expiresAt).toLocaleDateString('ru-RU')}.` : 'Плюс активен.'
-    : billing?.upgrade?.available ? 'Оплата готова через Telegram Stars.' : 'Оплата закрыта до legal и payment smoke; пакет уже можно проверять продуктово.';
+    : billing?.upgrade?.available ? 'Оплата готова через Telegram.' : 'Оплата пока недоступна.';
 
   async function switchActivePet(nextPetId: string) {
     if (!nextPetId || nextPetId === activePetId) return;
@@ -2532,7 +2532,6 @@ export default function Home() {
                   <p>{item.mood} · аппетит {item.appetite} · стул {item.stool} · энергия {item.energy}</p>
                   {item.note && <small>{item.note}</small>}
                 </div>
-                <span>{item.syncStatus === 'saved' ? 'сохранено' : 'локально'}</span>
               </article>)}
             </div> : undefined}
           >
@@ -2821,8 +2820,8 @@ export default function Home() {
                 <p>{profile.bio || `Запишем ${missingProfileFields[0]?.toLowerCase() || 'важное'}, чтобы не держать в голове.`}</p>
               </div>
             </div>
-            <div className="smart-profile-readiness" aria-label={`Готовность профиля ${completionCount} из ${profileChecklist.length}`}>
-              <div className="readiness-ring" style={{ '--ready': `${Math.round((completionCount / profileChecklist.length) * 100)}%` } as CSSProperties}><b>{completionCount}</b><span>/6</span></div>
+            <div className="smart-profile-readiness" aria-label="Заполнение профиля">
+              <div className="readiness-ring" style={{ '--ready': `${Math.round((completionCount / profileChecklist.length) * 100)}%` } as CSSProperties}><b>{Math.round((completionCount / profileChecklist.length) * 100)}%</b></div>
               <div><b>{profileReady ? 'Карточка собрана' : 'Что дальше'}</b><p>{profileReady ? 'Можно проверить памятку для людей.' : missingProfileFields[0] || 'Сохранить профиль'}</p><button className="mini-next-action" onClick={() => profileReady ? setTab('card') : document.querySelector<HTMLInputElement | HTMLSelectElement>('.profile-minimum-panel input, .profile-minimum-panel select')?.focus()}>{profileReady ? 'Открыть памятку' : 'Записать'}</button></div>
             </div>
           </section>
@@ -2942,7 +2941,7 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {tab === 'things' && <WatercolorScreen className="things-composition" tone="gold" eyebrow="вещи" title="Что нужно именно этой собаке" caption="Wishlist, уход, повторные покупки и подарки без превращения Псё в магазин." aside={<span className="watercolor-hero-mark">◈</span>}>
+        {tab === 'things' && <WatercolorScreen className="things-composition" tone="gold" eyebrow="вещи" title="Что нужно именно этой собаке" caption="Уход, повторные покупки и подарки без превращения Псё в магазин." aside={<span className="watercolor-hero-mark">◈</span>}>
           <PaperSheet className="thing-capture">
             <div className="section-title">
               <div><span className="eyebrow">быстро добавить</span><h3>Вещь, услуга или повторная покупка</h3></div>
@@ -2969,7 +2968,7 @@ export default function Home() {
 
           {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <article className="empty-state"><b>Вещей пока нет</b><p>Добавь адресник, корм, груминг, игрушку или услугу. Псё будет связывать это с профилем, триггерами и уходом.</p></article>}
 
-          {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Wishlist собаки">
+          {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Вещи собаки">
             {wantedWishlist.map((item) => <article key={item.id} className={`wishlist-item priority-${item.priority}`}>
               <div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div>
               <div className="wishlist-actions">

@@ -88,7 +88,7 @@ export default async function MapSharePage({
             <b>ссылка недоступна</b>
           </div>
           <div className="map-share-hero">
-            <span>privacy first</span>
+            <span>без точных координат</span>
             <h1>Место не открыто</h1>
             <p>Ссылка могла быть удалена, стать приватной или ожидать модерации.</p>
           </div>
