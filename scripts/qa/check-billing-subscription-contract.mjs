@@ -69,7 +69,7 @@ for (const token of [
 for (const token of [
   'plus-gate-card',
   'startPlusCheckout',
-  'Оплата закрыта до legal и payment smoke',
+  'Оплата пока недоступна',
 ]) {
   if (!files.page.includes(token)) failures.push(`main UI missing Plus subscription surface token: ${token}`);
 }
