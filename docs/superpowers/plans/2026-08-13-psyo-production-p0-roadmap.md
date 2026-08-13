@@ -254,6 +254,15 @@ W4 Authenticated P0 journey + device/release evidence
 - Decision dependency: D9 measurable performance threshold; D10 analytics event schema/privacy/vendor if analytics is included now.
 - Acceptance: every §22 P0 gate has command/evidence; failures block release; service readiness distinguishes disabled, partial, ready.
 
+### PSYO-16 — Human-first forms and CRUD usability gate
+
+- Applies to: dog/profile, reminders, observations, cards, wishlist items, map places/routes, social discovery/requests, pet/account deletion.
+- Depends: affected P0 entity slice exists end-to-end.
+- Сделать: audit every create/read/update/delete lifecycle from the user's intent rather than the storage model; minimize required fields; move optional detail into contextual progressive disclosure; preserve drafts and input on failure; prevent duplicate submissions; expose clear loading/success/error/retry states; make edit/cancel available where expected; require explicit consequence for irreversible deletion and prefer undo/archive for recoverable removal; verify reload persistence, active-pet scope, owner isolation and concurrent/retry behavior.
+- Language/information gate: persistent labels; Russian human terms; one entity has one name; no technical tags/codes/internal states; no repeated facts; one primary action per form state; buttons name the result; helper text appears only when it changes the decision.
+- Mobile/accessibility gate: 390×844 without horizontal overflow; touch-safe targets; keyboard/focus order; screen-reader names match visible outcomes; native date/time/file controls remain usable in Telegram WebView; long names, emoji, empty values and 200% text scaling remain operable.
+- Acceptance evidence per entity: `create → visible result → reload → edit → reload → complete/archive/delete → undo or explicit irreversible confirmation`, plus validation, offline/network failure, double-tap, unauthorized owner and wrong-pet negative cases. No release claim from source-contract alone.
+
 ## 7. Safe execution waves
 
 | Wave | Parallel work | Serial merge / exit criterion |
@@ -263,7 +272,7 @@ W4 Authenticated P0 journey + device/release evidence
 | W2A | PSYO-04 backend; PSYO-05 API; PSYO-06 API; PSYO-07 API/tests | Two-owner/two-dog runtime isolation green |
 | W2B | PSYO-08 API; PSYO-09 API/flags; PSYO-15 social backend/tests; UI work serialized | All P0 CRUD and basic matching persistent and reachable |
 | W3 | PSYO-10, 11 sequential UI; PSYO-12 backend/tests; PSYO-13 content | Full owner journey and privacy lifecycle green |
-| W4 | PSYO-14 only | PRD §22 evidence complete; explicit deploy approval; prod smoke green |
+| W4 | PSYO-14 and PSYO-16 | PRD §22 evidence and human-first CRUD matrix complete; explicit deploy approval; prod smoke green |
 
 Recommended subagent concurrency: one UI agent, one backend/domain agent, one QA/security agent. No two agents edit `app/page.tsx` concurrently.
 
@@ -292,6 +301,8 @@ Recommended subagent concurrency: one UI agent, one backend/domain agent, one QA
 - `npm run qa:local` зелёный.
 - Релевантный behavioral/integration test зелёный.
 - Для UI проверены Telegram viewport, loading/empty/error и keyboard/focus basics.
+- Для любой CRUD-сущности проверен полный человеческий цикл: минимальное создание, понятный результат, сохранение после reload, безопасное редактирование, отмена/восстановление и честная обработка необратимого удаления.
+- В пользовательском интерфейсе нет технических тегов, кодов ошибок, неоправданных англицизмов, повторов одной информации и элементов, не влияющих на решение или действие.
 - Tracker обновлён доказательством, а не заявлением.
 - Production deploy/smoke выполняются только отдельным release handoff после согласования.
 
