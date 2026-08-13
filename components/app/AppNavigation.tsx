@@ -1,12 +1,13 @@
 'use client';
 
-export type PrimaryRoute = 'today' | 'calendar' | 'card' | 'profile';
+export type PrimaryRoute = 'today' | 'profile' | 'map' | 'nearby' | 'things';
 
 const routes: { id: PrimaryRoute; label: string }[] = [
-  { id: 'today', label: 'Сегодня' },
-  { id: 'calendar', label: 'План' },
-  { id: 'card', label: 'Памятка' },
-  { id: 'profile', label: 'Профиль' },
+  { id: 'today', label: 'всё' },
+  { id: 'profile', label: 'псё' },
+  { id: 'map', label: 'карта' },
+  { id: 'nearby', label: 'рядом' },
+  { id: 'things', label: 'вещи' },
 ];
 
 export function AppNavigation({
@@ -25,6 +26,7 @@ export function AppNavigation({
           onClick={() => onNavigate(route.id)}
           className={active === route.id ? 'active' : ''}
           aria-current={active === route.id ? 'page' : undefined}
+          data-route={route.id}
         >
           {route.label}
         </button>

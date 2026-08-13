@@ -27,7 +27,6 @@ import {
   getAvatarStyle,
   lifeStageOptions,
   maxPhotos,
-  nearbyDogs,
   parasiteOptions,
   playStyleOptions,
   sexOptions,
@@ -58,6 +57,15 @@ type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_grou
 type AuthSession = { access_token: string; user: { email?: string } };
 type ObservationView = { id: string; petId?: string; mood: string; appetite: string; stool: string; energy: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
 type ObservationDraft = Pick<ObservationView, 'mood' | 'appetite' | 'stool' | 'energy' | 'note'>;
+type NearbyMatchView = {
+  petId: string;
+  name: string;
+  avatar?: string;
+  score?: number;
+  reasons?: string[];
+  safetyWarnings?: string[];
+  distance?: string;
+};
 type Tab = 'today' | 'calendar' | 'assistant' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
 type MapLayer = 'personal' | 'community';
 type DrawMode = 'none' | 'point' | 'route';
@@ -391,6 +399,9 @@ export default function Home() {
   const [pets, setPets] = useState<PetSwitchOption[]>([]);
   const [activePetId, setActivePetId] = useState('');
   const [observations, setObservations] = useState<ObservationView[]>([]);
+  const [nearbyMatches, setNearbyMatches] = useState<NearbyMatchView[]>([]);
+  const [nearbyState, setNearbyState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [nearbyReason, setNearbyReason] = useState('');
   const [observationDraft, setObservationDraft] = useState<ObservationDraft>(defaultObservationDraft);
   const [observationSaving, setObservationSaving] = useState(false);
   const [newReminderTitle, setNewReminderTitle] = useState('');
@@ -447,6 +458,40 @@ export default function Home() {
   useEffect(() => {
     resetViewScroll();
   }, [tab]);
+
+  useEffect(() => {
+    if (tab !== 'nearby') return;
+    if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) {
+      setNearbyMatches([]);
+      setNearbyReason('AUTH_OR_PET_REQUIRED');
+      setNearbyState('idle');
+      return;
+    }
+
+    const controller = new AbortController();
+    setNearbyState('loading');
+    setNearbyReason('');
+    fetch(`/api/social/candidates?petId=${encodeURIComponent(profile.backendPetId)}`, {
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      credentials: 'include',
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload?.error || 'NEARBY_LOOKUP_FAILED');
+        setNearbyMatches(Array.isArray(payload?.matches) ? payload.matches : []);
+        setNearbyReason(typeof payload?.reason === 'string' ? payload.reason : '');
+        setNearbyState('ready');
+      })
+      .catch((lookupError) => {
+        if (lookupError instanceof DOMException && lookupError.name === 'AbortError') return;
+        setNearbyMatches([]);
+        setNearbyReason('NEARBY_LOOKUP_FAILED');
+        setNearbyState('error');
+      });
+
+    return () => controller.abort();
+  }, [profile.backendPetId, session?.access_token, tab, telegramSession.ownerId]);
 
   function authHeaders(): Record<string, string> {
     return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
@@ -1851,7 +1896,7 @@ export default function Home() {
             <h1>{profile.dogName ? `Псё · ${profile.dogName}` : 'Псё'}</h1>
           </div>
           <TelegramPill session={telegramSession} />
-          {session ? <button onClick={signOut}>Выйти</button> : <button onClick={() => setTab(tab === 'profile' ? 'today' : 'profile')}>{tab === 'profile' ? 'Сегодня' : 'Профиль'}</button>}
+          {session ? <button onClick={signOut}>Выйти</button> : <button onClick={() => setTab(tab === 'profile' ? 'today' : 'profile')}>{tab === 'profile' ? 'всё' : 'псё'}</button>}
         </header>
 
         {pets.length > 1 && <section className="pet-switcher" aria-label="Активная собака">
@@ -1965,9 +2010,18 @@ export default function Home() {
             <b>{displaySocialMode(profile.socialMode) || 'сначала спросить владельца'}</b>
             <p>{profile.triggers ? `Учесть: ${profile.triggers}.` : 'Добавь триггеры и правило контакта, чтобы знакомиться спокойнее.'}</p>
           </article>
-          <section className="nearby-list" aria-label="Собаки рядом">
-            {nearbyDogs.map((dog) => <article className="nearby-dog-card" key={dog.name}><span>{dog.emoji}</span><div><b>{dog.name}</b><p>{dog.caption} · {dog.distance}</p></div><button aria-label={`Открыть памятку для знакомства с ${dog.name}`} onClick={() => setTab('card')}>→</button></article>)}
-          </section>
+          {nearbyState === 'loading' && <article className="empty-state" role="status"><b>Ищу спокойные знакомства…</b><p>Покажу только реальные анкеты с примерным расстоянием.</p></article>}
+          {nearbyState === 'error' && <article className="empty-state" role="alert"><b>Не получилось обновить «рядом»</b><p>Проверь соединение и открой раздел ещё раз.</p></article>}
+          {nearbyState === 'idle' && <article className="empty-state"><b>Открой Псё через Telegram</b><p>Тогда знакомства будут привязаны к выбранной собаке, а контакты останутся скрыты.</p></article>}
+          {nearbyState === 'ready' && nearbyReason === 'NO_PRIVATE_REFERENCE_AREA' && <article className="empty-state"><b>Добавь примерный район прогулок</b><p>Сохрани приватную область на карте. Точный адрес другим владельцам не показывается.</p><button className="secondary" type="button" onClick={() => setTab('map')}>Открыть карту</button></article>}
+          {nearbyState === 'ready' && !nearbyReason && nearbyMatches.length === 0 && <article className="empty-state"><b>Подходящих анкет пока нет</b><p>Никого не подставляем для вида. Новые собаки появятся здесь после явного согласия владельцев.</p></article>}
+          {nearbyState === 'ready' && nearbyMatches.length > 0 && <section className="nearby-list" aria-label="Собаки рядом">
+            {nearbyMatches.map((dog) => <article className="nearby-dog-card" key={dog.petId}>
+              <span aria-hidden="true">{dog.avatar ? <img src={dog.avatar} alt="" /> : dog.name.slice(0, 1).toUpperCase()}</span>
+              <div><b>{dog.name}</b><p>{[...(dog.reasons ?? []).slice(0, 2), dog.distance].filter(Boolean).join(' · ') || 'Можно спокойно проверить совместимость'}</p>{dog.safetyWarnings?.[0] && <small>{dog.safetyWarnings[0]}</small>}</div>
+              <button aria-label={`Открыть памятку для знакомства с ${dog.name}`} onClick={() => setTab('card')}>→</button>
+            </article>)}
+          </section>}
           <article className="match-card"><span>!</span><div><b>Сначала безопасность</b><p>Псё не показывает точные адреса и не обещает встречу. Проверь памятку, правило контакта и триггеры перед знакомством.</p></div></article>
         </WatercolorScreen>}
 

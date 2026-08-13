@@ -3777,6 +3777,23 @@ body::before { opacity: .12; background-size: 48px 48px; }
   grid-template-columns: 58px 1fr auto;
   align-items: center;
 }
+.nearby-dog-card > span {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--surface-quiet);
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 850;
+}
+.nearby-dog-card > span img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .nearby-dog-card b,
 .match-card b {
   font-size: 15px;
@@ -5175,7 +5192,7 @@ body::before,
 
 /* UX-RC1: final core navigation, action recovery, and mobile safety overrides. */
 .app-canvas > .app-tabs {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   max-width: 620px;
 }
 

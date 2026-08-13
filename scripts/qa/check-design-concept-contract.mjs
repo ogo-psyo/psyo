@@ -49,11 +49,11 @@ for (const token of [
   if (!`${files.page}\n${files.nextCare}`.includes(token)) failures.push(`focused experience missing concept copy: ${token}`);
 }
 
-for (const section of ['Сегодня', 'План', 'Памятка', 'Профиль']) {
+for (const section of ["label: 'всё'", "label: 'псё'", "label: 'карта'", "label: 'рядом'", "label: 'вещи'"]) {
   if (!files.navigation.includes(section)) failures.push(`primary nav must keep section: ${section}`);
 }
 
-for (const route of ["id: 'today'", "id: 'calendar'", "id: 'card'", "id: 'profile'"]) {
+for (const route of ["id: 'today'", "id: 'profile'", "id: 'map'", "id: 'nearby'", "id: 'things'"]) {
   if (!files.navigation.includes(route)) failures.push(`primary nav must keep route: ${route}`);
 }
 

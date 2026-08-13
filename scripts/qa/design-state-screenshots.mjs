@@ -14,10 +14,11 @@ const profile = {
   photos: [], selectedStyle: 'city', bio: 'Нежная, активная, иногда тревожится на шумных улицах.', backendPetId: 'guest-pet-qa', isPublic: false
 };
 const tabs = [
-  { id: 'today', button: 'Сегодня' },
-  { id: 'calendar', button: 'План' },
-  { id: 'card', button: 'Памятка' },
-  { id: 'profile', button: 'Профиль' },
+  { id: 'today', button: 'всё' },
+  { id: 'profile', button: 'псё' },
+  { id: 'map', button: 'карта' },
+  { id: 'nearby', button: 'рядом' },
+  { id: 'things', button: 'вещи' },
 ];
 const sizes = [
   { name: 'm360', width: 360, height: 800 },

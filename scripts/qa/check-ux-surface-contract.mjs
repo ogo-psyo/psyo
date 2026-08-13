@@ -102,11 +102,11 @@ const navStart = files.navigation.indexOf('<nav className="app-tabs"');
 const navEnd = files.navigation.indexOf('</nav>', navStart);
 const navBlock = navStart >= 0 && navEnd > navStart ? files.navigation.slice(navStart, navEnd) : '';
 if (!navBlock) failures.push('primary app nav missing');
-for (const token of ['Сегодня', 'План', 'Памятка', 'Профиль']) {
+for (const token of ["label: 'всё'", "label: 'псё'", "label: 'карта'", "label: 'рядом'", "label: 'вещи'"]) {
   if (!files.navigation.includes(token)) failures.push(`primary nav missing section: ${token}`);
 }
-for (const token of ["label: 'всё'", "label: 'псё'"]) {
-  if (files.navigation.includes(token)) failures.push(`primary nav exposes unclear label: ${token}`);
+for (const token of ["id: 'calendar'", "id: 'card'", "id: 'assistant'"]) {
+  if (files.navigation.includes(token)) failures.push(`secondary surface leaked into primary nav: ${token}`);
 }
 if (!files.page.includes("{tab === 'things'")) failures.push('things/wishlist tab surface missing');
 if (!files.page.includes("{tab === 'assistant'")) failures.push('assistant tab surface missing');
