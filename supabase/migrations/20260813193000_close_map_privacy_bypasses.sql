@@ -72,7 +72,7 @@ as $$
     z.area_label
   from public.map_zones z
   cross join caller c
-  where z.geom && public.st_makeenvelope(min_lng, min_lat, max_lng, max_lat, 4326)
+  where z.geom operator(public.&&) public.st_makeenvelope(min_lng, min_lat, max_lng, max_lat, 4326)
     and (
       (z.visibility = 'public' and z.moderation_status = 'approved')
       or exists (select 1 from public.pets p where p.id = z.pet_id and p.owner_id = c.owner_id)
@@ -93,7 +93,7 @@ as $$
   from public.map_routes r
   cross join caller c
   where coalesce(r.approximate_center, public.st_centroid(r.path))
-      && public.st_makeenvelope(min_lng, min_lat, max_lng, max_lat, 4326)
+      operator(public.&&) public.st_makeenvelope(min_lng, min_lat, max_lng, max_lat, 4326)
     and ((r.visibility = 'public' and r.moderation_status = 'approved') or r.owner_id = c.owner_id);
 $$;
 
