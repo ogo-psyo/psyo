@@ -72,12 +72,13 @@ export async function POST(request: Request) {
   if (!ownerId) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
   if (!body?.type || !body?.title?.trim()) return NextResponse.json({ error: 'type and title are required' }, { status: 400 });
 
-  const visibility = safeVisibility(body.visibility);
-  const moderationStatus = visibility === 'public' ? 'pending' : 'approved';
+  const requestedVisibility = safeVisibility(body.visibility);
 
   if (body.type === 'point') {
     if (!body.petId) return NextResponse.json({ error: 'petId is required for point features' }, { status: 400 });
     const zoneType = zoneTypes.has(body.zone_type) ? body.zone_type : 'safe_place';
+    const visibility = zoneType === 'home_area' ? 'private' : requestedVisibility;
+    const moderationStatus = visibility === 'public' ? 'pending' : 'approved';
     const { data: pet } = await supabase.from('pets').select('id').eq('id', body.petId).eq('owner_id', ownerId).maybeSingle();
     if (!pet) return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
 
@@ -108,6 +109,8 @@ export async function POST(request: Request) {
   }
 
   if (body.type === 'route') {
+    const visibility = requestedVisibility;
+    const moderationStatus = visibility === 'public' ? 'pending' : 'approved';
     const lineString = ewktLineString(body.path);
     if (!lineString) return NextResponse.json({ error: 'path must contain at least two [lng,lat] points' }, { status: 400 });
     if (body.petId) {

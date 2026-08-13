@@ -9,6 +9,7 @@ const files = {
   mapSharePage: readFileSync('app/map/share/[id]/page.tsx', 'utf8'),
   zonesApi: readFileSync('app/api/zones/route.ts', 'utf8'),
   secureMigration: readFileSync('supabase/migrations/20260813183000_secure_map_projection.sql', 'utf8'),
+  hardeningMigration: readFileSync('supabase/migrations/20260813193000_close_map_privacy_bypasses.sql', 'utf8'),
 };
 
 const failures = [];
@@ -29,11 +30,22 @@ for (const token of [
 for (const token of [
   "const visibilityModes = new Set(['private', 'shared', 'public'])",
   "const moderationStatus = visibility === 'public' ? 'pending' : 'approved'",
+  "zoneType === 'home_area' ? 'private' : requestedVisibility",
   'blurPublicZoneInput',
   "requesting_owner_id: ownerId ?? null",
   "shareUrl: visibility === 'shared' ? shareUrl(request, data.share_token) : null",
 ]) {
   if (!files.mapApi.includes(token)) failures.push(`map feature API privacy boundary missing: ${token}`);
+}
+
+for (const token of [
+  'create policy "Owners read map routes"',
+  'using (owner_id = auth.uid())',
+  'create or replace function public.enforce_private_home_area()',
+  "where visibility <> 'private'",
+  "set search_path = ''",
+]) {
+  if (!files.hardeningMigration.includes(token)) failures.push(`map hardening migration missing: ${token}`);
 }
 
 for (const token of [
