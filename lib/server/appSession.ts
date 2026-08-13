@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { TelegramSessionDto } from '@/packages/contracts';
+import type { VerifiedTelegramContact } from '@/lib/server/telegram';
 
 const cookieName = 'psyo_session';
 const sessionTtlSeconds = 60 * 60 * 24 * 7;
@@ -9,6 +10,7 @@ type SignedSessionPayload = {
   ownerId?: string;
   authDate?: number;
   locale?: string;
+  verifiedTelegramContact: VerifiedTelegramContact;
   iat: number;
   exp: number;
 };
@@ -51,13 +53,14 @@ function safeEqual(left: string, right: string) {
   return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-export function createAppSessionToken(input: { psyoUserId: string; ownerId?: string; authDate?: number; locale?: string }) {
+export function createAppSessionToken(input: { psyoUserId: string; ownerId?: string; authDate?: number; locale?: string; verifiedTelegramContact?: VerifiedTelegramContact }) {
   const issuedAt = Math.floor(Date.now() / 1000);
   const payload: SignedSessionPayload = {
     psyoUserId: input.psyoUserId,
     ownerId: input.ownerId,
     authDate: input.authDate,
     locale: input.locale,
+    verifiedTelegramContact: input.verifiedTelegramContact ?? { username: null },
     iat: issuedAt,
     exp: issuedAt + sessionTtlSeconds,
   };
@@ -84,6 +87,7 @@ export function verifyAppSessionToken(token: string): TelegramSessionDto | null 
       ownerId: payload.ownerId,
       authDate: payload.authDate,
       locale: payload.locale,
+      verifiedTelegramContact: payload.verifiedTelegramContact ?? { username: null },
       issuedAt: payload.iat,
       expiresAt: payload.exp,
     };

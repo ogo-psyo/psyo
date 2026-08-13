@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { buildPsyoUserId, verifyTelegramInitData } from '@/lib/server/telegram';
+import { buildPsyoUserId, verifiedTelegramContactFromUser, verifyTelegramInitData } from '@/lib/server/telegram';
 import { createAppSessionToken, setAppSessionCookie } from '@/lib/server/appSession';
 import { ensureTelegramOwner } from '@/lib/server/telegramOwner';
 import type { TelegramSessionResponse } from '@/packages/contracts';
@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       ownerId: owner?.id,
       authDate: verified.authDate,
       locale: verified.user.language_code,
+      verifiedTelegramContact: verifiedTelegramContactFromUser(verified.user),
     });
     const responseBody: TelegramSessionResponse = {
       service: 'IdentityService',
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
         ownerId: owner?.id,
         authDate: verified.authDate,
         locale: verified.user.language_code,
+        verifiedTelegramContact: verifiedTelegramContactFromUser(verified.user),
         issuedAt: signed.issuedAt,
         expiresAt: signed.expiresAt,
       },

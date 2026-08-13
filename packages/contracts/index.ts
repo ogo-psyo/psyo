@@ -29,6 +29,7 @@ export type TelegramSessionDto = {
   ownerId?: EntityId;
   authDate?: number;
   locale?: string;
+  verifiedTelegramContact: { username: string | null };
   issuedAt: number;
   expiresAt: number;
 };

@@ -16,6 +16,17 @@ export type TelegramSession = {
   authDate?: number;
 };
 
+export type VerifiedTelegramContact = {
+  username: string | null;
+};
+
+const telegramUsernamePattern = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;
+
+export function verifiedTelegramContactFromUser(user: Pick<TelegramMiniAppUser, 'username'>): VerifiedTelegramContact {
+  const username = String(user.username ?? '').trim().replace(/^@/, '');
+  return { username: telegramUsernamePattern.test(username) ? username : null };
+}
+
 function hmacHex(key: string | Buffer, value: string) {
   return createHmac('sha256', key).update(value).digest('hex');
 }
