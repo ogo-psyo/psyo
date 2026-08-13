@@ -4,6 +4,7 @@ export type CareFeedback =
   | { kind: 'completed'; reminderId: string; title: string }
   | { kind: 'created'; reminderId: string; title: string }
   | { kind: 'rescheduled'; reminderId: string; title: string }
+  | { kind: 'observation-deleted'; observationId: string; title: string }
   | null;
 
 export function CareActionNotice({
@@ -12,7 +13,7 @@ export function CareActionNotice({
   onDismiss,
 }: {
   feedback: CareFeedback;
-  onUndo: () => void;
+  onUndo: () => void | Promise<void>;
   onDismiss: () => void;
 }) {
   if (!feedback) return null;
@@ -21,12 +22,14 @@ export function CareActionNotice({
     ? `Готово: ${feedback.title}`
     : feedback.kind === 'created'
       ? `Добавлено: ${feedback.title}`
-      : `Перенесено: ${feedback.title}`;
+      : feedback.kind === 'rescheduled'
+        ? `Перенесено: ${feedback.title}`
+        : `Запись убрана: ${feedback.title}`;
 
   return (
     <div className="care-action-notice" role="status" aria-live="polite">
       <span>{label}</span>
-      {feedback.kind === 'completed' && (
+      {feedback.kind === 'observation-deleted' && (
         <button type="button" onClick={onUndo}>Отменить</button>
       )}
       <button type="button" aria-label="Закрыть сообщение" onClick={onDismiss}>×</button>

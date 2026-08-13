@@ -8,6 +8,7 @@ import { AppNavigation } from '@/components/app/AppNavigation';
 import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
 import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
+import { ObservationEditor, type ObservationEditorDraft } from '@/components/care/ObservationEditor';
 import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
 import { NextCareCard } from '@/components/today/NextCareCard';
 import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
@@ -53,7 +54,10 @@ import type { ActionSuggestion } from '@/packages/contracts';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
 type Notice = 'idle' | 'saved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
-type ReminderView = { id: string; petId: string; type: string; title: string; dueAt: string; status: string; snoozedUntil?: string; completedAt?: string };
+type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+type ReminderTimeMode = 'exact' | 'flexible' | 'approximate';
+type ReminderView = { id: string; petId: string; type: string; title: string; dueAt: string; recurrence?: ReminderRecurrence; status: string; snoozedUntil?: string; completedAt?: string; nextDueAt?: string };
+type ReminderHistoryItem = { id: string; eventType?: string; payload?: { dueAt?: string; completedAt?: string; nextDueAt?: string | null }; createdAt: string };
 type WishlistView = { id: string; petId: string; title: string; category: string; reason?: string; url?: string; priority: string; status: string; created_at?: string };
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; created_at?: string };
 type MapFeatureView = { id: string; type: 'point' | 'route'; title: string; lat?: number | null; lng?: number | null; zone_type?: string | null; path?: { type?: string; coordinates?: number[][] } | null; visibility: 'private' | 'shared' | 'public' };
@@ -130,6 +134,21 @@ const defaultObservationDraft: ObservationDraft = {
   energy: observationEnergyOptions[0],
   note: '',
 };
+
+const reminderRecurrenceOptions: { value: ReminderRecurrence; label: string }[] = [
+  { value: 'none', label: 'Не повторять' },
+  { value: 'daily', label: 'Каждый день' },
+  { value: 'weekly', label: 'Каждую неделю' },
+  { value: 'monthly', label: 'Каждый месяц' },
+  { value: 'quarterly', label: 'Раз в три месяца' },
+  { value: 'yearly', label: 'Каждый год' },
+];
+
+const reminderTimeModeOptions: { value: ReminderTimeMode; label: string }[] = [
+  { value: 'exact', label: 'Точное время' },
+  { value: 'flexible', label: 'В течение дня' },
+  { value: 'approximate', label: 'Примерно' },
+];
 
 const viralCardFormats: { id: ViralCardFormat; label: string; caption: string; size: string }[] = [
   { id: 'story', label: 'История', caption: 'вертикально для Telegram и Instagram', size: '1080x1920' },
@@ -303,6 +322,25 @@ function isoFromDateInput(value: string) {
   return Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString();
 }
 
+function reminderDueAt(date: string, time: string, mode: ReminderTimeMode) {
+  const fallbackTime = mode === 'flexible' ? '12:00' : mode === 'approximate' ? '10:00' : '09:00';
+  const value = `${date || dateInputValue(new Date())}T${mode === 'exact' ? (time || fallbackTime) : fallbackTime}:00`;
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
+}
+
+function reminderRecurrenceLabel(recurrence?: ReminderRecurrence) {
+  return reminderRecurrenceOptions.find((option) => option.value === recurrence)?.label ?? 'Не повторяется';
+}
+
+function reminderTimeLabel(reminder: ReminderView) {
+  const date = new Date(reminder.snoozedUntil || reminder.dueAt);
+  if (!Number.isFinite(date.getTime())) return 'Дата не указана';
+  const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  const timing = time === '12:00' ? 'в течение дня' : time === '10:00' ? 'примерно' : `в ${time}`;
+  return `${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'short' })}, ${timing}`;
+}
+
 function reminderDateInputValue(reminder: ReminderView) {
   const date = new Date(reminder.snoozedUntil || reminder.dueAt);
   return Number.isFinite(date.getTime()) ? dateInputValue(date) : dateInputValue(new Date());
@@ -418,10 +456,19 @@ export default function Home() {
   const [socialInviteState, setSocialInviteState] = useState<'idle' | 'loading' | 'ready' | 'gone' | 'error'>('idle');
   const [observationDraft, setObservationDraft] = useState<ObservationDraft>(defaultObservationDraft);
   const [observationSaving, setObservationSaving] = useState(false);
+  const [editingObservationId, setEditingObservationId] = useState<string | null>(null);
+  const [observationEditDraft, setObservationEditDraft] = useState<ObservationEditorDraft>(defaultObservationDraft);
+  const [observationMutationBusy, setObservationMutationBusy] = useState(false);
+  const [recentlyDeletedObservation, setRecentlyDeletedObservation] = useState<ObservationView | null>(null);
   const [newReminderTitle, setNewReminderTitle] = useState('');
   const [newReminderType, setNewReminderType] = useState('custom');
   const [newReminderDueDate, setNewReminderDueDate] = useState(() => dateInputValue(new Date()));
+  const [newReminderDueTime, setNewReminderDueTime] = useState('09:00');
+  const [newReminderTimeMode, setNewReminderTimeMode] = useState<ReminderTimeMode>('flexible');
+  const [newReminderRecurrence, setNewReminderRecurrence] = useState<ReminderRecurrence>('none');
   const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
+  const [reminderMutationBusy, setReminderMutationBusy] = useState<string | null>(null);
+  const [reminderHistory, setReminderHistory] = useState<Record<string, ReminderHistoryItem[]>>({});
   const [calendarCursor, setCalendarCursor] = useState(() => new Date());
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => dateInputValue(new Date()));
   const [careView, setCareView] = useState<'active' | 'history'>('active');
@@ -462,6 +509,29 @@ export default function Home() {
   const phoneShellRef = useRef<HTMLElement | null>(null);
   const dogCreationKeyRef = useRef<string | null>(null);
   const socialRequestKeysRef = useRef<Record<string, string>>({});
+  const careMutationKeysRef = useRef(new Map<string, string>());
+  const careMutationTimesRef = useRef(new Map<string, string>());
+
+  function careMutationKey(scope: string) {
+    const existing = careMutationKeysRef.current.get(scope);
+    if (existing) return existing;
+    const key = `pso-${crypto.randomUUID()}`;
+    careMutationKeysRef.current.set(scope, key);
+    return key;
+  }
+
+  function careMutationTime(scope: string, factory: () => string) {
+    const existing = careMutationTimesRef.current.get(scope);
+    if (existing) return existing;
+    const value = factory();
+    careMutationTimesRef.current.set(scope, value);
+    return value;
+  }
+
+  function finishCareMutation(scope: string) {
+    careMutationKeysRef.current.delete(scope);
+    careMutationTimesRef.current.delete(scope);
+  }
 
   function resetViewScroll() {
     window.requestAnimationFrame(() => {
@@ -1218,12 +1288,37 @@ export default function Home() {
     });
   }
 
+  async function loadReminderHistory(reminderId: string) {
+    if (isGuestMode()) return;
+    const response = await fetch(`/api/reminders/${reminderId}/history`, { headers: authHeaders() });
+    if (!response.ok) return;
+    const payload = await response.json().catch(() => ({}));
+    const history = Array.isArray(payload.history) ? payload.history.map((item: any) => ({
+      id: String(item.id),
+      eventType: String(item.event_type || ''),
+      payload: item.payload && typeof item.payload === 'object' ? item.payload : {},
+      createdAt: String(item.created_at || new Date().toISOString()),
+    })) : [];
+    setReminderHistory((current) => ({ ...current, [reminderId]: history }));
+  }
+
+  useEffect(() => {
+    if (careView !== 'history' || isGuestMode()) return;
+    reminders.forEach((reminder) => {
+      if (reminder.recurrence && reminder.recurrence !== 'none' && reminderHistory[reminder.id] === undefined) {
+        void loadReminderHistory(reminder.id);
+      }
+    });
+  }, [careView, reminders, reminderHistory]);
+
   async function submitObservation() {
     if (observationSaving) return;
     const note = observationDraft.note?.trim();
     const petId = profile.backendPetId || (isGuestMode() ? ensureGuestPetId() : undefined);
-    const createdAt = new Date().toISOString();
-    const optimistic: ObservationView = {
+    const payloadFingerprint = JSON.stringify({ petId, ...observationDraft, note });
+    const mutationScope = `observation:create:${payloadFingerprint}`;
+    const createdAt = careMutationTime(mutationScope, () => new Date().toISOString());
+    const draft: ObservationView = {
       id: guestId('observation'),
       petId,
       mood: observationDraft.mood,
@@ -1235,11 +1330,12 @@ export default function Home() {
       syncStatus: 'local',
     };
     setObservationSaving(true);
-    setObservations((current) => [optimistic, ...current].slice(0, 12));
-    setObservationDraft(defaultObservationDraft);
     setError('');
 
     if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) {
+      setObservations((current) => [draft, ...current].slice(0, 12));
+      setObservationDraft(defaultObservationDraft);
+      finishCareMutation(mutationScope);
       setObservationSaving(false);
       return;
     }
@@ -1247,28 +1343,132 @@ export default function Home() {
     try {
       const response = await fetch('/api/observations', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(mutationScope), ...authHeaders() },
         body: JSON.stringify({
           petId: profile.backendPetId,
           type: 'note',
-          value: `настроение ${optimistic.mood}, аппетит ${optimistic.appetite}, стул ${optimistic.stool}, энергия ${optimistic.energy}`,
-          note: optimistic.note || null,
+          value: `настроение ${draft.mood}, аппетит ${draft.appetite}, стул ${draft.stool}, энергия ${draft.energy}`,
+          note: draft.note || null,
           observedAt: createdAt,
           source: 'manual',
           metadata: {
-            mood: optimistic.mood,
-            appetite: optimistic.appetite,
-            stool: optimistic.stool,
-            energy: optimistic.energy,
+            mood: draft.mood,
+            appetite: draft.appetite,
+            stool: draft.stool,
+            energy: draft.energy,
           },
         }),
       });
-      if (!response.ok) return;
+      if (!response.ok) {
+        setError('Запись не сохранилась. Текст остался здесь — проверь связь и попробуй снова.');
+        return;
+      }
       const payload = await response.json().catch(() => ({}));
       const saved = normalizeObservation(payload?.observation || payload);
-      setObservations((current) => current.map((item) => item.id === optimistic.id ? { ...(saved || item), id: saved?.id || item.id, syncStatus: 'saved' } : item));
+      if (saved) setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
+      setObservationDraft(defaultObservationDraft);
+      finishCareMutation(mutationScope);
+    } catch {
+      setError('Запись не сохранилась. Текст остался здесь — проверь связь и попробуй снова.');
     } finally {
       setObservationSaving(false);
+    }
+  }
+
+  function startObservationEdit(observation: ObservationView) {
+    setEditingObservationId(observation.id);
+    setObservationEditDraft({
+      mood: observation.mood,
+      appetite: observation.appetite,
+      stool: observation.stool,
+      energy: observation.energy,
+      note: observation.note || '',
+    });
+    setError('');
+  }
+
+  async function editObservation(id: string) {
+    const scope = `observation:update:${id}:${JSON.stringify(observationEditDraft)}`;
+    if (isGuestMode()) {
+      setObservations((current) => current.map((item) => item.id === id ? { ...item, ...observationEditDraft } : item));
+      setEditingObservationId(null);
+      return;
+    }
+    setObservationMutationBusy(true);
+    try {
+      const response = await fetch(`/api/observations/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+        body: JSON.stringify(observationEditDraft),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) return setError('Не получилось сохранить запись. Изменения остались в форме.');
+      const saved = normalizeObservation(payload.observation);
+      if (saved) setObservations((current) => current.map((item) => item.id === id ? { ...saved, syncStatus: 'saved' as const } : item));
+      finishCareMutation(scope);
+      setEditingObservationId(null);
+    } catch {
+      setError('Не получилось сохранить запись. Изменения остались в форме.');
+    } finally {
+      setObservationMutationBusy(false);
+    }
+  }
+
+  async function deleteObservation(id: string) {
+    const observation = observations.find((item) => item.id === id);
+    if (!observation || observationMutationBusy) return;
+    if (isGuestMode()) {
+      setObservations((current) => current.filter((item) => item.id !== id));
+      setRecentlyDeletedObservation(observation);
+      setCareFeedback({ kind: 'observation-deleted', observationId: id, title: 'наблюдение' });
+      return;
+    }
+    const scope = `observation:delete:${id}`;
+    setObservationMutationBusy(true);
+    try {
+      const response = await fetch(`/api/observations/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+        body: JSON.stringify({}),
+      });
+      if (!response.ok) return setError('Не получилось убрать запись. Попробуй ещё раз.');
+      setObservations((current) => current.filter((item) => item.id !== id));
+      setRecentlyDeletedObservation(observation);
+      setCareFeedback({ kind: 'observation-deleted', observationId: id, title: 'наблюдение' });
+      finishCareMutation(scope);
+    } catch {
+      setError('Не получилось убрать запись. Попробуй ещё раз.');
+    } finally {
+      setObservationMutationBusy(false);
+    }
+  }
+
+  async function restoreObservation() {
+    if (!recentlyDeletedObservation) return;
+    const observation = recentlyDeletedObservation;
+    if (isGuestMode()) {
+      setObservations((current) => [observation, ...current]);
+      setRecentlyDeletedObservation(null);
+      setCareFeedback(null);
+      return;
+    }
+    const scope = `observation:restore:${observation.id}`;
+    setObservationMutationBusy(true);
+    try {
+      const response = await fetch(`/api/observations/${observation.id}/restore`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+        body: JSON.stringify({}),
+      });
+      if (!response.ok) return setError('Не получилось вернуть запись. Попробуй ещё раз.');
+      setObservations((current) => [observation, ...current.filter((item) => item.id !== observation.id)]);
+      setRecentlyDeletedObservation(null);
+      setCareFeedback(null);
+      finishCareMutation(scope);
+    } catch {
+      setError('Не получилось вернуть запись. Попробуй ещё раз.');
+    } finally {
+      setObservationMutationBusy(false);
     }
   }
 
@@ -1406,7 +1606,12 @@ export default function Home() {
       setError('Напиши, что нужно сделать для собаки.');
       return false;
     }
-    const dueAt = explicitDueDate ? isoFromDateInput(explicitDueDate) : title ? new Date(Date.now() + dueInDays * 86400000).toISOString() : isoFromDateInput(newReminderDueDate);
+    const dueAt = explicitDueDate
+      ? reminderDueAt(explicitDueDate, newReminderDueTime, newReminderTimeMode)
+      : title
+        ? new Date(Date.now() + dueInDays * 86400000).toISOString()
+        : reminderDueAt(newReminderDueDate, newReminderDueTime, newReminderTimeMode);
+    const recurrence = title ? 'none' : newReminderRecurrence;
     if (!profile.backendPetId) {
       if (!isGuestMode()) {
         setError('Сначала сохрани профиль собаки.');
@@ -1417,27 +1622,38 @@ export default function Home() {
     if (isGuestMode()) {
       const petId = ensureGuestPetId();
       const id = guestId('reminder');
-      setReminders((current) => [{ id, petId, type, title: reminderTitle, dueAt, status: 'active' }, ...current]);
+      setReminders((current) => [{ id, petId, type, title: reminderTitle, dueAt, recurrence, status: 'active' }, ...current]);
       setNewReminderTitle('');
       setCareFeedback({ kind: 'created', reminderId: id, title: reminderTitle });
       if (tab === 'today') resetViewScroll();
       return true;
     }
-    const response = await fetch('/api/reminders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify({ petId: profile.backendPetId, title: reminderTitle, dueAt, type, source: 'manual_calendar' }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      setError('Не удалось создать напоминание');
+    const scope = `reminder:create:${profile.backendPetId}:${reminderTitle}:${dueAt}:${type}:${recurrence}`;
+    setReminderMutationBusy(scope);
+    try {
+      const response = await fetch('/api/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+        body: JSON.stringify({ petId: profile.backendPetId, title: reminderTitle, dueAt, type, recurrence, source: 'manual_calendar' }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setError('Дело не сохранилось. Всё введённое осталось в форме — проверь связь и попробуй снова.');
+        return false;
+      }
+      setNewReminderTitle('');
+      setNewReminderRecurrence('none');
+      await loadBootstrap();
+      finishCareMutation(scope);
+      setCareFeedback({ kind: 'created', reminderId: String(result.reminder?.id || ''), title: reminderTitle });
+      if (tab === 'today') resetViewScroll();
+      return true;
+    } catch {
+      setError('Дело не сохранилось. Всё введённое осталось в форме — проверь связь и попробуй снова.');
       return false;
+    } finally {
+      setReminderMutationBusy(null);
     }
-    setNewReminderTitle('');
-    await loadBootstrap();
-    setCareFeedback({ kind: 'created', reminderId: String(result.reminder?.id || ''), title: reminderTitle });
-    if (tab === 'today') resetViewScroll();
-    return true;
   }
 
   async function createWishlistItem(preset?: { title: string; category?: string; reason?: string; priority?: string }) {
@@ -1618,18 +1834,29 @@ export default function Home() {
       setReminders((current) => current.map((reminder) => reminder.id === id ? { ...reminder, ...patch } : reminder));
       return true;
     }
-    const response = await fetch(`/api/reminders/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify(patch),
-    });
-    await response.json().catch(() => ({}));
-    if (!response.ok) {
+    const serverPatch = { title: patch.title, type: patch.type, dueAt: patch.dueAt, recurrence: patch.recurrence };
+    const scope = `reminder:update:${id}:${JSON.stringify(serverPatch)}`;
+    setReminderMutationBusy(scope);
+    try {
+      const response = await fetch(`/api/reminders/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+        body: JSON.stringify(serverPatch),
+      });
+      await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setError('Не получилось сохранить изменение. Проверь связь и попробуй ещё раз.');
+        return false;
+      }
+      await loadBootstrap();
+      finishCareMutation(scope);
+      return true;
+    } catch {
       setError('Не получилось сохранить изменение. Проверь связь и попробуй ещё раз.');
       return false;
+    } finally {
+      setReminderMutationBusy(null);
     }
-    await loadBootstrap();
-    return true;
   }
 
   async function deleteReminder(id: string) {
@@ -1637,14 +1864,25 @@ export default function Home() {
       setReminders((current) => current.filter((reminder) => reminder.id !== id));
       return true;
     }
-    const response = await fetch(`/api/reminders/${id}`, { method: 'DELETE', headers: authHeaders() });
-    await response.json().catch(() => ({}));
-    if (!response.ok) {
+    const scope = `reminder:delete:${id}`;
+    try {
+      const response = await fetch(`/api/reminders/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+        body: JSON.stringify({}),
+      });
+      await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setError('Не получилось удалить дело. Проверь связь и попробуй ещё раз.');
+        return false;
+      }
+      await loadBootstrap();
+      finishCareMutation(scope);
+      return true;
+    } catch {
       setError('Не получилось удалить дело. Проверь связь и попробуй ещё раз.');
       return false;
     }
-    await loadBootstrap();
-    return true;
   }
 
   async function completeReminder(id: string) {
@@ -1655,17 +1893,35 @@ export default function Home() {
       setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
       return;
     }
-    const response = await fetch(`/api/reminders/${id}/complete`, { method: 'POST', headers: authHeaders() });
-    if (!response.ok) return setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
-    await loadBootstrap();
-    setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
+    const scope = `reminder:complete:${id}`;
+    const completedAt = careMutationTime(scope, () => new Date().toISOString());
+    setReminderMutationBusy(scope);
+    try {
+      const response = await fetch(`/api/reminders/${id}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+        body: JSON.stringify({ completedAt }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) return setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
+      await loadBootstrap();
+      if (payload.historyOccurrence) {
+        setReminderHistory((current) => ({
+          ...current,
+          [id]: [{ id: `${id}-${completedAt}`, payload: payload.historyOccurrence, createdAt: completedAt }, ...(current[id] ?? [])],
+        }));
+      }
+      finishCareMutation(scope);
+      setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
+    } catch {
+      setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
+    } finally {
+      setReminderMutationBusy(null);
+    }
   }
 
   async function undoLastCareCompletion() {
-    if (!careFeedback || careFeedback.kind !== 'completed') return;
-    const restored = await updateReminder(careFeedback.reminderId, { status: 'active' });
-    if (!restored) return;
-    setCareFeedback(null);
+    if (careFeedback?.kind === 'observation-deleted') await restoreObservation();
   }
 
   async function confirmCareDeletion(id: string) {
@@ -1677,17 +1933,30 @@ export default function Home() {
   }
 
   async function snoozeReminder(id: string) {
-    const snoozedUntil = new Date(Date.now() + 86400000).toISOString();
+    const scope = `reminder:snooze:${id}:day`;
+    const snoozedUntil = careMutationTime(scope, () => new Date(Date.now() + 86400000).toISOString());
     if (isGuestMode()) { setReminders((current) => current.map((reminder) => reminder.id === id ? { ...reminder, status: 'snoozed', snoozedUntil } : reminder)); return; }
-    const response = await fetch(`/api/reminders/${id}/snooze`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ snoozedUntil }) });
-    if (!response.ok) return setError('Не удалось отложить напоминание');
-    await loadBootstrap();
+    setReminderMutationBusy(scope);
+    try {
+      const response = await fetch(`/api/reminders/${id}/snooze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+        body: JSON.stringify({ snoozedUntil }),
+      });
+      if (!response.ok) return setError('Не удалось перенести дело. Проверь связь и попробуй ещё раз.');
+      await loadBootstrap();
+      finishCareMutation(scope);
+    } catch {
+      setError('Не удалось перенести дело. Проверь связь и попробуй ещё раз.');
+    } finally {
+      setReminderMutationBusy(null);
+    }
   }
 
   async function rescheduleReminder(id: string, days: number) {
     const next = new Date();
     next.setDate(next.getDate() + days);
-    await updateReminder(id, { dueAt: isoFromDateInput(dateInputValue(next)), status: 'active' });
+    await updateReminder(id, { dueAt: isoFromDateInput(dateInputValue(next)) });
   }
 
   function exportReminderToCalendar(reminder: ReminderView) {
@@ -2342,47 +2611,55 @@ export default function Home() {
             {careView === 'active' && <div className="care-task-list">
               {visibleCareReminders.length === 0 && <article className="care-empty-state"><b>Добавь первое дело</b><p>Обработка, вакцина, груминг, корм, врач или своё напоминание. Дальше оно будет видно первым экраном и уйдёт в историю после выполнения.</p></article>}
               {visibleCareReminders.map((reminder) => <article key={reminder.id} className={`care-task-card ${new Date(reminder.snoozedUntil || reminder.dueAt).getTime() < new Date().setHours(0, 0, 0, 0) ? 'warning' : ''}`}>
-                {editingReminderId === reminder.id ? <form className="reminder-edit-form" onSubmit={(event) => {
+                {editingReminderId === reminder.id ? <form className="reminder-edit-form" onSubmit={async (event) => {
                   event.preventDefault();
                   const data = new FormData(event.currentTarget);
-                  updateReminder(reminder.id, { title: String(data.get('title') || reminder.title), type: String(data.get('type') || reminder.type), dueAt: isoFromDateInput(String(data.get('dueDate') || reminderDateInputValue(reminder))), status: 'active' });
-                  setEditingReminderId(null);
+                  const saved = await updateReminder(reminder.id, {
+                    title: String(data.get('title') || reminder.title),
+                    type: String(data.get('type') || reminder.type),
+                    dueAt: reminderDueAt(String(data.get('dueDate') || reminderDateInputValue(reminder)), String(data.get('dueTime') || '09:00'), 'exact'),
+                    recurrence: String(data.get('recurrence') || reminder.recurrence || 'none') as ReminderRecurrence,
+                  });
+                  if (saved) setEditingReminderId(null);
                 }}>
                   <input name="title" defaultValue={reminder.title} aria-label="Название дела" />
                   <div className="reminder-edit-row">
                     <select name="type" defaultValue={reminder.type} aria-label="Тип дела">{careTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
                     <input name="dueDate" type="date" defaultValue={reminderDateInputValue(reminder)} aria-label="Дата дела" />
                   </div>
-                  <div className="care-row-actions"><button type="submit">Сохранить</button><button type="button" onClick={() => setEditingReminderId(null)}>Отмена</button></div>
+                  <div className="reminder-edit-row">
+                    <input name="dueTime" type="time" defaultValue={new Date(reminder.dueAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })} aria-label="Время дела" />
+                    <select name="recurrence" defaultValue={reminder.recurrence || 'none'} aria-label="Повтор дела">{reminderRecurrenceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
+                  </div>
+                  <div className="care-row-actions"><button type="submit" disabled={Boolean(reminderMutationBusy)}>{reminderMutationBusy ? 'Сохраняю…' : 'Сохранить'}</button><button type="button" onClick={() => setEditingReminderId(null)} disabled={Boolean(reminderMutationBusy)}>Отмена</button></div>
                 </form> : <>
                   <div className="care-task-main">
                     <span>{careTypeLabel(reminder.type)}</span>
                     <b>{reminder.title}</b>
-                    <p>{new Date(reminder.snoozedUntil || reminder.dueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'short' })}</p>
+                    <p>{reminderTimeLabel(reminder)} · {reminderRecurrenceLabel(reminder.recurrence)}</p>
+                    {reminder.nextDueAt && <p>Следующий раз: {new Date(reminder.nextDueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}
                   </div>
                   <div className="care-row-actions">
-                    <button onClick={() => completeReminder(reminder.id)}>Готово</button>
-                    <button onClick={() => rescheduleReminder(reminder.id, 1)}>Завтра</button>
-                    <button onClick={() => setEditingReminderId(reminder.id)}>Править</button>
-                    <button className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button>
+                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => completeReminder(reminder.id)}>Готово</button>
+                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => snoozeReminder(reminder.id)}>Отложить</button>
+                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => setEditingReminderId(reminder.id)}>Изменить</button>
+                    <button disabled={Boolean(reminderMutationBusy)} className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button>
                   </div>
                 </>}
               </article>)}
             </div>}
 
             {careView === 'history' && <div className="care-task-list">
-              {doneReminders.length === 0 && <article className="care-empty-state"><b>История начнётся после первого “готово”</b><p>Так будет видно, когда была обработка, вакцина, груминг или визит.</p></article>}
+              {doneReminders.length === 0 && Object.values(reminderHistory).every((items) => items.length === 0) && <article className="care-empty-state"><b>История начнётся после первого «Готово»</b><p>Так будет видно, когда была обработка, вакцина, груминг или визит.</p></article>}
               {doneReminders.slice(0, 12).map((reminder) => <article key={reminder.id} className="care-task-card done">
                 <div className="care-task-main">
                   <span>{careTypeLabel(reminder.type)}</span>
                   <b>{reminder.title}</b>
                   <p>{new Date(reminder.completedAt || reminder.dueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                 </div>
-                <div className="care-row-actions">
-                  <button onClick={() => updateReminder(reminder.id, { status: 'active', dueAt: isoFromDateInput(dateInputValue(new Date())) })}>Вернуть</button>
-                  <button className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button>
-                </div>
+                <div className="care-row-actions"><button onClick={() => createReminder(reminder.title, reminder.type, 0)}>Создать снова</button><button className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button></div>
               </article>)}
+              {reminders.flatMap((reminder) => (reminderHistory[reminder.id] ?? []).map((entry) => ({ reminder, entry }))).slice(0, 20).map(({ reminder, entry }) => <article key={entry.id} className="care-task-card done"><div className="care-task-main"><span>{careTypeLabel(reminder.type)}</span><b>{reminder.title}</b><p>Выполнено {new Date(entry.payload?.completedAt || entry.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>{entry.payload?.nextDueAt && <p>Следующий раз: {new Date(entry.payload.nextDueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}</div></article>)}
             </div>}
           </section>
 
@@ -2400,6 +2677,11 @@ export default function Home() {
               <select value={newReminderType} onChange={(event) => setNewReminderType(event.target.value)} aria-label="Тип дела">{careTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
               <input type="date" value={newReminderDueDate} onChange={(event) => setNewReminderDueDate(event.target.value)} aria-label="Дата дела" />
             </div>
+            <div className="care-form-row">
+              <select value={newReminderTimeMode} onChange={(event) => setNewReminderTimeMode(event.target.value as ReminderTimeMode)} aria-label="Точность времени">{reminderTimeModeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
+              {newReminderTimeMode === 'exact' ? <input type="time" value={newReminderDueTime} onChange={(event) => setNewReminderDueTime(event.target.value)} aria-label="Время дела" /> : <select value={newReminderRecurrence} onChange={(event) => setNewReminderRecurrence(event.target.value as ReminderRecurrence)} aria-label="Повтор дела">{reminderRecurrenceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>}
+            </div>
+            {newReminderTimeMode === 'exact' && <label>Повтор<select value={newReminderRecurrence} onChange={(event) => setNewReminderRecurrence(event.target.value as ReminderRecurrence)}>{reminderRecurrenceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>}
             <div className="care-preset-grid" aria-label="Быстро добавить уход">
               <button onClick={() => createReminder('Обработка от клещей и паразитов', 'parasite', 30)}>Обработка</button>
               <button onClick={() => createReminder('Проверить дату вакцинации', 'vaccine', 7)}>Вакцинация</button>
@@ -2496,12 +2778,20 @@ export default function Home() {
             </div>
             {observations.length === 0 ? <article className="empty-state"><b>История пока пустая</b><p>Записи с главной появятся здесь: настроение, аппетит, стул, энергия и заметки владельца.</p></article> : <div>
               {observations.slice(0, 6).map((item) => <article key={item.id}>
-                <span>{new Date(item.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
-                <div>
-                  <b>{item.mood} · энергия {item.energy}</b>
-                  <p>Аппетит {item.appetite}; стул {item.stool}.{item.note ? ` ${item.note}` : ''}</p>
-                </div>
-                <small>{item.syncStatus === 'saved' ? 'сохранено' : 'локально'}</small>
+                {editingObservationId === item.id ? <ObservationEditor
+                  draft={observationEditDraft}
+                  busy={observationMutationBusy}
+                  onChange={(patch) => setObservationEditDraft((current) => ({ ...current, ...patch }))}
+                  onCancel={() => setEditingObservationId(null)}
+                  onSave={() => editObservation(item.id)}
+                /> : <>
+                  <span>{new Date(item.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
+                  <div>
+                    <b>{item.mood} · энергия {item.energy}</b>
+                    <p>Аппетит {item.appetite}; стул {item.stool}.{item.note ? ` ${item.note}` : ''}</p>
+                    <div className="care-row-actions"><button type="button" onClick={() => startObservationEdit(item)}>Изменить</button><button type="button" className="danger-action" onClick={() => deleteObservation(item.id)} disabled={observationMutationBusy}>Убрать</button></div>
+                  </div>
+                </>}
               </article>)}
             </div>}
           </section>
@@ -2579,7 +2869,7 @@ export default function Home() {
             <div className="details-body">
               <div className="upload-inline"><label><input type="file" accept="image/*" multiple onChange={handlePhotos} /><span>{profile.avatarSource === 'uploaded' ? 'Фото уже выбрано · заменить' : hasPhoto ? 'Фото выбрано · сделать портретом' : 'Добавить фото'}</span></label><button onClick={() => createAvatar()}>{avatarState === 'rendering' ? 'Делаю портрет…' : 'Сделать портрет'}</button></div>
               {doneReminders.length === 0 && <article className="empty-state"><b>Пока заметок нет</b><p>Сохрани важное как дело в плане: после выполнения оно останется в истории ухода.</p></article>}
-              {doneReminders.length > 0 && <div className="reminder-list">{doneReminders.slice(0, 5).map((reminder) => <article key={reminder.id} className="reminder-card done"><div><b>{reminder.title}</b><p>{new Date(reminder.completedAt || reminder.dueAt).toLocaleDateString('ru-RU')} · готово</p></div><div><button onClick={() => updateReminder(reminder.id, { status: 'active' })}>Вернуть</button></div></article>)}</div>}
+              {doneReminders.length > 0 && <div className="reminder-list">{doneReminders.slice(0, 5).map((reminder) => <article key={reminder.id} className="reminder-card done"><div><b>{reminder.title}</b><p>{new Date(reminder.completedAt || reminder.dueAt).toLocaleDateString('ru-RU')} · готово</p></div><div><button onClick={() => createReminder(reminder.title, reminder.type, 0)}>Создать снова</button></div></article>)}</div>}
               <button className="secondary full" onClick={() => setTab('calendar')}>Добавить дело в план</button>
             </div>
           </details>
