@@ -6,6 +6,7 @@ set visibility = 'private', moderation_status = 'approved', share_token = null
 where visibility <> 'private';
 
 drop policy if exists "Read map routes" on public.map_routes;
+drop policy if exists "Owners read map routes" on public.map_routes;
 create policy "Owners read map routes"
   on public.map_routes for select
   using (owner_id = auth.uid());
