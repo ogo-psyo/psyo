@@ -29,7 +29,7 @@
     "better-auth": "^1.6.22",
     "better-auth-telegram": "^1.5.0",
     "leaflet": "^1.9.4",
-    "next": "^16.2.11",
+    "next": "16.3.0",
     "pg": "^8.22.0",
     "postcss": "^8.5.23",
     "react": "^19.2.1",
