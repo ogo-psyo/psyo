@@ -29,6 +29,9 @@ for (const token of requiredCopyApi) {
 const forbiddenUiSnippets = [
   ['preview mode', 'browser preview must be human Russian copy'],
   ['web preview', 'telegram pill must not expose product preview jargon'],
+  ['Telegram Mini App', 'owner UI must use human Russian wording for the Telegram app'],
+  ['Личный профиль, Plus', 'owner UI must not expose an English subscription label'],
+  ['Telegram session signed out locally', 'owner UI must not expose an English session status'],
   ['email для письма со входом', 'owner app must not offer email magic-link login'],
   ['Письмо для входа отправлено', 'owner app must not expose email auth as a primary scenario'],
   ['signInWithOtp', 'owner app must not keep Supabase email OTP in the visible client flow'],

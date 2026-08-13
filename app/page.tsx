@@ -1004,7 +1004,7 @@ export default function Home() {
 
       const initData = webApp?.initData || '';
       if (!initData) {
-        setTelegramSession({ mode: 'browser', message: 'Open inside Telegram Mini App to attach Telegram session.' });
+        setTelegramSession({ mode: 'browser', message: 'Открой Псё в Telegram, чтобы войти.' });
         return;
       }
 
@@ -1698,7 +1698,7 @@ export default function Home() {
     await getSupabaseBrowser()?.auth.signOut();
     await fetch('/api/v1/session/logout', { method: 'POST', credentials: 'include' }).catch(() => null);
     setSession(null);
-    setTelegramSession((current) => current.mode === 'telegram' ? { mode: 'browser', message: 'Telegram session signed out locally.' } : current);
+    setTelegramSession((current) => current.mode === 'telegram' ? { mode: 'browser', message: 'Вы вышли из Псё на этом устройстве.' } : current);
     setProfile(defaultProfile);
     setReminders([]);
     setWishlist([]);
@@ -2724,7 +2724,7 @@ export default function Home() {
             <div><b>Telegram не подключился</b><p>Открой Псё через кнопку бота. Email здесь не нужен.</p></div>
             <button className="secondary" onClick={() => window.location.reload()}>Повторить</button>
           </> : telegramSession.mode === 'browser' ? <>
-            <div><b>Демо без входа</b><p>Личный профиль, Plus и сохранение включаются только внутри Telegram Mini App. В браузере можно спокойно посмотреть интерфейс без авторизации.</p></div>
+            <div><b>Демо без входа</b><p>Личный профиль, Псё Плюс и сохранение доступны внутри Telegram. В браузере можно спокойно посмотреть интерфейс без входа.</p></div>
           </> : <>
             <div><b>Локальный режим</b><p>Можно продолжить сейчас. Для сохранения открой через Telegram.</p></div>
           </>}
