@@ -15,17 +15,19 @@ const files = {
 const failures = [];
 
 for (const token of [
-  "type MapSaveMode = 'private' | 'shared' | 'public_pending'",
+  "type MapSaveMode = 'private' | 'shared'",
   "const [mapSaveMode, setMapSaveMode]",
   'aria-label="Приватность карты"',
   'Только мне',
   'По ссылке',
-  'На модерацию',
-  'mapSaveMode === \'public_pending\' ? \'public\' : mapSaveMode',
   'Точные координаты не показываются',
+  'features={ownerRoutes}',
+  'setOwnerRoutes(normalizeOwnerRoutes(payload.routes))',
 ]) {
   if (!files.page.includes(token)) failures.push(`map privacy UI missing: ${token}`);
 }
+
+if (files.page.includes('На модерацию')) failures.push('private map UI must not promise an unavailable community layer');
 
 for (const token of [
   "const visibilityModes = new Set(['private', 'shared', 'public'])",
