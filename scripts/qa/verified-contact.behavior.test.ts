@@ -38,7 +38,7 @@ assert.equal(typeof contactFromUser, 'function', 'Telegram module must derive a 
 const verifiedContact = (contactFromUser as (user: unknown) => unknown)(verified.user);
 assert.deepEqual(verifiedContact, { username: 'luna_owner' });
 
-const signed = (appSession.createAppSessionToken as (input: Record<string, unknown>) => { token: string })({
+const signed = (appSession.createAppSessionToken as unknown as (input: Record<string, unknown>) => { token: string })({
   psyoUserId: telegram.buildPsyoUserId(verified.user.id),
   ownerId: '00000000-0000-4000-8000-000000000001',
   authDate: verified.authDate,
