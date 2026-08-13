@@ -4395,6 +4395,82 @@ body::before,
   font-weight: 650;
 }
 
+.pet-switcher > .pet-add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+  gap: 8px;
+  overflow: visible;
+  padding: 10px 0 2px;
+  border-top: 1px solid #e5ece5;
+}
+
+.pet-add-row label,
+.profile-delete-form label {
+  display: grid;
+  gap: 6px;
+  color: #46534b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pet-add-row input,
+.profile-delete-form input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #cad8cc;
+  border-radius: 14px;
+  padding: 0 12px;
+  background: #fff;
+  font: inherit;
+}
+
+.profile-danger-zone {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #ead4ce;
+  border-radius: 24px;
+  padding: 18px;
+  background: #fffaf8;
+}
+
+.profile-danger-zone h3,
+.profile-danger-zone p {
+  margin: 4px 0 0;
+}
+
+.profile-danger-zone details {
+  border-top: 1px solid #eadfdc;
+  padding-top: 12px;
+}
+
+.profile-danger-zone summary {
+  min-height: 44px;
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.profile-delete-form {
+  display: grid;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+.profile-delete-form .danger-action {
+  min-height: 46px;
+  border-radius: 14px;
+}
+
+@media (max-width: 560px) {
+  .pet-switcher > .pet-add-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pet-add-row label {
+    grid-column: 1 / -1;
+  }
+}
+
 .map-privacy-modes {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

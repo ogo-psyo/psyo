@@ -502,6 +502,12 @@ export default function Home() {
   const [dogCreationOpen, setDogCreationOpen] = useState(false);
   const [heroNameDraft, setHeroNameDraft] = useState('');
   const [onboardingSaving, setOnboardingSaving] = useState(false);
+  const [addDogOpen, setAddDogOpen] = useState(false);
+  const [newDogName, setNewDogName] = useState('');
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [petMutationBusy, setPetMutationBusy] = useState(false);
+  const [dogDeleteName, setDogDeleteName] = useState('');
+  const [accountDeleteConfirmation, setAccountDeleteConfirmation] = useState('');
   const [telegramSession, setTelegramSession] = useState<TelegramSessionView>({ mode: 'loading' });
   const [billing, setBilling] = useState<BillingView | null>(null);
   const [careFeedback, setCareFeedback] = useState<CareFeedback>(null);
@@ -511,9 +517,27 @@ export default function Home() {
   const observationsLoadedRef = useRef(false);
   const phoneShellRef = useRef<HTMLElement | null>(null);
   const dogCreationKeyRef = useRef<string | null>(null);
+  const addDogKeyRef = useRef<string | null>(null);
   const socialRequestKeysRef = useRef<Record<string, string>>({});
   const careMutationKeysRef = useRef(new Map<string, string>());
   const careMutationTimesRef = useRef(new Map<string, string>());
+
+  async function loadPublicDogCard(petId: string) {
+    if (!petId || isGuestMode()) {
+      setPublishedPublicCardPath('');
+      return;
+    }
+    const response = await fetch(`/api/dog-cards?petId=${encodeURIComponent(petId)}`, {
+      credentials: 'include',
+      headers: authHeaders(),
+    });
+    if (!response.ok) {
+      setPublishedPublicCardPath('');
+      return;
+    }
+    const payload = await response.json().catch(() => ({}));
+    setPublishedPublicCardPath(typeof payload.path === 'string' ? payload.path : '');
+  }
 
   function careMutationKey(scope: string) {
     const existing = careMutationKeysRef.current.get(scope);
@@ -1021,6 +1045,13 @@ export default function Home() {
     if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) return;
     loadObservations().catch(() => null);
   }, [profile.backendPetId, session?.access_token, telegramSession.ownerId]);
+  useEffect(() => {
+    if (!profile.backendPetId) {
+      setPublishedPublicCardPath('');
+      return;
+    }
+    loadPublicDogCard(profile.backendPetId).catch(() => setPublishedPublicCardPath(''));
+  }, [profile.backendPetId, session?.access_token, telegramSession.ownerId]);
   const selectedStyle = useMemo(() => avatarStyles.find((style) => style.id === profile.selectedStyle) ?? avatarStyles[0], [profile.selectedStyle]);
   const selectedBreed = useMemo(() => breedCatalog.find((breed) => breed.id === profile.breedId) ?? breedCatalog[0], [profile.breedId]);
   const selectedBreedCare = useMemo(() => getBreedCare(profile.breedId), [profile.breedId]);
@@ -1233,17 +1264,77 @@ export default function Home() {
     : billing?.upgrade?.available ? 'Оплата готова через Telegram.' : 'Оплата пока недоступна.';
 
   async function switchActivePet(nextPetId: string) {
-    if (!nextPetId || nextPetId === activePetId) return;
+    if (!nextPetId || nextPetId === activePetId || petMutationBusy) return;
+    const previousPetId = activePetId;
     setError('');
-    setActivePetId(nextPetId);
-    setReminders([]);
-    setWishlist([]);
-    setZones([]);
-    setOwnerRoutes([]);
-    setObservations([]);
-    setPickedZonePoint(null);
-    setRoutePoints([]);
-    await loadBootstrap(undefined, nextPetId).catch(() => setError('Не удалось переключить собаку'));
+    setPetMutationBusy(true);
+    try {
+      if (!isGuestMode()) {
+        const response = await fetch('/api/v1/pets', {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ activePetId: nextPetId }),
+        });
+        if (!response.ok) throw new Error('PET_SWITCH_FAILED');
+      }
+      setActivePetId(nextPetId);
+      setReminders([]);
+       setWishlist([]);
+       setZones([]);
+       setOwnerRoutes([]);
+       setObservations([]);
+      setPickedZonePoint(null);
+      setRoutePoints([]);
+      setPublishedPublicCardPath('');
+      await loadBootstrap(undefined, nextPetId);
+    } catch {
+      setActivePetId(previousPetId);
+      setError('Не удалось переключить собаку. Попробуй ещё раз.');
+    } finally {
+      setPetMutationBusy(false);
+    }
+  }
+
+  async function addDog() {
+    const dogName = newDogName.trim();
+    if (!dogName || petMutationBusy) return;
+    if (isGuestMode()) {
+      setError('Добавить несколько собак можно после входа через Telegram.');
+      return;
+    }
+    const idempotencyKey = addDogKeyRef.current ?? `add-pet:${crypto.randomUUID()}`;
+    addDogKeyRef.current = idempotencyKey;
+    setPetMutationBusy(true);
+    setError('');
+    try {
+      const response = await fetch('/api/v1/pets', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey, ...authHeaders() },
+        body: JSON.stringify({ profile: { dogName } }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.pet?.id) throw new Error('PET_CREATE_FAILED');
+      setActivePetId(result.pet.id);
+      const selectResponse = await fetch('/api/v1/pets', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ activePetId: result.pet.id }),
+      });
+      if (!selectResponse.ok) throw new Error('PET_SELECTION_FAILED');
+      await loadBootstrap(undefined, result.pet.id);
+      addDogKeyRef.current = null;
+      setNewDogName('');
+      setAddDogOpen(false);
+      setNotice('saved');
+      window.setTimeout(() => setNotice('idle'), 1400);
+    } catch {
+      setError('Не удалось добавить собаку. Введённые данные сохранены — попробуй ещё раз.');
+    } finally {
+      setPetMutationBusy(false);
+  }
   }
 
 
@@ -1559,33 +1650,46 @@ export default function Home() {
     }
   }
 
-  async function saveCard() {
+  async function savePrivateProfile() {
     if (!profile.dogName.trim()) { setError('Сначала добавь имя собаки.'); return null; }
+    if (profileSaving) return profile.backendPetId || null;
+    setProfileSaving(true);
     setError('');
     if (isGuestMode()) {
       ensureGuestPetId();
       setNotice('saved');
       window.setTimeout(() => setNotice('idle'), 1600);
+      setProfileSaving(false);
       return profile.backendPetId || guestPetIdRef.current;
     }
     try {
-      const response = await fetch('/api/pets', {
+      const idempotencyKey = profile.backendPetId ? '' : (addDogKeyRef.current ?? `add-pet:${crypto.randomUUID()}`);
+      if (!profile.backendPetId) addDogKeyRef.current = idempotencyKey;
+      const response = await fetch('/api/v1/pets', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ profile: { ...profile, isPublic: true } }),
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+          ...authHeaders(),
+        },
+        body: JSON.stringify({ profile: { ...profile, isPublic: false } }),
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result?.error || 'Не удалось сохранить карточку');
+      if (!response.ok) throw new Error(result?.error || 'Не удалось сохранить профиль');
       const savedPetId = result.pet?.id || profile.backendPetId;
-      updateProfile({ backendPetId: savedPetId, isPublic: true });
+      addDogKeyRef.current = null;
+      updateProfile({ backendPetId: savedPetId, isPublic: false });
       if (savedPetId) setActivePetId(savedPetId);
       await loadBootstrap(undefined, savedPetId);
       setNotice('saved');
       window.setTimeout(() => setNotice('idle'), 1600);
       return savedPetId || null;
-    } catch (error) {
-      setError('Не удалось сохранить карточку');
+    } catch {
+      setError('Не удалось сохранить личный профиль. Изменения остались на экране — попробуй ещё раз.');
       return null;
+    } finally {
+      setProfileSaving(false);
     }
   }
   async function signOut() {
@@ -2175,7 +2279,7 @@ export default function Home() {
 
     let petId = profile.backendPetId;
     if (!petId) {
-      petId = await saveCard() || '';
+      petId = await savePrivateProfile() || '';
     }
     if (!petId) {
       setError('Сначала сохрани профиль собаки.');
@@ -2241,6 +2345,90 @@ export default function Home() {
       window.setTimeout(() => setNotice('idle'), 1400);
     } finally {
       setPublicCardLinkBusy(false);
+    }
+  }
+
+  async function deleteCurrentDog() {
+    const expectedName = profile.dogName.trim();
+    if (!profile.backendPetId || dogDeleteName.trim() !== expectedName || petMutationBusy) return;
+    setPetMutationBusy(true);
+    setError('');
+    try {
+      if (!isGuestMode()) {
+        const response = await fetch('/api/v1/pets', {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ petId: profile.backendPetId, confirmation: 'DELETE_DOG' }),
+        });
+        if (!response.ok) throw new Error('PET_DELETE_FAILED');
+      }
+      const remainingPets = pets.filter((pet) => pet.id !== profile.backendPetId);
+      setPets(remainingPets);
+      setDogDeleteName('');
+      setPublishedPublicCardPath('');
+      if (remainingPets[0]) {
+        const nextPetId = remainingPets[0].id;
+        setActivePetId(nextPetId);
+        if (!isGuestMode()) {
+          await fetch('/api/v1/pets', {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify({ activePetId: nextPetId }),
+          });
+        }
+        await loadBootstrap(undefined, nextPetId);
+      } else {
+        resetProfileStorage();
+        setProfile(defaultProfile);
+        setHeroNameDraft('');
+        setActivePetId('');
+        setReminders([]);
+        setWishlist([]);
+        setZones([]);
+        setObservations([]);
+        setTab('today');
+      }
+      setNotice('saved');
+      window.setTimeout(() => setNotice('idle'), 1400);
+    } catch {
+      setError('Не удалось удалить собаку. Ничего не изменилось — попробуй ещё раз.');
+    } finally {
+      setPetMutationBusy(false);
+    }
+  }
+
+  async function deleteAccount() {
+    if (accountDeleteConfirmation.trim() !== 'УДАЛИТЬ АККАУНТ' || petMutationBusy || isGuestMode()) return;
+    setPetMutationBusy(true);
+    setError('');
+    try {
+      const response = await fetch('/api/v1/account', {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ confirmation: 'DELETE_ACCOUNT' }),
+      });
+      if (!response.ok) throw new Error('ACCOUNT_DELETE_FAILED');
+      await getSupabaseBrowser()?.auth.signOut().catch(() => null);
+      resetProfileStorage();
+      setSession(null);
+      setTelegramSession({ mode: 'browser', message: 'Аккаунт удалён.' });
+      setProfile(defaultProfile);
+      setPets([]);
+      setActivePetId('');
+      setReminders([]);
+      setWishlist([]);
+      setZones([]);
+      setObservations([]);
+      setPublishedPublicCardPath('');
+      setAccountDeleteConfirmation('');
+      setTab('today');
+    } catch {
+      setError('Не удалось удалить аккаунт. Данные не изменились — попробуй ещё раз.');
+    } finally {
+      setPetMutationBusy(false);
     }
   }
 
@@ -2465,13 +2653,19 @@ export default function Home() {
           {session ? <button onClick={signOut}>Выйти</button> : <button onClick={() => setTab(tab === 'profile' ? 'today' : 'profile')}>{tab === 'profile' ? 'всё' : 'псё'}</button>}
         </header>
 
-        {pets.length > 1 && <section className="pet-switcher" aria-label="Активная собака">
-          <span>активная собака</span>
+        {pets.length > 0 && <section className="pet-switcher" aria-label="Активная собака">
+          <span>мои собаки</span>
           <div>
-            {pets.map((pet) => <button key={pet.id} className={pet.id === activePetId ? 'active' : ''} type="button" onClick={() => switchActivePet(pet.id)} aria-pressed={pet.id === activePetId}>
+            {pets.map((pet) => <button key={pet.id} className={pet.id === activePetId ? 'active' : ''} type="button" disabled={petMutationBusy} onClick={() => switchActivePet(pet.id)} aria-pressed={pet.id === activePetId}>
               {pet.name}
             </button>)}
+            <button type="button" className="secondary" onClick={() => setAddDogOpen((open) => !open)}>Добавить собаку</button>
           </div>
+          {addDogOpen && <div className="pet-add-row">
+            <label>Имя новой собаки<input value={newDogName} maxLength={80} autoFocus onChange={(event) => setNewDogName(event.target.value)} placeholder="Например, Луна" /></label>
+            <button type="button" className="primary" disabled={!newDogName.trim() || petMutationBusy} onClick={addDog}>{petMutationBusy ? 'Добавляю…' : 'Добавить'}</button>
+            <button type="button" className="secondary" disabled={petMutationBusy} onClick={() => { setAddDogOpen(false); setNewDogName(''); }}>Отмена</button>
+          </div>}
           <p>Профиль, дела, места, вещи и наблюдения ниже относятся только к выбранной собаке.</p>
         </section>}
 
@@ -2864,6 +3058,8 @@ export default function Home() {
               <ChoiceBubbles label="Вакцины" value={profile.vaccineStatus} options={vaccineOptions} onChange={(value) => updateProfile({ vaccineStatus: value })} />
               <ChoiceBubbles label="Обработка" value={profile.parasiteStatus} options={parasiteOptions} onChange={(value) => updateProfile({ parasiteStatus: value })} />
             </div>
+            <button className="primary full" type="button" disabled={profileSaving || !profile.dogName.trim()} onClick={savePrivateProfile}>{profileSaving ? 'Сохраняю…' : 'Сохранить личный профиль'}</button>
+            <p className="privacy-hint">Профиль виден только тебе. Памятка для других публикуется отдельно.</p>
           </PaperSheet>
 
           <details className="profile-details smart-section" open><summary><span>02</span><div><b>Карточка для людей</b></div></summary>
@@ -2872,10 +3068,10 @@ export default function Home() {
               <SuggestionBubbles label="Подсказки для био" options={['Спокойная, любит нюхать', 'Активный, лучше знакомить по одному', 'Боится самокатов и резких звуков', 'Не давать еду без спроса']} onPick={(bio) => updateProfile({ bio })} />
               <label>Район без точного адреса<input value={profile.neighborhood} onChange={(event) => updateProfile({ neighborhood: event.target.value })} placeholder="например: Сокол / парк рядом" /></label>
               <article className="public-card-preview-smart">
-                <div><small>публично</small><b>{profile.dogName.trim() || 'Моя собака'}</b><p>{profile.socialMode || 'сначала спросить владельца'}</p></div>
-                <span>{profile.isPublic ? 'активна' : 'черновик'}</span>
+                <div><small>памятка для других</small><b>{profile.dogName.trim() || 'Моя собака'}</b><p>{profile.socialMode || 'сначала спросить владельца'}</p></div>
+                <span>{publishedPublicCardPath ? 'ссылка открыта' : 'ещё не опубликована'}</span>
               </article>
-              <button className="secondary full" onClick={saveCard}>Обновить карточку</button>
+              <button className="secondary full" onClick={() => setTab('card')}>Настроить памятку</button>
               <div className="share-export-grid">
                 <button className="secondary" onClick={publicCardReady ? openPublicCard : () => setTab('profile')}>{publicCardReady ? 'Просмотреть' : 'Дозаполнить'}</button>
                 <button className="primary" onClick={publicCardReady ? shareDogCard : () => setTab('profile')}>{publicCardReady ? 'Поделиться' : 'Дозаполнить памятку'}</button>
@@ -2928,6 +3124,26 @@ export default function Home() {
               <button className="secondary full" onClick={() => setTab('calendar')}>Добавить дело в план</button>
             </div>
           </details>
+
+          <section className="profile-danger-zone" aria-label="Удаление данных">
+            <div><span className="eyebrow">управление данными</span><h3>Удаление</h3><p>Эти действия необратимы. Псё попросит точное подтверждение перед отправкой.</p></div>
+            {profile.backendPetId && <details>
+              <summary>Удалить собаку</summary>
+              <div className="profile-delete-form">
+                <p>Будут удалены профиль собаки {profile.dogName}, дела, записи, вещи и места.</p>
+                <label>Введите имя собаки полностью<input value={dogDeleteName} onChange={(event) => setDogDeleteName(event.target.value)} placeholder={profile.dogName} /></label>
+                <button type="button" className="danger-action" disabled={dogDeleteName.trim() !== profile.dogName.trim() || petMutationBusy} onClick={deleteCurrentDog}>Удалить собаку</button>
+              </div>
+            </details>}
+            {!isGuestMode() && <details>
+              <summary>Удалить аккаунт</summary>
+              <div className="profile-delete-form">
+                <p>Будут удалены аккаунт и данные всех собак без возможности восстановления.</p>
+                <label>Для подтверждения введи УДАЛИТЬ АККАУНТ<input value={accountDeleteConfirmation} onChange={(event) => setAccountDeleteConfirmation(event.target.value)} placeholder="УДАЛИТЬ АККАУНТ" /></label>
+                <button type="button" className="danger-action" disabled={accountDeleteConfirmation.trim() !== 'УДАЛИТЬ АККАУНТ' || petMutationBusy} onClick={deleteAccount}>Удалить аккаунт</button>
+              </div>
+            </details>}
+          </section>
 
           <section className="plus-gate-card profile-plus-card" aria-label="Псё Плюс">
             <div>
