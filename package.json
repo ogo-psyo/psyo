@@ -20,6 +20,7 @@
     "qa:profile-ui": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/qa/profile-ui.behavior.test.ts"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.3",
     "@types/leaflet": "^1.9.21",
