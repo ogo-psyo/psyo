@@ -17,7 +17,17 @@ export async function GET() {
       supabaseUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
       supabaseServerKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY),
       sessionSecret: Boolean(process.env.PSYO_SESSION_SIGNING_KEY || process.env.SESSION_SECRET || process.env.PSYO_ID_PEPPER),
-      betterAuthReady: Boolean((process.env.BETTER_AUTH_DATABASE_URL || process.env.DATABASE_URL) && process.env.BETTER_AUTH_SECRET && process.env.TELEGRAM_BOT_TOKEN),
+      identityServiceReady: Boolean(
+        process.env.TELEGRAM_BOT_TOKEN
+        && process.env.PSYO_SESSION_SIGNING_KEY
+        && process.env.NEXT_PUBLIC_SUPABASE_URL
+        && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY)
+      ),
+      betterAuthConfigured: Boolean(
+        (process.env.BETTER_AUTH_DATABASE_URL || process.env.DATABASE_URL)
+        && process.env.BETTER_AUTH_SECRET
+        && process.env.TELEGRAM_BOT_TOKEN
+      ),
     },
     flags: rc1Config.flags,
   });

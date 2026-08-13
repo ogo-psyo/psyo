@@ -6,6 +6,7 @@ const files = {
   appSession: readFileSync('lib/server/appSession.ts', 'utf8'),
   telegram: readFileSync('lib/server/telegram.ts', 'utf8'),
   sessionRoute: readFileSync('app/api/v1/session/telegram/route.ts', 'utf8'),
+  healthRoute: readFileSync('app/api/internal/health/route.ts', 'utf8'),
   petsRoute: readFileSync('app/api/v1/pets/route.ts', 'utf8'),
   profileService: readFileSync('lib/server/profileService.ts', 'utf8'),
   env: readFileSync('.env.example', 'utf8'),
@@ -76,6 +77,17 @@ for (const token of [
 }
 
 if (!files.env.includes('PSYO_SESSION_SIGNING_KEY')) failures.push('env example missing PSYO_SESSION_SIGNING_KEY');
+
+for (const token of [
+  'identityServiceReady',
+  'TELEGRAM_BOT_TOKEN',
+  'PSYO_SESSION_SIGNING_KEY',
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'betterAuthConfigured',
+]) {
+  if (!files.healthRoute.includes(token)) failures.push(`health route missing ${token}`);
+}
 
 if (failures.length) {
   console.error(failures.map((failure) => `- ${failure}`).join('\n'));

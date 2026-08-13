@@ -59,9 +59,14 @@ evidence.checks.health = health.json && {
   status: health.res.status,
   environment: health.json.environment,
   release: health.json.release,
+  identityServiceReady: health.json.checks?.identityServiceReady,
+  betterAuthConfigured: health.json.checks?.betterAuthConfigured,
   flags: health.json.flags,
 };
 if (strictProd && !health.json?.release) failures.push('/api/internal/health must expose a release identifier in prod smoke');
+if (strictProd && health.json?.checks?.identityServiceReady !== true) {
+  failures.push('/api/internal/health must report the canonical Telegram IdentityService ready in prod smoke');
+}
 for (const flag of ['billing_enabled', 'plus_paywall_enabled', 'new_invoices_enabled', 'uploads_enabled', 'avatar_generation_enabled']) {
   if (health.json?.flags?.[flag] === true && process.env.ALLOW_RISKY_PROD_FLAGS !== '1') {
     failures.push(`/api/internal/health risky flag enabled without ALLOW_RISKY_PROD_FLAGS=1: ${flag}`);
