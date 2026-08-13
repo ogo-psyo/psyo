@@ -107,3 +107,7 @@ export function getAppSessionFromRequest(request: Request) {
 export function setAppSessionCookie(response: Response, token: string, maxAge: number) {
   response.headers.append('Set-Cookie', `${cookieName}=${encodeURIComponent(token)}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax; Secure`);
 }
+
+export function clearAppSessionCookie(response: Response) {
+  response.headers.append('Set-Cookie', `${cookieName}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax; Secure`);
+}

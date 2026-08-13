@@ -30,6 +30,22 @@ async function resolveOwnerPet(request: Request, petId: string) {
   return { auth, appSession, supabase, ownerId, pet };
 }
 
+export async function GET(request: Request) {
+  const petId = new URL(request.url).searchParams.get('petId') || '';
+  if (!petId) return NextResponse.json({ error: 'petId is required' }, { status: 400 });
+  const context = await resolveOwnerPet(request, petId);
+  if (context.error) return context.error;
+  const { supabase } = context;
+  const active = await supabase
+    .from('dog_cards')
+    .select('id, public_slug, visibility, updated_at')
+    .eq('pet_id', petId)
+    .is('revoked_at', null)
+    .maybeSingle();
+  if (active.error) return NextResponse.json({ error: active.error.message }, { status: 500 });
+  return NextResponse.json({ card: active.data, path: active.data ? `/dog/${active.data.public_slug}` : null });
+}
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const petId = typeof body?.petId === 'string' ? body.petId : '';

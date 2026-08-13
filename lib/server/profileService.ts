@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import type { CreatePetCommand } from '@/packages/contracts';
 import { ensureProfile } from './auth';
@@ -71,6 +72,40 @@ export async function savePetProfile(input: { supabase: SupabaseClient; user: Pr
   return { pet, passport: passportResult.data, social: socialResult.data };
 }
 
+export async function createPetProfileIdempotently(input: {
+  supabase: SupabaseClient;
+  user: ProfileOwner;
+  profile: CreatePetCommand;
+  idempotencyKey: string;
+}) {
+  const { supabase, user, profile, idempotencyKey } = input;
+  await ensureProfile(user);
+  const { petPayload, passportPayload, socialPayload } = buildPetProfilePersistencePayload({ user, profile });
+  const fingerprint = createHash('sha256')
+    .update(JSON.stringify({ petPayload, passportPayload, socialPayload }))
+    .digest('hex');
+
+  const created = await supabase.rpc('create_pet_profile_for_owner', {
+    p_owner_id: user.id,
+    p_idempotency_key: idempotencyKey,
+    p_request_fingerprint: fingerprint,
+    p_pet: petPayload,
+    p_passport: passportPayload,
+    p_social: socialPayload,
+  });
+  if (created.error) throw created.error;
+
+  const pet = created.data?.pet;
+  if (!pet?.id) throw new Error('PET_CREATE_FAILED');
+  const [passportResult, socialResult] = await Promise.all([
+    supabase.from('pet_passports').select('*').eq('pet_id', pet.id).maybeSingle(),
+    supabase.from('social_profiles').select('*').eq('pet_id', pet.id).maybeSingle(),
+  ]);
+  if (passportResult.error) throw passportResult.error;
+  if (socialResult.error) throw socialResult.error;
+  return { pet, passport: passportResult.data, social: socialResult.data, replayed: created.data?.replayed === true };
+}
+
 export function buildPetProfilePersistencePayload(input: { user: ProfileOwner; profile: CreatePetCommand }) {
   const { user, profile } = input;
   const publicAvatarUrl = typeof profile.avatarImageUrl === 'string' && /^https?:\/\//i.test(profile.avatarImageUrl)
@@ -90,7 +125,6 @@ export function buildPetProfilePersistencePayload(input: { user: ProfileOwner; p
     sex: profile.sex || null,
     life_stage: profile.lifeStage || null,
     weight_kg: weightToNumber(profile.weight),
-    is_public: Boolean(profile.isPublic),
     ...(publicAvatarUrl ? { avatar_url: publicAvatarUrl } : {}),
     ...(publicPhotoUrls.length ? { photo_urls: publicPhotoUrls } : {}),
     ...(profile.backendPetId ? {} : { public_slug: `${slugify(profile.dogName)}-${crypto.randomUUID().slice(0, 6)}` }),
