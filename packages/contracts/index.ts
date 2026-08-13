@@ -114,6 +114,18 @@ export type PetProfileDto = {
   updatedAt?: IsoDateTime;
 };
 
+export type FirstReminderCommand = {
+  title: string;
+  dueAt: IsoDateTime;
+  type?: 'vaccine' | 'parasite' | 'medication' | 'grooming' | 'food' | 'training' | 'vet' | 'custom';
+  recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+};
+
+export type OnboardingActivationCommand = {
+  profile: CreatePetCommand;
+  firstReminder: FirstReminderCommand;
+};
+
 export function problem(code: string, status: number, title: string, detail: string, meta?: Record<string, unknown>): ProblemJson {
   return {
     type: `https://errors.psyo.app/${code.toLowerCase().replaceAll('_', '-')}`,
@@ -143,5 +155,48 @@ export function validateCreatePetCommand(value: unknown): { ok: true; command: C
       ...profile,
       dogName,
     } as CreatePetCommand,
+  };
+}
+
+const reminderTypes = new Set(['vaccine', 'parasite', 'medication', 'grooming', 'food', 'training', 'vet', 'custom']);
+const reminderRecurrences = new Set(['none', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly']);
+
+export function validateOnboardingActivationCommand(value: unknown): { ok: true; command: OnboardingActivationCommand } | { ok: false; error: ProblemJson } {
+  const source = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  const parsedProfile = validateCreatePetCommand(source.profile);
+  if (!parsedProfile.ok) return parsedProfile;
+
+  const reminder = source.firstReminder && typeof source.firstReminder === 'object'
+    ? source.firstReminder as Record<string, unknown>
+    : {};
+  const title = String(reminder.title ?? '').trim();
+  const dueAt = String(reminder.dueAt ?? '').trim();
+  const type = String(reminder.type ?? 'custom').trim();
+  const recurrence = String(reminder.recurrence ?? 'none').trim();
+
+  if (!title) {
+    return { ok: false, error: problem('VALIDATION_FAILED', 400, 'First care reminder is required', 'Provide firstReminder.title.', { field: 'firstReminder.title' }) };
+  }
+  if (!dueAt || !Number.isFinite(Date.parse(dueAt))) {
+    return { ok: false, error: problem('VALIDATION_FAILED', 400, 'Reminder time is invalid', 'Provide firstReminder.dueAt as an ISO date-time.', { field: 'firstReminder.dueAt' }) };
+  }
+  if (!reminderTypes.has(type)) {
+    return { ok: false, error: problem('VALIDATION_FAILED', 400, 'Reminder type is invalid', 'Choose a supported firstReminder.type.', { field: 'firstReminder.type' }) };
+  }
+  if (!reminderRecurrences.has(recurrence)) {
+    return { ok: false, error: problem('VALIDATION_FAILED', 400, 'Reminder recurrence is invalid', 'Choose a supported firstReminder.recurrence.', { field: 'firstReminder.recurrence' }) };
+  }
+
+  return {
+    ok: true,
+    command: {
+      profile: parsedProfile.command,
+      firstReminder: {
+        title,
+        dueAt: new Date(dueAt).toISOString(),
+        type: type as FirstReminderCommand['type'],
+        recurrence: recurrence as FirstReminderCommand['recurrence'],
+      },
+    },
   };
 }

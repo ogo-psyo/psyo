@@ -52,6 +52,27 @@ type ProfileOwner = { id: string; email?: string | null; user_metadata?: Record<
 export async function savePetProfile(input: { supabase: SupabaseClient; user: ProfileOwner; profile: CreatePetCommand }) {
   const { supabase, user, profile } = input;
   await ensureProfile(user);
+  const { petPayload, passportPayload, socialPayload } = buildPetProfilePersistencePayload({ user, profile });
+
+  const petQuery = profile.backendPetId
+    ? supabase.from('pets').update(petPayload).eq('id', profile.backendPetId).eq('owner_id', user.id).select('*').single()
+    : supabase.from('pets').insert(petPayload).select('*').single();
+
+  const { data: pet, error: petError } = await petQuery;
+  if (petError) throw petError;
+
+  const [passportResult, socialResult] = await Promise.all([
+    supabase.from('pet_passports').upsert({ pet_id: pet.id, ...passportPayload }).select('*').single(),
+    supabase.from('social_profiles').upsert({ pet_id: pet.id, ...socialPayload }).select('*').single(),
+  ]);
+
+  if (passportResult.error) throw passportResult.error;
+  if (socialResult.error) throw socialResult.error;
+  return { pet, passport: passportResult.data, social: socialResult.data };
+}
+
+export function buildPetProfilePersistencePayload(input: { user: ProfileOwner; profile: CreatePetCommand }) {
+  const { user, profile } = input;
   const publicAvatarUrl = typeof profile.avatarImageUrl === 'string' && /^https?:\/\//i.test(profile.avatarImageUrl)
     ? profile.avatarImageUrl
     : null;
@@ -75,16 +96,7 @@ export async function savePetProfile(input: { supabase: SupabaseClient; user: Pr
     ...(profile.backendPetId ? {} : { public_slug: `${slugify(profile.dogName)}-${crypto.randomUUID().slice(0, 6)}` }),
   };
 
-  const petQuery = profile.backendPetId
-    ? supabase.from('pets').update(petPayload).eq('id', profile.backendPetId).eq('owner_id', user.id).select('*').single()
-    : supabase.from('pets').insert(petPayload).select('*').single();
-
-  const { data: pet, error: petError } = await petQuery;
-  if (petError) throw petError;
-
-  const [passportResult, socialResult] = await Promise.all([
-    supabase.from('pet_passports').upsert({
-      pet_id: pet.id,
+  const passportPayload = {
       microchip: profile.microchip || null,
       vet_clinic: profile.vetClinic || null,
       diet: profile.diet || null,
@@ -93,9 +105,8 @@ export async function savePetProfile(input: { supabase: SupabaseClient; user: Pr
       health_notes: profile.healthNotes || null,
       vaccine_status: mapEnum(profile.vaccineStatus, vaccineStatusMap, 'unknown'),
       parasite_status: mapEnum(profile.parasiteStatus, parasiteStatusMap, 'unknown'),
-    }).select('*').single(),
-    supabase.from('social_profiles').upsert({
-      pet_id: pet.id,
+  };
+  const socialPayload = {
       social_mode: mapEnum(profile.socialMode, socialModeMap, 'ask_first'),
       temperament: profile.temperament || null,
       energy_level: profile.energyLevel || null,
@@ -106,12 +117,8 @@ export async function savePetProfile(input: { supabase: SupabaseClient; user: Pr
       cat_friendly: mapEnum(profile.catFriendly, friendlinessMap),
       triggers: String(profile.triggers || '').split(',').map((item) => item.trim()).filter(Boolean),
       alone_time_note: profile.aloneTime || null,
-    }).select('*').single(),
-  ]);
-
-  if (passportResult.error) throw passportResult.error;
-  if (socialResult.error) throw socialResult.error;
-  return { pet, passport: passportResult.data, social: socialResult.data };
+  };
+  return { petPayload, passportPayload, socialPayload };
 }
 
 export function mapPetProfileDto(row: any) {
