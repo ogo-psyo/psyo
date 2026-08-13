@@ -24,7 +24,9 @@ export async function PATCH(request: Request, routeContext: { params: Promise<{ 
       ? current.recipient_owner_id
       : current.sender_owner_id;
     const pairBlocked = await isOwnerPairBlocked(context.supabase, current.sender_owner_id, current.recipient_owner_id);
-    const participantsAvailable = await areRequestPetsDiscoverable(context.supabase, current.sender_pet_id, current.recipient_pet_id);
+    const participantsAvailable = current.source === 'invite'
+      ? true
+      : await areRequestPetsDiscoverable(context.supabase, current.sender_pet_id, current.recipient_pet_id);
 
     if (action === 'report') {
       const idempotencyKey = readIdempotencyKey(request, body);

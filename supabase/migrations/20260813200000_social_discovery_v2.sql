@@ -208,18 +208,6 @@ begin
   ) then
     raise exception 'INVITE_NOT_AVAILABLE';
   end if;
-  if not exists (
-    select 1 from public.social_discovery_profiles
-    where pet_id = v_invite.inviter_pet_id and discoverable = true
-      and v_invite.scenario = any(scenarios)
-  ) or not exists (
-    select 1 from public.social_discovery_profiles
-    where pet_id = p_recipient_pet_id and discoverable = true
-      and v_invite.scenario = any(scenarios)
-  ) then
-    raise exception 'DISCOVERY_NOT_ENABLED';
-  end if;
-
   insert into public.social_match_requests (
     sender_owner_id, recipient_owner_id, sender_pet_id, recipient_pet_id,
     scenario, source, status, idempotency_key, request_fingerprint,

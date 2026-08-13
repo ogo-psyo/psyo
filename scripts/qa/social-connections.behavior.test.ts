@@ -69,7 +69,7 @@ test('per-owner rate limiter rejects a full window', async () => {
   }), /SOCIAL_RATE_LIMITED/);
 });
 
-test('opting out revokes open invites and cancels pending requests for that pet', async () => {
+test('opting out preserves explicit invites and cancels only organic pending requests', async () => {
   const calls: Array<{ table: string; update: unknown }> = [];
   function builder(table: string) {
     let updateValue: unknown;
@@ -83,10 +83,16 @@ test('opting out revokes open invites and cancels pending requests for that pet'
   const supabase = { from(table: string) { return builder(table); } } as any;
   await revokeSocialDiscovery(supabase, 'owner-a', 'pet-a');
   assert.deepEqual(calls.map((call) => call.table), [
-    'social_discovery_profiles', 'social_friend_invites', 'social_match_requests',
+    'social_discovery_profiles', 'social_match_requests',
   ]);
   assert.deepEqual(calls[0].update, { discoverable: false });
-  assert.equal((calls[2].update as any).status, 'cancelled');
+  assert.equal((calls[1].update as any).status, 'cancelled');
+});
+
+test('friend invite consent is independent of organic discovery visibility', () => {
+  assert.deepEqual(transitionSocialRequest({ status: 'pending', actor: 'recipient', action: 'accept' }), {
+    ok: true, status: 'accepted', replayed: false,
+  });
 });
 
 test('same request payload has one fingerprint and changed payload does not', () => {

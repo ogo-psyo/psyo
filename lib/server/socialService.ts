@@ -130,14 +130,12 @@ export async function enforceSocialRateLimit(input: {
 
 export async function revokeSocialDiscovery(supabase: SupabaseClient, ownerId: string, petId: string) {
   const now = new Date().toISOString();
-  const [profile, invites, requests] = await Promise.all([
+  const [profile, requests] = await Promise.all([
     supabase.from('social_discovery_profiles').update({ discoverable: false }).eq('pet_id', petId),
-    supabase.from('social_friend_invites').update({ used_at: now })
-      .eq('inviter_owner_id', ownerId).eq('inviter_pet_id', petId).is('used_at', null),
     supabase.from('social_match_requests').update({ status: 'cancelled', responded_at: now })
-      .eq('status', 'pending').or(`sender_pet_id.eq.${petId},recipient_pet_id.eq.${petId}`),
+      .eq('source', 'organic').eq('status', 'pending').or(`sender_pet_id.eq.${petId},recipient_pet_id.eq.${petId}`),
   ]);
-  if (profile.error || invites.error || requests.error) throw new Error('SOCIAL_STORAGE_FAILED');
+  if (profile.error || requests.error) throw new Error('SOCIAL_STORAGE_FAILED');
 }
 
 export async function listCandidates(supabase: SupabaseClient, ownerId: string, petId: string) {
@@ -205,12 +203,6 @@ export async function createFriendInvite(input: {
 }) {
   const pet = await requireOwnedPet(input.supabase, input.ownerId, input.petId);
   if (!pet) return { code: 'PET_NOT_FOUND' as const };
-  const { data: profile, error: profileError } = await input.supabase
-    .from('social_discovery_profiles').select('discoverable, scenarios').eq('pet_id', input.petId).maybeSingle();
-  if (profileError) throw new Error('SOCIAL_STORAGE_FAILED');
-  if (!profile?.discoverable || !profile.scenarios?.includes(input.scenario)) {
-    return { code: 'DISCOVERY_NOT_ENABLED' as const };
-  }
   await enforceSocialRateLimit({
     supabase: input.supabase, table: 'social_friend_invites', ownerColumn: 'inviter_owner_id',
     ownerId: input.ownerId, limit: 10, windowMs: 60 * 60 * 1000,
