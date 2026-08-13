@@ -37,6 +37,8 @@ create table if not exists public.social_match_requests (
   request_fingerprint text not null check (length(request_fingerprint) = 64),
   sender_contact_username text check (sender_contact_username is null or sender_contact_username ~ '^[A-Za-z][A-Za-z0-9_]{4,31}$'),
   recipient_contact_username text check (recipient_contact_username is null or recipient_contact_username ~ '^[A-Za-z][A-Za-z0-9_]{4,31}$'),
+  sender_contact_verified_at timestamptz,
+  recipient_contact_verified_at timestamptz,
   responded_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -55,6 +57,7 @@ create table if not exists public.social_friend_invites (
   inviter_owner_id uuid not null references auth.users(id) on delete cascade,
   inviter_pet_id uuid not null references public.pets(id) on delete cascade,
   inviter_contact_username text check (inviter_contact_username is null or inviter_contact_username ~ '^[A-Za-z][A-Za-z0-9_]{4,31}$'),
+  inviter_contact_verified_at timestamptz,
   scenario text not null check (scenario in ('meet', 'walk', 'socialize', 'mating')),
   expires_at timestamptz not null,
   used_at timestamptz,
@@ -211,7 +214,8 @@ begin
   insert into public.social_match_requests (
     sender_owner_id, recipient_owner_id, sender_pet_id, recipient_pet_id,
     scenario, source, status, idempotency_key, request_fingerprint,
-    sender_contact_username, recipient_contact_username
+    sender_contact_username, recipient_contact_username,
+    sender_contact_verified_at, recipient_contact_verified_at
   ) values (
     v_invite.inviter_owner_id, p_recipient_owner_id, v_invite.inviter_pet_id, p_recipient_pet_id,
     v_invite.scenario, 'invite', 'pending', p_idempotency_key,
@@ -219,7 +223,8 @@ begin
       v_invite.inviter_pet_id::text || ':' || p_recipient_pet_id::text || ':' || v_invite.scenario || ':invite',
       'sha256'
     ), 'hex'),
-    v_invite.inviter_contact_username, p_recipient_contact_username
+    v_invite.inviter_contact_username, p_recipient_contact_username,
+    v_invite.inviter_contact_verified_at, now()
   ) returning * into v_request;
 
   update public.social_friend_invites set

@@ -214,6 +214,7 @@ export async function createFriendInvite(input: {
     inviter_owner_id: input.ownerId,
     inviter_pet_id: input.petId,
     inviter_contact_username: input.verifiedContact.username,
+    inviter_contact_verified_at: new Date().toISOString(),
     scenario: input.scenario,
     expires_at: expiresAt.toISOString(),
   }).select('id, expires_at').single();
@@ -244,6 +245,11 @@ export function contactUrlForRequestRow(row: any, viewerOwnerId: string, pairBlo
   const otherUsername = row.sender_owner_id === viewerOwnerId
     ? row.recipient_contact_username
     : row.sender_contact_username;
+  const otherVerifiedAt = row.sender_owner_id === viewerOwnerId
+    ? row.recipient_contact_verified_at
+    : row.sender_contact_verified_at;
+  const verifiedAt = Date.parse(String(otherVerifiedAt ?? ''));
+  if (!Number.isFinite(verifiedAt) || Date.now() - verifiedAt > 7 * 24 * 60 * 60 * 1000) return null;
   return contactForAcceptedRequest({
     request: {
       status: row.status,

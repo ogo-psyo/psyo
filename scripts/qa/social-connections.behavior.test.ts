@@ -9,6 +9,7 @@ import {
 } from '../../lib/socialCore.ts';
 import {
   contactForAcceptedRequest,
+  contactUrlForRequestRow,
   hashInviteToken,
   socialRequestFingerprint,
   enforceSocialRateLimit,
@@ -44,6 +45,25 @@ test('contact remains hidden before consent and comes only from verified session
   assert.equal(contactForAcceptedRequest({ request: accepted, viewerOwnerId: 'owner-a', otherContact: { username: null } }), null);
   assert.equal(contactForAcceptedRequest({ request: accepted, viewerOwnerId: 'owner-a', otherContact: { username: 'verified_owner' }, pairBlocked: true }), null);
   assert.equal(validateSocialContactBoundary({ telegramUsername: 'spoofed_owner' }).ok, false);
+});
+
+test('persisted Telegram contact expires unless its owner recently reopened Pso', () => {
+  const base = {
+    status: 'accepted',
+    sender_owner_id: 'owner-a',
+    recipient_owner_id: 'owner-b',
+    sender_contact_username: 'owner_a',
+    recipient_contact_username: 'owner_b',
+  };
+  assert.equal(contactUrlForRequestRow({
+    ...base,
+    recipient_contact_verified_at: new Date().toISOString(),
+  }, 'owner-a'), 'https://t.me/owner_b');
+  assert.equal(contactUrlForRequestRow({
+    ...base,
+    recipient_contact_verified_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+  }, 'owner-a'), null);
+  assert.equal(contactUrlForRequestRow(base, 'owner-a'), null);
 });
 
 test('retained accepted request id cannot reveal contact after either-side block', () => {

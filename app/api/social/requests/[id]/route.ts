@@ -94,7 +94,10 @@ export async function PATCH(request: Request, routeContext: { params: Promise<{ 
       status: transition.status,
       responded_at: new Date().toISOString(),
     };
-    if (action === 'accept') update.recipient_contact_username = context.verifiedTelegramContact.username;
+    if (action === 'accept') {
+      update.recipient_contact_username = context.verifiedTelegramContact.username;
+      update.recipient_contact_verified_at = new Date().toISOString();
+    }
     const { data: updated, error: updateError } = await context.supabase
       .from('social_match_requests')
       .update(update)

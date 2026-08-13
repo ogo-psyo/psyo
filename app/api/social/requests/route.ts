@@ -117,6 +117,7 @@ export async function POST(request: Request) {
       idempotency_key: idempotencyKey,
       request_fingerprint: fingerprint,
       sender_contact_username: context.verifiedTelegramContact.username,
+      sender_contact_verified_at: new Date().toISOString(),
     }).select('*').single();
     if (error?.code === '23505') {
       return NextResponse.json({ error: 'REQUEST_ALREADY_PENDING' }, { status: 409 });
@@ -137,6 +138,18 @@ export async function GET(request: Request) {
     if (!await requireOwnedPet(context.supabase, context.ownerId, petId)) {
       return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
     }
+    const verifiedAt = new Date().toISOString();
+    const [senderRefresh, recipientRefresh] = await Promise.all([
+      context.supabase.from('social_match_requests').update({
+        sender_contact_username: context.verifiedTelegramContact.username,
+        sender_contact_verified_at: verifiedAt,
+      }).eq('sender_owner_id', context.ownerId).eq('status', 'accepted'),
+      context.supabase.from('social_match_requests').update({
+        recipient_contact_username: context.verifiedTelegramContact.username,
+        recipient_contact_verified_at: verifiedAt,
+      }).eq('recipient_owner_id', context.ownerId).eq('status', 'accepted'),
+    ]);
+    if (senderRefresh.error || recipientRefresh.error) return socialStorageError();
     const { data, error } = await context.supabase.from('social_match_requests')
       .select('*')
       .or(`sender_pet_id.eq.${petId},recipient_pet_id.eq.${petId}`)
