@@ -66,11 +66,12 @@ export async function GET(request: Request) {
   if (!selectedPet) return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', connected: true, empty: true, pets: [], user: { id: ownerId, email: auth.user?.email ?? null }, message: 'No pets yet.' });
 
   const petId = selectedPet.id;
-  const [passportResult, socialResult, remindersResult, zonesResult, wishlistResult, observationsResult] = await Promise.all([
+  const [passportResult, socialResult, remindersResult, zonesResult, routesResult, wishlistResult, observationsResult] = await Promise.all([
     supabase.from('pet_passports').select('*').eq('pet_id', petId).maybeSingle(),
     supabase.from('social_profiles').select('*').eq('pet_id', petId).maybeSingle(),
     supabase.from('reminders').select('*').eq('pet_id', petId).order('due_at', { ascending: true }),
     supabase.from('map_zones').select('*').eq('pet_id', petId).order('created_at', { ascending: false }),
+    supabase.from('map_routes').select('*').eq('owner_id', ownerId).eq('pet_id', petId).order('created_at', { ascending: false }),
     supabase.from('wishlist_items').select('*').eq('pet_id', petId).order('created_at', { ascending: false }),
     supabase.from('pet_observations').select('*').eq('pet_id', petId).order('observed_at', { ascending: false }).limit(20),
   ]);
@@ -86,6 +87,7 @@ export async function GET(request: Request) {
     social: socialResult.data,
     reminders: (remindersResult.data ?? []).map(mapReminder),
     zones: zonesResult.data ?? [],
+    routes: routesResult.error ? [] : routesResult.data ?? [],
     wishlist: wishlistResult.data ?? [],
     observations: observationsResult.error ? [] : (observationsResult.data ?? []).map(mapObservation),
   });

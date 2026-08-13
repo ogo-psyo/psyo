@@ -41,6 +41,8 @@ function shareUrl(request: Request, id: string) {
 
 export async function GET(request: Request) {
   const auth = await getRequestAuth(request);
+  const appSession = getAppSessionFromRequest(request);
+  const ownerId = auth.user?.id ?? appSession?.ownerId;
   const bounds = parseBounds(new URL(request.url).searchParams.get('bounds'));
   if (!bounds) return NextResponse.json({ error: 'bounds must be minLat,minLng,maxLat,maxLng' }, { status: 400 });
 
@@ -52,6 +54,7 @@ export async function GET(request: Request) {
     max_lat: bounds.maxLat,
     min_lng: bounds.minLng,
     max_lng: bounds.maxLng,
+    requesting_owner_id: ownerId ?? null,
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -97,10 +100,11 @@ export async function POST(request: Request) {
       visibility,
       moderation_status: moderationStatus,
       geom: `SRID=4326;POINT(${point.lng} ${point.lat})`,
+      share_token: visibility === 'shared' ? crypto.randomUUID() : null,
     }).select('*').single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ feature: data, shareUrl: visibility === 'shared' ? shareUrl(request, data.id) : null }, { status: 201 });
+    return NextResponse.json({ feature: data, shareUrl: visibility === 'shared' ? shareUrl(request, data.share_token) : null }, { status: 201 });
   }
 
   if (body.type === 'route') {
@@ -120,10 +124,11 @@ export async function POST(request: Request) {
       moderation_status: moderationStatus,
       color: typeof body.color === 'string' ? body.color : '#3b82f6',
       path: lineString,
+      share_token: visibility === 'shared' ? crypto.randomUUID() : null,
     }).select('*').single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ feature: data, shareUrl: visibility === 'shared' ? shareUrl(request, data.id) : null }, { status: 201 });
+    return NextResponse.json({ feature: data, shareUrl: visibility === 'shared' ? shareUrl(request, data.share_token) : null }, { status: 201 });
   }
 
   return NextResponse.json({ error: 'type must be point or route' }, { status: 400 });

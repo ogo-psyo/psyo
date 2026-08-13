@@ -14,7 +14,7 @@ const allowedVisibility = new Set(['private', 'shared', 'public']);
 async function ownedZone(supabase: any, userId: string, id: string) {
   return supabase
     .from('map_zones')
-    .select('id, type, visibility, approximate_lat, approximate_lng, radius_meters, pets!inner(owner_id)')
+    .select('id, type, visibility, share_token, approximate_lat, approximate_lng, radius_meters, pets!inner(owner_id)')
     .eq('id', id)
     .eq('pets.owner_id', userId)
     .single();
@@ -31,14 +31,18 @@ export async function PATCH(request: Request, ctx: Ctx) {
   if (owned.error) return NextResponse.json({ error: 'ZONE_NOT_FOUND' }, { status: 404 });
 
   const body = await request.json().catch(() => ({}));
-  const patch: Record<string, unknown> = {};
+  // Any mutation invalidates the previous public share URL.
+  const patch: Record<string, unknown> = { visibility: 'private', share_token: null };
   if (typeof body.title === 'string' && body.title.trim()) patch.title = body.title.trim();
   if (typeof body.note === 'string') patch.note = body.note.trim() || null;
   const nextType = allowedTypes.has(body.type) ? body.type : owned.data.type;
   const requestedVisibility = allowedVisibility.has(body.visibility) ? body.visibility : owned.data.visibility ?? 'private';
   const nextVisibility = nextType === 'home_area' && requestedVisibility !== 'private' ? 'private' : requestedVisibility;
   if (allowedTypes.has(body.type)) patch.type = nextType;
-  if (allowedVisibility.has(body.visibility) || nextVisibility !== owned.data.visibility) patch.visibility = nextVisibility;
+  if (allowedVisibility.has(body.visibility) || nextVisibility !== owned.data.visibility) {
+    patch.visibility = nextVisibility;
+    patch.share_token = nextVisibility === 'shared' ? crypto.randomUUID() : null;
+  }
 
   const hasPointPatch = Number.isFinite(Number(body.approximateLat)) || Number.isFinite(Number(body.approximateLng)) || Number.isFinite(Number(body.radiusMeters));
   if (hasPointPatch || patch.visibility === 'public' || patch.visibility === 'shared') {
@@ -58,7 +62,14 @@ export async function PATCH(request: Request, ctx: Ctx) {
 
   const { data, error } = await supabase.from('map_zones').update(patch).eq('id', id).select('*').single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ zone: data, mode: 'supabase' });
+  const origin = new URL(request.url).origin;
+  return NextResponse.json({
+    zone: data,
+    shareUrl: data.visibility === 'shared' && data.share_token
+      ? `${origin}/map/share/${data.share_token}`
+      : null,
+    mode: 'supabase',
+  });
 }
 
 export async function DELETE(request: Request, ctx: Ctx) {

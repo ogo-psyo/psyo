@@ -62,10 +62,18 @@ export async function POST(request: Request) {
       approximate_lng: point?.lng ?? null,
       radius_meters: point?.radiusMeters ?? 500,
       visibility,
+      share_token: visibility === 'shared' ? crypto.randomUUID() : null,
     })
     .select('*')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ zone: data, mode: 'supabase' }, { status: 201 });
+  const origin = new URL(request.url).origin;
+  return NextResponse.json({
+    zone: data,
+    shareUrl: visibility === 'shared' && data.share_token
+      ? `${origin}/map/share/${data.share_token}`
+      : null,
+    mode: 'supabase',
+  }, { status: 201 });
 }

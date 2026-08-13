@@ -36,8 +36,8 @@ async function findSharedMapItem(id: string): Promise<SharedMapItem | null> {
 
   const { data: route } = await supabase
     .from('map_routes')
-    .select('id, title, description, color, visibility, moderation_status')
-    .eq('id', id)
+    .select('id, title, color, visibility, moderation_status, area_label')
+    .eq('share_token', id)
     .eq('visibility', 'shared')
     .maybeSingle();
 
@@ -46,7 +46,7 @@ async function findSharedMapItem(id: string): Promise<SharedMapItem | null> {
       id: route.id,
       kind: 'route',
       title: cleanText(route.title, 'Маршрут прогулки'),
-      description: cleanText(route.description, 'Владелец поделился маршрутом без точных координат на публичной странице.'),
+      description: cleanText(route.area_label, 'Примерный район маршрута; точный путь скрыт.'),
       label: 'маршрут по ссылке',
       tone: cleanText(route.color, '#3b82f6'),
     };
@@ -54,8 +54,8 @@ async function findSharedMapItem(id: string): Promise<SharedMapItem | null> {
 
   const { data: zone } = await supabase
     .from('map_zones')
-    .select('id, title, note, type, visibility, moderation_status')
-    .eq('id', id)
+    .select('id, title, type, visibility, moderation_status, area_label')
+    .eq('share_token', id)
     .eq('visibility', 'shared')
     .maybeSingle();
 
@@ -65,7 +65,7 @@ async function findSharedMapItem(id: string): Promise<SharedMapItem | null> {
     id: zone.id,
     kind: 'point',
     title: cleanText(zone.title, 'Место для собаки'),
-    description: cleanText(zone.note, 'Владелец поделился местом без точного адреса и приватных деталей.'),
+    description: cleanText(zone.area_label, 'Примерный район; точный адрес и личные заметки скрыты.'),
     label: zoneLabels[zone.type] || 'место по ссылке',
     tone: zone.type === 'risk_zone' ? '#ef4444' : '#2f985a',
   };
