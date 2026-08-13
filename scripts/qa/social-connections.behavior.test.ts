@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   canRevealTelegramContact,
@@ -24,6 +25,15 @@ test('one-use invite expires and cannot be reused', () => {
   assert.deepEqual(inviteAvailability({ expiresAt: past, usedAt: null }), { ok: false, code: 'INVITE_GONE' });
   assert.equal(hashInviteToken('secret-token').length, 64);
   assert.equal(hashInviteToken('secret-token'), hashInviteToken('secret-token'));
+});
+
+test('friend invite RPC resolves pgcrypto from the hosted Supabase extension schema', () => {
+  const migration = readFileSync(
+    new URL('../../supabase/migrations/20260813234500_fix_friend_invite_digest_schema.sql', import.meta.url),
+    'utf8',
+  );
+  assert.match(migration, /extensions\.digest\(/);
+  assert.doesNotMatch(migration, /public\.digest\(/);
 });
 
 test('request lifecycle is actor-scoped, deterministic and retry-safe', () => {

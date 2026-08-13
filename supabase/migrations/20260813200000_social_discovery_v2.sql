@@ -219,7 +219,7 @@ begin
   ) values (
     v_invite.inviter_owner_id, p_recipient_owner_id, v_invite.inviter_pet_id, p_recipient_pet_id,
     v_invite.scenario, 'invite', 'pending', p_idempotency_key,
-    pg_catalog.encode(public.digest(
+    pg_catalog.encode(extensions.digest(
       v_invite.inviter_pet_id::text || ':' || p_recipient_pet_id::text || ':' || v_invite.scenario || ':invite',
       'sha256'
     ), 'hex'),
