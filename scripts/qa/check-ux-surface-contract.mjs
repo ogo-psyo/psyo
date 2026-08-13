@@ -45,7 +45,7 @@ for (const token of ['профиль в Supabase', 'commerce/rebuy loop']) {
 }
 
 const requiredOwnerLanguage = [
-  'Сегодня',
+  'всё',
   'Памятка',
   'Что увидит другой человек',
   'Куда можно',
@@ -113,7 +113,7 @@ if (!files.page.includes("{tab === 'assistant'")) failures.push('assistant tab s
 if (!files.page.includes("{tab === 'nearby'")) failures.push('socialization/nearby tab surface missing');
 
 for (const token of ["saveOnboardingCarePlan('today')", 'Добавить дело и открыть Сегодня']) {
-  if (!`${files.page}\n${files.onboarding}`.includes(token)) failures.push(`onboarding must finish through the first care task, missing: ${token}`);
+  if (`${files.page}\n${files.onboarding}`.includes(token)) failures.push(`free shell must not require a first care task: ${token}`);
 }
 for (const token of ["'generating'", "'reveal'", 'launch-next-grid']) {
   if (files.page.includes(token)) failures.push(`onboarding must not restore a bypass route: ${token}`);

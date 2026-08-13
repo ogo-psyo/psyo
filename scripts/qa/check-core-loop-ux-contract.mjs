@@ -57,8 +57,12 @@ for (const token of ['<details', 'Записать наблюдение', 'По�
   if (!observationDisclosure.includes(token)) failures.push(`observation disclosure missing: ${token}`);
 }
 
-for (const token of ['шаг 1 из 2', 'шаг 2 из 2', 'Назад', 'Добавить дело и открыть Сегодня', 'dog-photo-help']) {
+for (const token of ['Добавить собаку', 'Сейчас достаточно имени', 'Имя собаки', 'Не сейчас']) {
   if (!onboarding.includes(token)) failures.push(`onboarding contract missing: ${token}`);
+}
+
+for (const token of ['шаг 1 из 2', 'шаг 2 из 2', 'Добавить дело и открыть Сегодня']) {
+  if (onboarding.includes(token)) failures.push(`free shell must not contain mandatory onboarding step: ${token}`);
 }
 
 if (page.includes('Имя, правило и первое дело')) failures.push('onboarding still overloads one step');
