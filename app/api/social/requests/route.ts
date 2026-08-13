@@ -14,7 +14,14 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-function compactRequest(row: any, contactUrl: string | null = null) {
+function compactRequest(
+  row: any,
+  contactUrl: string | null = null,
+  viewerPetId: string | null = null,
+  petsById: Map<string, { name: string; avatar_url: string | null }> = new Map(),
+) {
+  const otherPetId = viewerPetId === row.sender_pet_id ? row.recipient_pet_id : row.sender_pet_id;
+  const otherPet = petsById.get(otherPetId);
   return {
     id: row.id,
     senderPetId: row.sender_pet_id,
@@ -27,6 +34,7 @@ function compactRequest(row: any, contactUrl: string | null = null) {
     respondedAt: row.responded_at,
     contactVisibility: contactUrl ? 'mutual_consent' : 'hidden_until_mutual_consent',
     telegramContactUrl: contactUrl,
+    otherDog: otherPet ? { name: otherPet.name, avatarUrl: otherPet.avatar_url } : null,
   };
 }
 
@@ -136,15 +144,23 @@ export async function GET(request: Request) {
       .limit(100);
     if (error) return socialStorageError();
     const excluded = await excludedOwnerIds(context.supabase, context.ownerId);
+    const otherPetIds = [...new Set((data ?? []).map((row) => row.sender_pet_id === petId ? row.recipient_pet_id : row.sender_pet_id))];
+    const { data: otherPets, error: petsError } = otherPetIds.length
+      ? await context.supabase.from('pets').select('id, name, avatar_url').in('id', otherPetIds)
+      : { data: [], error: null };
+    if (petsError) return socialStorageError();
+    const petsById = new Map((otherPets ?? []).map((pet) => [pet.id, { name: pet.name, avatar_url: pet.avatar_url }]));
     const requests = [];
     for (const row of data ?? []) {
       const otherOwnerId = row.sender_owner_id === context.ownerId ? row.recipient_owner_id : row.sender_owner_id;
       if (excluded.has(otherOwnerId)) continue;
       const pairBlocked = await isOwnerPairBlocked(context.supabase, context.ownerId, otherOwnerId);
       if (pairBlocked) continue;
-      const participantsAvailable = await areRequestPetsDiscoverable(context.supabase, row.sender_pet_id, row.recipient_pet_id);
+      const participantsAvailable = row.source === 'invite'
+        ? true
+        : await areRequestPetsDiscoverable(context.supabase, row.sender_pet_id, row.recipient_pet_id);
       const contactUrl = contactUrlForRequestRow(row, context.ownerId, pairBlocked, participantsAvailable);
-      requests.push(compactRequest(row, contactUrl));
+      requests.push(compactRequest(row, contactUrl, petId, petsById));
     }
     return NextResponse.json({
       requests,

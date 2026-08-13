@@ -10,6 +10,7 @@ export type SocialRequestView = {
   scenario: SocialScenario;
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'blocked';
   telegramContactUrl: string | null;
+  otherDog: { name: string; avatarUrl: string | null } | null;
 };
 
 const scenarioLabels: Record<SocialScenario, string> = {
@@ -63,7 +64,8 @@ export function RequestsPanel({
           return (
             <article key={request.id} className="social-request-card">
               <div>
-                <b>{incoming ? `Вас зовут на ${scenarioLabels[request.scenario]}` : `Ваш запрос на ${scenarioLabels[request.scenario]}`}</b>
+                <b>{request.otherDog?.name ?? 'Другая собака'}</b>
+                <p>{incoming ? `Вас зовут на ${scenarioLabels[request.scenario]}` : `Ваш запрос на ${scenarioLabels[request.scenario]}`}</p>
                 <p>{statusLabels[request.status]}</p>
               </div>
 
