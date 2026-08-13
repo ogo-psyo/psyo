@@ -61,6 +61,8 @@ const scenarioSet = new Set<string>(socialScenarios);
 const citySet = new Set<string>(socialCities);
 const forbiddenContactKeys = ['telegramUsername', 'telegram_username', 'telegramContact', 'telegram_contact'];
 const forbiddenExactLocationKeys = ['exactLocation', 'exact_location', 'latitude', 'longitude', 'coordinates'];
+const districtAddressMarkers = /(улица|ул\.|дом|д\.|корпус|квартира|кв\.|подъезд|строение|проспект|переулок|шоссе|набережная)/i;
+const safeDistrictPattern = /^[А-ЯЁа-яё -]{2,50}$/;
 
 function sourceRecord(input: unknown): Record<string, unknown> {
   return input && typeof input === 'object' ? input as Record<string, unknown> : {};
@@ -129,12 +131,17 @@ export function normalizeSocialProfileInput(input: unknown): ProfileValidationRe
     return { ok: false, code: 'INVALID_COARSE_LOCATION', field: 'coarseLocation' };
   }
 
+  const district = cleanText(source.district, 50);
+  if (district && (!safeDistrictPattern.test(district) || /\d/.test(district) || districtAddressMarkers.test(district))) {
+    return { ok: false, code: 'INVALID_DISTRICT', field: 'district' };
+  }
+
   return {
     ok: true,
     value: {
       discoverable,
       city: city as SocialCity,
-      district: cleanText(source.district, 100),
+      district,
       coarseLocation,
       scenarios: scenarios as SocialScenario[],
     },
@@ -161,8 +168,9 @@ function candidateProjection(candidate: SocialCandidateSource, mine: SocialProfi
   const sharedScenarios = mine.scenarios.filter((scenario) => candidate.profile.scenarios.includes(scenario));
   const sameDistrict = Boolean(mine.district && candidate.profile.district
     && mine.district.localeCompare(candidate.profile.district, 'ru', { sensitivity: 'base' }) === 0);
+  const isNearby = km !== null && km <= 15;
   const reasons = [
-    ...(km !== null ? [`${distanceLabel(km)} от вас`] : []),
+    ...(isNearby ? [`${distanceLabel(km)} от вас`] : []),
     ...(sameDistrict ? ['Один район'] : []),
     'Совпадает цель знакомства',
   ];
@@ -174,7 +182,7 @@ function candidateProjection(candidate: SocialCandidateSource, mine: SocialProfi
     district: candidate.profile.district,
     scenarios: candidate.profile.scenarios,
     sharedScenarios,
-    distance: km !== null && km <= 15 ? distanceLabel(km) : null,
+    distance: isNearby ? distanceLabel(km) : null,
     reasons,
     contactVisibility: 'hidden_until_mutual_consent',
   };
@@ -218,10 +226,16 @@ export function canRevealTelegramContact(
   request: SocialContactRequest,
   viewerOwnerId: string,
   participantsAvailable = true,
+  pairBlocked = false,
 ) {
   return participantsAvailable
+    && !pairBlocked
     && request.status === 'accepted'
     && (viewerOwnerId === request.senderOwnerId || viewerOwnerId === request.recipientOwnerId);
+}
+
+export function principalsAgree(input: { bearerOwnerId?: string | null; sessionOwnerId?: string | null }) {
+  return !(input.bearerOwnerId && input.sessionOwnerId && input.bearerOwnerId !== input.sessionOwnerId);
 }
 
 export type RequestTransitionResult =

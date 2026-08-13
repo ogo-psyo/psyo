@@ -34,6 +34,8 @@ test('12 km is nearby; 20 km falls back to city', () => {
   });
   assert.deepEqual(result.nearby.map((item) => item.petId), ['twelve']);
   assert.deepEqual(result.city.map((item) => item.petId), ['twenty']);
+  assert.equal(result.city[0].distance, null);
+  assert.equal(result.city[0].reasons.some((reason) => reason.includes('км')), false);
 });
 
 test('without geolocation, same-city candidates remain discoverable and same district comes first', () => {

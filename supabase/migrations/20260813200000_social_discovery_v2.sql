@@ -5,7 +5,12 @@ create table if not exists public.social_discovery_profiles (
   pet_id uuid primary key references public.pets(id) on delete cascade,
   discoverable boolean not null default false,
   city text not null check (city in ('moscow', 'saint_petersburg')),
-  district text check (district is null or length(btrim(district)) between 1 and 100),
+  district text check (district is null or (
+    length(btrim(district)) between 2 and 50
+    and district ~ '^[А-ЯЁа-яё -]+$'
+    and district !~ '[0-9]'
+    and district !~* '(улица|ул\.|дом|д\.|корпус|квартира|подъезд|строение|проспект|переулок|шоссе|набережная)'
+  )),
   coarse_lat double precision,
   coarse_lng double precision,
   scenarios text[] not null default '{}',
@@ -107,6 +112,52 @@ create trigger social_match_requests_touch_updated_at
 before update on public.social_match_requests
 for each row execute function public.touch_updated_at();
 
+-- Authoritative bounded rate limits. Advisory transaction locks serialize
+-- concurrent inserts per owner, so parallel retries cannot race past the cap.
+create or replace function public.enforce_social_write_rate_limit()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_owner_id uuid;
+  v_limit integer;
+  v_since timestamptz;
+  v_count integer;
+begin
+  if tg_table_name = 'social_friend_invites' then
+    v_owner_id := new.inviter_owner_id; v_limit := 10; v_since := now() - interval '1 hour';
+  elsif tg_table_name = 'social_match_requests' then
+    v_owner_id := new.sender_owner_id; v_limit := 30; v_since := now() - interval '1 hour';
+  elsif tg_table_name = 'social_reports' then
+    v_owner_id := new.reporter_owner_id; v_limit := 10; v_since := now() - interval '1 day';
+  else
+    raise exception 'UNSUPPORTED_SOCIAL_RATE_LIMIT_TABLE';
+  end if;
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(tg_table_name || ':' || v_owner_id::text, 0));
+  execute pg_catalog.format('select count(*) from public.%I where %I = $1 and created_at >= $2', tg_table_name,
+    case tg_table_name
+      when 'social_friend_invites' then 'inviter_owner_id'
+      when 'social_match_requests' then 'sender_owner_id'
+      else 'reporter_owner_id'
+    end)
+  into v_count using v_owner_id, v_since;
+  if v_count >= v_limit then raise exception 'SOCIAL_RATE_LIMITED'; end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists social_friend_invites_rate_limit on public.social_friend_invites;
+create trigger social_friend_invites_rate_limit before insert on public.social_friend_invites
+for each row execute function public.enforce_social_write_rate_limit();
+drop trigger if exists social_match_requests_rate_limit on public.social_match_requests;
+create trigger social_match_requests_rate_limit before insert on public.social_match_requests
+for each row execute function public.enforce_social_write_rate_limit();
+drop trigger if exists social_reports_rate_limit on public.social_reports;
+create trigger social_reports_rate_limit before insert on public.social_reports
+for each row execute function public.enforce_social_write_rate_limit();
+
 -- One-use invite consumption and request creation are atomic. The raw token is
 -- never stored, only its SHA-256 digest.
 create or replace function public.consume_social_friend_invite(
@@ -135,7 +186,7 @@ begin
       where id = v_invite.request_id
         and recipient_owner_id = p_recipient_owner_id
         and idempotency_key = p_idempotency_key;
-      if found then
+      if found and v_request.recipient_pet_id = p_recipient_pet_id then
         return jsonb_build_object('request', to_jsonb(v_request), 'replayed', true);
       end if;
     end if;
@@ -156,6 +207,17 @@ begin
        or (blocker_owner_id = p_recipient_owner_id and blocked_owner_id = v_invite.inviter_owner_id)
   ) then
     raise exception 'INVITE_NOT_AVAILABLE';
+  end if;
+  if not exists (
+    select 1 from public.social_discovery_profiles
+    where pet_id = v_invite.inviter_pet_id and discoverable = true
+      and v_invite.scenario = any(scenarios)
+  ) or not exists (
+    select 1 from public.social_discovery_profiles
+    where pet_id = p_recipient_pet_id and discoverable = true
+      and v_invite.scenario = any(scenarios)
+  ) then
+    raise exception 'DISCOVERY_NOT_ENABLED';
   end if;
 
   insert into public.social_match_requests (

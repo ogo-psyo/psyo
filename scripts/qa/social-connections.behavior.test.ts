@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   canRevealTelegramContact,
   inviteAvailability,
+  principalsAgree,
   transitionSocialRequest,
   validateSocialContactBoundary,
 } from '../../lib/socialCore.ts';
@@ -10,6 +11,8 @@ import {
   contactForAcceptedRequest,
   hashInviteToken,
   socialRequestFingerprint,
+  enforceSocialRateLimit,
+  revokeSocialDiscovery,
 } from '../../lib/server/socialService.ts';
 
 test('one-use invite expires and cannot be reused', () => {
@@ -39,7 +42,51 @@ test('contact remains hidden before consent and comes only from verified session
   assert.equal(contactForAcceptedRequest({ request: accepted, viewerOwnerId: 'owner-a', otherContact: { username: 'verified_owner' } }), 'https://t.me/verified_owner');
   assert.equal(contactForAcceptedRequest({ request: accepted, viewerOwnerId: 'outsider', otherContact: { username: 'verified_owner' } }), null);
   assert.equal(contactForAcceptedRequest({ request: accepted, viewerOwnerId: 'owner-a', otherContact: { username: null } }), null);
+  assert.equal(contactForAcceptedRequest({ request: accepted, viewerOwnerId: 'owner-a', otherContact: { username: 'verified_owner' }, pairBlocked: true }), null);
   assert.equal(validateSocialContactBoundary({ telegramUsername: 'spoofed_owner' }).ok, false);
+});
+
+test('retained accepted request id cannot reveal contact after either-side block', () => {
+  const retained = { status: 'accepted', senderOwnerId: 'owner-a', recipientOwnerId: 'owner-b' };
+  assert.equal(canRevealTelegramContact(retained, 'owner-a', true, true), false);
+  assert.equal(canRevealTelegramContact(retained, 'owner-b', true, true), false);
+});
+
+test('bearer and Telegram app-session principals must agree', () => {
+  assert.equal(principalsAgree({ bearerOwnerId: 'owner-a', sessionOwnerId: 'owner-a' }), true);
+  assert.equal(principalsAgree({ bearerOwnerId: 'owner-a', sessionOwnerId: 'owner-b' }), false);
+  assert.equal(principalsAgree({ bearerOwnerId: 'owner-a', sessionOwnerId: null }), true);
+});
+
+test('per-owner rate limiter rejects a full window', async () => {
+  const query = {
+    select() { return this; }, eq() { return this; }, gte() { return Promise.resolve({ count: 10, error: null }); },
+  };
+  const supabase = { from() { return query; } } as any;
+  await assert.rejects(() => enforceSocialRateLimit({
+    supabase, table: 'social_friend_invites', ownerColumn: 'inviter_owner_id',
+    ownerId: 'owner-a', limit: 10, windowMs: 60_000,
+  }), /SOCIAL_RATE_LIMITED/);
+});
+
+test('opting out revokes open invites and cancels pending requests for that pet', async () => {
+  const calls: Array<{ table: string; update: unknown }> = [];
+  function builder(table: string) {
+    let updateValue: unknown;
+    const chain: any = {
+      update(value: unknown) { updateValue = value; calls.push({ table, update: value }); return chain; },
+      eq() { return chain; }, is() { return chain; }, or() { return chain; },
+      then(resolve: (value: unknown) => void) { resolve({ error: null }); },
+    };
+    return chain;
+  }
+  const supabase = { from(table: string) { return builder(table); } } as any;
+  await revokeSocialDiscovery(supabase, 'owner-a', 'pet-a');
+  assert.deepEqual(calls.map((call) => call.table), [
+    'social_discovery_profiles', 'social_friend_invites', 'social_match_requests',
+  ]);
+  assert.deepEqual(calls[0].update, { discoverable: false });
+  assert.equal((calls[2].update as any).status, 'cancelled');
 });
 
 test('same request payload has one fingerprint and changed payload does not', () => {

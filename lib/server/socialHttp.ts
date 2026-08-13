@@ -2,12 +2,16 @@ import { NextResponse } from 'next/server';
 import { getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
+import { principalsAgree } from '@/lib/socialCore';
 
 export async function socialRequestContext(request: Request) {
   const [auth, appSession] = await Promise.all([
     getRequestAuth(request),
     Promise.resolve(getAppSessionFromRequest(request)),
   ]);
+  if (!principalsAgree({ bearerOwnerId: auth.user?.id, sessionOwnerId: appSession?.ownerId })) {
+    return { response: NextResponse.json({ error: 'IDENTITY_PRINCIPAL_MISMATCH' }, { status: 401 }) } as const;
+  }
   const ownerId = auth.user?.id ?? appSession?.ownerId;
   if (!ownerId) {
     return { response: NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 }) } as const;
@@ -29,6 +33,8 @@ export function socialStorageError(error?: unknown) {
   if (/INVITE_SELF_ACCEPT_FORBIDDEN/.test(message)) return NextResponse.json({ error: 'INVITE_SELF_ACCEPT_FORBIDDEN' }, { status: 409 });
   if (/RECIPIENT_PET_NOT_FOUND/.test(message)) return NextResponse.json({ error: 'RECIPIENT_PET_NOT_FOUND' }, { status: 404 });
   if (/INVITE_NOT_AVAILABLE/.test(message)) return NextResponse.json({ error: 'INVITE_NOT_AVAILABLE' }, { status: 404 });
+  if (/DISCOVERY_NOT_ENABLED/.test(message)) return NextResponse.json({ error: 'DISCOVERY_NOT_ENABLED' }, { status: 409 });
+  if (/SOCIAL_RATE_LIMITED/.test(message)) return NextResponse.json({ error: 'SOCIAL_RATE_LIMITED' }, { status: 429 });
   return NextResponse.json({ error: 'SOCIAL_STORAGE_FAILED' }, { status: 500 });
 }
 

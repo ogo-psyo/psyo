@@ -3,6 +3,7 @@ import { socialRequestContext, socialStorageError } from '@/lib/server/socialHtt
 import {
   mapSocialProfile,
   normalizeSocialProfileInput,
+  revokeSocialDiscovery,
   requireOwnedPet,
   socialProfilePayload,
 } from '@/lib/server/socialService';
@@ -42,6 +43,9 @@ export async function PUT(request: Request) {
     if (!await requireOwnedPet(context.supabase, context.ownerId, petId)) {
       return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
     }
+    if (!normalized.value.discoverable) {
+      await revokeSocialDiscovery(context.supabase, context.ownerId, petId);
+    }
     const { data, error } = await context.supabase
       .from('social_discovery_profiles')
       .upsert({ pet_id: petId, ...socialProfilePayload(normalized.value) })
@@ -62,11 +66,7 @@ export async function DELETE(request: Request) {
     if (!await requireOwnedPet(context.supabase, context.ownerId, petId)) {
       return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
     }
-    const { error } = await context.supabase
-      .from('social_discovery_profiles')
-      .update({ discoverable: false })
-      .eq('pet_id', petId);
-    if (error) return socialStorageError();
+    await revokeSocialDiscovery(context.supabase, context.ownerId, petId);
     return NextResponse.json({ petId, discoverable: false });
   } catch (error) {
     return socialStorageError(error);

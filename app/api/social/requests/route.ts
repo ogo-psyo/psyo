@@ -3,6 +3,9 @@ import { socialScenarios, validateSocialContactBoundary, type SocialScenario } f
 import { readIdempotencyKey, socialRequestContext, socialStorageError } from '@/lib/server/socialHttp';
 import {
   contactUrlForRequestRow,
+  areRequestPetsDiscoverable,
+  enforceSocialRateLimit,
+  isOwnerPairBlocked,
   excludedOwnerIds,
   requireOwnedPet,
   socialRequestFingerprint,
@@ -65,6 +68,10 @@ export async function POST(request: Request) {
       }
       return NextResponse.json({ request: compactRequest(replay), replayed: true });
     }
+    await enforceSocialRateLimit({
+      supabase: context.supabase, table: 'social_match_requests', ownerColumn: 'sender_owner_id',
+      ownerId: context.ownerId, limit: 30, windowMs: 60 * 60 * 1000,
+    });
 
     const { data: recipientPet, error: recipientError } = await context.supabase
       .from('pets').select('id, owner_id').eq('id', recipientPetId).maybeSingle();
@@ -133,7 +140,10 @@ export async function GET(request: Request) {
     for (const row of data ?? []) {
       const otherOwnerId = row.sender_owner_id === context.ownerId ? row.recipient_owner_id : row.sender_owner_id;
       if (excluded.has(otherOwnerId)) continue;
-      const contactUrl = contactUrlForRequestRow(row, context.ownerId);
+      const pairBlocked = await isOwnerPairBlocked(context.supabase, context.ownerId, otherOwnerId);
+      if (pairBlocked) continue;
+      const participantsAvailable = await areRequestPetsDiscoverable(context.supabase, row.sender_pet_id, row.recipient_pet_id);
+      const contactUrl = contactUrlForRequestRow(row, context.ownerId, pairBlocked, participantsAvailable);
       requests.push(compactRequest(row, contactUrl));
     }
     return NextResponse.json({

@@ -30,8 +30,10 @@ export function contactForAcceptedRequest(input: {
   request: SocialContactRequest;
   viewerOwnerId: string;
   otherContact: VerifiedTelegramContact;
+  pairBlocked?: boolean;
+  participantsAvailable?: boolean;
 }) {
-  if (!canRevealTelegramContact(input.request, input.viewerOwnerId)) return null;
+  if (!canRevealTelegramContact(input.request, input.viewerOwnerId, input.participantsAvailable !== false, input.pairBlocked === true)) return null;
   if (!input.otherContact.username) return null;
   return `https://t.me/${input.otherContact.username}`;
 }
@@ -93,6 +95,51 @@ export async function excludedOwnerIds(supabase: SupabaseClient, ownerId: string
   return excluded;
 }
 
+export async function isOwnerPairBlocked(supabase: SupabaseClient, leftOwnerId: string, rightOwnerId: string) {
+  const { data, error } = await supabase.from('social_blocks')
+    .select('blocker_owner_id')
+    .or(`and(blocker_owner_id.eq.${leftOwnerId},blocked_owner_id.eq.${rightOwnerId}),and(blocker_owner_id.eq.${rightOwnerId},blocked_owner_id.eq.${leftOwnerId})`)
+    .limit(1);
+  if (error) throw new Error('SOCIAL_STORAGE_FAILED');
+  return Boolean(data?.length);
+}
+
+export async function areRequestPetsDiscoverable(supabase: SupabaseClient, senderPetId: string, recipientPetId: string) {
+  const { data, error } = await supabase.from('social_discovery_profiles')
+    .select('pet_id, discoverable').in('pet_id', [senderPetId, recipientPetId]);
+  if (error) throw new Error('SOCIAL_STORAGE_FAILED');
+  return (data ?? []).length === 2 && !data?.some((profile) => !profile.discoverable);
+}
+
+export async function enforceSocialRateLimit(input: {
+  supabase: SupabaseClient;
+  table: 'social_friend_invites' | 'social_match_requests' | 'social_reports';
+  ownerColumn: 'inviter_owner_id' | 'sender_owner_id' | 'reporter_owner_id';
+  ownerId: string;
+  limit: number;
+  windowMs: number;
+}) {
+  const since = new Date(Date.now() - input.windowMs).toISOString();
+  const { count, error } = await input.supabase.from(input.table)
+    .select('id', { count: 'exact', head: true })
+    .eq(input.ownerColumn, input.ownerId)
+    .gte('created_at', since);
+  if (error) throw new Error('SOCIAL_STORAGE_FAILED');
+  if ((count ?? 0) >= input.limit) throw new Error('SOCIAL_RATE_LIMITED');
+}
+
+export async function revokeSocialDiscovery(supabase: SupabaseClient, ownerId: string, petId: string) {
+  const now = new Date().toISOString();
+  const [profile, invites, requests] = await Promise.all([
+    supabase.from('social_discovery_profiles').update({ discoverable: false }).eq('pet_id', petId),
+    supabase.from('social_friend_invites').update({ used_at: now })
+      .eq('inviter_owner_id', ownerId).eq('inviter_pet_id', petId).is('used_at', null),
+    supabase.from('social_match_requests').update({ status: 'cancelled', responded_at: now })
+      .eq('status', 'pending').or(`sender_pet_id.eq.${petId},recipient_pet_id.eq.${petId}`),
+  ]);
+  if (profile.error || invites.error || requests.error) throw new Error('SOCIAL_STORAGE_FAILED');
+}
+
 export async function listCandidates(supabase: SupabaseClient, ownerId: string, petId: string) {
   const pet = await requireOwnedPet(supabase, ownerId, petId);
   if (!pet) return { code: 'PET_NOT_FOUND' as const };
@@ -102,18 +149,19 @@ export async function listCandidates(supabase: SupabaseClient, ownerId: string, 
   if (!mineRow?.discoverable) return { code: 'DISCOVERY_NOT_ENABLED' as const };
   const mine = mapSocialProfile(mineRow);
 
-  const [candidateResult, excluded] = await Promise.all([
-    supabase.from('social_discovery_profiles')
+  const excluded = await excludedOwnerIds(supabase, ownerId);
+  const candidateRows: any[] = [];
+  for (let from = 0; from < 1000; from += 200) {
+    const { data, error } = await supabase.from('social_discovery_profiles')
       .select('*, pets!inner(id, owner_id, name, avatar_url)')
-      .eq('discoverable', true)
-      .eq('city', mine.city)
-      .neq('pet_id', petId)
-      .limit(200),
-    excludedOwnerIds(supabase, ownerId),
-  ]);
-  if (candidateResult.error) throw new Error('SOCIAL_STORAGE_FAILED');
+      .eq('discoverable', true).eq('city', mine.city).neq('pet_id', petId)
+      .order('pet_id', { ascending: true }).range(from, from + 199);
+    if (error) throw new Error('SOCIAL_STORAGE_FAILED');
+    candidateRows.push(...(data ?? []));
+    if ((data ?? []).length < 200) break;
+  }
 
-  const candidates: SocialCandidateSource[] = (candidateResult.data ?? []).flatMap((row: any) => {
+  const candidates: SocialCandidateSource[] = candidateRows.flatMap((row: any) => {
     const candidatePet = Array.isArray(row.pets) ? row.pets[0] : row.pets;
     if (!candidatePet || candidatePet.owner_id === ownerId) return [];
     return [{
@@ -163,6 +211,10 @@ export async function createFriendInvite(input: {
   if (!profile?.discoverable || !profile.scenarios?.includes(input.scenario)) {
     return { code: 'DISCOVERY_NOT_ENABLED' as const };
   }
+  await enforceSocialRateLimit({
+    supabase: input.supabase, table: 'social_friend_invites', ownerColumn: 'inviter_owner_id',
+    ownerId: input.ownerId, limit: 10, windowMs: 60 * 60 * 1000,
+  });
   const token = randomBytes(32).toString('base64url');
   const expiresAt = new Date(Date.now() + Math.min(Math.max(input.expiresInHours ?? 72, 1), 168) * 60 * 60 * 1000);
   const { data, error } = await input.supabase.from('social_friend_invites').insert({
@@ -196,7 +248,7 @@ export async function consumeFriendInvite(input: {
   return data?.request;
 }
 
-export function contactUrlForRequestRow(row: any, viewerOwnerId: string) {
+export function contactUrlForRequestRow(row: any, viewerOwnerId: string, pairBlocked = false, participantsAvailable = true) {
   const otherUsername = row.sender_owner_id === viewerOwnerId
     ? row.recipient_contact_username
     : row.sender_contact_username;
@@ -208,5 +260,7 @@ export function contactUrlForRequestRow(row: any, viewerOwnerId: string) {
     },
     viewerOwnerId,
     otherContact: { username: otherUsername ?? null },
+    pairBlocked,
+    participantsAvailable,
   });
 }

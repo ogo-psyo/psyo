@@ -47,6 +47,18 @@ test('coarse location is quantized and exact/contact fields are rejected', () =>
     scenarios: ['walk'],
     telegramUsername: 'spoofed_owner',
   }).ok, false);
+  assert.equal(normalizeSocialProfileInput({
+    discoverable: true,
+    city: 'moscow',
+    district: 'улица Арбат, дом 10',
+    scenarios: ['walk'],
+  }).ok, false);
+  assert.equal(normalizeSocialProfileInput({
+    discoverable: true,
+    city: 'moscow',
+    district: 'Хамовники',
+    scenarios: ['walk'],
+  }).ok, true);
 });
 
 test('candidate projection contains no coordinates, owner id, contact, or score', () => {
