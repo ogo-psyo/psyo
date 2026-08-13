@@ -3,6 +3,7 @@ import { createHmac } from 'node:crypto';
 
 const botToken = '123456:test-token';
 process.env.PSYO_ID_PEPPER = 'qa-pepper';
+process.env.PSYO_SESSION_SIGNING_KEY = 'qa-session-signing-key-not-used-outside-this-process';
 process.on('warning', (warning) => {
   if (warning.code !== 'MODULE_TYPELESS_PACKAGE_JSON') {
     console.warn(warning);
@@ -10,6 +11,7 @@ process.on('warning', (warning) => {
 });
 
 const { buildTelegramSession, verifyTelegramInitData } = await import('../../lib/server/telegram.ts');
+const { createAppSessionToken, setAppSessionCookie, verifyAppSessionToken } = await import('../../lib/server/appSession.ts');
 
 function signTelegramInitData(fields) {
   const params = new URLSearchParams();
@@ -29,9 +31,9 @@ function signTelegramInitData(fields) {
 
 const now = Math.floor(Date.now() / 1000);
 const user = {
-  id: 90582596,
-  first_name: 'Ruslan',
-  username: 'uglanov',
+  id: 10101,
+  first_name: 'Fixture',
+  username: 'psyo_qa_fixture',
   language_code: 'ru',
 };
 
@@ -46,7 +48,7 @@ if (!verified) throw new Error('fresh signed initData should verify');
 if (verified.user.id !== user.id) throw new Error('verified user id mismatch');
 if (verified.authDate !== now) throw new Error('verified auth_date mismatch');
 
-const tamperedInitData = validInitData.replace('Ruslan', 'Other');
+const tamperedInitData = validInitData.replace('Fixture', 'Other');
 if (verifyTelegramInitData(tamperedInitData, botToken)) {
   throw new Error('tampered initData must be rejected');
 }
@@ -77,6 +79,28 @@ if ('id' in session) {
 }
 if (session.firstName !== user.first_name || session.username !== user.username) {
   throw new Error('session safe display fields mismatch');
+}
+
+const ownerAId = '00000000-0000-4000-8000-000000000001';
+const ownerBId = '00000000-0000-4000-8000-000000000002';
+const signedA = createAppSessionToken({ psyoUserId: session.psyoUserId, ownerId: ownerAId, authDate: now, locale: 'ru' });
+const signedB = createAppSessionToken({ psyoUserId: `${session.psyoUserId}-b`, ownerId: ownerBId, authDate: now, locale: 'ru' });
+const verifiedA = verifyAppSessionToken(signedA.token);
+const verifiedB = verifyAppSessionToken(signedB.token);
+if (verifiedA?.ownerId !== ownerAId || verifiedB?.ownerId !== ownerBId) {
+  throw new Error('signed app sessions must preserve distinct storage owners');
+}
+if (signedA.token === signedB.token) throw new Error('distinct owners must receive distinct app session tokens');
+if (signedA.token.includes(String(user.id))) throw new Error('app session token must not expose raw Telegram id');
+const [payload, signature] = signedA.token.split('.');
+const tamperedToken = `${payload}.${signature.slice(0, -1)}${signature.endsWith('a') ? 'b' : 'a'}`;
+if (verifyAppSessionToken(tamperedToken)) throw new Error('tampered app session token must be rejected');
+
+const response = new Response();
+setAppSessionCookie(response, signedA.token, signedA.maxAge);
+const cookie = response.headers.get('set-cookie') || '';
+for (const flag of ['HttpOnly', 'SameSite=Lax', 'Secure']) {
+  if (!cookie.includes(flag)) throw new Error(`app session cookie is missing ${flag}`);
 }
 
 console.log('telegram initData contract ok');
