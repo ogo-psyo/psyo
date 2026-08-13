@@ -17,6 +17,7 @@ async function ownedZone(supabase: any, userId: string, id: string) {
     .select('id, type, visibility, share_token, approximate_lat, approximate_lng, radius_meters, pets!inner(owner_id)')
     .eq('id', id)
     .eq('pets.owner_id', userId)
+    .is('deleted_at', null)
     .single();
 }
 
@@ -81,7 +82,11 @@ export async function DELETE(request: Request, ctx: Ctx) {
   if (!ownerId || !supabase) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
   const owned = await ownedZone(supabase, ownerId, id);
   if (owned.error) return NextResponse.json({ error: 'ZONE_NOT_FOUND' }, { status: 404 });
-  const { error } = await supabase.from('map_zones').delete().eq('id', id);
+  const { error } = await supabase
+    .from('map_zones')
+    .update({ deleted_at: new Date().toISOString(), visibility: 'private', share_token: null })
+    .eq('id', id)
+    .is('deleted_at', null);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

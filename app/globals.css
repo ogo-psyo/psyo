@@ -294,6 +294,28 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .reminder-card, .zone-card, .wishlist-item { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 12px; }
 .reminder-card.done { opacity: .58; }
 .reminder-card div:last-child, .wishlist-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.restore-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+.restore-notice button {
+  min-height: 40px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0 14px;
+  color: var(--primary-ink);
+  background: var(--primary);
+  font-weight: 800;
+}
 .wishlist-item.priority-high, .zone-card.safe_place, .zone-card.home_area { border-color: oklch(0.70 0.105 170 / .30); background: var(--surface-2); }
 .wishlist-form { display: grid; gap: 8px; padding: 12px; }
 .history-block { padding: 10px; background: var(--surface-2); box-shadow: none; }

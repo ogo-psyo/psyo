@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
   if (!ownerId) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
 
-  let query = supabase.from('wishlist_items').select('*, pets!inner(owner_id)').eq('pets.owner_id', ownerId).order('created_at', { ascending: false });
+  let query = supabase.from('wishlist_items').select('*, pets!inner(owner_id)').eq('pets.owner_id', ownerId).is('deleted_at', null).order('created_at', { ascending: false });
   if (petId) query = query.eq('pet_id', petId);
   const { data, error } = await query;
 

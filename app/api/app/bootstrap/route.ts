@@ -70,9 +70,9 @@ export async function GET(request: Request) {
     supabase.from('pet_passports').select('*').eq('pet_id', petId).maybeSingle(),
     supabase.from('social_profiles').select('*').eq('pet_id', petId).maybeSingle(),
     supabase.from('reminders').select('*').eq('pet_id', petId).order('due_at', { ascending: true }),
-    supabase.from('map_zones').select('*').eq('pet_id', petId).order('created_at', { ascending: false }),
+    supabase.from('map_zones').select('*').eq('pet_id', petId).is('deleted_at', null).order('created_at', { ascending: false }),
     supabase.from('map_routes').select('*').eq('owner_id', ownerId).eq('pet_id', petId).order('created_at', { ascending: false }),
-    supabase.from('wishlist_items').select('*').eq('pet_id', petId).order('created_at', { ascending: false }),
+    supabase.from('wishlist_items').select('*').eq('pet_id', petId).is('deleted_at', null).order('created_at', { ascending: false }),
     supabase.from('pet_observations').select('*').eq('pet_id', petId).order('observed_at', { ascending: false }).limit(20),
   ]);
 

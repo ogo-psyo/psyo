@@ -17,6 +17,7 @@ async function ownedWishlistItem(supabase: any, userId: string, id: string) {
     .select('id, pets!inner(owner_id)')
     .eq('id', id)
     .eq('pets.owner_id', userId)
+    .is('deleted_at', null)
     .single();
 }
 
@@ -59,7 +60,11 @@ export async function DELETE(request: Request, ctx: Ctx) {
   const owned = await ownedWishlistItem(supabase, ownerId, id);
   if (owned.error) return NextResponse.json({ error: 'WISHLIST_ITEM_NOT_FOUND' }, { status: 404 });
 
-  const { error } = await supabase.from('wishlist_items').delete().eq('id', id);
+  const { error } = await supabase
+    .from('wishlist_items')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('deleted_at', null);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

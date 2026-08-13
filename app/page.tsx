@@ -440,6 +440,8 @@ export default function Home() {
   const [reminders, setReminders] = useState<ReminderView[]>([]);
   const [wishlist, setWishlist] = useState<WishlistView[]>([]);
   const [zones, setZones] = useState<ZoneView[]>([]);
+  const [removedWishlistItem, setRemovedWishlistItem] = useState<WishlistView | null>(null);
+  const [removedZone, setRemovedZone] = useState<ZoneView | null>(null);
   const [pets, setPets] = useState<PetSwitchOption[]>([]);
   const [activePetId, setActivePetId] = useState('');
   const [observations, setObservations] = useState<ObservationView[]>([]);
@@ -1962,10 +1964,30 @@ export default function Home() {
   }
 
   async function deleteZone(id: string) {
-    if (isGuestMode()) { setZones((current) => current.filter((zone) => zone.id !== id)); return; }
+    const zone = zones.find((item) => item.id === id);
+    if (isGuestMode()) {
+      setZones((current) => current.filter((item) => item.id !== id));
+      if (zone) setRemovedZone(zone);
+      return;
+    }
     const response = await fetch(`/api/zones/${id}`, { method: 'DELETE', headers: authHeaders() });
-    const result = await response.json().catch(() => ({}));
+    await response.json().catch(() => ({}));
     if (!response.ok) return setError('Не удалось удалить место');
+    if (zone) setRemovedZone(zone);
+    await loadBootstrap();
+  }
+
+  async function restoreZone() {
+    if (!removedZone) return;
+    if (isGuestMode()) {
+      setZones((current) => [removedZone, ...current.filter((zone) => zone.id !== removedZone.id)]);
+      setRemovedZone(null);
+      return;
+    }
+    const response = await fetch(`/api/zones/${removedZone.id}/restore`, { method: 'POST', headers: authHeaders() });
+    await response.json().catch(() => ({}));
+    if (!response.ok) return setError('Не удалось вернуть место');
+    setRemovedZone(null);
     await loadBootstrap();
   }
 
@@ -1982,10 +2004,30 @@ export default function Home() {
   }
 
   async function deleteWishlistItem(id: string) {
-    if (isGuestMode()) { setWishlist((current) => current.filter((item) => item.id !== id)); return; }
+    const item = wishlist.find((entry) => entry.id === id);
+    if (isGuestMode()) {
+      setWishlist((current) => current.filter((entry) => entry.id !== id));
+      if (item) setRemovedWishlistItem(item);
+      return;
+    }
     const response = await fetch(`/api/wishlist/${id}`, { method: 'DELETE', headers: authHeaders() });
-    const result = await response.json().catch(() => ({}));
+    await response.json().catch(() => ({}));
     if (!response.ok) return setError('Не удалось удалить вещь');
+    if (item) setRemovedWishlistItem(item);
+    await loadBootstrap();
+  }
+
+  async function restoreWishlistItem() {
+    if (!removedWishlistItem) return;
+    if (isGuestMode()) {
+      setWishlist((current) => [removedWishlistItem, ...current.filter((item) => item.id !== removedWishlistItem.id)]);
+      setRemovedWishlistItem(null);
+      return;
+    }
+    const response = await fetch(`/api/wishlist/${removedWishlistItem.id}/restore`, { method: 'POST', headers: authHeaders() });
+    await response.json().catch(() => ({}));
+    if (!response.ok) return setError('Не удалось вернуть вещь');
+    setRemovedWishlistItem(null);
     await loadBootstrap();
   }
 
@@ -3203,6 +3245,11 @@ export default function Home() {
             </article>)}
           </section>}
 
+          {removedWishlistItem && <div className="restore-notice" role="status">
+            <span>Вещь убрана</span>
+            <button type="button" onClick={restoreWishlistItem}>Вернуть</button>
+          </div>}
+
           <article className="public-card-privacy-note">
             <b>Не магазин вместо заботы</b>
             <p>Партнёрские рекомендации должны быть помечены отдельно. Сейчас это личный список хозяина: что купить, повторить, подарить или проверить для конкретной собаки.</p>
@@ -3245,6 +3292,10 @@ export default function Home() {
           </FloatingNote>
           {zones.length === 0 && <article className="empty-state"><b>Мест пока нет</b><p>Добавь клинику, парк или любое важное место.</p></article>}
           {zones.length > 0 && <div className="place-ribbon">{zones.map((zone) => <article key={zone.id} className={`zone-card ${zone.type}`}><div><b>{zone.title}</b><p>{formatZoneMeta(zone)}</p></div><div className="wishlist-actions"><button onClick={() => updateZone(zone.id, { type: zone.type === 'risk_zone' ? 'safe_place' : 'risk_zone' })}>{zone.type === 'risk_zone' ? 'Сделать спокойным местом' : 'Отметить как риск'}</button>{pickedZonePoint && <button onClick={() => updateZone(zone.id, { approximateLat: pickedZonePoint.lat, approximateLng: pickedZonePoint.lng })}>Переставить</button>}<button onClick={() => updateZone(zone.id, { radiusMeters: (zone.radius_meters || zone.radiusMeters || 500) + 250 })}>Увеличить радиус</button><button onClick={() => deleteZone(zone.id)}>Удалить</button></div></article>)}</div>}
+          {removedZone && <div className="restore-notice" role="status">
+            <span>Место убрано</span>
+            <button type="button" onClick={restoreZone}>Вернуть</button>
+          </div>}
           <section aria-label="Мои маршруты">
             <div className="section-title"><div><span className="eyebrow">прогулки</span><h3>Мои маршруты</h3></div></div>
             {ownerRoutes.length === 0 && <article className="empty-state"><b>Маршрутов пока нет</b><p>Нажми «Маршрут», отметь на карте хотя бы две точки и сохрани прогулку.</p></article>}

@@ -57,6 +57,7 @@ async function findSharedMapItem(id: string): Promise<SharedMapItem | null> {
     .select('id, title, type, visibility, moderation_status, area_label')
     .eq('share_token', id)
     .eq('visibility', 'shared')
+    .is('deleted_at', null)
     .maybeSingle();
 
   if (!zone) return null;
