@@ -53,7 +53,7 @@ for (const token of requiredDesignKitTokens) {
 
 const requiredHumanCopy = [
   'Демо без входа',
-  'Личный профиль, Plus и сохранение включаются только внутри Telegram Mini App',
+  'Личный профиль, Псё Плюс и сохранение доступны внутри Telegram',
   'Портрет собаки',
   'пример памятки',
   'Примерное место выбрано',
