@@ -1,0 +1,8 @@
+observations:
+  - id: O01
+    timestamp: "2026-08-13T16:15:00+03:00"
+    provenance: ai-suggested
+    content: "The monolithic app/page.tsx makes parallel UI-agent edits unsafe."
+    context: "Subagent dependency and file-ownership planning"
+    potential_type: heuristic
+    promoted: false
