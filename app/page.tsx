@@ -2778,7 +2778,7 @@ export default function Home() {
             </article>}
 
             {!profile.backendPetId && <article className="social-empty-state">
-              <div><h3>Можно начать без анкеты</h3><p>Городские сообщества доступны сразу. Для личных знакомств достаточно добавить имя собаки.</p></div>
+              <div><h3>Можно начать с одного имени</h3><p>Добавь собаку, чтобы позвать знакомого или найти компанию рядом. Остальное заполнишь позже.</p></div>
               <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>
             </article>}
 
