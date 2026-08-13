@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
+import { abortCareMutation, beginCareMutation, careError, careMutationError, careRequestFingerprint, finishCareMutation, readCareIdempotencyKey } from '@/lib/server/careHttp';
 
 export const runtime = 'nodejs';
 
@@ -106,6 +107,7 @@ export async function GET(request: Request) {
     .from('pet_observations')
     .select('*, pets!inner(owner_id)')
     .eq('pets.owner_id', ownerId)
+    .is('deleted_at', null)
     .order('observed_at', { ascending: false })
     .limit(parseLimit(url.searchParams.get('limit')));
 
@@ -124,18 +126,20 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
-  if (!body?.petId) return NextResponse.json({ error: 'petId is required' }, { status: 400 });
+  if (!body?.petId) return careError('PET_REQUIRED', 'Выберите собаку для этой записи.', 400);
   const input = normalizeObservationInput(body);
-  if (!input) return NextResponse.json({ error: 'type/value or quick observation metrics are required' }, { status: 400 });
+  if (!input) return careError('OBSERVATION_VALUE_REQUIRED', 'Добавьте хотя бы одно наблюдение.', 400);
 
   const observedAt = body.observedAt || body.createdAt ? parseDate(body.observedAt || body.createdAt) : new Date().toISOString();
-  if (!observedAt) return NextResponse.json({ error: 'INVALID_OBSERVED_AT' }, { status: 400 });
+  if (!observedAt) return careError('INVALID_OBSERVED_AT', 'Проверьте дату наблюдения.', 400);
 
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
   const supabase = auth.supabase ?? getSupabaseAdmin();
   const ownerId = auth.user?.id ?? appSession?.ownerId;
   const source = allowedSources.has(body.source) ? body.source : 'manual';
+  const idempotencyKey = readCareIdempotencyKey(request, body);
+  if (!idempotencyKey) return careError('IDEMPOTENCY_KEY_REQUIRED', 'Не удалось безопасно сохранить запись. Повторите попытку.', 400);
 
   if (!supabase) {
     const now = new Date().toISOString();
@@ -160,28 +164,36 @@ export async function POST(request: Request) {
     }, { status: 201 });
   }
 
-  if (!ownerId) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
+  if (!ownerId) return careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401);
 
   const { data: pet, error: petError } = await supabase.from('pets').select('id').eq('id', body.petId).eq('owner_id', ownerId).single();
-  if (petError || !pet) return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
+  if (petError || !pet) return careError('PET_NOT_FOUND', 'Эта собака не найдена или недоступна.', 404);
 
-  const { data, error } = await supabase
-    .from('pet_observations')
-    .insert({
-      pet_id: body.petId,
-      type: input.type,
-      value: input.value,
-      note: typeof body.note === 'string' ? body.note.trim() || null : null,
-      observed_at: observedAt,
-      source,
-      metadata: input.metadata,
-    })
-    .select('*')
-    .single();
+  const fingerprint = careRequestFingerprint({ petId: body.petId, input, observedAt, note: body.note ?? null, source });
+  try {
+    const claim = await beginCareMutation({ supabase, ownerId, idempotencyKey, operation: 'observation:create', fingerprint });
+    if (claim.replayed) return NextResponse.json(claim.response);
 
-  if (error) {
-    if (error.code === '42P01') return NextResponse.json({ error: 'OBSERVATIONS_SCHEMA_NOT_READY' }, { status: 503 });
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const { data, error } = await supabase
+      .from('pet_observations')
+      .insert({
+        pet_id: body.petId,
+        type: input.type,
+        value: input.value,
+        note: typeof body.note === 'string' ? body.note.trim() || null : null,
+        observed_at: observedAt,
+        source,
+        metadata: input.metadata,
+      })
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    const response = { observation: mapObservation(data), mode: 'supabase' };
+    await finishCareMutation({ supabase, ownerId, idempotencyKey, response });
+    return NextResponse.json(response, { status: 201 });
+  } catch (error) {
+    await abortCareMutation({ supabase, ownerId, idempotencyKey });
+    return careMutationError(error);
   }
-  return NextResponse.json({ observation: mapObservation(data), mode: 'supabase' }, { status: 201 });
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
+import { abortCareMutation, beginCareMutation, careError, careMutationError, careRequestFingerprint, finishCareMutation, readCareIdempotencyKey } from '@/lib/server/careHttp';
 
 export const runtime = 'nodejs';
 
@@ -64,6 +65,7 @@ async function ownedObservation(supabase: any, ownerId: string, id: string) {
     .select('id, metadata, pets!inner(owner_id)')
     .eq('id', id)
     .eq('pets.owner_id', ownerId)
+    .is('deleted_at', null)
     .single();
 }
 
@@ -74,6 +76,8 @@ function quickMetricValue(body: any, key: QuickMetricType) {
 export async function PATCH(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const body = await request.json().catch(() => ({}));
+  const idempotencyKey = readCareIdempotencyKey(request, body);
+  if (!idempotencyKey) return careError('IDEMPOTENCY_KEY_REQUIRED', 'Не удалось безопасно сохранить запись.', 400);
   const patch: Record<string, unknown> = {};
 
   if (body.type !== undefined) {
@@ -134,33 +138,57 @@ export async function PATCH(request: Request, ctx: Ctx) {
     });
   }
 
-  if (!ownerId) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
+  if (!ownerId) return careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401);
 
   const owned = await ownedObservation(supabase, ownerId, id);
   if (owned.error?.code === '42P01') return NextResponse.json({ error: 'OBSERVATIONS_SCHEMA_NOT_READY' }, { status: 503 });
   if (owned.error) return NextResponse.json({ error: 'OBSERVATION_NOT_FOUND' }, { status: 404 });
   if (patch.metadata) patch.metadata = { ...(owned.data.metadata ?? {}), ...(patch.metadata as Record<string, unknown>) };
 
-  const { data, error } = await supabase.from('pet_observations').update(patch).eq('id', id).select('*').single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ observation: mapObservation(data), mode: 'supabase' });
+  const fingerprint = careRequestFingerprint({ id, patch });
+  try {
+    const claim = await beginCareMutation({ supabase, ownerId, idempotencyKey, operation: 'observation:update', fingerprint });
+    if (claim.replayed) return NextResponse.json(claim.response);
+    const { data, error } = await supabase.from('pet_observations').update(patch).eq('id', id).select('*').single();
+    if (error) throw error;
+    const response = { observation: mapObservation(data), mode: 'supabase' };
+    await finishCareMutation({ supabase, ownerId, idempotencyKey, response });
+    return NextResponse.json(response);
+  } catch (error) {
+    await abortCareMutation({ supabase, ownerId, idempotencyKey });
+    return careMutationError(error);
+  }
 }
 
 export async function DELETE(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
+  const body = await request.json().catch(() => ({}));
+  const idempotencyKey = readCareIdempotencyKey(request, body);
+  if (!idempotencyKey) return careError('IDEMPOTENCY_KEY_REQUIRED', 'Не удалось безопасно убрать запись.', 400);
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
   const supabase = auth.supabase ?? getSupabaseAdmin();
   const ownerId = auth.user?.id ?? appSession?.ownerId;
 
   if (!supabase) return NextResponse.json({ ok: true, ...demoModeResponse('Connect Supabase to persist observations.') });
-  if (!ownerId) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
+  if (!ownerId) return careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401);
 
   const owned = await ownedObservation(supabase, ownerId, id);
   if (owned.error?.code === '42P01') return NextResponse.json({ error: 'OBSERVATIONS_SCHEMA_NOT_READY' }, { status: 503 });
   if (owned.error) return NextResponse.json({ error: 'OBSERVATION_NOT_FOUND' }, { status: 404 });
 
-  const { error } = await supabase.from('pet_observations').delete().eq('id', id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  const deletedAt = new Date().toISOString();
+  const fingerprint = careRequestFingerprint({ id });
+  try {
+    const claim = await beginCareMutation({ supabase, ownerId, idempotencyKey, operation: 'observation:delete', fingerprint });
+    if (claim.replayed) return NextResponse.json(claim.response);
+    const result = await supabase.from('pet_observations').update({ deleted_at: deletedAt }).eq('id', id);
+    if (result.error) throw result.error;
+    const response = { ok: true, deletedAt, canRestore: true };
+    await finishCareMutation({ supabase, ownerId, idempotencyKey, response });
+    return NextResponse.json(response);
+  } catch (error) {
+    await abortCareMutation({ supabase, ownerId, idempotencyKey });
+    return careMutationError(error);
+  }
 }
