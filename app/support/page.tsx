@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { rc1Config } from '@/lib/rc1';
 
 export default function SupportPage() {
   return (
@@ -7,10 +6,10 @@ export default function SupportPage() {
       <section>
         <p className="eyebrow">Псё</p>
         <h1>Поддержка</h1>
-        <p>Если напоминание, карточка питомца или оплата работают не так, напишите в поддержку. Не отправляйте медицинские документы, токены или приватные данные в открытом чате.</p>
+        <p>Если дело, памятка или поиск рядом работают не так, напишите в чат Telegram, из которого вы открыли Псё. Не отправляйте медицинские документы и другие чувствительные сведения в открытом чате.</p>
         <div className="legal-callout">
           <b>Контакт</b>
-          <p>{rc1Config.supportContact === 'TBD' ? 'Контакт поддержки ещё не утверждён для RC1.' : rc1Config.supportContact}</p>
+          <p>Чат с Псё в Telegram</p>
         </div>
         <Link href="/">Вернуться в Псё</Link>
       </section>
