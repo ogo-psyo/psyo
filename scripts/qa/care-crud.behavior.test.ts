@@ -80,13 +80,19 @@ const observationCreateApi = source('app/api/observations/route.ts');
 const observationItemApi = source('app/api/observations/[id]/route.ts');
 const observationRestoreApi = source('app/api/observations/[id]/restore/route.ts');
 const migration = source('supabase/migrations/20260813210000_care_lifecycle.sql');
+const atomicMigration = source('supabase/migrations/20260813230000_atomic_care_mutations.sql');
 
 assert.match(careHttp, /readCareIdempotencyKey/);
 for (const api of [reminderCreateApi, reminderUpdateApi, reminderCompleteApi, reminderSnoozeApi, observationCreateApi, observationItemApi, observationRestoreApi]) {
   assert.match(api, /readCareIdempotencyKey/);
+}
+for (const api of [reminderCreateApi, reminderUpdateApi, reminderCompleteApi, reminderSnoozeApi]) {
+  assert.match(api, /care_\w+_reminder_atomic/);
+  assert.doesNotMatch(api, /beginCareMutation|finishCareMutation|abortCareMutation/);
+}
+for (const api of [observationCreateApi, observationItemApi, observationRestoreApi]) {
   assert.match(api, /beginCareMutation/);
 }
-assert.match(reminderCompleteApi, /completeReminder/);
 assert.match(reminderHistoryApi, /event_type[\s\S]*completed/);
 assert.match(observationCreateApi, /is\('deleted_at', null\)/);
 assert.doesNotMatch(observationItemApi, /\.delete\(\)/);
@@ -95,5 +101,7 @@ assert.match(observationRestoreApi, /deleted_at:\s*null/);
 assert.match(migration, /create table if not exists public\.care_mutations/);
 assert.match(migration, /unique \(owner_id, idempotency_key\)/);
 assert.match(migration, /add column if not exists deleted_at timestamptz/);
+assert.match(atomicMigration, /security definer/);
+assert.match(atomicMigration, /pg_advisory_xact_lock/);
 
 console.log('care CRUD behavior ok');

@@ -95,12 +95,22 @@ export async function abortCareMutation(input: {
 }
 
 export function careMutationError(error: unknown) {
-  const message = error instanceof Error ? error.message : '';
-  if (message === 'IDEMPOTENCY_KEY_REUSED') {
+  const message = error instanceof Error
+    ? error.message
+    : error && typeof error === 'object' && 'message' in error
+      ? String(error.message)
+      : '';
+  if (message.includes('IDEMPOTENCY_KEY_REUSED')) {
     return careError('IDEMPOTENCY_KEY_REUSED', 'Этот запрос уже использован для другого изменения.', 409);
   }
-  if (message === 'CARE_MUTATION_IN_PROGRESS') {
+  if (message.includes('CARE_MUTATION_IN_PROGRESS')) {
     return careError('CARE_MUTATION_IN_PROGRESS', 'Изменение ещё сохраняется. Повторите через несколько секунд.', 409);
+  }
+  if (message.includes('PET_NOT_FOUND')) {
+    return careError('PET_NOT_FOUND', 'Эта собака не найдена или недоступна.', 404);
+  }
+  if (message.includes('REMINDER_NOT_FOUND')) {
+    return careError('REMINDER_NOT_FOUND', 'Это дело не найдено или недоступно.', 404);
   }
   return careError('CARE_SAVE_FAILED', 'Не удалось сохранить изменение. Попробуйте ещё раз.', 500);
 }

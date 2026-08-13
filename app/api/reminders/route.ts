@@ -3,12 +3,9 @@ import { getRequestAuth } from '@/lib/server/auth';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import {
-  abortCareMutation,
-  beginCareMutation,
   careError,
   careMutationError,
   careRequestFingerprint,
-  finishCareMutation,
   readCareIdempotencyKey,
 } from '@/lib/server/careHttp';
 
@@ -52,7 +49,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
-  const supabase = auth.supabase ?? getSupabaseAdmin();
+  const supabase = getSupabaseAdmin();
   const ownerId = auth.user?.id ?? appSession?.ownerId;
   const body = await request.json().catch(() => null);
   if (!body?.title || !body?.dueAt || !body?.petId) return careError('REMINDER_FIELDS_REQUIRED', 'Укажите собаку, название и дату дела.', 400);
@@ -60,9 +57,6 @@ export async function POST(request: Request) {
   if (!idempotencyKey) return careError('IDEMPOTENCY_KEY_REQUIRED', 'Не удалось безопасно сохранить дело. Повторите попытку.', 400);
   if (!supabase) return NextResponse.json({ reminder: { id: crypto.randomUUID(), status: 'active', ...body }, ...demoModeResponse('Connect Supabase.') }, { status: 201 });
   if (!ownerId) return careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401);
-
-  const { data: pet, error: petError } = await supabase.from('pets').select('id').eq('id', body.petId).eq('owner_id', ownerId).single();
-  if (petError || !pet) return careError('PET_NOT_FOUND', 'Эта собака не найдена или недоступна.', 404);
 
   const fingerprint = careRequestFingerprint({
     petId: body.petId,
@@ -72,26 +66,20 @@ export async function POST(request: Request) {
     recurrence: body.recurrence || 'none',
   });
   try {
-    const claim = await beginCareMutation({ supabase, ownerId, idempotencyKey, operation: 'reminder:create', fingerprint });
-    if (claim.replayed) return NextResponse.json(claim.response, { status: 200 });
-
-    const { data, error } = await supabase.from('reminders').insert({
-      pet_id: body.petId,
-      type: body.type || 'custom',
-      title: String(body.title).trim(),
-      due_at: body.dueAt,
-      recurrence: body.recurrence || 'none',
-      status: 'active',
-      metadata: { source: body.source || 'manual' },
-    }).select('*').single();
+    const { data, error } = await supabase.rpc('care_create_reminder_atomic', {
+      p_owner_id: ownerId,
+      p_idempotency_key: idempotencyKey,
+      p_request_fingerprint: fingerprint,
+      p_pet_id: body.petId,
+      p_type: body.type || 'custom',
+      p_title: String(body.title).trim(),
+      p_due_at: body.dueAt,
+      p_recurrence: body.recurrence || 'none',
+      p_source: body.source || 'manual',
+    });
     if (error) throw error;
-    const event = await supabase.from('reminder_events').insert({ reminder_id: data.id, event_type: 'created', idempotency_key: idempotencyKey, payload: { source: body.source || 'manual' } });
-    if (event.error) throw event.error;
-    const response = { reminder: mapReminder(data), mode: 'user' };
-    await finishCareMutation({ supabase, ownerId, idempotencyKey, response });
-    return NextResponse.json(response, { status: 201 });
+    return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    await abortCareMutation({ supabase, ownerId, idempotencyKey });
     return careMutationError(error);
   }
 }

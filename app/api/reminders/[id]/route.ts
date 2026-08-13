@@ -3,37 +3,28 @@ import { getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
 import {
-  abortCareMutation,
-  beginCareMutation,
   careError,
   careMutationError,
   careRequestFingerprint,
-  finishCareMutation,
   readCareIdempotencyKey,
 } from '@/lib/server/careHttp';
 
 export const runtime = 'nodejs';
 type Ctx = { params: Promise<{ id: string }> };
 
-async function ownedReminder(supabase: any, userId: string, id: string) {
-  return supabase.from('reminders').select('*, pets!inner(owner_id)').eq('id', id).eq('pets.owner_id', userId).maybeSingle();
-}
-
-async function context(request: Request, id: string) {
+async function context(request: Request) {
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
-  const supabase = auth.supabase ?? getSupabaseAdmin();
+  const supabase = getSupabaseAdmin();
   const ownerId = auth.user?.id ?? appSession?.ownerId;
   if (!ownerId || !supabase) return { response: careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401) } as const;
-  const owned = await ownedReminder(supabase, ownerId, id);
-  if (owned.error || !owned.data) return { response: careError('REMINDER_NOT_FOUND', 'Это дело не найдено или недоступно.', 404) } as const;
-  return { supabase, ownerId, reminder: owned.data } as const;
+  return { supabase, ownerId } as const;
 }
 
 export async function PATCH(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const body = await request.json().catch(() => ({}));
-  const requestContext = await context(request, id);
+  const requestContext = await context(request);
   if ('response' in requestContext) return requestContext.response;
   const { supabase, ownerId } = requestContext;
   const idempotencyKey = readCareIdempotencyKey(request, body);
@@ -47,17 +38,16 @@ export async function PATCH(request: Request, ctx: Ctx) {
   const fingerprint = careRequestFingerprint({ id, patch });
 
   try {
-    const claim = await beginCareMutation({ supabase, ownerId, idempotencyKey, operation: 'reminder:update', fingerprint });
-    if (claim.replayed) return NextResponse.json(claim.response);
-    const { data, error } = await supabase.from('reminders').update(patch).eq('id', id).select('*').single();
+    const { data, error } = await supabase.rpc('care_update_reminder_atomic', {
+      p_owner_id: ownerId,
+      p_idempotency_key: idempotencyKey,
+      p_request_fingerprint: fingerprint,
+      p_reminder_id: id,
+      p_patch: patch,
+    });
     if (error) throw error;
-    const event = await supabase.from('reminder_events').insert({ reminder_id: id, event_type: 'updated', idempotency_key: idempotencyKey, payload: patch });
-    if (event.error) throw event.error;
-    const response = { reminder: data };
-    await finishCareMutation({ supabase, ownerId, idempotencyKey, response });
-    return NextResponse.json(response);
+    return NextResponse.json(data);
   } catch (error) {
-    await abortCareMutation({ supabase, ownerId, idempotencyKey });
     return careMutationError(error);
   }
 }
@@ -65,24 +55,22 @@ export async function PATCH(request: Request, ctx: Ctx) {
 export async function DELETE(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const body = await request.json().catch(() => ({}));
-  const requestContext = await context(request, id);
+  const requestContext = await context(request);
   if ('response' in requestContext) return requestContext.response;
   const { supabase, ownerId } = requestContext;
   const idempotencyKey = readCareIdempotencyKey(request, body);
   if (!idempotencyKey) return careError('IDEMPOTENCY_KEY_REQUIRED', 'Не удалось безопасно удалить дело. Повторите попытку.', 400);
   const fingerprint = careRequestFingerprint({ id });
   try {
-    const claim = await beginCareMutation({ supabase, ownerId, idempotencyKey, operation: 'reminder:delete', fingerprint });
-    if (claim.replayed) return NextResponse.json(claim.response);
-    const event = await supabase.from('reminder_events').insert({ reminder_id: id, event_type: 'deleted', idempotency_key: idempotencyKey, payload: {} });
-    if (event.error) throw event.error;
-    const removed = await supabase.from('reminders').delete().eq('id', id);
-    if (removed.error) throw removed.error;
-    const response = { ok: true };
-    await finishCareMutation({ supabase, ownerId, idempotencyKey, response });
-    return NextResponse.json(response);
+    const { data, error } = await supabase.rpc('care_delete_reminder_atomic', {
+      p_owner_id: ownerId,
+      p_idempotency_key: idempotencyKey,
+      p_request_fingerprint: fingerprint,
+      p_reminder_id: id,
+    });
+    if (error) throw error;
+    return NextResponse.json(data);
   } catch (error) {
-    await abortCareMutation({ supabase, ownerId, idempotencyKey });
     return careMutationError(error);
   }
 }
