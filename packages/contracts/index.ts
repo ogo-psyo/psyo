@@ -121,10 +121,38 @@ export type FirstReminderCommand = {
   recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 };
 
+export type CreatePetInput = {
+  name: string;
+  idempotencyKey: string;
+};
+
+export type CreatePetResult = {
+  petId: string;
+  created: boolean;
+};
+
 export type OnboardingActivationCommand = {
   profile: CreatePetCommand;
   firstReminder: FirstReminderCommand;
 };
+
+export function validateCreatePetInput(value: unknown): { ok: true; input: CreatePetInput } | { ok: false; error: ProblemJson } {
+  const source = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  const name = String(source.name ?? '').trim();
+  const idempotencyKey = String(source.idempotencyKey ?? '').trim();
+
+  if (!name) {
+    return { ok: false, error: problem('VALIDATION_FAILED', 400, 'Dog name is required', 'Provide the dog name.', { field: 'name' }) };
+  }
+  if (name.length > 80) {
+    return { ok: false, error: problem('VALIDATION_FAILED', 400, 'Dog name is too long', 'Use no more than 80 characters.', { field: 'name' }) };
+  }
+  if (!/^[A-Za-z0-9._:-]{8,128}$/.test(idempotencyKey)) {
+    return { ok: false, error: problem('IDEMPOTENCY_KEY_REQUIRED', 400, 'Idempotency key is required', 'Send an Idempotency-Key header containing 8-128 safe characters.', { field: 'idempotencyKey' }) };
+  }
+
+  return { ok: true, input: { name, idempotencyKey } };
+}
 
 export function problem(code: string, status: number, title: string, detail: string, meta?: Record<string, unknown>): ProblemJson {
   return {

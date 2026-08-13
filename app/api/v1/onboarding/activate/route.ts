@@ -1,15 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { getRequestAuth } from '@/lib/server/auth';
-import { activateFirstCareLoop } from '@/lib/server/onboardingService';
+import { createPet } from '@/lib/server/onboardingService';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
-import { problem, validateOnboardingActivationCommand } from '@/packages/contracts';
+import { problem, validateCreatePetInput } from '@/packages/contracts';
 
 export const runtime = 'nodejs';
-
-function validIdempotencyKey(value: string) {
-  return /^[A-Za-z0-9._:-]{8,128}$/.test(value);
-}
 
 export async function POST(request: Request) {
   const appSession = getAppSessionFromRequest(request);
@@ -21,12 +17,11 @@ export async function POST(request: Request) {
   }
 
   const idempotencyKey = request.headers.get('idempotency-key')?.trim() ?? '';
-  if (!validIdempotencyKey(idempotencyKey)) {
-    const payload = problem('IDEMPOTENCY_KEY_REQUIRED', 400, 'Idempotency key is required', 'Send an Idempotency-Key header containing 8-128 safe characters.');
-    return NextResponse.json(payload, { status: payload.status });
-  }
-
-  const parsed = validateOnboardingActivationCommand(await request.json().catch(() => null));
+  const body = await request.json().catch(() => null);
+  const parsed = validateCreatePetInput({
+    ...(body && typeof body === 'object' ? body as Record<string, unknown> : {}),
+    idempotencyKey,
+  });
   if (!parsed.ok) return NextResponse.json(parsed.error, { status: parsed.error.status });
 
   // The activation RPC is intentionally service-role only. ownerId is derived
@@ -38,14 +33,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await activateFirstCareLoop({ supabase, ownerId, idempotencyKey, command: parsed.command });
-    return NextResponse.json({
-      service: 'ProfileService',
-      mode: auth.user ? 'supabase-auth' : 'telegram',
-      activation: result,
-      restore: { href: `/api/app/bootstrap?petId=${encodeURIComponent(String(result.pet.id))}` },
-      privacy: 'The pet and first reminder are private and owner-scoped by default.',
-    }, { status: result.replayed ? 200 : 201 });
+    const result = await createPet({
+      supabase,
+      ownerId,
+      name: parsed.input.name,
+      idempotencyKey: parsed.input.idempotencyKey,
+    });
+    return NextResponse.json(result, { status: result.created ? 201 : 200 });
   } catch (error) {
     const internalMessage = error instanceof Error ? error.message : '';
     const conflictCode = internalMessage.includes('IDEMPOTENCY_KEY_REUSED')
@@ -57,17 +51,17 @@ export async function POST(request: Request) {
       ? problem(
           'ONBOARDING_ACTIVATION_CONFLICT',
           409,
-          'Onboarding is already activated',
+          'Dog could not be added',
           conflictCode === 'IDEMPOTENCY_KEY_REUSED'
-            ? 'This idempotency key was already used for a different onboarding request.'
-            : 'This owner already has a pet. Load the existing private profile instead of creating another first pet.',
+            ? 'This idempotency key was already used for a different dog.'
+            : 'This owner already has a dog. Load the existing private profile instead of creating another first dog.',
           { reason: conflictCode },
         )
       : problem(
           'ONBOARDING_ACTIVATION_FAILED',
           500,
-          'Onboarding could not be activated',
-          'The first pet and reminder were not saved. Retry with the same idempotency key.',
+          'Dog could not be added',
+          'The dog was not saved. Retry with the same idempotency key.',
         );
     return NextResponse.json(payload, { status: payload.status });
   }

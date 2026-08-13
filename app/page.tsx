@@ -8,7 +8,7 @@ import { AppNavigation } from '@/components/app/AppNavigation';
 import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
 import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
-import { CoreOnboarding, type CoreOnboardingStep, type OnboardingCareChoice } from '@/components/onboarding/CoreOnboarding';
+import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
 import { NextCareCard } from '@/components/today/NextCareCard';
 import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
 import {
@@ -48,7 +48,6 @@ import type { ActionSuggestion } from '@/packages/contracts';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
 type Notice = 'idle' | 'saved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
-type OnboardingStage = CoreOnboardingStep | 'done';
 type ReminderView = { id: string; petId: string; type: string; title: string; dueAt: string; status: string; snoozedUntil?: string; completedAt?: string };
 type WishlistView = { id: string; petId: string; title: string; category: string; reason?: string; url?: string; priority: string; status: string; created_at?: string };
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; created_at?: string };
@@ -100,7 +99,6 @@ declare global {
 }
 
 const styleOptions = avatarStyles.slice(0, 4);
-const onboardingKey = 'pso.topapp.onboarding.v1';
 const observationsStorageKey = 'pso.topapp.observations.v1';
 const heroStyleOptions = avatarStyles.filter((style) => ['city', 'space', 'sticker'].includes(style.id));
 const viralFactOrder: ViralFactKey[] = ['social', 'energy', 'care', 'triggers', 'area', 'breed'];
@@ -272,7 +270,7 @@ const careTypeOptions = [
   { value: 'vet', label: 'Ветеринар' },
 ];
 
-const onboardingCareOptions: OnboardingCareChoice[] = [
+const onboardingCareOptions = [
   { type: 'parasite', title: 'Обработка от клещей и паразитов', dueInDays: 30, label: 'Обработка', dueLabel: 'через 30 дней' },
   { type: 'vaccine', title: 'Проверить дату вакцинации', dueInDays: 7, label: 'Вакцина', dueLabel: 'через неделю' },
   { type: 'grooming', title: 'Груминг: шерсть и когти', dueInDays: 14, label: 'Груминг', dueLabel: 'через 2 недели' },
@@ -435,9 +433,8 @@ export default function Home() {
   const [assistantActions, setAssistantActions] = useState<ActionSuggestion[]>([]);
   const [breedSearch, setBreedSearch] = useState('');
   const [assistantLoading, setAssistantLoading] = useState(false);
-  const [onboardingStage, setOnboardingStage] = useState<OnboardingStage>('intro');
+  const [dogCreationOpen, setDogCreationOpen] = useState(false);
   const [heroNameDraft, setHeroNameDraft] = useState('');
-  const [onboardingCareChoice, setOnboardingCareChoice] = useState<OnboardingCareChoice>(onboardingCareOptions[0]);
   const [onboardingSaving, setOnboardingSaving] = useState(false);
   const [telegramSession, setTelegramSession] = useState<TelegramSessionView>({ mode: 'loading' });
   const [billing, setBilling] = useState<BillingView | null>(null);
@@ -447,6 +444,7 @@ export default function Home() {
   const guestPetIdRef = useRef<string | null>(null);
   const observationsLoadedRef = useRef(false);
   const phoneShellRef = useRef<HTMLElement | null>(null);
+  const dogCreationKeyRef = useRef<string | null>(null);
 
   function resetViewScroll() {
     window.requestAnimationFrame(() => {
@@ -506,34 +504,50 @@ export default function Home() {
   }
   function guestId(prefix: string) { return `${prefix}-${crypto.randomUUID()}`; }
 
-  function completeOnboarding(nextTab: Tab = 'today') {
-    setOnboardingStage('done');
-    setTab(nextTab);
-    try { window.localStorage.setItem(onboardingKey, 'done'); } catch {}
-  }
-
-  function startHeroFlow() {
-    setError('');
-    setOnboardingStage('pet');
-  }
-
-  async function saveOnboardingCarePlan(nextTab: Tab = 'today') {
+  async function saveMinimalDog() {
     if (onboardingSaving) return;
+    if (authLoading || telegramSession.mode === 'loading') {
+      setError('Подожди секунду — Псё проверяет вход.');
+      return;
+    }
     const nextName = heroNameDraft.trim();
     if (!nextName) {
-      setError('Напиши имя собаки, чтобы создать план.');
-      setOnboardingStage('pet');
+      setError('Напиши имя собаки.');
       return;
     }
     setOnboardingSaving(true);
     try {
-      updateProfile({ dogName: nextName });
-      ensureGuestPetId();
-      if (activeReminders.length === 0) {
-        const created = await createReminder(onboardingCareChoice.title, onboardingCareChoice.type, onboardingCareChoice.dueInDays);
-        if (!created) return;
+      if (isGuestMode()) {
+        const petId = ensureGuestPetId();
+        updateProfile({ dogName: nextName, backendPetId: petId, isPublic: false });
+        setPets([{ id: petId, name: nextName }]);
+        setActivePetId(petId);
+      } else {
+        const idempotencyKey = dogCreationKeyRef.current ?? `create-pet:${crypto.randomUUID()}`;
+        dogCreationKeyRef.current = idempotencyKey;
+        const response = await fetch('/api/v1/onboarding/activate', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': idempotencyKey,
+            ...authHeaders(),
+          },
+          body: JSON.stringify({ name: nextName }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result?.petId) {
+          setError('Не удалось добавить собаку. Проверь соединение и попробуй ещё раз.');
+          return;
+        }
+        updateProfile({ dogName: nextName, backendPetId: result.petId, isPublic: false });
+        setActivePetId(result.petId);
+        await loadBootstrap(undefined, result.petId);
+        dogCreationKeyRef.current = null;
       }
-      completeOnboarding(nextTab);
+      setError('');
+      setDogCreationOpen(false);
+      setTab('profile');
     } finally {
       setOnboardingSaving(false);
     }
@@ -589,7 +603,6 @@ export default function Home() {
       if (Array.isArray(savedObservations)) setObservations(savedObservations.map(normalizeObservation).filter(Boolean).slice(0, 12) as ObservationView[]);
     } catch {}
     observationsLoadedRef.current = true;
-    try { if (window.localStorage.getItem(onboardingKey) === 'done') setOnboardingStage('done'); } catch {}
     const supabase = getSupabaseBrowser();
     if (!supabase) { setAuthLoading(false); loadBootstrap().catch(() => null); return; }
     supabase.auth.getSession().then(({ data }) => {
@@ -1558,10 +1571,10 @@ export default function Home() {
     setAssistantAnswer('Демо готово: профиль, задачи, карта и список вещей уже заполнены. Можно нажать быстрые сценарии ниже или редактировать всё под свою собаку.');
     setError('');
     setNotice('idle');
-    completeOnboarding('today');
+    setTab('today');
   }
 
-  function reset() { resetProfileStorage(); try { window.localStorage.removeItem(onboardingKey); } catch {} setProfile(defaultProfile); setHeroNameDraft(''); setOnboardingStage('intro'); setAvatarState('idle'); setGeneratedAvatarUrl(''); setDemoMode(false); setError(''); }
+  function reset() { resetProfileStorage(); setProfile(defaultProfile); setHeroNameDraft(''); setDogCreationOpen(false); setAvatarState('idle'); setGeneratedAvatarUrl(''); setDemoMode(false); setError(''); }
 
   function absolutePublicCardUrl() {
     return new URL(publicCardHref, window.location.origin).toString();
@@ -1855,38 +1868,6 @@ export default function Home() {
     }
   }
 
-  if (onboardingStage !== 'done') return (
-    <main className="app-canvas onboarding-canvas">
-      <section className="phone-shell onboarding-shell">
-        <CoreOnboarding
-          step={onboardingStage}
-          dogName={heroNameDraft}
-          hasPhoto={hasPhoto}
-          careChoice={onboardingCareChoice}
-          careOptions={onboardingCareOptions}
-          busy={onboardingSaving}
-          preview={<div className="hero-product-shot passport-shot" aria-label="Пример ближайшего дела">
-            <div className="shot-toolbar"><span /><b>Сегодня</b><i>уход</i></div>
-            <div className="shot-hero-row">
-              <GeneratedAvatar profile={profile} ready demo size="large" />
-              <div><small>что не забыть</small><b>{profile.dogName || 'Мята'}</b><p>обработка от клещей · завтра</p></div>
-            </div>
-          </div>}
-          onStart={startHeroFlow}
-          onSkip={seedDemoExperience}
-          onNameChange={(value) => { setHeroNameDraft(value); setError(''); }}
-          onPhotoChange={handlePhotos}
-          onCareChoice={setOnboardingCareChoice}
-          onBack={() => setOnboardingStage(onboardingStage === 'care' ? 'pet' : 'intro')}
-          onContinue={() => setOnboardingStage('care')}
-          onFinish={() => saveOnboardingCarePlan('today')}
-        />
-
-        {error && <p className="error-text" role="alert">{error}</p>}
-      </section>
-    </main>
-  );
-
   return (
     <main className="app-canvas">
       <section ref={phoneShellRef} className={`phone-shell tab-${tab}`}>
@@ -1931,7 +1912,9 @@ export default function Home() {
         <section className="dog-hero-card">
           <div className="hero-avatar-wrap"><GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" /></div>
           <div className="dog-main-info"><span>{selectedBreed.emoji} {breedLabel}</span><h2>{profile.dogName || 'Добавь имя'}</h2><p>{profile.bio || 'Профиль, места, записи и вещи в одном спокойном месте.'}</p></div>
-          <button className="round-action" aria-label="Редактировать профиль собаки" onClick={() => setTab('profile')}>✎</button>
+          {profile.dogName
+            ? <button className="round-action" aria-label="Редактировать профиль собаки" onClick={() => setTab('profile')}>✎</button>
+            : <button className="secondary" type="button" onClick={() => { setError(''); setDogCreationOpen(true); }}>Добавить собаку</button>}
         </section>
 
         {tab === 'today' && <section className="screen-stack today-screen kit-today-screen">
@@ -1946,7 +1929,7 @@ export default function Home() {
             onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
           />
 
-          {todayCare.state === 'empty' && <section className="today-care-presets" aria-label="Первое дело ухода">
+          {todayCare.state === 'empty' && profile.dogName && <section className="today-care-presets" aria-label="Первое дело ухода">
             <b>Выбери первое дело</b>
             <div>
               {onboardingCareOptions.map((option) => <button key={option.type} onClick={() => createReminder(option.title, option.type, option.dueInDays)}>{option.label}<small>{option.dueLabel}</small></button>)}
@@ -2419,6 +2402,14 @@ export default function Home() {
         busy={careDeletionBusy}
         onCancel={() => setPendingCareDeletion(null)}
         onConfirm={confirmCareDeletion}
+      />
+      <CoreOnboarding
+        open={dogCreationOpen}
+        dogName={heroNameDraft}
+        busy={onboardingSaving}
+        onNameChange={(value) => { setHeroNameDraft(value); dogCreationKeyRef.current = null; setError(''); }}
+        onDismiss={() => { if (!onboardingSaving) setDogCreationOpen(false); }}
+        onSubmit={saveMinimalDog}
       />
 
     </main>
