@@ -11,6 +11,10 @@ import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/De
 import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
 import { NextCareCard } from '@/components/today/NextCareCard';
 import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
+import { CandidateCard } from '@/components/social/CandidateCard';
+import { CityCommunities, type CityCommunity } from '@/components/social/CityCommunities';
+import { RequestsPanel, type SocialRequestView } from '@/components/social/RequestsPanel';
+import { SocialProfileSheet } from '@/components/social/SocialProfileSheet';
 import {
   anchorCards,
   avatarStyles,
@@ -44,6 +48,7 @@ import { formatCount, formatReadinessLabel, formatReminderGroupLine, formatToday
 import { fileToLocalAvatarDataUrl, filesToPhotos, loadProfile, resetProfileStorage, saveProfile } from '@/lib/profileStorage';
 import { buildAppReadiness, type ReadinessLevel } from '@/lib/readiness';
 import { buildTodayCareView } from '@/lib/today';
+import type { CandidateGroup, CoarseLocation, SocialProfile, SocialScenario } from '@/lib/socialCore';
 import type { ActionSuggestion } from '@/packages/contracts';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
@@ -56,15 +61,7 @@ type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_grou
 type AuthSession = { access_token: string; user: { email?: string } };
 type ObservationView = { id: string; petId?: string; mood: string; appetite: string; stool: string; energy: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
 type ObservationDraft = Pick<ObservationView, 'mood' | 'appetite' | 'stool' | 'energy' | 'note'>;
-type NearbyMatchView = {
-  petId: string;
-  name: string;
-  avatar?: string;
-  score?: number;
-  reasons?: string[];
-  safetyWarnings?: string[];
-  distance?: string;
-};
+type SocialInviteView = { token: string; scenario: SocialScenario; petName: string | null; expiresAt: string };
 type Tab = 'today' | 'calendar' | 'assistant' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
 type MapLayer = 'personal' | 'community';
 type DrawMode = 'none' | 'point' | 'route';
@@ -103,6 +100,18 @@ const observationsStorageKey = 'pso.topapp.observations.v1';
 const heroStyleOptions = avatarStyles.filter((style) => ['city', 'space', 'sticker'].includes(style.id));
 const viralFactOrder: ViralFactKey[] = ['social', 'energy', 'care', 'triggers', 'area', 'breed'];
 const defaultPublicCardFields: PublicCardFieldKey[] = ['breed', 'character', 'triggers', 'area'];
+const cityCommunities: CityCommunity[] = [
+  {
+    city: 'Москва',
+    chatUrl: process.env.NEXT_PUBLIC_PSYO_MOSCOW_CHAT_URL,
+    folderUrl: process.env.NEXT_PUBLIC_PSYO_COMMUNITIES_FOLDER_URL,
+  },
+  {
+    city: 'Санкт-Петербург',
+    chatUrl: process.env.NEXT_PUBLIC_PSYO_SPB_CHAT_URL,
+    folderUrl: process.env.NEXT_PUBLIC_PSYO_COMMUNITIES_FOLDER_URL,
+  },
+];
 const publicCardFieldOptions: { key: PublicCardFieldKey; label: string; detail: string }[] = [
   { key: 'breed', label: 'Порода', detail: 'помогает узнать собаку' },
   { key: 'character', label: 'Характер', detail: 'ритм и темперамент' },
@@ -397,9 +406,16 @@ export default function Home() {
   const [pets, setPets] = useState<PetSwitchOption[]>([]);
   const [activePetId, setActivePetId] = useState('');
   const [observations, setObservations] = useState<ObservationView[]>([]);
-  const [nearbyMatches, setNearbyMatches] = useState<NearbyMatchView[]>([]);
+  const [socialProfile, setSocialProfile] = useState<SocialProfile | null>(null);
+  const [socialCandidates, setSocialCandidates] = useState<CandidateGroup>({ nearby: [], city: [] });
+  const [socialRequests, setSocialRequests] = useState<SocialRequestView[]>([]);
   const [nearbyState, setNearbyState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [nearbyReason, setNearbyReason] = useState('');
+  const [socialBusyId, setSocialBusyId] = useState<string | null>(null);
+  const [socialLocating, setSocialLocating] = useState(false);
+  const [missingTelegramUsernameAction, setMissingTelegramUsernameAction] = useState<string | null>(null);
+  const [socialInvite, setSocialInvite] = useState<SocialInviteView | null>(null);
+  const [socialInviteState, setSocialInviteState] = useState<'idle' | 'loading' | 'ready' | 'gone' | 'error'>('idle');
   const [observationDraft, setObservationDraft] = useState<ObservationDraft>(defaultObservationDraft);
   const [observationSaving, setObservationSaving] = useState(false);
   const [newReminderTitle, setNewReminderTitle] = useState('');
@@ -445,6 +461,7 @@ export default function Home() {
   const observationsLoadedRef = useRef(false);
   const phoneShellRef = useRef<HTMLElement | null>(null);
   const dogCreationKeyRef = useRef<string | null>(null);
+  const socialRequestKeysRef = useRef<Record<string, string>>({});
 
   function resetViewScroll() {
     window.requestAnimationFrame(() => {
@@ -460,39 +477,282 @@ export default function Home() {
   useEffect(() => {
     if (tab !== 'nearby') return;
     if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) {
-      setNearbyMatches([]);
+      setSocialProfile(null);
+      setSocialCandidates({ nearby: [], city: [] });
+      setSocialRequests([]);
       setNearbyReason('AUTH_OR_PET_REQUIRED');
       setNearbyState('idle');
       return;
     }
 
     const controller = new AbortController();
-    setNearbyState('loading');
-    setNearbyReason('');
-    fetch(`/api/social/candidates?petId=${encodeURIComponent(profile.backendPetId)}`, {
-      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
-      credentials: 'include',
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload?.error || 'NEARBY_LOOKUP_FAILED');
-        setNearbyMatches(Array.isArray(payload?.matches) ? payload.matches : []);
-        setNearbyReason(typeof payload?.reason === 'string' ? payload.reason : '');
-        setNearbyState('ready');
-      })
-      .catch((lookupError) => {
-        if (lookupError instanceof DOMException && lookupError.name === 'AbortError') return;
-        setNearbyMatches([]);
-        setNearbyReason('NEARBY_LOOKUP_FAILED');
-        setNearbyState('error');
-      });
+    loadSocialSurface(controller.signal).catch((lookupError) => {
+      if (lookupError instanceof DOMException && lookupError.name === 'AbortError') return;
+      setSocialCandidates({ nearby: [], city: [] });
+      setNearbyReason('NEARBY_LOOKUP_FAILED');
+      setNearbyState('error');
+    });
 
     return () => controller.abort();
   }, [profile.backendPetId, session?.access_token, tab, telegramSession.ownerId]);
 
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get('socialInvite');
+    if (!token || (!session?.access_token && !telegramSession.ownerId)) return;
+    setSocialInviteState('loading');
+    fetch(`/api/social/invites/${encodeURIComponent(token)}`, { headers: authHeaders(), credentials: 'include' })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (response.status === 410) {
+          setSocialInviteState('gone');
+          setSocialInvite(null);
+          return;
+        }
+        if (!response.ok) throw new Error('INVITE_LOOKUP_FAILED');
+        setSocialInvite({
+          token,
+          scenario: payload.invite.scenario,
+          petName: payload.invite.pet?.name ?? null,
+          expiresAt: payload.invite.expiresAt,
+        });
+        setSocialInviteState('ready');
+        setTab('nearby');
+      })
+      .catch(() => setSocialInviteState('error'));
+  }, [session?.access_token, telegramSession.ownerId]);
+
   function authHeaders(): Record<string, string> {
     return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+  }
+
+  async function loadSocialSurface(signal?: AbortSignal) {
+    const petId = profile.backendPetId;
+    if (!petId) return;
+    setNearbyState('loading');
+    setNearbyReason('');
+    const requestOptions = { headers: authHeaders(), credentials: 'include' as const, signal };
+    const [profileResponse, candidatesResponse, requestsResponse] = await Promise.all([
+      fetch(`/api/social/profile?petId=${encodeURIComponent(petId)}`, requestOptions),
+      fetch(`/api/social/candidates?petId=${encodeURIComponent(petId)}`, requestOptions),
+      fetch(`/api/social/requests?petId=${encodeURIComponent(petId)}`, requestOptions),
+    ]);
+    const [profilePayload, candidatesPayload, requestsPayload] = await Promise.all([
+      profileResponse.json().catch(() => ({})),
+      candidatesResponse.json().catch(() => ({})),
+      requestsResponse.json().catch(() => ({})),
+    ]);
+    if (!profileResponse.ok || !requestsResponse.ok) throw new Error('SOCIAL_SURFACE_FAILED');
+    setSocialProfile(profilePayload.profile ?? null);
+    setSocialRequests(Array.isArray(requestsPayload.requests) ? requestsPayload.requests : []);
+    setMissingTelegramUsernameAction(requestsPayload.missingTelegramUsernameAction ?? null);
+    if (candidatesResponse.ok) {
+      setSocialCandidates({
+        nearby: Array.isArray(candidatesPayload.nearby) ? candidatesPayload.nearby : [],
+        city: Array.isArray(candidatesPayload.city) ? candidatesPayload.city : [],
+      });
+    } else if (candidatesResponse.status === 409 && candidatesPayload.error === 'DISCOVERY_NOT_ENABLED') {
+      setSocialCandidates({ nearby: [], city: [] });
+      setNearbyReason('DISCOVERY_NOT_ENABLED');
+    } else {
+      throw new Error('SOCIAL_DISCOVERY_FAILED');
+    }
+    setNearbyState('ready');
+  }
+
+  async function saveSocialProfile(draft: Omit<SocialProfile, 'petId'>) {
+    if (!profile.backendPetId || socialBusyId) return;
+    setSocialBusyId('profile');
+    setError('');
+    try {
+      const response = await fetch('/api/social/profile', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ petId: profile.backendPetId, ...draft }),
+      });
+      if (!response.ok) {
+        setError('Не получилось сохранить анкету. Проверь поля и попробуй ещё раз.');
+        return;
+      }
+      await loadSocialSurface();
+    } finally {
+      setSocialBusyId(null);
+    }
+  }
+
+  async function hideSocialProfile() {
+    if (!profile.backendPetId || socialBusyId) return;
+    setSocialBusyId('profile');
+    try {
+      const response = await fetch(`/api/social/profile?petId=${encodeURIComponent(profile.backendPetId)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: authHeaders(),
+      });
+      if (!response.ok) {
+        setError('Не получилось скрыть анкету. Попробуй ещё раз.');
+        return;
+      }
+      await loadSocialSurface();
+    } finally {
+      setSocialBusyId(null);
+    }
+  }
+
+  function locateForSocial(onReady: (location: CoarseLocation) => void) {
+    if (!navigator.geolocation) {
+      setError('На этом устройстве поиск по расстоянию недоступен. Можно искать по городу и району.');
+      return;
+    }
+    setSocialLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        onReady({ lat: position.coords.latitude, lng: position.coords.longitude });
+        setSocialLocating(false);
+      },
+      () => {
+        setSocialLocating(false);
+        setError('Геодоступ не получен. Псё продолжит искать по городу и району.');
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
+    );
+  }
+
+  async function sendSocialRequest(candidatePetId: string, scenario: SocialScenario) {
+    if (!profile.backendPetId || socialBusyId) return;
+    const keyId = `${candidatePetId}:${scenario}`;
+    const idempotencyKey = socialRequestKeysRef.current[keyId] ?? `social-request:${crypto.randomUUID()}`;
+    socialRequestKeysRef.current[keyId] = idempotencyKey;
+    setSocialBusyId(candidatePetId);
+    try {
+      const response = await fetch('/api/social/requests', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey, ...authHeaders() },
+        body: JSON.stringify({
+          senderPetId: profile.backendPetId,
+          recipientPetId: candidatePetId,
+          scenario,
+          idempotencyKey,
+        }),
+      });
+      if (!response.ok && response.status !== 409) {
+        setError('Не получилось отправить запрос. Попробуй ещё раз.');
+        return;
+      }
+      delete socialRequestKeysRef.current[keyId];
+      await loadSocialSurface();
+    } finally {
+      setSocialBusyId(null);
+    }
+  }
+
+  async function updateSocialRequest(id: string, action: 'accept' | 'reject' | 'cancel' | 'block') {
+    if (socialBusyId) return;
+    setSocialBusyId(id);
+    try {
+      const response = await fetch(`/api/social/requests/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ action }),
+      });
+      if (!response.ok) {
+        setError(action === 'block' ? 'Не получилось заблокировать пользователя.' : 'Не получилось изменить запрос.');
+        return;
+      }
+      await loadSocialSurface();
+    } finally {
+      setSocialBusyId(null);
+    }
+  }
+
+  async function reportSocialRequest(id: string, reason: string) {
+    if (socialBusyId) return;
+    const idempotencyKey = `social-report:${crypto.randomUUID()}`;
+    setSocialBusyId(id);
+    try {
+      const response = await fetch(`/api/social/requests/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey, ...authHeaders() },
+        body: JSON.stringify({ action: 'report', reason, idempotencyKey }),
+      });
+      if (!response.ok) {
+        setError('Не получилось отправить жалобу. Попробуй ещё раз.');
+        return;
+      }
+      await loadSocialSurface();
+    } finally {
+      setSocialBusyId(null);
+    }
+  }
+
+  function openTelegramDestination(url: string) {
+    let parsed: URL;
+    try { parsed = new URL(url); } catch { return setError('Telegram-ссылка недоступна.'); }
+    if (parsed.protocol !== 'https:' || !['t.me', 'telegram.me'].includes(parsed.hostname)) {
+      setError('Telegram-ссылка недоступна.');
+      return;
+    }
+    if (window.Telegram?.WebApp?.openTelegramLink) window.Telegram.WebApp.openTelegramLink(parsed.toString());
+    else window.open(parsed.toString(), '_blank', 'noopener,noreferrer');
+  }
+
+  async function createSocialInvite() {
+    if (!profile.backendPetId || !socialProfile?.discoverable || socialBusyId) return;
+    setSocialBusyId('invite');
+    try {
+      const response = await fetch('/api/social/invites', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ petId: profile.backendPetId, scenario: socialProfile.scenarios[0] }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.invite?.token) {
+        setError('Не получилось создать приглашение. Сначала сохрани анкету и попробуй ещё раз.');
+        return;
+      }
+      const url = payload.invite.url || `${window.location.origin}/?socialInvite=${encodeURIComponent(payload.invite.token)}`;
+      if (navigator.share) await navigator.share({ title: `Познакомить собак в Псё`, url }).catch(() => null);
+      else await navigator.clipboard.writeText(url);
+      setNotice('copied');
+      window.setTimeout(() => setNotice('idle'), 1600);
+    } finally {
+      setSocialBusyId(null);
+    }
+  }
+
+  async function acceptSocialInvite() {
+    if (!socialInvite) return;
+    if (!profile.backendPetId) {
+      setDogCreationOpen(true);
+      return;
+    }
+    if (socialBusyId) return;
+    const idempotencyKey = `social-invite:${socialInvite.token}:${profile.backendPetId}`;
+    setSocialBusyId('incoming-invite');
+    try {
+      const response = await fetch(`/api/social/invites/${encodeURIComponent(socialInvite.token)}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey, ...authHeaders() },
+        body: JSON.stringify({ recipientPetId: profile.backendPetId, idempotencyKey }),
+      });
+      if (!response.ok) {
+        setSocialInviteState(response.status === 410 ? 'gone' : 'error');
+        return;
+      }
+      setSocialInvite(null);
+      setSocialInviteState('idle');
+      const url = new URL(window.location.href);
+      url.searchParams.delete('socialInvite');
+      window.history.replaceState({}, '', url);
+      await loadSocialSurface();
+    } finally {
+      setSocialBusyId(null);
+    }
   }
 
   function isGuestMode() { return !session?.access_token && !telegramSession.ownerId; }
@@ -1987,25 +2247,85 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {tab === 'nearby' && <WatercolorScreen className="nearby-composition" tone="rose" eyebrow="социализация" title="Кого можно встретить" caption="Не свайпы и не обещания. Только спокойная подготовка к знакомствам рядом." aside={<span className="watercolor-hero-mark">🐕</span>}>
-          <article className="presence-radar">
-            <div className="presence-ring"><GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" /></div>
-            <b>{displaySocialMode(profile.socialMode) || 'сначала спросить владельца'}</b>
-            <p>{profile.triggers ? `Учесть: ${profile.triggers}.` : 'Добавь триггеры и правило контакта, чтобы знакомиться спокойнее.'}</p>
-          </article>
-          {nearbyState === 'loading' && <article className="empty-state" role="status"><b>Ищу спокойные знакомства…</b><p>Покажу только реальные анкеты с примерным расстоянием.</p></article>}
-          {nearbyState === 'error' && <article className="empty-state" role="alert"><b>Не получилось обновить «рядом»</b><p>Проверь соединение и открой раздел ещё раз.</p></article>}
-          {nearbyState === 'idle' && <article className="empty-state"><b>Открой Псё через Telegram</b><p>Тогда знакомства будут привязаны к выбранной собаке, а контакты останутся скрыты.</p></article>}
-          {nearbyState === 'ready' && nearbyReason === 'NO_PRIVATE_REFERENCE_AREA' && <article className="empty-state"><b>Добавь примерный район прогулок</b><p>Сохрани приватную область на карте. Точный адрес другим владельцам не показывается.</p><button className="secondary" type="button" onClick={() => setTab('map')}>Открыть карту</button></article>}
-          {nearbyState === 'ready' && !nearbyReason && nearbyMatches.length === 0 && <article className="empty-state"><b>Подходящих анкет пока нет</b><p>Никого не подставляем для вида. Новые собаки появятся здесь после явного согласия владельцев.</p></article>}
-          {nearbyState === 'ready' && nearbyMatches.length > 0 && <section className="nearby-list" aria-label="Собаки рядом">
-            {nearbyMatches.map((dog) => <article className="nearby-dog-card" key={dog.petId}>
-              <span aria-hidden="true">{dog.avatar ? <img src={dog.avatar} alt="" /> : dog.name.slice(0, 1).toUpperCase()}</span>
-              <div><b>{dog.name}</b><p>{[...(dog.reasons ?? []).slice(0, 2), dog.distance].filter(Boolean).join(' · ') || 'Можно спокойно проверить совместимость'}</p>{dog.safetyWarnings?.[0] && <small>{dog.safetyWarnings[0]}</small>}</div>
-              <button aria-label={`Открыть памятку для знакомства с ${dog.name}`} onClick={() => setTab('card')}>→</button>
-            </article>)}
-          </section>}
-          <article className="match-card"><span>!</span><div><b>Сначала безопасность</b><p>Псё не показывает точные адреса и не обещает встречу. Проверь памятку, правило контакта и триггеры перед знакомством.</p></div></article>
+        {tab === 'nearby' && <WatercolorScreen className="nearby-composition" tone="rose" eyebrow="" title="Рядом" caption="Найди компанию для собаки или позови знакомого. Контакт откроется только по взаимному согласию.">
+          <div className="social-nearby-shell">
+            <CityCommunities communities={cityCommunities} onOpen={openTelegramDestination} />
+
+            {socialInviteState === 'loading' && <article className="social-invite-card" role="status"><b>Открываю приглашение…</b></article>}
+            {socialInviteState === 'gone' && <article className="social-invite-card" role="status"><b>Приглашение уже закрыто</b><p>Попроси друга отправить новую ссылку.</p></article>}
+            {socialInviteState === 'error' && <article className="social-invite-card" role="alert"><b>Не получилось открыть приглашение</b><p>Проверь соединение и попробуй ещё раз.</p></article>}
+            {socialInviteState === 'ready' && socialInvite && <article className="social-invite-card">
+              <div><b>{socialInvite.petName ? `${socialInvite.petName} зовёт познакомиться` : 'Вас зовут познакомить собак'}</b><p>После принятия владельцу придёт запрос. Контакт пока останется скрыт.</p></div>
+              <button className="primary" type="button" disabled={socialBusyId === 'incoming-invite'} onClick={acceptSocialInvite}>{profile.backendPetId ? 'Принять приглашение' : 'Добавить собаку'}</button>
+            </article>}
+
+            {!profile.backendPetId && <article className="social-empty-state">
+              <div><h3>Можно начать без анкеты</h3><p>Городские сообщества доступны сразу. Для личных знакомств достаточно добавить имя собаки.</p></div>
+              <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>
+            </article>}
+
+            {profile.backendPetId && nearbyState === 'idle' && <article className="social-empty-state"><div><h3>Открой Псё через Telegram</h3><p>Так запросы будут привязаны к владельцу, а контакт нельзя будет подменить.</p></div></article>}
+            {profile.backendPetId && nearbyState === 'loading' && <article className="social-loading-state" role="status"><span /><div><b>Обновляю знакомства</b><p>Покажу реальные анкеты без точных адресов.</p></div></article>}
+            {profile.backendPetId && nearbyState === 'error' && <article className="social-empty-state" role="alert"><div><h3>Не получилось обновить раздел</h3><p>Проверь соединение и попробуй ещё раз.</p></div><button type="button" onClick={() => loadSocialSurface().catch(() => setNearbyState('error'))}>Повторить</button></article>}
+
+            {profile.backendPetId && nearbyState === 'ready' && <>
+              <SocialProfileSheet
+                dogName={profile.dogName || 'собаки'}
+                profile={socialProfile}
+                busy={socialBusyId === 'profile'}
+                locating={socialLocating}
+                onSave={saveSocialProfile}
+                onHide={hideSocialProfile}
+                onLocate={locateForSocial}
+              />
+
+              {socialProfile?.discoverable && <section className="social-invite-action">
+                <div><h3>Уже знакомы?</h3><p>Отправь одноразовую ссылку. Расстояние и город не помешают найти друг друга.</p></div>
+                <button type="button" disabled={socialBusyId === 'invite'} onClick={createSocialInvite}>{socialBusyId === 'invite' ? 'Готовлю ссылку…' : 'Позвать друга'}</button>
+              </section>}
+
+              <RequestsPanel
+                petId={profile.backendPetId}
+                requests={socialRequests}
+                busyId={socialBusyId}
+                missingTelegramUsernameAction={missingTelegramUsernameAction}
+                onAction={updateSocialRequest}
+                onReport={reportSocialRequest}
+                onOpenChat={openTelegramDestination}
+              />
+
+              {socialProfile?.discoverable && <section className="social-candidate-groups" aria-label="Собаки для знакомства">
+                {socialCandidates.nearby.length > 0 && <div className="social-candidate-group">
+                  <div className="social-section-heading"><div><h3>Рядом</h3><p>До 15 км по примерному местоположению.</p></div><span>{socialCandidates.nearby.length}</span></div>
+                  <div className="social-candidate-list">{socialCandidates.nearby.map((dog) => <CandidateCard
+                    key={dog.petId}
+                    candidate={dog}
+                    requestStatus={socialRequests.find((request) => request.senderPetId === profile.backendPetId && request.recipientPetId === dog.petId)?.status}
+                    busy={socialBusyId === dog.petId}
+                    onRequest={(scenario) => sendSocialRequest(dog.petId, scenario)}
+                  />)}</div>
+                </div>}
+
+                {socialCandidates.city.length > 0 && <div className="social-candidate-group">
+                  <div className="social-section-heading"><div><h3>В вашем городе</h3><p>Если рядом пока пусто, показываем подходящие анкеты по городу и району.</p></div><span>{socialCandidates.city.length}</span></div>
+                  <div className="social-candidate-list">{socialCandidates.city.map((dog) => <CandidateCard
+                    key={dog.petId}
+                    candidate={dog}
+                    requestStatus={socialRequests.find((request) => request.senderPetId === profile.backendPetId && request.recipientPetId === dog.petId)?.status}
+                    busy={socialBusyId === dog.petId}
+                    onRequest={(scenario) => sendSocialRequest(dog.petId, scenario)}
+                  />)}</div>
+                </div>}
+
+                {socialCandidates.nearby.length === 0 && socialCandidates.city.length === 0 && <article className="social-empty-state">
+                  <div><h3>Новых анкет пока нет</h3><p>Псё не подставляет вымышленных собак. Можно позвать знакомого или вернуться позже.</p></div>
+                  <button type="button" onClick={createSocialInvite}>Позвать друга</button>
+                </article>}
+              </section>}
+
+              {nearbyReason === 'DISCOVERY_NOT_ENABLED' && <article className="social-safety-note"><b>Поиск выключен</b><p>Анкета скрыта, и другие владельцы не увидят собаку.</p></article>}
+            </>}
+          </div>
         </WatercolorScreen>}
 
         {tab === 'calendar' && <WatercolorScreen className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Добавить, перенести, закрыть или вернуть дело без отдельной возни с календарём." aside={<span className="watercolor-hero-mark">▣</span>}>

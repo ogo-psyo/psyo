@@ -3743,6 +3743,279 @@ body::before { opacity: .12; background-size: 48px 48px; }
 .nearby-composition {
   gap: 12px;
 }
+
+.social-nearby-shell {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.social-nearby-shell h3,
+.social-nearby-shell h4,
+.social-nearby-shell b,
+.social-nearby-shell p,
+.social-nearby-shell span,
+.social-nearby-shell small {
+  overflow-wrap: anywhere;
+}
+
+.social-profile-sheet,
+.city-communities,
+.social-requests-panel,
+.social-invite-card,
+.social-invite-action,
+.social-empty-state,
+.social-loading-state,
+.social-safety-note {
+  min-width: 0;
+  border: 1px solid #dde7dd;
+  border-radius: 22px;
+  padding: 14px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgb(42 61 50 / .08);
+}
+
+.social-section-heading {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.social-section-heading h3,
+.social-invite-action h3,
+.social-empty-state h3 {
+  color: #19231d;
+  font-size: 19px;
+  line-height: 1.12;
+  letter-spacing: -.02em;
+}
+
+.social-section-heading p,
+.social-invite-card p,
+.social-invite-action p,
+.social-empty-state p,
+.social-loading-state p,
+.social-safety-note p,
+.social-privacy-copy,
+.social-inline-hint {
+  margin-top: 5px;
+  color: #69746c;
+  font-size: 12px;
+  line-height: 1.42;
+  font-weight: 650;
+}
+
+.social-state-on,
+.social-state-off,
+.social-section-heading > span {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: #326448;
+  background: #e8f5eb;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.social-state-off { color: #69746c; background: #f0f2ee; }
+
+.social-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.social-form-grid label,
+.social-request-card form label {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  color: #28342d;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.social-form-grid label > span { color: #7b857e; font-size: 10px; font-weight: 700; }
+
+.social-form-grid select,
+.social-request-card textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  border: 1px solid #cfd9d1;
+  border-radius: 15px;
+  padding: 0 11px;
+  color: #19231d;
+  background: #f8faf7;
+}
+
+.social-request-card textarea { min-height: 94px; padding-block: 11px; resize: vertical; }
+
+.social-scenarios {
+  min-width: 0;
+  margin: 14px 0 0;
+  border: 0;
+  padding: 0;
+}
+
+.social-scenarios legend { margin-bottom: 8px; color: #28342d; font-size: 12px; font-weight: 850; }
+.social-scenarios > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.social-scenarios label { position: relative; min-width: 0; }
+.social-scenarios input { position: absolute; opacity: 0; pointer-events: none; }
+.social-scenarios label span {
+  min-height: 43px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d7dfd8;
+  border-radius: 14px;
+  padding: 7px 9px;
+  color: #536057;
+  background: #f8faf7;
+  font-size: 11px;
+  font-weight: 790;
+  text-align: center;
+}
+.social-scenarios input:checked + span { border-color: #254c37; color: #fff; background: #254c37; }
+.social-scenarios input:focus-visible + span { outline: 3px solid #2f7660; outline-offset: 3px; }
+
+.social-location-button {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 10px;
+  border: 1px solid #cfd9d1;
+  border-radius: 15px;
+  color: #31533e;
+  background: #edf6ef;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.social-profile-sheet .social-profile-actions,
+.social-request-actions,
+.social-safety-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.social-profile-sheet button,
+.social-invite-card button,
+.social-invite-action button,
+.social-empty-state button,
+.social-request-card button,
+.city-community-list button,
+.social-candidate-card button {
+  min-height: 44px;
+  border-radius: 15px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 820;
+}
+
+.social-inline-hint { color: #8a5c26; }
+
+.city-community-list,
+.social-request-list,
+.social-candidate-list,
+.social-candidate-groups,
+.social-candidate-group {
+  min-width: 0;
+  display: grid;
+  gap: 9px;
+}
+
+.city-community-list { margin-top: 12px; }
+.city-community-list article { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; border-top: 1px solid #e3e9e3; padding-top: 10px; }
+.city-community-list article:first-child { border-top: 0; padding-top: 0; }
+.city-community-list article > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.city-community-list button { min-height: 40px; color: #254c37; background: #edf6ef; }
+
+.social-invite-card,
+.social-invite-action,
+.social-empty-state,
+.social-loading-state {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.social-invite-card { border-color: #d9d1ed; background: #f8f4ff; }
+.social-invite-action { border-color: #d8e8da; background: #f3faf4; }
+
+.social-loading-state > span {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(100deg, #edf1ed 25%, #f8faf8 45%, #edf1ed 65%);
+  background-size: 220% 100%;
+  animation: social-loading 1.3s ease-out infinite;
+}
+
+@keyframes social-loading { to { background-position: -220% 0; } }
+
+.social-request-list { margin-top: 12px; }
+.social-request-card {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid #e3e9e3;
+  padding-top: 12px;
+}
+.social-request-card:first-child { border-top: 0; padding-top: 0; }
+.social-request-card > div:first-child p { margin-top: 4px; color: #69746c; font-size: 11px; font-weight: 700; }
+.social-safety-actions { margin-top: 0; }
+.social-safety-actions button { color: #794338; background: #fff5f1; }
+
+.social-candidate-group { gap: 10px; }
+.social-candidate-group + .social-candidate-group { border-top: 1px solid #dce4dd; padding-top: 14px; }
+.social-candidate-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 10px 12px;
+  align-items: center;
+  border: 1px solid #dce4dd;
+  border-radius: 20px;
+  padding: 12px;
+  background: #fff;
+}
+.social-candidate-avatar { width: 52px; height: 52px; display: grid; place-items: center; overflow: hidden; border-radius: 16px; color: #254c37; background: #e8f2ea; font-size: 19px; font-weight: 900; }
+.social-candidate-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.social-candidate-copy { min-width: 0; }
+.social-candidate-copy h4 { color: #19231d; font-size: 16px; line-height: 1.12; }
+.social-candidate-copy p { margin-top: 4px; color: #68736b; font-size: 11px; line-height: 1.35; font-weight: 700; }
+.social-reasons { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.social-reasons span { border-radius: 999px; padding: 5px 7px; color: #3e624b; background: #edf6ef; font-size: 9.5px; font-weight: 780; }
+.social-candidate-card > button { grid-column: 1 / -1; width: 100%; color: #fff; background: #254c37; }
+.social-candidate-card > small { grid-column: 1 / -1; color: #69746c; font-size: 10px; font-weight: 720; }
+.social-safety-note { background: #fbfaf4; }
+
+@media (prefers-reduced-motion: reduce) {
+  .social-loading-state > span { animation: none; }
+}
+
+@media (max-width: 390px) {
+  .social-candidate-card,
+  .social-form-grid,
+  .social-invite-card,
+  .social-invite-action,
+  .social-empty-state,
+  .social-loading-state {
+    grid-template-columns: 1fr;
+  }
+
+  .social-candidate-card { grid-template-columns: 48px minmax(0, 1fr); }
+  .social-candidate-card > button,
+  .social-candidate-card > small { grid-column: 1 / -1; }
+  .city-community-list article { grid-template-columns: 1fr; }
+  .city-community-list article > div { justify-content: stretch; }
+  .city-community-list button { flex: 1 1 120px; }
+}
 .presence-radar {
   place-items: center;
   text-align: center;
