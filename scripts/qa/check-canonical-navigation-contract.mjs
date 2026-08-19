@@ -28,12 +28,14 @@ for (const forbidden of ["id: 'calendar'", "id: 'card'", "id: 'assistant'", "lab
   if (navigation.includes(forbidden)) failures.push(`secondary surface leaked into primary navigation: ${forbidden}`);
 }
 
-for (const surface of ["{tab === 'today'", "{tab === 'profile'", "{tab === 'map'", "{tab === 'nearby'", "{tab === 'things'"]) {
-  if (!page.includes(surface)) failures.push(`primary route has no reachable surface: ${surface}`);
+for (const route of ['today', 'profile', 'map', 'nearby', 'things']) {
+  const surface = new RegExp(`\\{(?:hasDog\\s*&&\\s*)?tab\\s*===\\s*['\"]${route}['\"]`);
+  if (!surface.test(page)) failures.push(`primary route has no reachable surface: ${route}`);
 }
 
-for (const surface of ["{tab === 'calendar'", "{tab === 'card'"]) {
-  if (!page.includes(surface)) failures.push(`secondary in-app surface was removed: ${surface}`);
+for (const route of ['calendar', 'card']) {
+  const surface = new RegExp(`\\{(?:hasDog\\s*&&\\s*)?tab\\s*===\\s*['\"]${route}['\"]`);
+  if (!surface.test(page)) failures.push(`secondary in-app surface was removed: ${route}`);
 }
 
 for (const token of ["setTab('calendar')", "setTab('card')"]) {

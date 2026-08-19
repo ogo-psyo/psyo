@@ -33,7 +33,7 @@ assert.deepEqual(removeOwnerRoute(updated, 'route-1'), [], 'deleted route must l
 
 const page = readFileSync('app/page.tsx', 'utf8');
 for (const token of [
-  'setOwnerRoutes(normalizeOwnerRoutes(payload.routes))',
+  'setOwnerRoutes(normalizeOwnerRoutes(',
   'features={ownerRoutes}',
   'async function updateOwnerRoute',
   'async function deleteOwnerRoute',

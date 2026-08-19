@@ -12,6 +12,8 @@ for (const token of [
   "confirmation: 'DELETE_DOG'",
   "confirmation: 'DELETE_ACCOUNT'",
   'Сохранить личный профиль',
+  'primary mini-next-action',
+  'details.open = true',
   'Добавить собаку',
   'Удалить собаку',
   'Удалить аккаунт',

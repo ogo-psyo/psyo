@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/Button';
+import { LongPressButton } from '@/components/ui/LongPressButton';
 
 export type PendingCareDeletion = {
   id: string;
@@ -47,15 +49,15 @@ export function DeleteCareDialog({
         <h2 id="care-delete-title">Удалить дело?</h2>
         <p>«{reminder.title}» исчезнет из плана и истории. Это действие нельзя отменить.</p>
         <div>
-          <button ref={cancelRef} type="button" onClick={onCancel} disabled={busy}>Отмена</button>
-          <button
+          <Button ref={cancelRef} variant="secondary" onClick={onCancel} disabled={busy}>Отмена</Button>
+          <LongPressButton
             className="danger-action"
-            type="button"
-            onClick={() => onConfirm(reminder.id)}
+            onHoldComplete={() => void onConfirm(reminder.id)}
             disabled={busy}
+            aria-label="Удалить дело"
           >
-            {busy ? 'Удаляю…' : 'Удалить дело'}
-          </button>
+            {busy ? 'Удаляю…' : 'Удерживай: удалить'}
+          </LongPressButton>
         </div>
       </section>
     </div>

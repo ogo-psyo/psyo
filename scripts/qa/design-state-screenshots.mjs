@@ -21,6 +21,7 @@ const tabs = [
   { id: 'things', button: 'вещи' },
 ];
 const sizes = [
+  { name: 'm320', width: 320, height: 720 },
   { name: 'm360', width: 360, height: 800 },
   { name: 'm390', width: 390, height: 844 },
   { name: 't768p', width: 768, height: 1024 },
@@ -49,9 +50,12 @@ for (const size of sizes) {
     await page.waitForTimeout(300);
     await page.screenshot({ path: `${outDir}/${size.name}-${tab.id}.png`, fullPage: true });
     if (size.name === 'm390' && tab.id === 'today') {
-      await page.locator('.today-care-presets').getByRole('button', { name: /Обработка/ }).click();
-      await page.getByRole('status').filter({ hasText: 'Добавлено: Обработка от клещей и паразитов' }).waitFor();
-      await page.screenshot({ path: `${outDir}/${size.name}-${tab.id}-with-care.png`, fullPage: true });
+      const carePreset = page.locator('.today-care-presets').getByRole('button', { name: /Обработка/ });
+      if (await carePreset.count()) {
+        await carePreset.click();
+        await page.getByRole('status').filter({ hasText: 'Добавлено: Обработка от клещей и паразитов' }).waitFor();
+        await page.screenshot({ path: `${outDir}/${size.name}-${tab.id}-with-care.png`, fullPage: true });
+      }
     }
     const m = await page.evaluate(() => ({
       scrollWidth: document.documentElement.scrollWidth,
@@ -60,7 +64,10 @@ for (const size of sizes) {
       primaryTargetHeights: [...document.querySelectorAll('.app-tabs button, .care-action-notice button, .care-delete-dialog button')]
         .map((element) => Math.round(element.getBoundingClientRect().height)),
       bodyText: document.body.innerText.slice(0,300),
-      overflow: [...document.querySelectorAll('body *')].map((el) => { const r=el.getBoundingClientRect(); return {tag:el.tagName, cls:String(el.className||''), text:(el.textContent||'').trim().slice(0,60), left:r.left, right:r.right, w:r.width}; }).filter(x => x.w>1 && !x.cls.includes('leaflet-tile') && (x.left<-1 || x.right>innerWidth+1)).slice(0,10)
+      overflow: [...document.querySelectorAll('body *')]
+        .filter((el) => !(el instanceof SVGGeometryElement))
+        .map((el) => { const r=el.getBoundingClientRect(); return {tag:el.tagName, cls:String(el.className||''), text:(el.textContent||'').trim().slice(0,60), left:r.left, right:r.right, w:r.width}; })
+        .filter(x => x.w>1 && !x.cls.includes('leaflet-tile') && (x.left<-1 || x.right>innerWidth+1)).slice(0,10)
     }));
     results.push({size:size.name, tab: tab.id, m});
     await page.close();

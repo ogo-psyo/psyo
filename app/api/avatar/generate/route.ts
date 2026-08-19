@@ -24,7 +24,7 @@ function buildPollinationsPrompt(prompt: string, dogName: string, styleId: strin
     .replace(/\s+/g, ' ')
     .slice(0, 360);
   return [
-    `Premium 3D stylized dog avatar for Pso app.`,
+    `Premium 3D stylized dog avatar for the Псё app.`,
     dogName ? `Dog name: ${dogName}.` : '',
     styleMap[styleId] || styleMap.city,
     compactPrompt,

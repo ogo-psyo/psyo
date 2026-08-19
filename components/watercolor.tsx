@@ -1,4 +1,6 @@
 import { ReactNode } from 'react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Surface } from '@/components/ui/Surface';
 
 type Tone = 'rose' | 'blue' | 'green' | 'gold' | 'neutral';
 
@@ -15,6 +17,7 @@ type WatercolorScreenProps = {
 export function WatercolorScreen({ eyebrow, title, caption, tone = 'neutral', aside, children, className = '' }: WatercolorScreenProps) {
   return (
     <section className={`watercolor-screen wc-${tone} ${className}`.trim()}>
+      <span className={`ui-decorative-bloom ui-decorative-bloom-${tone}`} aria-hidden="true" />
       <WatercolorPageHero eyebrow={eyebrow} title={title} caption={caption} aside={aside} />
       <div className="watercolor-content">{children}</div>
     </section>
@@ -29,23 +32,15 @@ type WatercolorPageHeroProps = {
 };
 
 export function WatercolorPageHero({ eyebrow: _eyebrow, title, caption, aside }: WatercolorPageHeroProps) {
-  return (
-    <article className="watercolor-page-hero">
-      <div>
-        <h2>{title}</h2>
-        {caption && <p>{caption}</p>}
-      </div>
-      {aside && <div className="watercolor-page-hero-aside">{aside}</div>}
-    </article>
-  );
+  return <PageHeader className="watercolor-page-hero" title={title} description={caption} aside={aside} />;
 }
 
 export function PaperSheet({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <article className={`paper-sheet ${className}`.trim()}>{children}</article>;
+  return <Surface variant="raised" className={`paper-sheet ${className}`.trim()}>{children}</Surface>;
 }
 
 export function FloatingNote({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <article className={`floating-note ${className}`.trim()}>{children}</article>;
+  return <Surface variant="fancy" className={`floating-note ${className}`.trim()}>{children}</Surface>;
 }
 
 export function ActionDock({ children, className = '' }: { children: ReactNode; className?: string }) {

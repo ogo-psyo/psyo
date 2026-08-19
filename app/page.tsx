@@ -1,21 +1,24 @@
 'use client';
 
-import { ChangeEvent, type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, CalendarDots, MapPin, PawPrint, ShoppingBag } from '@phosphor-icons/react';
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { LiveMap } from '@/components/LiveMap';
 import { FloatingNote, PaperSheet, WatercolorScreen } from '@/components/watercolor';
-import { AppNavigation } from '@/components/app/AppNavigation';
+import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
 import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
 import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
 import { ObservationEditor, type ObservationEditorDraft } from '@/components/care/ObservationEditor';
 import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
+import { AllFunctionsHub, type AllFunctionTarget } from '@/components/home/AllFunctionsHub';
 import { NextCareCard } from '@/components/today/NextCareCard';
 import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
 import { CandidateCard } from '@/components/social/CandidateCard';
 import { CityCommunities, type CityCommunity } from '@/components/social/CityCommunities';
 import { RequestsPanel, type SocialRequestView } from '@/components/social/RequestsPanel';
 import { SocialProfileSheet } from '@/components/social/SocialProfileSheet';
+import { SelectField } from '@/components/ui/FormControls';
 import {
   anchorCards,
   avatarStyles,
@@ -50,6 +53,7 @@ import { fileToLocalAvatarDataUrl, filesToPhotos, loadProfile, resetProfileStora
 import { buildAppReadiness, type ReadinessLevel } from '@/lib/readiness';
 import { buildTodayCareView } from '@/lib/today';
 import { normalizeOwnerRoutes, removeOwnerRoute, upsertOwnerRoute, type OwnerRouteView } from '@/lib/mapUi';
+import { rc1Config } from '@/lib/rc1';
 import type { CandidateGroup, CoarseLocation, SocialProfile, SocialScenario } from '@/lib/socialCore';
 import type { ActionSuggestion } from '@/packages/contracts';
 
@@ -163,14 +167,14 @@ const viralCardMoods: { id: ViralCardMood; label: string; caption: string }[] = 
 ];
 
 const viralMoodTheme: Record<ViralCardMood, { bg: string; fg: string; muted: string; accent: string; soft: string; label: string }> = {
-  bold: { bg: '#17112a', fg: '#fff8e7', muted: '#d9c8ff', accent: '#7ee7d2', soft: '#ff8a5b', label: 'PSYO HERO CARD' },
-  soft: { bg: '#fff4d7', fg: '#25192f', muted: '#6f5f6f', accent: '#ff8a5b', soft: '#a7eadf', label: 'PSYO CARE CARD' },
+  bold: { bg: '#17112a', fg: '#fff8e7', muted: '#d9c8ff', accent: '#7ee7d2', soft: '#ff8a5b', label: 'КАРТОЧКА ПСЁ' },
+  soft: { bg: '#fff4d7', fg: '#25192f', muted: '#6f5f6f', accent: '#ff8a5b', soft: '#a7eadf', label: 'ПАМЯТКА ПСЁ' },
   safety: { bg: '#f4fbf3', fg: '#18251f', muted: '#557063', accent: '#1d927d', soft: '#ffc75d', label: 'DOG WALK RULES' },
-  club: { bg: '#111513', fg: '#f7f0df', muted: '#b7c4b8', accent: '#d7ff6f', soft: '#f0a37b', label: 'PSYO KENNEL CLUB' },
+  club: { bg: '#111513', fg: '#f7f0df', muted: '#b7c4b8', accent: '#d7ff6f', soft: '#f0a37b', label: 'КЛУБ ПСЁ' },
 };
 
 function FieldSelect({ label, value, options, onChange }: { label: string; value: string; options: readonly string[]; onChange: (value: string) => void }) {
-  return <label>{label}<select value={value} onChange={(event) => onChange(event.target.value)}><option value="">не указано</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>;
+  return <SelectField label={label} value={value} onChange={(event) => onChange(event.target.value)}><option value="">не указано</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</SelectField>;
 }
 
 function ChoiceBubbles({ label, value, options, onChange, hint }: { label: string; value: string; options: readonly string[]; onChange: (value: string) => void; hint?: string }) {
@@ -209,6 +213,15 @@ function ObservationChoice({ label, value, options, onChange }: { label: string;
 
 function TaskCard({ emoji, title, caption, action, onClick }: { emoji: string; title: string; caption: string; action: string; onClick?: () => void }) {
   return <article className="task-card"><span>{emoji}</span><div><b>{title}</b><p>{caption}</p></div><button onClick={onClick}>{action}</button></article>;
+}
+
+function SecondaryFlowHeader({ label, onBack }: { label: string; onBack: () => void }) {
+  return (
+    <button className="secondary-flow-back" type="button" onClick={onBack}>
+      <ArrowLeft weight="bold" aria-hidden="true" />
+      <span>{label}</span>
+    </button>
+  );
 }
 
 function AssistantActionButtons({ actions, onApply }: { actions: ActionSuggestion[]; onApply: (action: ActionSuggestion) => void }) {
@@ -349,32 +362,35 @@ function calendarStamp(date: Date) {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 }
 
-function dbToProfile(payload: any): Partial<DogProfile> | null {
-  if (!payload?.connected || !payload?.pet) return null;
-  const pet = payload.pet;
+function dbToProfile(payload: any, preferredPetId?: string): Partial<DogProfile> | null {
+  const selectedDemoPet = payload?.mode === 'demo' && preferredPetId
+    ? payload?.pets?.find((pet: any) => String(pet.id) === preferredPetId)
+    : null;
+  const pet = selectedDemoPet || payload?.pet;
+  if ((!payload?.connected && payload?.mode !== 'demo') || !pet) return null;
   const passport = payload.passport ?? {};
   const social = payload.social ?? {};
   return {
     backendPetId: pet.id,
-    avatarImageUrl: pet.avatar_url || '',
-    avatarSource: pet.avatar_url ? 'uploaded' : 'none',
-    photoUrls: Array.isArray(pet.photo_urls) ? pet.photo_urls.filter(Boolean) : pet.avatar_url ? [pet.avatar_url] : [],
+    avatarImageUrl: pet.avatar_url || pet.avatarUrl || '',
+    avatarSource: pet.avatar_url || pet.avatarUrl ? 'uploaded' : 'none',
+    photoUrls: Array.isArray(pet.photo_urls || pet.photoUrls) ? (pet.photo_urls || pet.photoUrls).filter(Boolean) : pet.avatar_url || pet.avatarUrl ? [pet.avatar_url || pet.avatarUrl] : [],
     dogName: pet.name || '',
-    breedId: pet.breed_id || 'mixed',
-    breedGroupId: pet.breed_group_id || 'mixed',
-    breedCustom: pet.custom_breed || '',
-    lifeStage: pet.life_stage || '',
+    breedId: pet.breed_id || pet.breedId || 'mixed',
+    breedGroupId: pet.breed_group_id || pet.breedGroupId || 'mixed',
+    breedCustom: pet.custom_breed || pet.customBreed || '',
+    lifeStage: pet.life_stage || pet.lifeStage || '',
     sex: pet.sex || '',
-    weight: pet.weight_kg ? `${pet.weight_kg} кг` : '',
+    weight: pet.weight_kg || pet.weightKg ? `${pet.weight_kg || pet.weightKg} кг` : '',
     microchip: passport.microchip || '',
-    vetClinic: passport.vet_clinic || '',
+    vetClinic: passport.vet_clinic || passport.vetClinic || '',
     diet: passport.diet || '',
     allergies: passport.allergies || '',
     medication: passport.medication || '',
-    healthNotes: passport.health_notes || '',
-    vaccineStatus: fromDbEnum(passport.vaccine_status, dbVaccineStatusMap),
-    parasiteStatus: fromDbEnum(passport.parasite_status, dbParasiteStatusMap),
-    socialMode: fromDbEnum(social.social_mode, dbSocialModeMap),
+    healthNotes: passport.health_notes || passport.healthNotes || '',
+    vaccineStatus: fromDbEnum(passport.vaccine_status || passport.vaccineStatus, dbVaccineStatusMap),
+    parasiteStatus: fromDbEnum(passport.parasite_status || passport.parasiteStatus, dbParasiteStatusMap),
+    socialMode: fromDbEnum(social.social_mode || social.socialMode, dbSocialModeMap),
     temperament: social.temperament || '',
     energyLevel: social.energy_level || '',
     playStyle: social.play_style || '',
@@ -434,7 +450,7 @@ export default function Home() {
   const [demoMode, setDemoMode] = useState(false);
   const [notice, setNotice] = useState<Notice>('idle');
   const [error, setError] = useState('');
-  const [tab, setTab] = useState<Tab>('today');
+  const [tab, setTabState] = useState<Tab>('today');
   const [session, setSession] = useState<AuthSession | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [reminders, setReminders] = useState<ReminderView[]>([]);
@@ -489,6 +505,8 @@ export default function Home() {
   const [newWishTitle, setNewWishTitle] = useState('');
   const [newWishReason, setNewWishReason] = useState('');
   const [newWishCategory, setNewWishCategory] = useState('gear');
+  const [thingCaptureOpen, setThingCaptureOpen] = useState(false);
+  const [mapComposerOpen, setMapComposerOpen] = useState(false);
   const [viralCardFormat, setViralCardFormat] = useState<ViralCardFormat>('story');
   const [viralCardMood, setViralCardMood] = useState<ViralCardMood>('bold');
   const [viralCardHeadline, setViralCardHeadline] = useState('');
@@ -568,6 +586,34 @@ export default function Home() {
       window.scrollTo({ top: 0, behavior: 'auto' });
     });
   }
+
+  function setTab(nextTab: Tab) {
+    if (nextTab === tab) return;
+    setTabState(nextTab);
+    if (typeof window !== 'undefined') {
+      const nextUrl = new URL(window.location.href);
+      nextUrl.hash = nextTab;
+      window.history.pushState({ tab: nextTab }, '', nextUrl);
+    }
+  }
+
+  function closeSecondaryFlow(parent: 'today' | 'profile') {
+    setTabState(parent);
+    const nextUrl = new URL(window.location.href);
+    nextUrl.hash = parent;
+    window.history.replaceState({ tab: parent }, '', nextUrl);
+  }
+
+  useEffect(() => {
+    const knownTabs: Tab[] = ['today', 'calendar', 'assistant', 'nearby', 'map', 'card', 'profile', 'things'];
+    const syncFromLocation = () => {
+      const requested = window.location.hash.replace(/^#/, '') as Tab;
+      setTabState(knownTabs.includes(requested) ? requested : 'today');
+    };
+    syncFromLocation();
+    window.addEventListener('popstate', syncFromLocation);
+    return () => window.removeEventListener('popstate', syncFromLocation);
+  }, []);
 
   useEffect(() => {
     resetViewScroll();
@@ -906,7 +952,7 @@ export default function Home() {
       }
       setError('');
       setDogCreationOpen(false);
-      setTab('profile');
+      setTab('today');
     } finally {
       setOnboardingSaving(false);
     }
@@ -918,31 +964,35 @@ export default function Home() {
     if (petId) params.set('petId', petId);
     const response = await fetch(`/api/app/bootstrap${params.size ? `?${params.toString()}` : ''}`, { headers });
     const payload = await response.json();
-    const dbProfile = dbToProfile(payload);
+    const dbProfile = dbToProfile(payload, petId);
+    const selectedPetId = String(petId || payload.activePetId || dbProfile?.backendPetId || payload.pet?.id || '');
+    const belongsToSelectedPet = (item: any) => {
+      const itemPetId = String(item?.petId || item?.pet_id || '');
+      return !selectedPetId || !itemPetId || itemPetId === selectedPetId;
+    };
+    setDemoMode(payload.mode === 'demo');
     if (Array.isArray(payload.pets)) setPets(payload.pets.map((pet: any) => ({
       id: String(pet.id),
       name: String(pet.name || 'Собака'),
-      breed_id: pet.breed_id,
-      breed_group_id: pet.breed_group_id,
-      avatar_url: pet.avatar_url,
-      photo_urls: Array.isArray(pet.photo_urls) ? pet.photo_urls : [],
+      breed_id: pet.breed_id || pet.breedId,
+      breed_group_id: pet.breed_group_id || pet.breedGroupId,
+      avatar_url: pet.avatar_url || pet.avatarUrl,
+      photo_urls: Array.isArray(pet.photo_urls || pet.photoUrls) ? pet.photo_urls || pet.photoUrls : [],
     })));
     if (dbProfile) {
-      setActivePetId(String(payload.activePetId || payload.pet?.id || dbProfile.backendPetId || ''));
+      setActivePetId(selectedPetId);
       setProfile((current) => {
         const samePet = !petId || current.backendPetId === dbProfile.backendPetId;
         return { ...current, ...dbProfile, photos: samePet ? current.photos : [], selectedStyle: current.selectedStyle };
       });
-      setReminders(payload.reminders ?? []);
-      setWishlist(payload.wishlist ?? []);
-      setZones(payload.zones ?? []);
-      setOwnerRoutes(normalizeOwnerRoutes(payload.routes));
+      setReminders((payload.reminders ?? []).filter(belongsToSelectedPet));
+      setWishlist((payload.wishlist ?? []).filter(belongsToSelectedPet));
+      setZones((payload.zones ?? []).filter(belongsToSelectedPet));
+      setOwnerRoutes(normalizeOwnerRoutes((payload.routes ?? []).filter(belongsToSelectedPet)));
       if (Array.isArray(payload.observations)) {
-        const bootObservations = payload.observations.map(normalizeObservation).filter(Boolean) as ObservationView[];
-        if (bootObservations.length) setObservations(bootObservations.slice(0, 12));
+        const bootObservations = payload.observations.filter(belongsToSelectedPet).map(normalizeObservation).filter(Boolean) as ObservationView[];
+        setObservations(bootObservations.slice(0, 12));
       }
-      setNotice('loaded');
-      window.setTimeout(() => setNotice('idle'), 1400);
     } else if (payload.empty) {
       setPets([]);
       setActivePetId('');
@@ -970,12 +1020,12 @@ export default function Home() {
       const nextSession = data.session as AuthSession | null;
       setSession(nextSession);
       setAuthLoading(false);
-      if (nextSession) loadBootstrap(nextSession.access_token).catch(() => null);
+      loadBootstrap(nextSession?.access_token).catch(() => null);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       const nextSession = next as AuthSession | null;
       setSession(nextSession);
-      if (nextSession) loadBootstrap(nextSession.access_token).catch(() => null);
+      loadBootstrap(nextSession?.access_token).catch(() => null);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -1069,6 +1119,12 @@ export default function Home() {
   const avatarPrompt = useMemo(() => buildAvatarPrompt(profile), [profile]);
   const hasPhoto = profile.photos.length > 0;
   const avatarReady = avatarState === 'ready';
+  const hasDog = Boolean(profile.dogName.trim());
+  const activePrimaryRoute: PrimaryRoute = tab === 'calendar' || tab === 'assistant'
+    ? 'today'
+    : tab === 'card'
+      ? 'profile'
+      : tab as PrimaryRoute;
   const activeReminders = useMemo(() => reminders.filter((reminder) => reminder.status !== 'done'), [reminders]);
   const doneReminders = useMemo(() => reminders.filter((reminder) => reminder.status === 'done'), [reminders]);
   const wantedWishlist = useMemo(() => wishlist.filter((item) => item.status !== 'bought' && item.status !== 'not_suitable'), [wishlist]);
@@ -1775,6 +1831,7 @@ export default function Home() {
       setWishlist((current) => [{ id: guestId('wish'), petId, title, category: preset?.category || newWishCategory, reason: preset?.reason || newWishReason || undefined, priority: preset?.priority || 'medium', status: 'wanted', created_at: new Date().toISOString() }, ...current]);
       setNewWishTitle('');
       setNewWishReason('');
+      setThingCaptureOpen(false);
       return;
     }
     const response = await fetch('/api/wishlist', {
@@ -1793,6 +1850,7 @@ export default function Home() {
     if (!response.ok) return setError('Не удалось добавить вещь');
     setNewWishTitle('');
     setNewWishReason('');
+    setThingCaptureOpen(false);
     await loadBootstrap();
   }
 
@@ -1809,6 +1867,9 @@ export default function Home() {
       setNewZoneTitle('');
       setNewZoneNote('');
       setPickedZonePoint(null);
+      setRoutePoints([]);
+      setDrawMode('none');
+      setMapComposerOpen(false);
       return;
     }
     const response = await fetch('/api/zones', {
@@ -1829,6 +1890,9 @@ export default function Home() {
     setNewZoneTitle('');
     setNewZoneNote('');
     setPickedZonePoint(null);
+    setRoutePoints([]);
+    setDrawMode('none');
+    setMapComposerOpen(false);
     await loadBootstrap();
   }
 
@@ -1838,7 +1902,6 @@ export default function Home() {
       return;
     }
     setPickedZonePoint(point);
-    if (drawMode === 'point') setDrawMode('none');
   }
 
   function handleMapClick(event: { latlng: { lat: number; lng: number } }) {
@@ -1875,6 +1938,7 @@ export default function Home() {
     setPickedZonePoint(null);
     setRoutePoints([]);
     setDrawMode('none');
+    setMapComposerOpen(false);
     setNewZoneTitle('');
     setNewZoneNote('');
     if (visibility === 'shared' && result.shareUrl) {
@@ -2089,11 +2153,14 @@ export default function Home() {
 
   async function completeReminder(id: string) {
     const reminder = reminders.find((item) => item.id === id);
-    if (!reminder) return setError('Не удалось найти дело в плане.');
+    if (!reminder) {
+      setError('Не удалось найти дело в плане.');
+      return false;
+    }
     if (isGuestMode()) {
       setReminders((current) => current.map((item) => item.id === id ? { ...item, status: 'done', completedAt: new Date().toISOString() } : item));
       setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
-      return;
+      return true;
     }
     const scope = `reminder:complete:${id}`;
     const completedAt = careMutationTime(scope, () => new Date().toISOString());
@@ -2105,7 +2172,10 @@ export default function Home() {
         body: JSON.stringify({ completedAt }),
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) return setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
+      if (!response.ok) {
+        setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
+        return false;
+      }
       await loadBootstrap();
       if (payload.historyOccurrence) {
         setReminderHistory((current) => ({
@@ -2115,8 +2185,10 @@ export default function Home() {
       }
       finishCareMutation(scope);
       setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
+      return true;
     } catch {
       setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
+      return false;
     } finally {
       setReminderMutationBusy(null);
     }
@@ -2634,7 +2706,7 @@ export default function Home() {
 
     ctx.fillStyle = theme.fg;
     ctx.font = `800 ${Math.round(24 * scale)}px system-ui, -apple-system, sans-serif`;
-    ctx.fillText(`Создано в PSYO · ${new Date().toLocaleDateString('ru-RU')}`, pad, height - pad);
+    ctx.fillText(`Создано в Псё · ${new Date().toLocaleDateString('ru-RU')}`, pad, height - pad);
     ctx.textAlign = 'right';
     ctx.fillText(publicCardHref, width - pad, height - pad);
     ctx.textAlign = 'left';
@@ -2687,12 +2759,16 @@ export default function Home() {
     <main className="app-canvas">
       <section ref={phoneShellRef} className={`phone-shell tab-${tab}`}>
         <header className="app-header">
-          <div>
+          <div className="app-wordmark">
             <p>план ухода и памятка</p>
-            <h1>{profile.dogName ? `Псё · ${profile.dogName}` : 'Псё'}</h1>
+            <h1>Псё</h1>
           </div>
           <TelegramPill session={telegramSession} />
-          {session ? <button onClick={signOut}>Выйти</button> : <button onClick={() => setTab(tab === 'profile' ? 'today' : 'profile')}>{tab === 'profile' ? 'всё' : 'псё'}</button>}
+          {session
+            ? <button onClick={signOut}>Выйти</button>
+            : hasDog
+              ? <button onClick={() => setTab(tab === 'profile' ? 'today' : 'profile')}>{tab === 'profile' ? 'всё' : 'псё'}</button>
+              : <button onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>}
         </header>
 
         {pets.length > 0 && <section className="pet-switcher" aria-label="Активная собака">
@@ -2730,25 +2806,86 @@ export default function Home() {
           </>}
         </section>}
 
-        <section className="dog-hero-card">
-          <div className="hero-avatar-wrap"><GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" /></div>
-          <div className="dog-main-info"><span>{selectedBreed.emoji} {breedLabel}</span><h2>{profile.dogName || 'Добавь имя'}</h2><p>{profile.bio || 'Профиль, места, записи и вещи в одном спокойном месте.'}</p></div>
-          {profile.dogName
-            ? <button className="round-action" aria-label="Редактировать профиль собаки" onClick={() => setTab('profile')}>✎</button>
-            : <button className="secondary" type="button" onClick={() => { setError(''); setDogCreationOpen(true); }}>Добавить собаку</button>}
-        </section>
+        {!hasDog && <section className="first-run-activation" aria-labelledby="first-run-title">
+          <GeneratedAvatar profile={profile} ready={false} size="large" />
+          <div>
+            <h2 id="first-run-title">Добавь собаку</h2>
+            <p>Начни с имени. После этого Псё покажет одно ближайшее дело и сохранит всё остальное на потом.</p>
+          </div>
+          <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>
+        </section>}
 
-        {tab === 'today' && <section className="screen-stack today-screen kit-today-screen">
-          <NextCareCard
+        {hasDog && <AppNavigation active={activePrimaryRoute} onNavigate={setTab} />}
+
+        {hasDog && tab === 'today' && <AllFunctionsHub
+          dogName={profile.dogName}
+          breedLabel={breedLabel}
+          profileFacts={completionCount}
+          profileFactsTotal={profileChecklist.length}
+          activeReminders={activeReminders.length}
+          observations={observations.length}
+          habits={profile.habits.filter((habit) => habit.value.trim()).length}
+          places={zones.length + ownerRoutes.length}
+          nearby={socialCandidates.nearby.length + socialCandidates.city.length}
+          things={wantedWishlist.length}
+          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
+          reminderFeature={<NextCareCard
             care={todayCare}
-            dogName={petName || 'собакой'}
             onPrimaryAction={() => todayCare.reminderId
               ? completeReminder(todayCare.reminderId)
               : todayCare.target === 'history'
                 ? (setCareView('history'), setTab('calendar'))
                 : setTab('calendar')}
             onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
-          />
+          />}
+          healthFeature={<button className="all-health-summary" type="button" onClick={() => setTab('profile')}>
+            <span><b>{observations.length ? observationNextStepLine : 'Начать историю здоровья'}</b><small>{observations.length ? 'Открыть наблюдения и документы' : 'Первая запись займёт меньше минуты'}</small></span>
+            <ArrowRight weight="bold" aria-hidden="true" />
+          </button>}
+          onNavigate={(target: AllFunctionTarget) => setTab(target)}
+        />}
+
+        {false && hasDog && tab === 'today' && <section className="screen-stack today-screen kit-today-screen watercolor-production-today">
+          <section className="watercolor-day-field" aria-label="Главное на сегодня">
+            <div className="watercolor-day-heading">
+              <h2>{formatTodayTitle(profile.dogName)}</h2>
+              <p>{profile.bio || 'Уход, наблюдения и места собраны вокруг одного следующего действия.'}</p>
+            </div>
+
+            <button className="watercolor-dog-focus" type="button" onClick={() => setTab('profile')} aria-label="Открыть профиль собаки">
+              <GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />
+              <span><b>{profile.dogName || 'Добавить собаку'}</b><small>{profile.dogName ? breedLabel : 'начать с имени'}</small></span>
+              <PawPrint weight="fill" aria-hidden="true" />
+            </button>
+
+            <div className="watercolor-care-paper">
+              <NextCareCard
+                care={todayCare}
+                onPrimaryAction={() => todayCare.reminderId
+                  ? completeReminder(todayCare.reminderId)
+                  : todayCare.target === 'history'
+                    ? (setCareView('history'), setTab('calendar'))
+                    : setTab('calendar')}
+                onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
+              />
+            </div>
+
+            <button className="watercolor-place-focus" type="button" onClick={() => setTab('map')}>
+              <MapPin weight="fill" aria-hidden="true" />
+              <span><b>Свои места</b><small>{zones.length ? formatCount(zones.length, ['место', 'места', 'мест']) : 'добавить первое место'}</small></span>
+            </button>
+
+            <button className="watercolor-ask-action" type="button" onClick={() => setTab('assistant')}>
+              <span>Спросить</span>
+              <ArrowRight weight="bold" aria-hidden="true" />
+            </button>
+
+            <div className="watercolor-day-shelf" aria-label="Быстрые разделы">
+              <button type="button" onClick={() => { setCareView('active'); setTab('calendar'); }}><CalendarDots weight="duotone" aria-hidden="true" /><span><b>{activeReminders.length}</b><small>в плане</small></span></button>
+              <button type="button" onClick={() => setTab('profile')}><PawPrint weight="duotone" aria-hidden="true" /><span><b>{profileReady ? 'готов' : `${completionCount}/${profileChecklist.length}`}</b><small>профиль</small></span></button>
+              <button type="button" onClick={() => setTab('things')}><ShoppingBag weight="duotone" aria-hidden="true" /><span><b>{wantedWishlist.length}</b><small>вещи</small></span></button>
+            </div>
+          </section>
 
           {todayCare.state === 'empty' && profile.dogName && <section className="today-care-presets" aria-label="Первое дело ухода">
             <b>Выбери первое дело</b>
@@ -2790,7 +2927,8 @@ export default function Home() {
           </button>
         </section>}
 
-        {tab === 'assistant' && <WatercolorScreen className="assistant-composition" tone="green" eyebrow="помощник по уходу" title="Выбери безопасный сценарий" caption="Ответ должен закончиться действием: дело в план, обновление памятки или заметка владельца." aside={<span className="watercolor-hero-mark">✦</span>}>
+        {hasDog && tab === 'assistant' && <WatercolorScreen className="assistant-composition" tone="green" eyebrow="помощник по уходу" title="Выбери безопасный сценарий" caption="Ответ должен закончиться действием: дело в план, обновление памятки или заметка владельца." aside={<PawPrint className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+          <SecondaryFlowHeader label="Назад во Всё" onBack={() => closeSecondaryFlow('today')} />
           <PaperSheet className="assistant-main-sheet">
             <div className="assistant-box">
               <textarea value={assistantQuestion} onChange={(event) => setAssistantQuestion(event.target.value)} placeholder="Например: что проверить по уходу на этой неделе?" aria-label="Вопрос ассистенту" />
@@ -2807,7 +2945,12 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {tab === 'nearby' && <WatercolorScreen className="nearby-composition" tone="rose" eyebrow="" title="Рядом" caption="Найди компанию для собаки или позови знакомого. Контакт откроется только по взаимному согласию.">
+        {hasDog && tab === 'nearby' && <WatercolorScreen className="nearby-composition" tone="rose" eyebrow="" title="Рядом" caption="Найди компанию для собаки или позови знакомого. Контакт откроется только по взаимному согласию.">
+          <ol className="nearby-trust-flow" aria-label="Как открывается контакт">
+            <li><b>Покажи анкету</b><span>без точного адреса</span></li>
+            <li><b>Дождись согласия</b><span>с обеих сторон</span></li>
+            <li><b>Открой контакт</b><span>только после совпадения</span></li>
+          </ol>
           <div className="social-nearby-shell">
             <CityCommunities communities={cityCommunities} onOpen={openTelegramDestination} />
 
@@ -2824,7 +2967,7 @@ export default function Home() {
               <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>
             </article>}
 
-            {profile.backendPetId && nearbyState === 'idle' && <article className="social-empty-state"><div><h3>Открой Псё через Telegram</h3><p>Так запросы будут привязаны к владельцу, а контакт нельзя будет подменить.</p></div></article>}
+            {profile.backendPetId && nearbyState === 'idle' && <article className="social-empty-state"><div><h3>Открой Псё через Telegram</h3><p>Так запросы будут привязаны к владельцу, а контакт нельзя будет подменить.</p></div><button className="primary" type="button" onClick={() => openTelegramDestination(`https://t.me/${rc1Config.botUsername}?startapp`)}>Открыть в Telegram</button></article>}
             {profile.backendPetId && nearbyState === 'loading' && <article className="social-loading-state" role="status"><span /><div><b>Обновляю знакомства</b><p>Покажу реальные анкеты без точных адресов.</p></div></article>}
             {profile.backendPetId && nearbyState === 'error' && <article className="social-empty-state" role="alert"><div><h3>Не получилось обновить раздел</h3><p>Проверь соединение и попробуй ещё раз.</p></div><button type="button" onClick={() => loadSocialSurface().catch(() => setNearbyState('error'))}>Повторить</button></article>}
 
@@ -2888,7 +3031,8 @@ export default function Home() {
           </div>
         </WatercolorScreen>}
 
-        {tab === 'calendar' && <WatercolorScreen className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Добавить, перенести, закрыть или вернуть дело без отдельной возни с календарём." aside={<span className="watercolor-hero-mark">▣</span>}>
+        {hasDog && tab === 'calendar' && <WatercolorScreen className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Добавить, перенести, закрыть или вернуть дело без отдельной возни с календарём." aside={<CalendarDots className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+          <SecondaryFlowHeader label="Назад во Всё" onBack={() => closeSecondaryFlow('today')} />
           <section className="care-workbench" aria-label="Дела ухода">
             <div className="care-workbench-head">
               <div><span className="eyebrow">сейчас в плане</span><h3>{activeReminders.length ? formatCount(activeReminders.length, ['активное дело', 'активных дела', 'активных дел']) : 'Добавь первое дело'}</h3></div>
@@ -2981,7 +3125,8 @@ export default function Home() {
           </article>
         </WatercolorScreen>}
 
-        {tab === 'card' && <WatercolorScreen className="public-card-screen" tone="gold" eyebrow="памятка" title="Что увидит другой человек" caption="Короткая карточка для догситтера, грумера, друга или человека во дворе. Без точного адреса и без лишней анкеты." aside={<span className="watercolor-hero-mark">◇</span>}>
+        {hasDog && tab === 'card' && <WatercolorScreen className="public-card-screen" tone="gold" eyebrow="памятка" title="Что увидит другой человек" caption="Короткая карточка для догситтера, грумера, друга или человека во дворе. Без точного адреса и без лишней анкеты." aside={<PawPrint className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+          <SecondaryFlowHeader label="Назад в Псё" onBack={() => closeSecondaryFlow('profile')} />
           <section className="public-card-review" aria-label="Предпросмотр памятки собаки">
             <article className="public-card-preview-panel">
               <div className="public-card-preview-head">
@@ -3046,19 +3191,27 @@ export default function Home() {
           </article>
         </WatercolorScreen>}
 
-        {tab === 'profile' && <WatercolorScreen className="profile-ux-2025" tone="gold" eyebrow="умный профиль" title={profile.dogName || 'Профиль пса'} caption={profileReady ? 'Минимум готов: Псё уже персонализирует подсказки, места и напоминания.' : `Следующий шаг: ${missingProfileFields[0] || 'сохранить профиль'}.`}>
+        {hasDog && tab === 'profile' && <WatercolorScreen className="profile-ux-2025" tone="gold" eyebrow="умный профиль" title={profile.dogName || 'Профиль пса'} caption={profileReady ? 'Минимум готов: Псё уже персонализирует подсказки, места и напоминания.' : `Следующий шаг: ${missingProfileFields[0] || 'сохранить профиль'}.`}>
           <section className="smart-profile-hero" aria-label="Сводка профиля собаки">
             <div className="smart-profile-identity">
               <GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="large" />
               <div className="smart-profile-nameplate">
-                <span>{selectedBreed.emoji} {breedLabel}</span>
-                <h3>{profile.dogName || 'Про него'}</h3>
-                <p>{profile.bio || `Запишем ${missingProfileFields[0]?.toLowerCase() || 'важное'}, чтобы не держать в голове.`}</p>
+                <span>{profile.dogName ? breedLabel : 'Личный профиль'}</span>
+                <h3>{profile.dogName || 'Добавь собаку'}</h3>
+                <p>{profile.bio || (profile.dogName ? `Следующий шаг — ${missingProfileFields[0]?.toLowerCase() || 'сохранить важное'}.` : 'Начни с имени. Остальное можно заполнить позже.')}</p>
               </div>
             </div>
             <div className="smart-profile-readiness" aria-label="Заполнение профиля">
-              <div className="readiness-ring" style={{ '--ready': `${Math.round((completionCount / profileChecklist.length) * 100)}%` } as CSSProperties}><b>{Math.round((completionCount / profileChecklist.length) * 100)}%</b></div>
-              <div><b>{profileReady ? 'Карточка собрана' : 'Что дальше'}</b><p>{profileReady ? 'Можно проверить памятку для людей.' : missingProfileFields[0] || 'Сохранить профиль'}</p><button className="mini-next-action" onClick={() => profileReady ? setTab('card') : document.querySelector<HTMLInputElement | HTMLSelectElement>('.profile-minimum-panel input, .profile-minimum-panel select')?.focus()}>{profileReady ? 'Открыть памятку' : 'Записать'}</button></div>
+              <div className="readiness-score"><b>{Math.round((completionCount / profileChecklist.length) * 100)}%</b><span>готово</span></div>
+              <div><b>{profileReady ? 'Карточка собрана' : profile.dogName ? 'Следующий шаг' : 'Первый шаг'}</b><p>{profileReady ? 'Можно проверить памятку для людей.' : profile.dogName ? missingProfileFields[0] || 'Сохранить профиль' : 'Как зовут собаку?'}</p><button className="primary mini-next-action" onClick={() => {
+                if (profileReady) {
+                  setTab('card');
+                  return;
+                }
+                const details = document.querySelector<HTMLDetailsElement>('.profile-minimum-panel');
+                if (details) details.open = true;
+                requestAnimationFrame(() => details?.querySelector<HTMLInputElement | HTMLSelectElement>('input, select')?.focus());
+              }}>{profileReady ? 'Открыть памятку' : profile.dogName ? 'Продолжить' : 'Добавить имя'}</button></div>
             </div>
           </section>
 
@@ -3087,24 +3240,26 @@ export default function Home() {
             </div>}
           </section>
 
-          <PaperSheet className="profile-minimum-panel">
-            <div className="profile-panel-head"><span>01</span><div><b>Быстрый портрет</b><p>Отвечай как в чате: пару тапов уже дают полезную карточку.</p></div></div>
-            <div className="smart-field-grid">
-              <label className="field-wide">Имя<input value={profile.dogName} onChange={(event) => updateProfile({ dogName: event.target.value })} placeholder="Имя собаки" /></label>
+          <details className="profile-minimum-panel profile-details">
+            <summary><div><b>Основные данные</b><p>{profileReady ? 'Профиль готов. Открой, если нужно что-то изменить.' : 'Заполни только то, что помогает в уходе прямо сейчас.'}</p></div><span>{completionCount}/{profileChecklist.length}</span></summary>
+            <div className="details-body">
+              <div className="smart-field-grid">
+                <label className="field-wide">Имя<input value={profile.dogName} onChange={(event) => updateProfile({ dogName: event.target.value })} placeholder="Имя собаки" /></label>
+              </div>
+              <div className="choice-bubble-stack">
+                <ChoiceBubbles label="Возраст" value={profile.lifeStage} options={lifeStageOptions} onChange={(value) => updateProfile({ lifeStage: value })} />
+                <ChoiceBubbles label="Размер" value={profile.size} options={sizeOptions} onChange={(value) => updateProfile({ size: value })} />
+                <ChoiceBubbles label="Как знакомиться" value={profile.socialMode} options={socialOptions} onChange={(value) => updateProfile({ socialMode: value })} hint="Это увидят люди в карточке." />
+                <ChoiceBubbles label="Энергия" value={profile.energyLevel} options={energyOptions} onChange={(value) => updateProfile({ energyLevel: value })} />
+                <ChoiceBubbles label="Вакцины" value={profile.vaccineStatus} options={vaccineOptions} onChange={(value) => updateProfile({ vaccineStatus: value })} />
+                <ChoiceBubbles label="Обработка" value={profile.parasiteStatus} options={parasiteOptions} onChange={(value) => updateProfile({ parasiteStatus: value })} />
+              </div>
+              <button className="primary full" type="button" disabled={profileSaving || !profile.dogName.trim()} onClick={savePrivateProfile}>{profileSaving ? 'Сохраняю…' : 'Сохранить личный профиль'}</button>
+              <p className="privacy-hint">Профиль виден только тебе. Памятка для других публикуется отдельно.</p>
             </div>
-            <div className="choice-bubble-stack">
-              <ChoiceBubbles label="Возраст" value={profile.lifeStage} options={lifeStageOptions} onChange={(value) => updateProfile({ lifeStage: value })} />
-              <ChoiceBubbles label="Размер" value={profile.size} options={sizeOptions} onChange={(value) => updateProfile({ size: value })} />
-              <ChoiceBubbles label="Как знакомиться" value={profile.socialMode} options={socialOptions} onChange={(value) => updateProfile({ socialMode: value })} hint="Это увидят люди в карточке." />
-              <ChoiceBubbles label="Энергия" value={profile.energyLevel} options={energyOptions} onChange={(value) => updateProfile({ energyLevel: value })} />
-              <ChoiceBubbles label="Вакцины" value={profile.vaccineStatus} options={vaccineOptions} onChange={(value) => updateProfile({ vaccineStatus: value })} />
-              <ChoiceBubbles label="Обработка" value={profile.parasiteStatus} options={parasiteOptions} onChange={(value) => updateProfile({ parasiteStatus: value })} />
-            </div>
-            <button className="primary full" type="button" disabled={profileSaving || !profile.dogName.trim()} onClick={savePrivateProfile}>{profileSaving ? 'Сохраняю…' : 'Сохранить личный профиль'}</button>
-            <p className="privacy-hint">Профиль виден только тебе. Памятка для других публикуется отдельно.</p>
-          </PaperSheet>
+          </details>
 
-          <details className="profile-details smart-section" open><summary><span>02</span><div><b>Карточка для людей</b></div></summary>
+          <details className="profile-details smart-section"><summary><span>02</span><div><b>Карточка для людей</b></div></summary>
             <div className="details-body public-card-composer">
               <label>Короткое био<input value={profile.bio} onChange={(event) => updateProfile({ bio: event.target.value })} placeholder="Спокойная, любит нюхать, боится самокатов" /></label>
               <SuggestionBubbles label="Подсказки для био" options={['Спокойная, любит нюхать', 'Активный, лучше знакомить по одному', 'Боится самокатов и резких звуков', 'Не давать еду без спроса']} onPick={(bio) => updateProfile({ bio })} />
@@ -3199,14 +3354,20 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {tab === 'things' && <WatercolorScreen className="things-composition" tone="gold" eyebrow="вещи" title="Что нужно именно этой собаке" caption="Уход, повторные покупки и подарки без превращения Псё в магазин." aside={<span className="watercolor-hero-mark">◈</span>}>
-          <PaperSheet className="thing-capture">
+        {hasDog && tab === 'things' && <WatercolorScreen className="things-composition" tone="gold" eyebrow="вещи" title="Что нужно именно этой собаке" caption="Личный список покупок и услуг для ухода." aside={<ShoppingBag className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+          <div className="screen-primary-action">
+            <button className="primary" type="button" aria-expanded={thingCaptureOpen} onClick={() => setThingCaptureOpen((open) => !open)}>
+              {thingCaptureOpen ? 'Закрыть добавление' : 'Добавить вещь'}
+            </button>
+            <span>{formatCount(wantedWishlist.length, ['позиция', 'позиции', 'позиций'])}</span>
+          </div>
+
+          {thingCaptureOpen && <PaperSheet className="thing-capture">
             <div className="section-title">
-              <div><span className="eyebrow">быстро добавить</span><h3>Вещь, услуга или повторная покупка</h3></div>
-              <span>{formatCount(wantedWishlist.length, ['позиция', 'позиции', 'позиций'])}</span>
+              <div><span className="eyebrow">новая позиция</span><h3>Что нужно</h3></div>
             </div>
-            <input value={newWishTitle} onChange={(event) => setNewWishTitle(event.target.value)} placeholder="Адресник, корм, груминг, игрушка…" />
-            <select value={newWishCategory} onChange={(event) => setNewWishCategory(event.target.value)}>
+            <label>Название<input value={newWishTitle} onChange={(event) => setNewWishTitle(event.target.value)} placeholder="Например, адресник" /></label>
+            <label>Категория<select value={newWishCategory} onChange={(event) => setNewWishCategory(event.target.value)}>
               <option value="gear">амуниция</option>
               <option value="food">корм</option>
               <option value="treats">лакомства</option>
@@ -3215,16 +3376,12 @@ export default function Home() {
               <option value="grooming">груминг</option>
               <option value="service">сервис</option>
               <option value="other">другое</option>
-            </select>
-            <input value={newWishReason} onChange={(event) => setNewWishReason(event.target.value)} placeholder="Зачем это нужно собаке" />
+            </select></label>
+            <label>Зачем <span className="field-optional">необязательно</span><input value={newWishReason} onChange={(event) => setNewWishReason(event.target.value)} placeholder="Например, старый адресник потерялся" /></label>
             <button className="primary full" onClick={() => createWishlistItem()} disabled={!newWishTitle.trim()}>{newWishTitle.trim() ? 'Добавить в вещи' : 'Напиши название'}</button>
-          </PaperSheet>
+          </PaperSheet>}
 
-          {wishlistHints.length > 0 && <section className="things-hint-shelf" aria-label="Подсказки вещей">
-            {wishlistHints.map((hint) => <article key={hint.title}><b>{hint.title}</b><p>{hint.reason}</p><button className="secondary" onClick={() => createWishlistItem(hint)}>Добавить</button></article>)}
-          </section>}
-
-          {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <article className="empty-state"><b>Вещей пока нет</b><p>Добавь адресник, корм, груминг, игрушку или услугу. Псё будет связывать это с профилем, триггерами и уходом.</p></article>}
+          {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <article className="empty-state"><b>Список пока пуст</b><p>Здесь можно держать покупки и услуги для {profile.dogName}.</p></article>}
 
           {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Вещи собаки">
             {wantedWishlist.map((item) => <article key={item.id} className={`wishlist-item priority-${item.priority}`}>
@@ -3235,6 +3392,10 @@ export default function Home() {
                 <button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button>
               </div>
             </article>)}
+          </section>}
+
+          {wantedWishlist.length > 0 && wishlistHints.length > 0 && <section className="things-hint-shelf" aria-label="Подсказки вещей">
+            {wishlistHints.map((hint) => <article key={hint.title}><b>{hint.title}</b><p>{hint.reason}</p><button className="secondary" onClick={() => createWishlistItem(hint)}>Добавить</button></article>)}
           </section>}
 
           {boughtWishlist.length > 0 && <section className="wishlist-list" aria-label="История вещей">
@@ -3250,46 +3411,42 @@ export default function Home() {
             <button type="button" onClick={restoreWishlistItem}>Вернуть</button>
           </div>}
 
-          <article className="public-card-privacy-note">
-            <b>Не магазин вместо заботы</b>
-            <p>Партнёрские рекомендации должны быть помечены отдельно. Сейчас это личный список хозяина: что купить, повторить, подарить или проверить для конкретной собаки.</p>
-          </article>
         </WatercolorScreen>}
 
-        {tab === 'map' && <WatercolorScreen className="places-composition" tone="green" eyebrow="места" title="Куда можно" caption="Места для прогулок, рисков и клиник." aside={<span className="watercolor-hero-mark">⌖</span>}>
-          <section className="map-privacy-modes" aria-label="Приватность карты">
-            <button type="button" className={mapSaveMode === 'private' ? 'active' : ''} onClick={() => setMapSaveMode('private')} aria-pressed={mapSaveMode === 'private'}>
-              <b>Только мне</b>
-              <span>личное место или маршрут</span>
+        {hasDog && tab === 'map' && <WatercolorScreen className="places-composition" tone="green" eyebrow="места" title="Куда можно" caption="Места для прогулок, рисков и клиник." aside={<MapPin className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+          <div className="screen-primary-action">
+            <button className="primary" type="button" aria-expanded={mapComposerOpen} onClick={() => setMapComposerOpen((open) => !open)}>
+              {mapComposerOpen ? 'Закрыть добавление' : 'Добавить место или маршрут'}
             </button>
-            <button type="button" className={mapSaveMode === 'shared' ? 'active' : ''} onClick={() => setMapSaveMode('shared')} aria-pressed={mapSaveMode === 'shared'}>
-              <b>По ссылке</b>
-              <span>скопировать ссылку после сохранения</span>
-            </button>
-          </section>
+          </div>
+          {mapComposerOpen && <div className="map-kind-picker" aria-label="Что добавить">
+            <button type="button" className={drawMode === 'point' ? 'active' : ''} aria-pressed={drawMode === 'point'} onClick={() => { setDrawMode('point'); setRoutePoints([]); }}>Место</button>
+            <button type="button" className={drawMode === 'route' ? 'active' : ''} aria-pressed={drawMode === 'route'} onClick={() => { setDrawMode('route'); setPickedZonePoint(null); }}>Маршрут</button>
+          </div>}
           <section className="places-field">
             <PaperSheet className="map-sheet"><LiveMap zones={zones} features={ownerRoutes} picked={pickedZonePoint} onPick={handleMapPick} drawMode={drawMode} routePoints={routePoints} onMapClick={handleMapClick} /></PaperSheet>
-            <FloatingNote className="map-help"><b>{drawMode === 'route' ? 'Рисуешь маршрут' : 'Добавь место'}</b><p>{drawMode === 'route' ? `Точек в маршруте: ${routePoints.length}` : 'Сохраним примерно, без точного адреса.'}</p>{pickedZonePoint && <small>Примерное место выбрано</small>}</FloatingNote>
-            <div className="care-actions place-chips"><button onClick={() => createZone({ title: 'Тихий двор для спокойной прогулки', type: 'safe_place', note: 'Без точного адреса, только памятка владельца.' })}>🟢 Тихое место</button><button onClick={() => createZone({ title: 'Зона риска: самокаты / шум', type: 'risk_zone', note: profile.triggers || 'Уточнить триггеры в паспорте.' })}>⚠️ Зона риска</button><button onClick={() => createZone({ title: 'Ветклиника', type: 'clinic', note: profile.vetClinic || 'Добавить контакт в паспорте.' })}>🏥 Ветклиника</button></div>
+            {mapComposerOpen && drawMode !== 'none' && <FloatingNote className="map-help"><b>{drawMode === 'route' ? 'Рисуешь маршрут' : 'Выбери место'}</b><p>{drawMode === 'route' ? `Точек в маршруте: ${routePoints.length}` : 'Коснись карты — сохраним приблизительно.'}</p>{pickedZonePoint && <small>Примерное место выбрано</small>}</FloatingNote>}
           </section>
-          <p className="map-accessibility-note">Коснись карты, чтобы выбрать примерное место, или сохрани его текстом ниже.</p>
-          <FloatingNote className="place-add-note">
-            <div className="social-profile-actions">
-              <button className="active" type="button">Личные места</button>
-              <button className={drawMode === 'point' ? 'active' : ''} onClick={() => { setDrawMode(drawMode === 'point' ? 'none' : 'point'); setRoutePoints([]); }}>Место</button>
-              <button className={drawMode === 'route' ? 'active' : ''} onClick={() => { setDrawMode(drawMode === 'route' ? 'none' : 'route'); setPickedZonePoint(null); }}>Маршрут</button>
+          {mapComposerOpen && drawMode !== 'none' && <section className="place-add-note" aria-label="Добавление на карту">
+            <div className="place-add-body">
+                <p className="map-accessibility-note">{drawMode === 'route' ? 'Отметь на карте хотя бы две точки маршрута.' : 'Коснись карты или сохрани место только текстом.'}</p>
+                <label>Название<input value={newZoneTitle} onChange={(event) => setNewZoneTitle(event.target.value)} placeholder={drawMode === 'route' ? 'Например, утренняя прогулка' : 'Например, тихий двор'} /></label>
+                {drawMode === 'point' && <label>Тип<select value={newZoneType} onChange={(event) => setNewZoneType(event.target.value)}><option value="safe_place">безопасное место</option><option value="risk_zone">зона риска</option><option value="home_area">домашний район</option><option value="clinic">клиника</option><option value="shop">зоомагазин</option><option value="grooming">груминг</option></select></label>}
+                <label>Заметка <span className="field-optional">необязательно</span><input value={newZoneNote} onChange={(event) => setNewZoneNote(event.target.value)} placeholder="Что важно помнить" /></label>
+                <section className="map-privacy-modes" aria-label="Приватность карты">
+                  <button type="button" className={mapSaveMode === 'private' ? 'active' : ''} onClick={() => setMapSaveMode('private')} aria-pressed={mapSaveMode === 'private'}><b>Только мне</b><span>личная запись</span></button>
+                  <button type="button" className={mapSaveMode === 'shared' ? 'active' : ''} onClick={() => setMapSaveMode('shared')} aria-pressed={mapSaveMode === 'shared'}><b>По ссылке</b><span>можно закрыть позже</span></button>
+                </section>
+                <button className="primary full" disabled={!newZoneTitle.trim() || (drawMode === 'route' && routePoints.length < 2) || (mapSaveMode === 'shared' && drawMode === 'point' && !pickedZonePoint)} onClick={() => {
+                  if (drawMode === 'route' || mapSaveMode === 'shared') void createMapFeature(mapSaveMode);
+                  else void createZone();
+                }}>
+                  {drawMode === 'route' && routePoints.length < 2 ? 'Отметь две точки' : !newZoneTitle.trim() ? 'Добавь название' : mapSaveMode === 'shared' ? 'Сохранить и получить ссылку' : 'Сохранить'}
+                </button>
+                {routePoints.length > 0 && <button type="button" className="secondary" onClick={() => setRoutePoints([])}>Очистить маршрут</button>}
+                <p className="privacy-hint">Точные координаты не показываются другим людям. Ссылку можно закрыть в любой момент.</p>
             </div>
-            <input value={newZoneTitle} onChange={(event) => setNewZoneTitle(event.target.value)} placeholder="Например: тихий двор, шумный перекрёсток, ветклиника" />
-            <select value={newZoneType} onChange={(event) => setNewZoneType(event.target.value)}><option value="safe_place">безопасное место</option><option value="risk_zone">зона риска</option><option value="home_area">домашний район</option><option value="walk_route">маршрут</option><option value="clinic">клиника</option><option value="shop">зоомагазин</option><option value="grooming">груминг</option></select>
-            <input value={newZoneNote} onChange={(event) => setNewZoneNote(event.target.value)} placeholder="Заметка: самокаты, тихо утром, хороший врач…" />
-            <button className="primary full" onClick={() => createZone()} disabled={!newZoneTitle.trim()}>{!newZoneTitle.trim() ? 'Добавь название места' : pickedZonePoint ? 'Сохранить примерное место' : 'Сохранить без отметки на карте'}</button>
-            <div className="care-actions">
-              {drawMode === 'route' && routePoints.length > 1 && <button onClick={saveRoute}>{mapSaveMode === 'private' ? 'Сохранить лично' : 'Сохранить и получить ссылку'}</button>}
-              {drawMode !== 'route' && pickedZonePoint && <button onClick={() => createMapFeature(mapSaveMode)}>{mapSaveMode === 'private' ? 'Сохранить точку лично' : 'Сохранить точку для ссылки'}</button>}
-              {routePoints.length > 0 && <button onClick={() => setRoutePoints([])}>Очистить маршрут</button>}
-            </div>
-            <p className="privacy-hint">Точные координаты не показываются другим людям. Личная карта доступна только тебе, а ссылку можно закрыть в любой момент.</p>
-          </FloatingNote>
+          </section>}
           {zones.length === 0 && <article className="empty-state"><b>Мест пока нет</b><p>Добавь клинику, парк или любое важное место.</p></article>}
           {zones.length > 0 && <div className="place-ribbon">{zones.map((zone) => <article key={zone.id} className={`zone-card ${zone.type}`}><div><b>{zone.title}</b><p>{formatZoneMeta(zone)}</p></div><div className="wishlist-actions"><button onClick={() => updateZone(zone.id, { type: zone.type === 'risk_zone' ? 'safe_place' : 'risk_zone' })}>{zone.type === 'risk_zone' ? 'Сделать спокойным местом' : 'Отметить как риск'}</button>{pickedZonePoint && <button onClick={() => updateZone(zone.id, { approximateLat: pickedZonePoint.lat, approximateLng: pickedZonePoint.lng })}>Переставить</button>}<button onClick={() => updateZone(zone.id, { radiusMeters: (zone.radius_meters || zone.radiusMeters || 500) + 250 })}>Увеличить радиус</button><button onClick={() => deleteZone(zone.id)}>Удалить</button></div></article>)}</div>}
           {removedZone && <div className="restore-notice" role="status">
@@ -3298,7 +3455,7 @@ export default function Home() {
           </div>}
           <section aria-label="Мои маршруты">
             <div className="section-title"><div><span className="eyebrow">прогулки</span><h3>Мои маршруты</h3></div></div>
-            {ownerRoutes.length === 0 && <article className="empty-state"><b>Маршрутов пока нет</b><p>Нажми «Маршрут», отметь на карте хотя бы две точки и сохрани прогулку.</p></article>}
+            {ownerRoutes.length === 0 && <article className="empty-state"><b>Маршрутов пока нет</b><p>Начни с кнопки «Добавить место или маршрут» выше.</p></article>}
             {ownerRoutes.length > 0 && <div className="place-ribbon">{ownerRoutes.map((route) => <article key={route.id} className="zone-card walk_route">
               {editingRouteId === route.id ? <>
                 <div><b>Изменить маршрут</b><input value={routeTitleDraft} onChange={(event) => setRouteTitleDraft(event.target.value)} aria-label="Название маршрута" /><input value={routeDescriptionDraft} onChange={(event) => setRouteDescriptionDraft(event.target.value)} aria-label="Заметка о маршруте" /></div>
@@ -3335,7 +3492,6 @@ export default function Home() {
         onOpenHistory={() => { setCareView('history'); setTab('calendar'); }}
         onOpenCard={() => setTab('card')}
       />
-      <AppNavigation active={tab} onNavigate={setTab} />
       <CareActionNotice
         feedback={careFeedback}
         onUndo={undoLastCareCompletion}
@@ -3350,8 +3506,20 @@ export default function Home() {
       <CoreOnboarding
         open={dogCreationOpen}
         dogName={heroNameDraft}
+        lifeStage={profile.lifeStage}
+        sex={profile.sex}
+        breedId={profile.breedId}
+        lifeStageOptions={lifeStageOptions}
+        sexOptions={sexOptions}
+        breedOptions={breedCatalog}
         busy={onboardingSaving}
         onNameChange={(value) => { setHeroNameDraft(value); dogCreationKeyRef.current = null; setError(''); }}
+        onLifeStageChange={(value) => updateProfile({ lifeStage: value })}
+        onSexChange={(value) => updateProfile({ sex: value })}
+        onBreedChange={(value) => {
+          const breed = breedCatalog.find((item) => item.id === value);
+          updateProfile({ breedId: value as BreedId, breedGroupId: breed?.groupId ?? 'mixed' });
+        }}
         onDismiss={() => { if (!onboardingSaving) setDogCreationOpen(false); }}
         onSubmit={saveMinimalDog}
       />

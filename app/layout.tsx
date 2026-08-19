@@ -1,5 +1,21 @@
 import type { Metadata, Viewport } from 'next';
+import { Nunito, Russo_One } from 'next/font/google';
 import './globals.css';
+import './refinement.css';
+import './pouf.css';
+
+const nunito = Nunito({
+  subsets: ['cyrillic', 'latin'],
+  display: 'swap',
+  variable: '--font-pouf',
+});
+
+const russo = Russo_One({
+  subsets: ['cyrillic', 'latin'],
+  weight: '400',
+  display: 'swap',
+  variable: '--font-display-cyrillic',
+});
 
 export const metadata: Metadata = {
   title: 'Псё — ассистент владельца собаки',
@@ -25,13 +41,13 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#f7fbf8',
+  themeColor: '#f0e9ff',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body>
+      <body className={`${nunito.variable} ${russo.variable}`}>
         <script src="https://telegram.org/js/telegram-web-app.js" async />
         {children}
       </body>

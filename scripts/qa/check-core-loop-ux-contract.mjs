@@ -49,15 +49,19 @@ for (const token of ['@media (min-width: 768px)', '@media (min-width: 1024px)', 
   if (!css.includes(token)) failures.push(`responsive shell missing: ${token}`);
 }
 
-for (const token of ['today-first-viewport', 'Сегодня с', 'Открыть план']) {
+for (const token of ['today-first-viewport', 'ближайшее дело', 'Открыть план', '<StatusButton', 'successAnnouncement', 'errorAnnouncement']) {
   if (!nextCareCard.includes(token)) failures.push(`focused Today missing: ${token}`);
+}
+
+if (!page.includes('formatTodayTitle(profile.dogName)')) {
+  failures.push('focused Today missing its single dog-aware screen title');
 }
 
 for (const token of ['<details', 'Записать наблюдение', 'Последние записи']) {
   if (!observationDisclosure.includes(token)) failures.push(`observation disclosure missing: ${token}`);
 }
 
-for (const token of ['Добавить собаку', 'Сейчас достаточно имени', 'Имя собаки', 'Не сейчас']) {
+for (const token of ['Профиль собаки', 'короткий каркас', 'Имя собаки', 'Возраст', 'Пол', 'Порода', 'Не сейчас', 'Завести профиль']) {
   if (!onboarding.includes(token)) failures.push(`onboarding contract missing: ${token}`);
 }
 
@@ -66,8 +70,8 @@ for (const token of ['шаг 1 из 2', 'шаг 2 из 2', 'Добавить д�
 }
 
 if (page.includes('Имя, правило и первое дело')) failures.push('onboarding still overloads one step');
-const todayStart = page.indexOf("{tab === 'today'");
-const todayEnd = page.indexOf("{tab === 'assistant'", todayStart);
+const todayStart = page.indexOf("{hasDog && tab === 'today'");
+const todayEnd = page.indexOf("{hasDog && tab === 'assistant'", todayStart);
 const todayBlock = todayStart >= 0 && todayEnd > todayStart ? page.slice(todayStart, todayEnd) : '';
 if (todayBlock.includes('className="plus-gate-card"')) {
   failures.push('Today still contains a Plus promotion');

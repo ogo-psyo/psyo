@@ -39,7 +39,12 @@ const LiveMapClient = dynamic(
   () => import('./LiveMapClient').then((module) => module.LiveMapClient),
   {
     ssr: false,
-    loading: () => <div className="live-map" aria-label="Карта загружается" />,
+    loading: () => (
+      <div className="live-map map-surface-status" role="status">
+        <b>Загружаю карту</b>
+        <span>Места и маршруты появятся здесь.</span>
+      </div>
+    ),
   },
 );
 

@@ -63,8 +63,8 @@ if (files.page.includes('service-state-strip')) {
   failures.push('readiness/service status strips must not be exposed in primary user screens');
 }
 
-const cardStart = files.page.indexOf("{tab === 'card'");
-const cardEnd = files.page.indexOf("{tab === 'profile'", cardStart);
+const cardStart = files.page.indexOf("{hasDog && tab === 'card'");
+const cardEnd = files.page.indexOf("{hasDog && tab === 'profile'", cardStart);
 const cardBlock = cardStart >= 0 && cardEnd > cardStart ? files.page.slice(cardStart, cardEnd) : '';
 if (!cardBlock) failures.push('public card tab block missing');
 
@@ -108,9 +108,9 @@ for (const token of ["label: 'всё'", "label: 'псё'", "label: 'карта'"
 for (const token of ["id: 'calendar'", "id: 'card'", "id: 'assistant'"]) {
   if (files.navigation.includes(token)) failures.push(`secondary surface leaked into primary nav: ${token}`);
 }
-if (!files.page.includes("{tab === 'things'")) failures.push('things/wishlist tab surface missing');
-if (!files.page.includes("{tab === 'assistant'")) failures.push('assistant tab surface missing');
-if (!files.page.includes("{tab === 'nearby'")) failures.push('socialization/nearby tab surface missing');
+if (!files.page.includes("tab === 'things'")) failures.push('things/wishlist tab surface missing');
+if (!files.page.includes("tab === 'assistant'")) failures.push('assistant tab surface missing');
+if (!files.page.includes("tab === 'nearby'")) failures.push('socialization/nearby tab surface missing');
 
 for (const token of ["saveOnboardingCarePlan('today')", 'Добавить дело и открыть Сегодня']) {
   if (`${files.page}\n${files.onboarding}`.includes(token)) failures.push(`free shell must not require a first care task: ${token}`);
@@ -119,7 +119,7 @@ for (const token of ["'generating'", "'reveal'", 'launch-next-grid']) {
   if (files.page.includes(token)) failures.push(`onboarding must not restore a bypass route: ${token}`);
 }
 
-const mapStart = files.page.indexOf("{tab === 'map'");
+const mapStart = files.page.indexOf("{hasDog && tab === 'map'");
 const mapEnd = files.page.indexOf("{error &&", mapStart);
 const mapBlock = mapStart >= 0 && mapEnd > mapStart ? files.page.slice(mapStart, mapEnd) : '';
 if (!mapBlock) failures.push('map tab block missing');

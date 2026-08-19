@@ -1,4 +1,4 @@
-# Product
+# PRODUCT — Псё
 
 ## Register
 
@@ -6,11 +6,11 @@ product
 
 ## Users
 
-Dog owners using PSYO as a Telegram-first care companion, plus trusted people who may receive a limited public dog card or shared map link. Owners are often in practical, time-sensitive contexts: walking, handing the dog to another person, checking reminders, or deciding what is safe to share.
+Dog owners using Псё as a Telegram-first care companion, plus trusted people who may receive a limited public dog card or shared map link. Owners are often in practical, time-sensitive contexts: walking, handing the dog to another person, checking reminders, or deciding what is safe to share.
 
 ## Product Purpose
 
-PSYO keeps a dog's daily care, profile, observations, reminders, places, wishlist, and safe sharing flows in one owner-controlled product. Success means the owner can act quickly, share only what they intend to expose, and trust that public surfaces do not leak private details.
+Псё keeps a dog's daily care, profile, observations, reminders, places, wishlist, and safe sharing flows in one owner-controlled product. Success means the owner can act quickly, share only what they intend to expose, and trust that public surfaces do not leak private details.
 
 ## Brand Personality
 

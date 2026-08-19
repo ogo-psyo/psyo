@@ -66,7 +66,7 @@ for (const token of [
   "observationsStorageKey",
   "ObservationChoice",
   "submitObservation",
-  "{tab === 'today'",
+  "tab === 'today'",
   '<ObservationDisclosure',
   'className="profile-observation-timeline"',
   'aria-label="История наблюдений собаки"',

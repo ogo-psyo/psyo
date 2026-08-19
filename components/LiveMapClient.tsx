@@ -1,11 +1,13 @@
 'use client';
 
-import { Circle, Marker, MapContainer, Polyline, Popup, TileLayer, useMapEvents } from 'react-leaflet';
+import { useState } from 'react';
+import { AttributionControl, Circle, Marker, MapContainer, Polyline, Popup, TileLayer, useMapEvents } from 'react-leaflet';
 import type { LiveMapProps, MapFeature } from './LiveMap';
 import 'leaflet/dist/leaflet.css';
 
 const defaultCenter: [number, number] = [55.751244, 37.618423];
-const yandexTiles = 'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}';
+const mapTiles = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+const mapAttribution = '&copy; OpenStreetMap contributors &copy; CARTO';
 
 function toNumber(value: unknown): number | null {
   const next = Number(value);
@@ -78,6 +80,8 @@ export function LiveMapClient({
   onPick,
   onMapClick,
 }: LiveMapProps) {
+  const [tilesReady, setTilesReady] = useState(false);
+  const [tilesFailed, setTilesFailed] = useState(false);
   const mappedZones = zones
     .map((zone) => ({
       ...zone,
@@ -89,11 +93,22 @@ export function LiveMapClient({
   const draftPositions = draftRoutePositions(routePoints);
 
   return (
-    <MapContainer center={defaultCenter} zoom={12} className="live-map" zoomControl attributionControl>
-      <TileLayer url={yandexTiles} attribution="Yandex Maps" maxZoom={19} />
-      <MapEvents onMapClick={onMapClick} onPick={onPick} />
+    <div className="live-map-frame">
+      <MapContainer center={defaultCenter} zoom={12} className="live-map" zoomControl attributionControl={false}>
+        <AttributionControl prefix={false} />
+        <TileLayer
+          url={mapTiles}
+          attribution={mapAttribution}
+          subdomains="abcd"
+          maxZoom={20}
+          eventHandlers={{
+            load: () => setTilesReady(true),
+            tileerror: () => setTilesFailed(true),
+          }}
+        />
+        <MapEvents onMapClick={onMapClick} onPick={onPick} />
 
-      {mappedZones.map((zone) => {
+        {mappedZones.map((zone) => {
         const color = zoneColor(zone.type);
         return (
           <Circle
@@ -110,9 +125,9 @@ export function LiveMapClient({
             </Popup>
           </Circle>
         );
-      })}
+        })}
 
-      {features.map((feat) => {
+        {features.map((feat) => {
         if (feat.type === 'point' && feat.lat && feat.lng) {
           const color = zoneColor(feat.zone_type || 'safe_place');
           return (
@@ -150,19 +165,27 @@ export function LiveMapClient({
         }
 
         return null;
-      })}
+        })}
 
-      {draftPositions.length > 1 && (
-        <Polyline positions={draftPositions} pathOptions={{ color: '#22c55e', weight: 4, dashArray: '6 8' }}>
-          <Popup>Новый маршрут</Popup>
-        </Polyline>
-      )}
+        {draftPositions.length > 1 && (
+          <Polyline positions={draftPositions} pathOptions={{ color: '#22c55e', weight: 4, dashArray: '6 8' }}>
+            <Popup>Новый маршрут</Popup>
+          </Polyline>
+        )}
 
-      {picked && (
-        <Marker position={[picked.lat, picked.lng]}>
-          <Popup>Новая примерная точка зоны</Popup>
-        </Marker>
+        {picked && (
+          <Marker position={[picked.lat, picked.lng]}>
+            <Popup>Новая примерная точка зоны</Popup>
+          </Marker>
+        )}
+      </MapContainer>
+
+      {!tilesReady && (
+        <div className="map-surface-status map-surface-overlay" role="status">
+          <b>{tilesFailed ? 'Карта пока недоступна' : 'Загружаю карту'}</b>
+          <span>{tilesFailed ? 'Место можно указать текстом ниже.' : 'Места и маршруты появятся здесь.'}</span>
+        </div>
       )}
-    </MapContainer>
+    </div>
   );
 }

@@ -72,7 +72,10 @@ async function runScenario(viewport, label) {
   await task.waitFor();
 
   await task.getByRole('button', { name: 'Удалить', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Удалить дело', exact: true }).click();
+  const destructiveConfirm = dialog.getByRole('button', { name: 'Удалить дело', exact: true });
+  await destructiveConfirm.dispatchEvent('pointerdown', { button: 0 });
+  await page.waitForTimeout(1300);
+  await destructiveConfirm.dispatchEvent('pointerup', { button: 0 });
   await task.waitFor({ state: 'detached' });
 
   await page.close();

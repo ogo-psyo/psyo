@@ -22,7 +22,7 @@ for (const token of [
   'По ссылке',
   'Точные координаты не показываются',
   'features={ownerRoutes}',
-  'setOwnerRoutes(normalizeOwnerRoutes(payload.routes))',
+  'setOwnerRoutes(normalizeOwnerRoutes(',
 ]) {
   if (!files.page.includes(token)) failures.push(`map privacy UI missing: ${token}`);
 }

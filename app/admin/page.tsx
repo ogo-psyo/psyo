@@ -48,7 +48,7 @@ export default function AdminPage() {
     <main className="admin-shell">
       <section className="admin-panel admin-hero">
         <div>
-          <p>PSYO admin</p>
+          <p>Псё · админка</p>
           <h1>Авторизация и доступ</h1>
           <span>{'Telegram initData -> HttpOnly session -> owner -> Plus'}</span>
         </div>
@@ -58,7 +58,7 @@ export default function AdminPage() {
             value={token}
             onChange={(event) => setToken(event.target.value)}
             placeholder="PSYO_ADMIN_TOKEN"
-            aria-label="PSYO admin token"
+            aria-label="Токен администратора Псё"
           />
           <button type="button" onClick={loadOwners} disabled={status === 'loading'}>{status === 'loading' ? 'Загрузка...' : 'Открыть'}</button>
         </div>
