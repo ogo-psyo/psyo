@@ -21,14 +21,19 @@ export async function createPet(input: {
   supabase: SupabaseClient;
   ownerId: string;
   name: string;
+  lifeStage?: string;
+  sex?: string;
+  breedId?: string;
+  breedGroupId?: string;
+  breedCustom?: string;
   idempotencyKey: string;
 }): Promise<CreatePetResult> {
-  const { supabase, ownerId, name, idempotencyKey } = input;
+  const { supabase, ownerId, name, lifeStage, sex, breedId, breedGroupId, breedCustom, idempotencyKey } = input;
   const normalized = buildPetProfilePersistencePayload({
     user: { id: ownerId, email: null, user_metadata: { provider: 'telegram' } },
-    profile: { dogName: name },
+    profile: { dogName: name, lifeStage, sex, breedId, breedGroupId, breedCustom },
   });
-  const requestFingerprint = createHash('sha256').update(canonicalJson({ name: name.trim() })).digest('hex');
+  const requestFingerprint = createHash('sha256').update(canonicalJson({ name: name.trim(), lifeStage, sex, breedId, breedGroupId, breedCustom })).digest('hex');
 
   const { data, error } = await supabase.rpc('create_pet_for_owner', {
     p_owner_id: ownerId,

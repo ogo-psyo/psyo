@@ -1,10 +1,10 @@
 import type { ReadinessLevel } from './readiness';
 
-type CaseName = 'nomn' | 'gent' | 'datv' | 'ablt';
+type CaseName = 'nomn' | 'gent' | 'datv' | 'accs' | 'ablt';
 
 const irregularPetNames: Record<string, Record<CaseName, string>> = {
-  Марс: { nomn: 'Марс', gent: 'Марса', datv: 'Марсу', ablt: 'Марсом' },
-  Мята: { nomn: 'Мята', gent: 'Мяты', datv: 'Мяте', ablt: 'Мятой' },
+  Марс: { nomn: 'Марс', gent: 'Марса', datv: 'Марсу', accs: 'Марса', ablt: 'Марсом' },
+  Мята: { nomn: 'Мята', gent: 'Мяты', datv: 'Мяте', accs: 'Мяту', ablt: 'Мятой' },
 };
 
 export function inflectPetName(name: string, targetCase: CaseName = 'nomn') {
@@ -13,10 +13,11 @@ export function inflectPetName(name: string, targetCase: CaseName = 'nomn') {
   const known = irregularPetNames[clean]?.[targetCase];
   if (known) return known;
   if (targetCase === 'nomn') return clean;
-  if (/а$/i.test(clean)) return clean.replace(/а$/i, targetCase === 'gent' ? 'ы' : targetCase === 'datv' ? 'е' : 'ой');
-  if (/я$/i.test(clean)) return clean.replace(/я$/i, targetCase === 'gent' ? 'и' : targetCase === 'datv' ? 'е' : 'ей');
+  if (/а$/i.test(clean)) return clean.replace(/а$/i, targetCase === 'gent' ? 'ы' : targetCase === 'datv' ? 'е' : targetCase === 'accs' ? 'у' : 'ой');
+  if (/я$/i.test(clean)) return clean.replace(/я$/i, targetCase === 'gent' ? 'и' : targetCase === 'datv' ? 'е' : targetCase === 'accs' ? 'ю' : 'ей');
   if (targetCase === 'gent') return `${clean}а`;
   if (targetCase === 'datv') return `${clean}у`;
+  if (targetCase === 'accs') return `${clean}а`;
   return `${clean}ом`;
 }
 

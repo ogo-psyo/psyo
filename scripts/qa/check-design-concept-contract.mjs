@@ -49,7 +49,7 @@ for (const token of [
   if (!`${files.page}\n${files.nextCare}`.includes(token)) failures.push(`focused experience missing concept copy: ${token}`);
 }
 
-for (const section of ["label: 'всё'", "label: 'псё'", "label: 'карта'", "label: 'рядом'", "label: 'вещи'"]) {
+for (const section of ["label: 'всё'", "label: 'псё'", "label: 'карта'", "label: 'гав'", "label: 'вещи'"]) {
   if (!files.navigation.includes(section)) failures.push(`primary nav must keep section: ${section}`);
 }
 

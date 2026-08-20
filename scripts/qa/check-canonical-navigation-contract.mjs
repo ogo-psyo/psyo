@@ -9,7 +9,7 @@ const primaryRoutes = [
   ["id: 'today'", "label: 'всё'"],
   ["id: 'profile'", "label: 'псё'"],
   ["id: 'map'", "label: 'карта'"],
-  ["id: 'nearby'", "label: 'рядом'"],
+  ["id: 'nearby'", "label: 'гав'"],
   ["id: 'things'", "label: 'вещи'"],
 ];
 

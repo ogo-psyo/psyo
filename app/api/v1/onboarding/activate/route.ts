@@ -37,6 +37,11 @@ export async function POST(request: Request) {
       supabase,
       ownerId,
       name: parsed.input.name,
+      lifeStage: parsed.input.lifeStage,
+      sex: parsed.input.sex,
+      breedId: parsed.input.breedId,
+      breedGroupId: parsed.input.breedGroupId,
+      breedCustom: parsed.input.breedCustom,
       idempotencyKey: parsed.input.idempotencyKey,
     });
     return NextResponse.json(result, { status: result.created ? 201 : 200 });

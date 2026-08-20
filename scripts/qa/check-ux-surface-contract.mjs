@@ -48,7 +48,7 @@ const requiredOwnerLanguage = [
   'всё',
   'Памятка',
   'Что увидит другой человек',
-  'Куда можно',
+  'Карта прогулок',
   'План заботы',
 ];
 
@@ -102,7 +102,7 @@ const navStart = files.navigation.indexOf('<nav className="app-tabs"');
 const navEnd = files.navigation.indexOf('</nav>', navStart);
 const navBlock = navStart >= 0 && navEnd > navStart ? files.navigation.slice(navStart, navEnd) : '';
 if (!navBlock) failures.push('primary app nav missing');
-for (const token of ["label: 'всё'", "label: 'псё'", "label: 'карта'", "label: 'рядом'", "label: 'вещи'"]) {
+for (const token of ["label: 'всё'", "label: 'псё'", "label: 'карта'", "label: 'гав'", "label: 'вещи'"]) {
   if (!files.navigation.includes(token)) failures.push(`primary nav missing section: ${token}`);
 }
 for (const token of ["id: 'calendar'", "id: 'card'", "id: 'assistant'"]) {

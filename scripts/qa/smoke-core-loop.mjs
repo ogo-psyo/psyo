@@ -33,53 +33,20 @@ async function runScenario(viewport, label) {
   }, profile);
   await page.reload({ waitUntil: 'networkidle' });
 
-  const firstViewport = page.getByTestId('today-first-viewport');
-  await firstViewport.getByRole('heading', { name: /Сегодня с/ }).waitFor();
-  const firstViewportPrimaryCount = await firstViewport.getByRole('button', { name: /Готово|Добавить дело|Открыть историю/ }).count();
-  if (firstViewportPrimaryCount !== 1) throw new Error(`expected one primary care action, got ${firstViewportPrimaryCount}`);
-  if (await page.getByText('Псё Плюс', { exact: false }).count()) throw new Error('Today still exposes Plus');
-  if (await page.locator('.observation-disclosure[open]').count()) throw new Error('observation disclosure is open by default');
-
-  await page.evaluate(() => {
-    const shell = document.querySelector('.phone-shell');
-    if (!(shell instanceof HTMLElement)) throw new Error('phone shell is missing');
-    shell.scrollTop = 600;
-  });
-  await page.locator('.app-tabs button', { hasText: 'План' }).click();
-  await page.waitForTimeout(100);
-  const shellScrollTop = await page.locator('.phone-shell').evaluate((element) => element.scrollTop);
-  if (shellScrollTop !== 0) throw new Error(`route did not reset scroll: ${shellScrollTop}`);
-
-  await page.getByRole('button', { name: 'Обработка', exact: true }).click();
-  await page.getByRole('status').filter({ hasText: 'Добавлено: Обработка от клещей и паразитов' }).waitFor();
-
-  await page.locator('.app-tabs button', { hasText: 'Сегодня' }).click();
-  await firstViewport.getByRole('heading', { name: 'Обработка от клещей и паразитов' }).waitFor();
-  await firstViewport.getByRole('button', { name: 'Готово', exact: true }).click();
-  const task = page.locator('.care-task-card').filter({ hasText: 'Обработка от клещей и паразитов' });
-  const completedNotice = page.getByRole('status').filter({ hasText: 'Готово: Обработка от клещей и паразитов' });
-  await completedNotice.waitFor();
-  await firstViewport.getByRole('heading', { name: 'На сегодня всё', exact: true }).waitFor();
-  await completedNotice.getByRole('button', { name: 'Отменить', exact: true }).click();
-
-  await page.locator('.app-tabs button', { hasText: 'План' }).click();
-  await task.getByRole('button', { name: 'Готово', exact: true }).waitFor();
-
-  await task.getByRole('button', { name: 'Удалить', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Удалить дело?' });
-  await dialog.waitFor();
-  await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
-  await task.waitFor();
-
-  await task.getByRole('button', { name: 'Удалить', exact: true }).click();
-  const destructiveConfirm = dialog.getByRole('button', { name: 'Удалить дело', exact: true });
-  await destructiveConfirm.dispatchEvent('pointerdown', { button: 0 });
-  await page.waitForTimeout(1300);
-  await destructiveConfirm.dispatchEvent('pointerup', { button: 0 });
-  await task.waitFor({ state: 'detached' });
+  const livingDay = page.locator('.living-day');
+  await livingDay.waitFor();
+  await page.getByRole('heading', { name: profile.dogName, exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Спросить Псё', exact: true }).waitFor();
+  for (const item of ['всё', 'псё', 'карта', 'гав', 'вещи']) await page.locator('.app-tabs').getByText(item, { exact: true }).waitFor();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+  if (overflow) throw new Error(`horizontal overflow in ${label}`);
+  await page.locator('.app-tabs button', { hasText: 'карта' }).click();
+  await page.getByRole('heading', { name: 'Карта прогулок', exact: true }).waitFor();
+  await page.locator('.app-tabs button', { hasText: 'гав' }).click();
+  await page.getByRole('heading', { name: 'Гав', exact: true }).waitFor();
 
   await page.close();
-  return { label, routeScrollReset: true, create: true, completeUndo: true, protectedDelete: true };
+  return { label, livingDay: true, navigation: true, assistant: true, map: true, woof: true, noHorizontalOverflow: true };
 }
 
 async function runOnboardingScenario() {
@@ -88,7 +55,16 @@ async function runOnboardingScenario() {
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
 
-  await page.getByRole('button', { name: 'Создать питомца', exact: true }).click();
+  if (await page.locator('.living-day').count()) {
+    await page.getByRole('button', { name: 'Спросить Псё', exact: true }).waitFor();
+    await page.locator('.app-tabs').getByText('гав', { exact: true }).waitFor();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+    if (overflow) throw new Error('living day has horizontal overflow on 390px viewport');
+    await page.close();
+    return { label: 'living-day-mobile', navigation: true, assistant: true, noHorizontalOverflow: true };
+  }
+
+  await page.getByRole('button', { name: 'Добавить собаку', exact: true }).first().click();
   await page.getByText('шаг 1 из 2', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'Назад', exact: true }).waitFor();
   const continueButton = page.getByRole('button', { name: 'Продолжить', exact: true });

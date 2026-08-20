@@ -25,7 +25,7 @@ for (const token of [
 for (const token of [
   'buildAppReadiness({',
   'Что увидит другой человек',
-  'Куда можно',
+  'Карта прогулок',
   'План заботы',
   'Памятка',
 ]) {

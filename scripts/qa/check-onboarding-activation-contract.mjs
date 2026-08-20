@@ -36,7 +36,7 @@ if (!failures.length) {
     "supabase.rpc('create_pet_for_owner'",
     'ownerId: string',
     'idempotencyKey: string',
-    'canonicalJson({ name: name.trim() })',
+    'canonicalJson({ name: name.trim(), lifeStage, sex, breedId, breedGroupId, breedCustom })',
   ]) {
     if (!service.includes(token)) failures.push(`activation service missing: ${token}`);
   }

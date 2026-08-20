@@ -7,7 +7,7 @@ colors:
   canvas: "#f4fff7"
   surface: "#fafffb"
   mint-soft: "#cbfedb"
-  green-soft: "#b6fdcd"
+  green-soft: "#98df73"
   lime-signal: "#3df881"
   accent-emerald: "#07814d"
   danger-coral: "#dd617c"
@@ -57,7 +57,7 @@ components:
     height: "48px"
     padding: "12px 18px"
   button-secondary:
-    backgroundColor: "#eadfff"
+    backgroundColor: "{colors.mint-soft}"
     textColor: "{colors.primary-ink}"
     rounded: "{rounded.control}"
     height: "44px"
@@ -68,7 +68,7 @@ components:
     rounded: "{rounded.card}"
     padding: "16px"
   input:
-    backgroundColor: "#f0e8ff"
+    backgroundColor: "{colors.canvas}"
     textColor: "{colors.primary-ink}"
     rounded: "{rounded.control}"
     height: "48px"
@@ -93,7 +93,7 @@ components:
 
 ## Colors
 
-The owner-selected ColorKit palette is exact: `#CBFEDB`, `#B6FDCD`, `#3DF881`, `#07814D`, `#DD617C`. A darker derived emerald `#06472F` carries body text where the supplied emerald does not provide enough contrast.
+The owner-selected ColorKit palette is exact: `#CBFEDB`, `#98DF73`, `#3DF881`, `#07814D`, `#DD617C`. A darker derived emerald `#06472F` carries body text where the supplied emerald does not provide enough contrast. Lilac, yellow, blue and unrelated decorative hues are outside the product palette; lighter surfaces are tints of the five approved colors.
 
 **The Green Range Rule.** Large regions use mint soft; selected states use green soft; primary actions use emerald with near-white text. Lime signal appears only at the nearest care action, and coral is reserved for destructive states.
 

@@ -15,11 +15,11 @@ function toNumber(value: unknown): number | null {
 }
 
 function zoneColor(type: string) {
-  if (type === 'risk_zone' || type === 'risk') return '#ef4444';
-  if (type === 'clinic') return '#3b82f6';
-  if (type === 'route') return '#8b5cf6';
-  if (type === 'shop' || type === 'grooming') return '#8f6bff';
-  return '#22c55e';
+  if (type === 'risk_zone' || type === 'risk') return '#dd617c';
+  if (type === 'clinic') return '#07814d';
+  if (type === 'route') return '#07814d';
+  if (type === 'shop' || type === 'grooming') return '#98df73';
+  return '#3df881';
 }
 
 const zoneLabels: Record<string, string> = {
@@ -153,7 +153,7 @@ export function LiveMapClient({
             <Polyline
               key={feat.id}
               positions={positions}
-              pathOptions={{ color: feat.visibility === 'public' ? '#f59e0b' : zoneColor('route'), weight: 4 }}
+              pathOptions={{ color: feat.visibility === 'public' ? '#07814d' : '#3df881', weight: 4 }}
             >
               <Popup>
                 <b>{feat.title}</b>
@@ -168,7 +168,7 @@ export function LiveMapClient({
         })}
 
         {draftPositions.length > 1 && (
-          <Polyline positions={draftPositions} pathOptions={{ color: '#22c55e', weight: 4, dashArray: '6 8' }}>
+          <Polyline positions={draftPositions} pathOptions={{ color: '#3df881', weight: 4, dashArray: '6 8' }}>
             <Popup>Новый маршрут</Popup>
           </Polyline>
         )}

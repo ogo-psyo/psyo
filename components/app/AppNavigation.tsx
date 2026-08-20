@@ -10,7 +10,7 @@ const routes: { id: PrimaryRoute; label: string; icon: PetIconName }[] = [
   { id: 'today', label: 'всё', icon: 'home' },
   { id: 'profile', label: 'псё', icon: 'paw' },
   { id: 'map', label: 'карта', icon: 'map' },
-  { id: 'nearby', label: 'рядом', icon: 'nearby' },
+  { id: 'nearby', label: 'гав', icon: 'nearby' },
   { id: 'things', label: 'вещи', icon: 'bag' },
 ];
 

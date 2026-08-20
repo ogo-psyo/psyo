@@ -124,6 +124,11 @@ export type FirstReminderCommand = {
 
 export type CreatePetInput = {
   name: string;
+  lifeStage?: string;
+  sex?: string;
+  breedId?: string;
+  breedGroupId?: string;
+  breedCustom?: string;
   idempotencyKey: string;
 };
 
@@ -141,6 +146,10 @@ export function validateCreatePetInput(value: unknown): { ok: true; input: Creat
   const source = value && typeof value === 'object' ? value as Record<string, unknown> : {};
   const name = String(source.name ?? '').trim();
   const idempotencyKey = String(source.idempotencyKey ?? '').trim();
+  const optionalText = (key: string, maxLength = 120) => {
+    const normalized = String(source[key] ?? '').trim();
+    return normalized ? normalized.slice(0, maxLength) : undefined;
+  };
 
   if (!name) {
     return { ok: false, error: problem('VALIDATION_FAILED', 400, 'Dog name is required', 'Provide the dog name.', { field: 'name' }) };
@@ -152,7 +161,18 @@ export function validateCreatePetInput(value: unknown): { ok: true; input: Creat
     return { ok: false, error: problem('IDEMPOTENCY_KEY_REQUIRED', 400, 'Idempotency key is required', 'Send an Idempotency-Key header containing 8-128 safe characters.', { field: 'idempotencyKey' }) };
   }
 
-  return { ok: true, input: { name, idempotencyKey } };
+  return {
+    ok: true,
+    input: {
+      name,
+      ...(optionalText('lifeStage') ? { lifeStage: optionalText('lifeStage') } : {}),
+      ...(optionalText('sex') ? { sex: optionalText('sex') } : {}),
+      ...(optionalText('breedId') ? { breedId: optionalText('breedId') } : {}),
+      ...(optionalText('breedGroupId') ? { breedGroupId: optionalText('breedGroupId') } : {}),
+      ...(optionalText('breedCustom') ? { breedCustom: optionalText('breedCustom') } : {}),
+      idempotencyKey,
+    },
+  };
 }
 
 export function problem(code: string, status: number, title: string, detail: string, meta?: Record<string, unknown>): ProblemJson {

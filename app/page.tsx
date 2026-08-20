@@ -1,7 +1,7 @@
 'use client';
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, CalendarDots, MapPin, PawPrint, ShoppingBag } from '@phosphor-icons/react';
+import { ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, CalendarDots, FilePdf, MapPin, PawPrint, Plus, ShoppingBag, Sparkle, Trash } from '@phosphor-icons/react';
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { LiveMap } from '@/components/LiveMap';
 import { FloatingNote, PaperSheet, WatercolorScreen } from '@/components/watercolor';
@@ -11,7 +11,9 @@ import { CareActionNotice, type CareFeedback } from '@/components/care/CareActio
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
 import { ObservationEditor, type ObservationEditorDraft } from '@/components/care/ObservationEditor';
 import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
-import { AllFunctionsHub, type AllFunctionTarget } from '@/components/home/AllFunctionsHub';
+import { AllFunctionsHub, type AllFunctionTarget, type DogModuleSummary } from '@/components/home/AllFunctionsHub';
+import { HabitScreen, type HabitDraft, type HabitView } from '@/components/habits/HabitScreen';
+import { HealthTimelineScreen } from '@/components/health/HealthTimelineScreen';
 import { NextCareCard } from '@/components/today/NextCareCard';
 import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
 import { CandidateCard } from '@/components/social/CandidateCard';
@@ -67,10 +69,11 @@ type WishlistView = { id: string; petId: string; title: string; category: string
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; created_at?: string };
 type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; photo_urls?: string[] };
 type AuthSession = { access_token: string; user: { email?: string } };
-type ObservationView = { id: string; petId?: string; mood: string; appetite: string; stool: string; energy: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
-type ObservationDraft = Pick<ObservationView, 'mood' | 'appetite' | 'stool' | 'energy' | 'note'>;
+type ObservationView = { id: string; petId?: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
+type ObservationDraft = { mood: string; appetite: string; stool: string; energy: string; note?: string };
+type DocumentView = { id: string; petId: string; kind: string; title: string; clinic?: string | null; documentDate?: string | null; originalName: string; mimeType: string; sizeBytes: number; createdAt: string };
 type SocialInviteView = { token: string; scenario: SocialScenario; petName: string | null; expiresAt: string };
-type Tab = 'today' | 'calendar' | 'assistant' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
+type Tab = 'today' | 'calendar' | 'habits' | 'health' | 'assistant' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
 type DrawMode = 'none' | 'point' | 'route';
 type MapSaveMode = 'private' | 'shared';
 type ViralCardFormat = 'story' | 'square' | 'poster';
@@ -131,10 +134,10 @@ const observationAppetiteOptions = ['обычный', 'ниже обычного
 const observationStoolOptions = ['обычный', 'мягкий', 'жидкий', 'не было'];
 const observationEnergyOptions = ['обычная', 'много', 'мало', 'сонная'];
 const defaultObservationDraft: ObservationDraft = {
-  mood: observationMoodOptions[0],
-  appetite: observationAppetiteOptions[0],
-  stool: observationStoolOptions[0],
-  energy: observationEnergyOptions[0],
+  mood: '',
+  appetite: '',
+  stool: '',
+  energy: '',
   note: '',
 };
 
@@ -334,6 +337,10 @@ function isoFromDateInput(value: string) {
   return Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString();
 }
 
+function observationSummary(item: ObservationView) {
+  return [item.mood, item.appetite && `аппетит ${item.appetite}`, item.stool && `стул ${item.stool}`, item.energy && `энергия ${item.energy}`].filter(Boolean).join(' · ') || item.note || 'Заметка владельца';
+}
+
 function reminderDueAt(date: string, time: string, mode: ReminderTimeMode) {
   const fallbackTime = mode === 'flexible' ? '12:00' : mode === 'approximate' ? '10:00' : '09:00';
   const value = `${date || dateInputValue(new Date())}T${mode === 'exact' ? (time || fallbackTime) : fallbackTime}:00`;
@@ -445,6 +452,7 @@ function blobFromCanvas(canvas: HTMLCanvasElement) {
 
 export default function Home() {
   const [profile, setProfile] = useState<DogProfile>(defaultProfile);
+  const [profileHydrated, setProfileHydrated] = useState(false);
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
   const [generatedAvatarUrl, setGeneratedAvatarUrl] = useState('');
   const [demoMode, setDemoMode] = useState(false);
@@ -461,6 +469,15 @@ export default function Home() {
   const [pets, setPets] = useState<PetSwitchOption[]>([]);
   const [activePetId, setActivePetId] = useState('');
   const [observations, setObservations] = useState<ObservationView[]>([]);
+  const [documents, setDocuments] = useState<DocumentView[]>([]);
+  const [documentUploadOpen, setDocumentUploadOpen] = useState(false);
+  const [documentUploading, setDocumentUploading] = useState(false);
+  const [documentBusyId, setDocumentBusyId] = useState<string | null>(null);
+  const [habits, setHabits] = useState<HabitView[]>([]);
+  const [habitLoading, setHabitLoading] = useState(false);
+  const [habitBusyId, setHabitBusyId] = useState<string | null>(null);
+  const [dogSummary, setDogSummary] = useState<DogModuleSummary | null>(null);
+  const [moduleErrors, setModuleErrors] = useState<{ habits?: string; health?: string }>({});
   const [socialProfile, setSocialProfile] = useState<SocialProfile | null>(null);
   const [socialCandidates, setSocialCandidates] = useState<CandidateGroup>({ nearby: [], city: [] });
   const [socialRequests, setSocialRequests] = useState<SocialRequestView[]>([]);
@@ -605,7 +622,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const knownTabs: Tab[] = ['today', 'calendar', 'assistant', 'nearby', 'map', 'card', 'profile', 'things'];
+    const knownTabs: Tab[] = ['today', 'calendar', 'habits', 'health', 'assistant', 'nearby', 'map', 'card', 'profile', 'things'];
     const syncFromLocation = () => {
       const requested = window.location.hash.replace(/^#/, '') as Tab;
       setTabState(knownTabs.includes(requested) ? requested : 'today');
@@ -924,7 +941,16 @@ export default function Home() {
     try {
       if (isGuestMode()) {
         const petId = ensureGuestPetId();
-        updateProfile({ dogName: nextName, backendPetId: petId, isPublic: false });
+        updateProfile({
+          dogName: nextName,
+          lifeStage: profile.lifeStage,
+          sex: profile.sex,
+          breedId: profile.breedId,
+          breedGroupId: profile.breedGroupId,
+          breedCustom: profile.breedCustom,
+          backendPetId: petId,
+          isPublic: false,
+        });
         setPets([{ id: petId, name: nextName }]);
         setActivePetId(petId);
       } else {
@@ -938,7 +964,14 @@ export default function Home() {
             'Idempotency-Key': idempotencyKey,
             ...authHeaders(),
           },
-          body: JSON.stringify({ name: nextName }),
+          body: JSON.stringify({
+            name: nextName,
+            lifeStage: profile.lifeStage,
+            sex: profile.sex,
+            breedId: profile.breedId,
+            breedGroupId: profile.breedGroupId,
+            breedCustom: profile.breedCustom,
+          }),
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok || !result?.petId) {
@@ -993,6 +1026,7 @@ export default function Home() {
         const bootObservations = payload.observations.filter(belongsToSelectedPet).map(normalizeObservation).filter(Boolean) as ObservationView[];
         setObservations(bootObservations.slice(0, 12));
       }
+      setDocuments(Array.isArray(payload.documents) ? payload.documents.filter(belongsToSelectedPet) : []);
     } else if (payload.empty) {
       setPets([]);
       setActivePetId('');
@@ -1002,12 +1036,17 @@ export default function Home() {
       setZones([]);
       setOwnerRoutes([]);
       setObservations([]);
+      setDocuments([]);
+      setHabits([]);
+      setDogSummary(null);
+      setModuleErrors({});
     }
   }
 
   useEffect(() => {
     const local = loadProfile();
     setProfile(local);
+    setProfileHydrated(true);
     setHeroNameDraft(local.dogName || '');
     try {
       const savedObservations = JSON.parse(window.localStorage.getItem(observationsStorageKey) || '[]');
@@ -1088,7 +1127,11 @@ export default function Home() {
     connectTelegramSession();
     return () => { cancelled = true; };
   }, []);
-  useEffect(() => { const result = saveProfile(profile); if (!result.ok) setError(result.message); }, [profile]);
+  useEffect(() => {
+    if (!profileHydrated) return;
+    const result = saveProfile(profile);
+    if (!result.ok) setError(result.message);
+  }, [profile, profileHydrated]);
   useEffect(() => {
     if (!observationsLoadedRef.current) return;
     try { window.localStorage.setItem(observationsStorageKey, JSON.stringify(observations.slice(0, 24))); } catch {}
@@ -1120,7 +1163,7 @@ export default function Home() {
   const hasPhoto = profile.photos.length > 0;
   const avatarReady = avatarState === 'ready';
   const hasDog = Boolean(profile.dogName.trim());
-  const activePrimaryRoute: PrimaryRoute = tab === 'calendar' || tab === 'assistant'
+  const activePrimaryRoute: PrimaryRoute = tab === 'calendar' || tab === 'habits' || tab === 'health' || tab === 'assistant'
     ? 'today'
     : tab === 'card'
       ? 'profile'
@@ -1262,6 +1305,7 @@ export default function Home() {
   const petName = profile.dogName.trim();
   const petNameGent = inflectPetName(profile.dogName, 'gent');
   const petNameDatv = inflectPetName(profile.dogName, 'datv');
+  const petNameAccs = inflectPetName(profile.dogName, 'accs');
   const missingProfileSummary = missingProfileFields.slice(0, 3).join(', ');
   const publicCardChecks = useMemo<PublicCardCheck[]>(() => [
     { label: 'Имя', done: Boolean(profile.dogName.trim()), missing: 'имя собаки' },
@@ -1294,7 +1338,7 @@ export default function Home() {
   }, [petNameDatv, profile.backendPetId, todayCare]);
   const latestObservation = observations[0];
   const observationNextStepLine = latestObservation
-    ? `Последняя запись: ${latestObservation.mood}, аппетит ${latestObservation.appetite}, энергия ${latestObservation.energy}. Следующий шаг: ${nextBestAction.title.toLowerCase()}.`
+    ? `Последняя запись: ${observationSummary(latestObservation)}. Следующий шаг: ${nextBestAction.title.toLowerCase()}.`
     : `Запиши короткое наблюдение перед шагом «${nextBestAction.title}», чтобы видеть, что меняется день за днём.`;
   const appReadiness = useMemo(() => buildAppReadiness({
     profile,
@@ -1342,6 +1386,10 @@ export default function Home() {
        setZones([]);
        setOwnerRoutes([]);
        setObservations([]);
+       setDocuments([]);
+       setHabits([]);
+       setDogSummary(null);
+       setModuleErrors({});
       setPickedZonePoint(null);
       setRoutePoints([]);
       setPublishedPublicCardPath('');
@@ -1406,10 +1454,10 @@ export default function Home() {
     return {
       id: String(raw.id || guestId('observation')),
       petId: raw.petId || raw.pet_id ? String(raw.petId || raw.pet_id) : undefined,
-      mood: String(raw.mood || metadata.mood || (type === 'mood' ? value : '') || defaultObservationDraft.mood),
-      appetite: String(raw.appetite || metadata.appetite || (type === 'appetite' ? value : '') || defaultObservationDraft.appetite),
-      stool: String(raw.stool || metadata.stool || (type === 'stool' ? value : '') || defaultObservationDraft.stool),
-      energy: String(raw.energy || metadata.energy || (type === 'energy' ? value : '') || defaultObservationDraft.energy),
+      mood: String(raw.mood || metadata.mood || (type === 'mood' ? value : '')).trim() || undefined,
+      appetite: String(raw.appetite || metadata.appetite || (type === 'appetite' ? value : '')).trim() || undefined,
+      stool: String(raw.stool || metadata.stool || (type === 'stool' ? value : '')).trim() || undefined,
+      energy: String(raw.energy || metadata.energy || (type === 'energy' ? value : '')).trim() || undefined,
       note: String(raw.note || '').trim() || undefined,
       createdAt: Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString(),
       syncStatus: raw.syncStatus === 'saved' ? 'saved' : 'local',
@@ -1435,6 +1483,105 @@ export default function Home() {
       [...remote.map((item) => ({ ...item, syncStatus: 'saved' as const })), ...current].forEach((item) => byId.set(item.id, item));
       return Array.from(byId.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 12);
     });
+  }
+
+  async function loadRealModules(petId = profile.backendPetId, signal?: AbortSignal) {
+    if (!petId || isGuestMode()) {
+      setHabits([]);
+      setDogSummary(null);
+      setModuleErrors({});
+      return;
+    }
+    setHabitLoading(true);
+    setModuleErrors({});
+    const request = { headers: authHeaders(), credentials: 'include' as const, signal };
+    try {
+      const [habitResponse, healthResponse, summaryResponse] = await Promise.all([
+        fetch(`/api/habits?petId=${encodeURIComponent(petId)}`, request),
+        fetch(`/api/health?petId=${encodeURIComponent(petId)}`, request),
+        fetch(`/api/pets/${encodeURIComponent(petId)}/summary`, request),
+      ]);
+      const [habitPayload, healthPayload, summaryPayload] = await Promise.all([
+        habitResponse.json().catch(() => ({})),
+        healthResponse.json().catch(() => ({})),
+        summaryResponse.json().catch(() => ({})),
+      ]);
+      if (habitResponse.ok) setHabits(Array.isArray(habitPayload.habits) ? habitPayload.habits : []);
+      if (healthResponse.ok && Array.isArray(healthPayload.entries)) {
+        const entries = healthPayload.entries.map(normalizeObservation).filter(Boolean) as ObservationView[];
+        setObservations(entries.slice(0, 50));
+      }
+      if (summaryResponse.ok && summaryPayload.summary) setDogSummary(summaryPayload.summary);
+      setModuleErrors({
+        habits: habitResponse.ok ? undefined : 'Проверь соединение и попробуй снова.',
+        health: healthResponse.ok ? undefined : 'Проверь соединение и попробуй снова.',
+      });
+      if (!summaryResponse.ok) setDogSummary(null);
+    } catch (loadError) {
+      if (!(loadError instanceof DOMException && loadError.name === 'AbortError')) {
+        setModuleErrors({ habits: 'Проверь соединение и попробуй снова.', health: 'Проверь соединение и попробуй снова.' });
+      }
+    } finally {
+      if (!signal?.aborted) setHabitLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!profile.backendPetId || isGuestMode()) return;
+    const controller = new AbortController();
+    void loadRealModules(profile.backendPetId, controller.signal);
+    return () => controller.abort();
+  }, [profile.backendPetId, session?.access_token, telegramSession.ownerId]);
+
+  async function createHabit(draft: HabitDraft) {
+    if (!profile.backendPetId || isGuestMode() || habitBusyId) return false;
+    setHabitBusyId('create');
+    setError('');
+    try {
+      const response = await fetch('/api/habits', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ petId: profile.backendPetId, ...draft }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.habit) {
+        setError('Привычка не сохранилась. Проверь данные и попробуй снова.');
+        return false;
+      }
+      await loadRealModules(profile.backendPetId);
+      return true;
+    } catch {
+      setError('Привычка не сохранилась. Проверь соединение и попробуй снова.');
+      return false;
+    } finally {
+      setHabitBusyId(null);
+    }
+  }
+
+  async function checkInHabit(habitId: string) {
+    if (!profile.backendPetId || isGuestMode() || habitBusyId) return;
+    const scope = `habit:checkin:${habitId}`;
+    setHabitBusyId(habitId);
+    setError('');
+    try {
+      const response = await fetch(`/api/habits/${encodeURIComponent(habitId)}/checkins`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+        body: JSON.stringify({}),
+      });
+      if (!response.ok) {
+        setError('Не получилось отметить привычку. Попробуй снова.');
+        return;
+      }
+      finishCareMutation(scope);
+      await loadRealModules(profile.backendPetId);
+    } catch {
+      setError('Не получилось отметить привычку. Проверь соединение и попробуй снова.');
+    } finally {
+      setHabitBusyId(null);
+    }
   }
 
   async function loadReminderHistory(reminderId: string) {
@@ -1463,6 +1610,10 @@ export default function Home() {
   async function submitObservation() {
     if (observationSaving) return;
     const note = observationDraft.note?.trim();
+    if (!observationDraft.mood && !observationDraft.appetite && !observationDraft.stool && !observationDraft.energy && !note) {
+      setError('Выбери то, что заметил, или добавь короткую заметку.');
+      return;
+    }
     const petId = profile.backendPetId || (isGuestMode() ? ensureGuestPetId() : undefined);
     const payloadFingerprint = JSON.stringify({ petId, ...observationDraft, note });
     const mutationScope = `observation:create:${payloadFingerprint}`;
@@ -1495,17 +1646,14 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(mutationScope), ...authHeaders() },
         body: JSON.stringify({
           petId: profile.backendPetId,
-          type: 'note',
-          value: `настроение ${draft.mood}, аппетит ${draft.appetite}, стул ${draft.stool}, энергия ${draft.energy}`,
+          ...(draft.note && !draft.mood && !draft.appetite && !draft.stool && !draft.energy ? { type: 'note', value: draft.note } : {}),
+          mood: draft.mood || undefined,
+          appetite: draft.appetite || undefined,
+          stool: draft.stool || undefined,
+          energy: draft.energy || undefined,
           note: draft.note || null,
           observedAt: createdAt,
           source: 'manual',
-          metadata: {
-            mood: draft.mood,
-            appetite: draft.appetite,
-            stool: draft.stool,
-            energy: draft.energy,
-          },
         }),
       });
       if (!response.ok) {
@@ -1517,6 +1665,7 @@ export default function Home() {
       if (saved) setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
       setObservationDraft(defaultObservationDraft);
       finishCareMutation(mutationScope);
+      await loadRealModules(profile.backendPetId);
     } catch {
       setError('Запись не сохранилась. Текст остался здесь — проверь связь и попробуй снова.');
     } finally {
@@ -1527,10 +1676,10 @@ export default function Home() {
   function startObservationEdit(observation: ObservationView) {
     setEditingObservationId(observation.id);
     setObservationEditDraft({
-      mood: observation.mood,
-      appetite: observation.appetite,
-      stool: observation.stool,
-      energy: observation.energy,
+      mood: observation.mood || '',
+      appetite: observation.appetite || '',
+      stool: observation.stool || '',
+      energy: observation.energy || '',
       note: observation.note || '',
     });
     setError('');
@@ -1589,6 +1738,45 @@ export default function Home() {
       setError('Не получилось убрать запись. Попробуй ещё раз.');
     } finally {
       setObservationMutationBusy(false);
+    }
+  }
+
+  async function uploadPetDocument(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!profile.backendPetId || documentUploading) return;
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    form.set('petId', profile.backendPetId);
+    setDocumentUploading(true);
+    setError('');
+    try {
+      const response = await fetch('/api/documents', { method: 'POST', headers: authHeaders(), body: form });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.error || 'UPLOAD_FAILED');
+      setDocuments((current) => [payload.document, ...current]);
+      setDocumentUploadOpen(false);
+      formElement.reset();
+      setNotice('saved');
+      window.setTimeout(() => setNotice('idle'), 1400);
+    } catch {
+      setError('Не удалось сохранить документ. Проверь формат и размер файла — до 4 МБ.');
+    } finally {
+      setDocumentUploading(false);
+    }
+  }
+
+  async function deletePetDocument(id: string) {
+    if (documentBusyId || !window.confirm('Удалить этот документ без возможности восстановления?')) return;
+    setDocumentBusyId(id);
+    setError('');
+    try {
+      const response = await fetch(`/api/documents/${id}`, { method: 'DELETE', headers: authHeaders() });
+      if (!response.ok) throw new Error('DELETE_FAILED');
+      setDocuments((current) => current.filter((item) => item.id !== id));
+    } catch {
+      setError('Не удалось удалить документ. Ничего не изменилось — попробуй ещё раз.');
+    } finally {
+      setDocumentBusyId(null);
     }
   }
 
@@ -1761,6 +1949,7 @@ export default function Home() {
     setZones([]);
     setOwnerRoutes([]);
     setObservations([]);
+    setDocuments([]);
   }
 
   async function createReminder(title?: string, type = newReminderType, dueInDays = 0, explicitDueDate?: string) {
@@ -2502,6 +2691,7 @@ export default function Home() {
         setWishlist([]);
         setZones([]);
         setObservations([]);
+        setDocuments([]);
         setTab('today');
       }
       setNotice('saved');
@@ -2536,6 +2726,7 @@ export default function Home() {
       setWishlist([]);
       setZones([]);
       setObservations([]);
+      setDocuments([]);
       setPublishedPublicCardPath('');
       setAccountDeleteConfirmation('');
       setTab('today');
@@ -2817,14 +3008,17 @@ export default function Home() {
 
         {hasDog && <AppNavigation active={activePrimaryRoute} onNavigate={setTab} />}
 
+        {hasDog && tab !== 'assistant' && <button className="production-floating-assistant" type="button" onClick={() => setTab('assistant')}><Sparkle weight="fill" aria-hidden="true" /><span>Спросить Псё</span></button>}
+
         {hasDog && tab === 'today' && <AllFunctionsHub
           dogName={profile.dogName}
+          dogNameAccusative={petNameAccs}
           breedLabel={breedLabel}
-          profileFacts={completionCount}
-          profileFactsTotal={profileChecklist.length}
+          summary={dogSummary}
           activeReminders={activeReminders.length}
           observations={observations.length}
-          habits={profile.habits.filter((habit) => habit.value.trim()).length}
+          documents={documents.length}
+          habits={habits.length}
           places={zones.length + ownerRoutes.length}
           nearby={socialCandidates.nearby.length + socialCandidates.city.length}
           things={wantedWishlist.length}
@@ -2838,11 +3032,36 @@ export default function Home() {
                 : setTab('calendar')}
             onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
           />}
-          healthFeature={<button className="all-health-summary" type="button" onClick={() => setTab('profile')}>
-            <span><b>{observations.length ? observationNextStepLine : 'Начать историю здоровья'}</b><small>{observations.length ? 'Открыть наблюдения и документы' : 'Первая запись займёт меньше минуты'}</small></span>
+          healthFeature={<button className="all-health-summary" type="button" onClick={() => setTab('health')}>
+            <span><b>{observations.length ? observationSummary(observations[0]) : 'Добавить первое наблюдение'}</b><small>{observations.length ? 'Открыть историю наблюдений' : 'Записать только то, что заметили'}</small></span>
             <ArrowRight weight="bold" aria-hidden="true" />
           </button>}
           onNavigate={(target: AllFunctionTarget) => setTab(target)}
+        />}
+
+        {hasDog && tab === 'habits' && <HabitScreen
+          dogName={petNameGent}
+          habits={habits}
+          loading={habitLoading}
+          error={moduleErrors.habits}
+          busyId={habitBusyId}
+          canPersist={!isGuestMode() && Boolean(profile.backendPetId)}
+          onBack={() => closeSecondaryFlow('today')}
+          onCreate={createHabit}
+          onCheckIn={checkInHabit}
+          onRetry={() => loadRealModules(profile.backendPetId)}
+        />}
+
+        {hasDog && tab === 'health' && <HealthTimelineScreen
+          dogName={petNameGent}
+          entries={observations}
+          draft={observationDraft}
+          saving={observationSaving}
+          error={moduleErrors.health}
+          onBack={() => closeSecondaryFlow('today')}
+          onDraftChange={updateObservationDraft}
+          onSave={submitObservation}
+          onRetry={() => loadRealModules(profile.backendPetId)}
         />}
 
         {false && hasDog && tab === 'today' && <section className="screen-stack today-screen kit-today-screen watercolor-production-today">
@@ -2927,7 +3146,7 @@ export default function Home() {
           </button>
         </section>}
 
-        {hasDog && tab === 'assistant' && <WatercolorScreen className="assistant-composition" tone="green" eyebrow="помощник по уходу" title="Выбери безопасный сценарий" caption="Ответ должен закончиться действием: дело в план, обновление памятки или заметка владельца." aside={<PawPrint className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'assistant' && <WatercolorScreen className="assistant-composition" tone="green" eyebrow="ассистент всегда рядом" title="Спросить Псё" caption={`Помогу разобраться в делах, документах и прогулках ${petNameGent} — без диагнозов и выдуманных фактов.`} aside={<PawPrint className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
           <SecondaryFlowHeader label="Назад во Всё" onBack={() => closeSecondaryFlow('today')} />
           <PaperSheet className="assistant-main-sheet">
             <div className="assistant-box">
@@ -2945,7 +3164,7 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'nearby' && <WatercolorScreen className="nearby-composition" tone="rose" eyebrow="" title="Рядом" caption="Найди компанию для собаки или позови знакомого. Контакт откроется только по взаимному согласию.">
+        {hasDog && tab === 'nearby' && <WatercolorScreen className="nearby-composition" tone="rose" eyebrow="свои рядом" title="Гав" caption="Подай сигнал, найди компанию для прогулки и договорись без публикации точного адреса.">
           <ol className="nearby-trust-flow" aria-label="Как открывается контакт">
             <li><b>Покажи анкету</b><span>без точного адреса</span></li>
             <li><b>Дождись согласия</b><span>с обеих сторон</span></li>
@@ -3215,6 +3434,18 @@ export default function Home() {
             </div>
           </section>
 
+          <section className="pet-documents-panel" aria-labelledby="pet-documents-title">
+            <div className="section-title"><div><span className="eyebrow">из клиники и дома</span><h3 id="pet-documents-title">Анализы и документы</h3></div><button className="secondary" type="button" onClick={() => setDocumentUploadOpen((value) => !value)}><Plus weight="bold" aria-hidden="true" /> Добавить</button></div>
+            {documentUploadOpen && <form className="pet-document-form" onSubmit={uploadPetDocument}>
+              <label>Что это<input name="title" required placeholder="Например, общий анализ крови" /></label>
+              <div className="two-fields"><label>Тип<select name="kind" defaultValue="analysis"><option value="analysis">Анализ</option><option value="prescription">Назначение</option><option value="vaccination">Вакцинация</option><option value="other">Другое</option></select></label><label>Дата<input name="documentDate" type="date" /></label></div>
+              <label>Клиника <span>необязательно</span><input name="clinic" placeholder="Название клиники" /></label>
+              <label className="document-file-input">Файл<input name="file" type="file" required accept="application/pdf,image/jpeg,image/png,image/webp" /><small>PDF, JPG, PNG или WEBP до 4 МБ. Документ остаётся приватным.</small></label>
+              <div className="care-row-actions"><button className="primary" type="submit" disabled={documentUploading}>{documentUploading ? 'Сохраняю…' : 'Сохранить документ'}</button><button type="button" onClick={() => setDocumentUploadOpen(false)}>Отмена</button></div>
+            </form>}
+            {documents.length ? <div className="pet-document-list">{documents.map((item) => <article key={item.id}><span className="pet-document-icon"><FilePdf weight="duotone" aria-hidden="true" /></span><div><b>{item.title}</b><p>{[item.clinic, item.documentDate && new Date(item.documentDate).toLocaleDateString('ru-RU')].filter(Boolean).join(' · ') || 'Личный документ'}</p></div><a href={`/api/documents/${item.id}`} target="_blank" rel="noreferrer">Открыть</a><button className="danger-action icon-only" type="button" aria-label={`Удалить ${item.title}`} disabled={documentBusyId === item.id} onClick={() => deletePetDocument(item.id)}><Trash weight="bold" aria-hidden="true" /></button></article>)}</div> : <article className="empty-state"><b>Документов пока нет</b><p>Добавь файл из ветклиники — он сохранится в личной истории {petNameGent}.</p></article>}
+          </section>
+
           <section className="profile-observation-timeline" aria-label="История наблюдений собаки">
             <div className="section-title">
               <div><span className="eyebrow">динамика</span><h3>Наблюдения в профиле</h3></div>
@@ -3231,8 +3462,8 @@ export default function Home() {
                 /> : <>
                   <span>{new Date(item.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
                   <div>
-                    <b>{item.mood} · энергия {item.energy}</b>
-                    <p>Аппетит {item.appetite}; стул {item.stool}.{item.note ? ` ${item.note}` : ''}</p>
+                    <b>{observationSummary(item)}</b>
+                    {item.note && observationSummary(item) !== item.note && <p>{item.note}</p>}
                     <div className="care-row-actions"><button type="button" onClick={() => startObservationEdit(item)}>Изменить</button><button type="button" className="danger-action" onClick={() => deleteObservation(item.id)} disabled={observationMutationBusy}>Убрать</button></div>
                   </div>
                 </>}
@@ -3354,7 +3585,7 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'things' && <WatercolorScreen className="things-composition" tone="gold" eyebrow="вещи" title="Что нужно именно этой собаке" caption="Личный список покупок и услуг для ухода." aside={<ShoppingBag className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'things' && <WatercolorScreen className="things-composition" tone="gold" eyebrow="вещи" title={`Что нужно ${petNameDatv}`} caption="Личный список покупок и того, что заканчивается." aside={<ShoppingBag className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
           <div className="screen-primary-action">
             <button className="primary" type="button" aria-expanded={thingCaptureOpen} onClick={() => setThingCaptureOpen((open) => !open)}>
               {thingCaptureOpen ? 'Закрыть добавление' : 'Добавить вещь'}
@@ -3413,7 +3644,7 @@ export default function Home() {
 
         </WatercolorScreen>}
 
-        {hasDog && tab === 'map' && <WatercolorScreen className="places-composition" tone="green" eyebrow="места" title="Куда можно" caption="Места для прогулок, рисков и клиник." aside={<MapPin className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'map' && <WatercolorScreen className="places-composition" tone="green" eyebrow="мир вокруг" title="Карта прогулок" caption="Живые маршруты, полезные места и предупреждения владельцев." aside={<MapPin className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
           <div className="screen-primary-action">
             <button className="primary" type="button" aria-expanded={mapComposerOpen} onClick={() => setMapComposerOpen((open) => !open)}>
               {mapComposerOpen ? 'Закрыть добавление' : 'Добавить место или маршрут'}
