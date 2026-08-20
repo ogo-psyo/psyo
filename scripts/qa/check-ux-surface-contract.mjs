@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 const files = {
   page: readFileSync('app/page.tsx', 'utf8'),
+  journey: readFileSync('components/journey/ProductionJourney.tsx', 'utf8'),
   navigation: readFileSync('components/app/AppNavigation.tsx', 'utf8'),
   dogCard: readFileSync('app/dog/[slug]/page.tsx', 'utf8'),
   dogCardActions: readFileSync('app/dog/[slug]/DogCardActions.tsx', 'utf8'),
@@ -53,7 +54,7 @@ const requiredOwnerLanguage = [
 ];
 
 for (const token of requiredOwnerLanguage) {
-  if (!files.page.includes(token)) failures.push(`owner-language UX copy missing: ${token}`);
+  if (!`${files.page}\n${files.journey}`.includes(token)) failures.push(`owner-language UX copy missing: ${token}`);
 }
 
 const statusSurfaceCount = (files.page.match(/readiness-details|telegram-status-panel|service-state-strip/g) ?? []).length;

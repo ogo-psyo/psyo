@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 const files = {
   readiness: readFileSync('lib/readiness.ts', 'utf8'),
   page: readFileSync('app/page.tsx', 'utf8'),
+  journey: readFileSync('components/journey/ProductionJourney.tsx', 'utf8'),
   css: readFileSync('app/globals.css', 'utf8'),
 };
 
@@ -29,7 +30,7 @@ for (const token of [
   'План заботы',
   'Памятка',
 ]) {
-  if (!files.page.includes(token)) failures.push(`UI does not expose ${token}`);
+  if (!`${files.page}\n${files.journey}`.includes(token)) failures.push(`UI does not expose ${token}`);
 }
 
 for (const token of ['.readiness-details', '.readiness-badge']) {

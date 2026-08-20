@@ -10,6 +10,7 @@ const files = {
   zonesApi: readFileSync('app/api/zones/route.ts', 'utf8'),
   secureMigration: readFileSync('supabase/migrations/20260813183000_secure_map_projection.sql', 'utf8'),
   hardeningMigration: readFileSync('supabase/migrations/20260813193000_close_map_privacy_bypasses.sql', 'utf8'),
+  routeActivityMigration: readFileSync('supabase/migrations/20260820194500_map_route_activity_metadata.sql', 'utf8'),
 };
 
 const failures = [];
@@ -17,10 +18,10 @@ const failures = [];
 for (const token of [
   "type MapSaveMode = 'private' | 'shared'",
   "const [mapSaveMode, setMapSaveMode]",
-  'aria-label="Приватность карты"',
+  'aria-label="Кому видно"',
   'Только мне',
   'По ссылке',
-  'Точные координаты не показываются',
+  'Точное место никому не показывается',
   'features={ownerRoutes}',
   'setOwnerRoutes(normalizeOwnerRoutes(',
 ]) {
@@ -36,6 +37,9 @@ for (const token of [
   'blurPublicZoneInput',
   "requesting_owner_id: ownerId ?? null",
   "shareUrl: visibility === 'shared' ? shareUrl(request, data.share_token) : null",
+  "routeSource === 'recorded'",
+  'duration_seconds: durationSeconds',
+  'distance_meters: distanceMeters',
 ]) {
   if (!files.mapApi.includes(token)) failures.push(`map feature API privacy boundary missing: ${token}`);
 }
@@ -93,6 +97,10 @@ for (const token of [
   'blurPublicZoneInput',
 ]) {
   if (!files.zonesApi.includes(token)) failures.push(`zone API privacy boundary missing: ${token}`);
+}
+
+for (const token of ['route_source', 'started_at', 'duration_seconds', 'distance_meters']) {
+  if (!files.routeActivityMigration.includes(token)) failures.push(`recorded walk persistence missing: ${token}`);
 }
 
 if (failures.length) {

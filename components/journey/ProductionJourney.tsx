@@ -92,6 +92,7 @@ type ProductionJourneyProps = BaseProps & {
   onOpenCare?: () => void;
   onAskAssistant?: () => void;
   map?: ReactNode;
+  mapWorkspace?: ReactNode;
   riskTitle?: string;
   routeTitle?: string;
   candidates?: JourneyCandidate[];
@@ -297,6 +298,7 @@ export function ProductionDocumentSheet({ dogName, onClose, returnFocusTo, child
 }
 
 function MapScreen(props: ProductionJourneyProps) {
+  if (props.mapWorkspace) return <>{props.mapWorkspace}</>;
   return <main className="v3-screen v3-map-screen production-journey-screen" data-production-journey="map">
     <Header dogName={props.dogName} title="Карта прогулок" detail="маршруты и места" avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
     <section className="v3-real-map production-journey-map" aria-label="Интерактивная карта прогулок">{props.map}</section>

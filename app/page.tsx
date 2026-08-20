@@ -1,12 +1,13 @@
 'use client';
 
 import { ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, FilePdf, Files, MapPin, PawPrint, Plus, ShoppingBag, Sparkle, TextT, Trash, UploadSimple } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, FilePdf, Files, MapPin, MapTrifold, PawPrint, Plus, ShieldWarning, ShoppingBag, Sparkle, TextT, Trash, UploadSimple } from '@phosphor-icons/react';
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
-import { LiveMap } from '@/components/LiveMap';
-import { FloatingNote, PaperSheet, WatercolorScreen } from '@/components/watercolor';
+import { PaperSheet, WatercolorScreen } from '@/components/watercolor';
 import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
 import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
+import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
+import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';
 import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
 import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
@@ -61,13 +62,13 @@ import type { CandidateGroup, CoarseLocation, SocialProfile, SocialScenario } fr
 import type { ActionSuggestion } from '@/packages/contracts';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
-type Notice = 'idle' | 'saved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
+type Notice = 'idle' | 'saved' | 'mapSaved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
 type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 type ReminderTimeMode = 'exact' | 'flexible' | 'approximate';
 type ReminderView = { id: string; petId: string; type: string; title: string; dueAt: string; recurrence?: ReminderRecurrence; status: string; snoozedUntil?: string; completedAt?: string; nextDueAt?: string };
 type ReminderHistoryItem = { id: string; eventType?: string; payload?: { dueAt?: string; completedAt?: string; nextDueAt?: string | null }; createdAt: string };
 type WishlistView = { id: string; petId: string; title: string; category: string; reason?: string; url?: string; priority: string; status: string; created_at?: string };
-type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; created_at?: string };
+type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; visibility?: 'private' | 'shared' | 'public'; share_token?: string | null; created_at?: string };
 type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; photo_urls?: string[] };
 type AuthSession = { access_token: string; user: { email?: string } };
 type ObservationView = { id: string; petId?: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
@@ -523,12 +524,13 @@ export default function Home() {
   const [routeTitleDraft, setRouteTitleDraft] = useState('');
   const [routeDescriptionDraft, setRouteDescriptionDraft] = useState('');
   const [routeMutationBusy, setRouteMutationBusy] = useState<string | null>(null);
+  const [mapDraftSaving, setMapDraftSaving] = useState(false);
+  const [mapRouteMeta, setMapRouteMeta] = useState<RouteDraftMeta | null>(null);
   const [pendingRouteDeletion, setPendingRouteDeletion] = useState<OwnerRouteView | null>(null);
   const [newWishTitle, setNewWishTitle] = useState('');
   const [newWishReason, setNewWishReason] = useState('');
   const [newWishCategory, setNewWishCategory] = useState('gear');
   const [thingCaptureOpen, setThingCaptureOpen] = useState(false);
-  const [mapComposerOpen, setMapComposerOpen] = useState(false);
   const [viralCardFormat, setViralCardFormat] = useState<ViralCardFormat>('story');
   const [viralCardMood, setViralCardMood] = useState<ViralCardMood>('bold');
   const [viralCardHeadline, setViralCardHeadline] = useState('');
@@ -2089,8 +2091,7 @@ export default function Home() {
   }
 
   async function createZone(preset?: { title: string; type?: string; note?: string; radiusMeters?: number; approximateLat?: number; approximateLng?: number }) {
-    const title = (preset?.title || newZoneTitle).trim();
-    if (!title) return setError('Добавь название зоны.');
+    const title = (preset?.title || newZoneTitle || (newZoneType === 'risk_zone' ? 'Опасное место' : 'Место на карте')).trim();
     if (!profile.backendPetId) {
       if (!isGuestMode()) return setError('Сначала сохрани профиль собаки.');
       ensureGuestPetId();
@@ -2103,7 +2104,9 @@ export default function Home() {
       setPickedZonePoint(null);
       setRoutePoints([]);
       setDrawMode('none');
-      setMapComposerOpen(false);
+      setMapSaveMode('private');
+      setMapRouteMeta(null);
+      setNotice('mapSaved');
       return;
     }
     const response = await fetch('/api/zones', {
@@ -2126,7 +2129,9 @@ export default function Home() {
     setPickedZonePoint(null);
     setRoutePoints([]);
     setDrawMode('none');
-    setMapComposerOpen(false);
+    setMapSaveMode('private');
+    setMapRouteMeta(null);
+    setNotice('mapSaved');
     await loadBootstrap();
   }
 
@@ -2143,18 +2148,44 @@ export default function Home() {
   }
 
   async function createMapFeature(visibility: 'private' | 'shared') {
-    if (!profile.backendPetId) {
-      if (!isGuestMode()) return setError('Сначала сохрани профиль собаки.');
-      return setError('Сначала добавь собаку по имени.');
-    }
-
-    const title = (newZoneTitle || (drawMode === 'route' ? 'Маршрут прогулки' : 'Место на карте')).trim();
-    const body = drawMode === 'route'
-      ? { type: 'route', title, petId: profile.backendPetId, path: routePoints, visibility, description: newZoneNote || null }
-      : { type: 'point', title, petId: profile.backendPetId, lat: pickedZonePoint?.lat, lng: pickedZonePoint?.lng, zone_type: newZoneType, visibility, description: newZoneNote || null };
-
     if (drawMode === 'route' && routePoints.length < 2) return setError('Для маршрута нужны хотя бы две точки.');
     if (drawMode !== 'route' && !pickedZonePoint) return setError('Сначала коснись карты, чтобы выбрать точку.');
+    const title = (newZoneTitle || (drawMode === 'route' ? 'Маршрут прогулки' : newZoneType === 'risk_zone' ? 'Опасное место' : 'Место на карте')).trim();
+
+    if (isGuestMode()) {
+      if (visibility === 'shared') return setError('Чтобы открыть ссылку, запусти Псё внутри Telegram. Личную запись можно сохранить уже сейчас.');
+      if (drawMode === 'route') {
+        setOwnerRoutes((current) => upsertOwnerRoute(current, {
+          id: guestId('route'),
+          petId: ensureGuestPetId(),
+          type: 'route',
+          title,
+          description: newZoneNote.trim() || undefined,
+          path: { type: 'LineString', coordinates: routePoints },
+          visibility: 'private',
+          routeSource: mapRouteMeta?.routeSource || 'planned',
+          startedAt: mapRouteMeta?.startedAt,
+          durationSeconds: mapRouteMeta?.durationSeconds,
+          distanceMeters: mapRouteMeta?.distanceMeters,
+        }));
+        setNotice('mapSaved');
+        setPickedZonePoint(null);
+        setRoutePoints([]);
+        setDrawMode('none');
+        setNewZoneTitle('');
+        setNewZoneNote('');
+        setMapSaveMode('private');
+        setMapRouteMeta(null);
+        return;
+      }
+      await createZone();
+      return;
+    }
+    if (!profile.backendPetId) return setError('Сначала сохрани профиль собаки.');
+
+    const body = drawMode === 'route'
+      ? { type: 'route', title, petId: profile.backendPetId, path: routePoints, visibility, description: newZoneNote || null, routeSource: mapRouteMeta?.routeSource || 'planned', startedAt: mapRouteMeta?.startedAt, durationSeconds: mapRouteMeta?.durationSeconds ?? 0, distanceMeters: mapRouteMeta?.distanceMeters ?? 0 }
+      : { type: 'point', title, petId: profile.backendPetId, lat: pickedZonePoint?.lat, lng: pickedZonePoint?.lng, zone_type: newZoneType, visibility, description: newZoneNote || null };
 
     const response = await fetch('/api/map/features', {
       method: 'POST',
@@ -2168,13 +2199,14 @@ export default function Home() {
       const createdRoute = normalizeOwnerRoutes([result.feature])[0];
       if (createdRoute) setOwnerRoutes((current) => upsertOwnerRoute(current, createdRoute));
     }
-    setNotice(visibility === 'shared' ? 'sharing' : 'saved');
+    setNotice(visibility === 'shared' ? 'sharing' : 'mapSaved');
     setPickedZonePoint(null);
     setRoutePoints([]);
     setDrawMode('none');
-    setMapComposerOpen(false);
     setNewZoneTitle('');
     setNewZoneNote('');
+    setMapSaveMode('private');
+    setMapRouteMeta(null);
     if (visibility === 'shared' && result.shareUrl) {
       await navigator.clipboard?.writeText(result.shareUrl).catch(() => undefined);
       setNotice('copied');
@@ -2182,8 +2214,36 @@ export default function Home() {
     await loadBootstrap();
   }
 
-  async function saveRoute() {
-    await createMapFeature(mapSaveMode);
+  function setProductionMapMode(mode: ProductionMapMode) {
+    setError('');
+    if (mode !== 'view') setNotice('idle');
+    setPickedZonePoint(null);
+    setRoutePoints([]);
+    setMapSaveMode('private');
+    if (mode !== 'route') setMapRouteMeta(null);
+    if (mode === 'route') {
+      setDrawMode('route');
+      setNewZoneType('walk_route');
+      return;
+    }
+    if (mode === 'risk') {
+      setDrawMode('point');
+      setNewZoneType('risk_zone');
+      return;
+    }
+    setDrawMode('none');
+  }
+
+  async function saveProductionMapDraft() {
+    if (mapDraftSaving) return;
+    setMapDraftSaving(true);
+    setError('');
+    try {
+      if (drawMode === 'route' || mapSaveMode === 'shared') await createMapFeature(mapSaveMode);
+      else await createZone();
+    } finally {
+      setMapDraftSaving(false);
+    }
   }
 
   function beginOwnerRouteEdit(route: OwnerRouteView) {
@@ -2991,6 +3051,44 @@ export default function Home() {
     }
   }
 
+  const productionMapMode: ProductionMapMode = drawMode === 'route'
+    ? 'route'
+    : drawMode === 'point' && newZoneType === 'risk_zone'
+      ? 'risk'
+      : 'view';
+  const mapDraftReady = drawMode === 'route' ? routePoints.length >= 2 : Boolean(pickedZonePoint);
+  const mapComposerContent = <section className="production-map-composer" data-map-composer-content aria-label={productionMapMode === 'route' ? 'Новый маршрут' : 'Новое предупреждение'}>
+    <div className="production-map-composer-status">
+      <span aria-hidden="true">{productionMapMode === 'route' ? <MapTrifold weight="regular" /> : <ShieldWarning weight="fill" />}</span>
+      <div><b>{productionMapMode === 'route' ? `Поставлено: ${routePoints.length}` : pickedZonePoint ? 'Примерное место выбрано' : 'Выберите место'}</b><p>{productionMapMode === 'route' ? 'Касайтесь карты по ходу прогулки. Достаточно двух точек.' : mapSaveMode === 'shared' ? 'По ссылке будет видна только приблизительная область.' : 'Отметка останется личной. Точное место никому не показывается.'}</p></div>
+    </div>
+    <label>Название <span>необязательно</span><input value={newZoneTitle} onChange={(event) => setNewZoneTitle(event.target.value)} placeholder={productionMapMode === 'route' ? 'Например, вечерний круг' : 'Например, битое стекло'} /></label>
+    <label>Что важно знать <span>необязательно</span><textarea value={newZoneNote} onChange={(event) => setNewZoneNote(event.target.value)} placeholder={productionMapMode === 'route' ? 'Покрытие, вода, освещение' : 'Что произошло и когда заметили'} rows={2} /></label>
+    <section className="production-map-privacy" aria-label="Кому видно">
+      <button type="button" className={mapSaveMode === 'private' ? 'active' : ''} onClick={() => setMapSaveMode('private')} aria-pressed={mapSaveMode === 'private'}><b>Только мне</b><span>личная отметка</span></button>
+      <button type="button" className={mapSaveMode === 'shared' ? 'active' : ''} onClick={() => setMapSaveMode('shared')} aria-pressed={mapSaveMode === 'shared'}><b>По ссылке</b><span>можно закрыть позже</span></button>
+    </section>
+    <div className="production-map-composer-actions">
+      <button type="button" className="secondary" onClick={() => setProductionMapMode('view')}>{productionMapMode === 'route' ? 'Отменить маршрут' : 'Отменить'}</button>
+      {productionMapMode === 'route' && routePoints.length > 0 && <button type="button" className="secondary" onClick={() => setRoutePoints([])}>Очистить</button>}
+      <button type="button" className="primary" disabled={!mapDraftReady || mapDraftSaving} onClick={() => void saveProductionMapDraft()}>{mapDraftSaving ? 'Сохраняю…' : !mapDraftReady ? productionMapMode === 'route' ? 'Отметьте две точки' : 'Коснитесь карты' : mapSaveMode === 'shared' ? 'Сохранить и скопировать ссылку' : 'Сохранить лично'}</button>
+    </div>
+  </section>;
+  const mapSavedContent = <section className="production-map-saved" data-map-saved-content aria-label="Сохранённое на карте">
+    {zones.length === 0 && ownerRoutes.length === 0 && <article className="production-map-empty"><MapPin weight="regular" aria-hidden="true" /><div><b>Карта пока чистая</b><p>Сохраните маршрут или предупредите об опасном месте.</p></div></article>}
+    {zones.map((zone) => <article key={zone.id} className={`production-map-saved-row ${zone.type === 'risk_zone' ? 'risk' : 'place'}`}>
+      <span className="production-map-saved-mark" aria-hidden="true"><MapTrifold weight="regular" /></span>
+      <div><b>{zone.title}</b><p>{formatZoneMeta(zone)} · {zone.visibility === 'shared' ? 'по ссылке' : 'только вам'}</p></div>
+      <button type="button" className="danger-action" onClick={() => deleteZone(zone.id)}>Убрать</button>
+    </article>)}
+    {ownerRoutes.map((route) => <article key={route.id} className="production-map-saved-row route">
+      <span className="production-map-saved-mark" aria-hidden="true"><MapPin weight="fill" /></span>
+      {editingRouteId === route.id ? <div className="production-map-route-edit"><input value={routeTitleDraft} onChange={(event) => setRouteTitleDraft(event.target.value)} aria-label="Название маршрута" /><input value={routeDescriptionDraft} onChange={(event) => setRouteDescriptionDraft(event.target.value)} aria-label="Заметка о маршруте" /><span><button type="button" disabled={Boolean(routeMutationBusy) || !routeTitleDraft.trim()} onClick={() => updateOwnerRoute(route.id, { title: routeTitleDraft.trim(), description: routeDescriptionDraft.trim() })}>Сохранить</button><button type="button" onClick={() => setEditingRouteId(null)}>Отмена</button></span></div> : <><div><b>{route.title}</b><p>{route.routeSource === 'recorded' ? `${route.startedAt ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(new Date(route.startedAt)) + ' · ' : ''}${route.durationSeconds !== undefined ? `${Math.floor(route.durationSeconds / 60)} мин · ` : ''}${route.distanceMeters !== undefined ? route.distanceMeters < 1000 ? `${route.distanceMeters} м` : `${(route.distanceMeters / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} км` : 'Записанная прогулка'}` : route.description || 'Маршрут построен заранее'} · {route.visibility === 'shared' ? 'по ссылке' : 'только вам'}</p></div><div className="production-map-row-actions"><button type="button" onClick={() => beginOwnerRouteEdit(route)}>Изменить</button><button type="button" onClick={() => route.visibility === 'shared' ? revokeOwnerRouteShare(route) : shareOwnerRoute(route)}>{route.visibility === 'shared' ? 'Закрыть ссылку' : 'Поделиться'}</button><button type="button" className="danger-action" onClick={() => setPendingRouteDeletion(route)}>Убрать</button></div></>}
+    </article>)}
+    {removedZone && <div className="restore-notice" role="status"><span>Место убрано</span><button type="button" onClick={restoreZone}>Вернуть</button></div>}
+    {pendingRouteDeletion && <section className="delete-care-dialog" role="dialog" aria-modal="true" aria-label="Удалить маршрут"><article><b>Удалить маршрут «{pendingRouteDeletion.title}»?</b><p>Он исчезнет с карты, а открытая ссылка перестанет работать.</p><div className="wishlist-actions"><button type="button" disabled={Boolean(routeMutationBusy)} onClick={() => setPendingRouteDeletion(null)}>Оставить</button><button type="button" className="danger-action" disabled={Boolean(routeMutationBusy)} onClick={() => { if (pendingRouteDeletion) void deleteOwnerRoute(pendingRouteDeletion); }}>Удалить маршрут</button></div></article></section>}
+  </section>;
+
   return (
     <main className="app-canvas">
       <section ref={phoneShellRef} className={`phone-shell tab-${tab}${hasDog && isJourneyRoute ? ' journey-active' : ''}`}>
@@ -3057,7 +3155,7 @@ export default function Home() {
           setTab(route);
         }} />}
 
-        {hasDog && isJourneyRoute && tab !== 'profile' && <button className="production-floating-assistant" type="button" aria-label="Спросить Псё" onClick={() => setAssistantOpen(true)}><Sparkle weight="fill" aria-hidden="true" /><span>Спросить</span></button>}
+        {hasDog && isJourneyRoute && tab !== 'profile' && tab !== 'map' && <button className="production-floating-assistant" type="button" aria-label="Спросить Псё" onClick={() => setAssistantOpen(true)}><Sparkle weight="fill" aria-hidden="true" /><span>Спросить</span></button>}
 
         {hasDog && tab === 'today' && !journeyDetail && <ProductionJourney route="today"
           dogName={profile.dogName}
@@ -3117,17 +3215,32 @@ export default function Home() {
           </form>
         </ProductionDocumentSheet>}
 
-        {hasDog && tab === 'map' && journeyDetail !== 'map' && <ProductionJourney route="map"
+        {hasDog && tab === 'map' && <ProductionJourney route="map"
           dogName={profile.dogName}
           breedLabel={breedLabel}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
-          map={<LiveMap zones={zones} features={ownerRoutes} />}
-          riskTitle={zones.find((zone) => zone.type === 'risk_zone')?.title}
-          routeTitle={ownerRoutes[0]?.title}
-          onNavigate={(route) => {
-            if (route === 'map') setJourneyDetail('map');
-            else { setJourneyDetail(null); setTab(route); }
-          }}
+          mapWorkspace={<ProductionMapWorkspace
+            dogName={profile.dogName}
+            avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
+            zones={zones}
+            features={ownerRoutes}
+            mode={productionMapMode}
+            pickedPoint={pickedZonePoint}
+            routePoints={routePoints}
+            composer={mapComposerContent}
+            savedContent={mapSavedContent}
+            onOpenProfile={() => { setJourneyDetail(null); setTab('profile'); }}
+            onModeChange={setProductionMapMode}
+            onMapClick={handleMapClick}
+            onAppendRoutePoint={(point) => setRoutePoints((current) => [...current, point])}
+            onReplaceRoutePoints={setRoutePoints}
+            onClearDraft={() => { setRoutePoints([]); setPickedZonePoint(null); }}
+            onSaveDraft={() => void saveProductionMapDraft()}
+            canSaveDraft={mapDraftReady}
+            savingDraft={mapDraftSaving}
+            onRouteMetaChange={setMapRouteMeta}
+          />}
+          onNavigate={(route) => { setJourneyDetail(null); setTab(route); }}
         />}
 
         {hasDog && tab === 'nearby' && journeyDetail !== 'nearby' && <ProductionJourney route="nearby"
@@ -3783,66 +3896,8 @@ export default function Home() {
 
         </WatercolorScreen>}
 
-        {hasDog && tab === 'map' && journeyDetail === 'map' && <WatercolorScreen className="places-composition" tone="green" eyebrow="мир вокруг" title="Карта прогулок" caption="Живые маршруты, полезные места и предупреждения владельцев." aside={<MapPin className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
-          <div className="screen-primary-action">
-            <button className="primary" type="button" aria-expanded={mapComposerOpen} onClick={() => setMapComposerOpen((open) => !open)}>
-              {mapComposerOpen ? 'Закрыть добавление' : 'Добавить место или маршрут'}
-            </button>
-          </div>
-          {mapComposerOpen && <div className="map-kind-picker" aria-label="Что добавить">
-            <button type="button" className={drawMode === 'point' ? 'active' : ''} aria-pressed={drawMode === 'point'} onClick={() => { setDrawMode('point'); setRoutePoints([]); }}>Место</button>
-            <button type="button" className={drawMode === 'route' ? 'active' : ''} aria-pressed={drawMode === 'route'} onClick={() => { setDrawMode('route'); setPickedZonePoint(null); }}>Маршрут</button>
-          </div>}
-          <section className="places-field">
-            <PaperSheet className="map-sheet"><LiveMap zones={zones} features={ownerRoutes} picked={pickedZonePoint} onPick={handleMapPick} drawMode={drawMode} routePoints={routePoints} onMapClick={handleMapClick} /></PaperSheet>
-            {mapComposerOpen && drawMode !== 'none' && <FloatingNote className="map-help"><b>{drawMode === 'route' ? 'Рисуешь маршрут' : 'Выбери место'}</b><p>{drawMode === 'route' ? `Точек в маршруте: ${routePoints.length}` : 'Коснись карты — сохраним приблизительно.'}</p>{pickedZonePoint && <small>Примерное место выбрано</small>}</FloatingNote>}
-          </section>
-          {mapComposerOpen && drawMode !== 'none' && <section className="place-add-note" aria-label="Добавление на карту">
-            <div className="place-add-body">
-                <p className="map-accessibility-note">{drawMode === 'route' ? 'Отметь на карте хотя бы две точки маршрута.' : 'Коснись карты или сохрани место только текстом.'}</p>
-                <label>Название<input value={newZoneTitle} onChange={(event) => setNewZoneTitle(event.target.value)} placeholder={drawMode === 'route' ? 'Например, утренняя прогулка' : 'Например, тихий двор'} /></label>
-                {drawMode === 'point' && <label>Тип<select value={newZoneType} onChange={(event) => setNewZoneType(event.target.value)}><option value="safe_place">безопасное место</option><option value="risk_zone">зона риска</option><option value="home_area">домашний район</option><option value="clinic">клиника</option><option value="shop">зоомагазин</option><option value="grooming">груминг</option></select></label>}
-                <label>Заметка <span className="field-optional">необязательно</span><input value={newZoneNote} onChange={(event) => setNewZoneNote(event.target.value)} placeholder="Что важно помнить" /></label>
-                <section className="map-privacy-modes" aria-label="Приватность карты">
-                  <button type="button" className={mapSaveMode === 'private' ? 'active' : ''} onClick={() => setMapSaveMode('private')} aria-pressed={mapSaveMode === 'private'}><b>Только мне</b><span>личная запись</span></button>
-                  <button type="button" className={mapSaveMode === 'shared' ? 'active' : ''} onClick={() => setMapSaveMode('shared')} aria-pressed={mapSaveMode === 'shared'}><b>По ссылке</b><span>можно закрыть позже</span></button>
-                </section>
-                <button className="primary full" disabled={!newZoneTitle.trim() || (drawMode === 'route' && routePoints.length < 2) || (mapSaveMode === 'shared' && drawMode === 'point' && !pickedZonePoint)} onClick={() => {
-                  if (drawMode === 'route' || mapSaveMode === 'shared') void createMapFeature(mapSaveMode);
-                  else void createZone();
-                }}>
-                  {drawMode === 'route' && routePoints.length < 2 ? 'Отметь две точки' : !newZoneTitle.trim() ? 'Добавь название' : mapSaveMode === 'shared' ? 'Сохранить и получить ссылку' : 'Сохранить'}
-                </button>
-                {routePoints.length > 0 && <button type="button" className="secondary" onClick={() => setRoutePoints([])}>Очистить маршрут</button>}
-                <p className="privacy-hint">Точные координаты не показываются другим людям. Ссылку можно закрыть в любой момент.</p>
-            </div>
-          </section>}
-          {zones.length === 0 && <article className="empty-state"><b>Мест пока нет</b><p>Добавь клинику, парк или любое важное место.</p></article>}
-          {zones.length > 0 && <div className="place-ribbon">{zones.map((zone) => <article key={zone.id} className={`zone-card ${zone.type}`}><div><b>{zone.title}</b><p>{formatZoneMeta(zone)}</p></div><div className="wishlist-actions"><button onClick={() => updateZone(zone.id, { type: zone.type === 'risk_zone' ? 'safe_place' : 'risk_zone' })}>{zone.type === 'risk_zone' ? 'Сделать спокойным местом' : 'Отметить как риск'}</button>{pickedZonePoint && <button onClick={() => updateZone(zone.id, { approximateLat: pickedZonePoint.lat, approximateLng: pickedZonePoint.lng })}>Переставить</button>}<button onClick={() => updateZone(zone.id, { radiusMeters: (zone.radius_meters || zone.radiusMeters || 500) + 250 })}>Увеличить радиус</button><button onClick={() => deleteZone(zone.id)}>Удалить</button></div></article>)}</div>}
-          {removedZone && <div className="restore-notice" role="status">
-            <span>Место убрано</span>
-            <button type="button" onClick={restoreZone}>Вернуть</button>
-          </div>}
-          <section aria-label="Мои маршруты">
-            <div className="section-title"><div><span className="eyebrow">прогулки</span><h3>Мои маршруты</h3></div></div>
-            {ownerRoutes.length === 0 && <article className="empty-state"><b>Маршрутов пока нет</b><p>Начни с кнопки «Добавить место или маршрут» выше.</p></article>}
-            {ownerRoutes.length > 0 && <div className="place-ribbon">{ownerRoutes.map((route) => <article key={route.id} className="zone-card walk_route">
-              {editingRouteId === route.id ? <>
-                <div><b>Изменить маршрут</b><input value={routeTitleDraft} onChange={(event) => setRouteTitleDraft(event.target.value)} aria-label="Название маршрута" /><input value={routeDescriptionDraft} onChange={(event) => setRouteDescriptionDraft(event.target.value)} aria-label="Заметка о маршруте" /></div>
-                <div className="wishlist-actions"><button disabled={Boolean(routeMutationBusy) || !routeTitleDraft.trim()} onClick={() => updateOwnerRoute(route.id, { title: routeTitleDraft.trim(), description: routeDescriptionDraft.trim() })}>Сохранить</button><button disabled={Boolean(routeMutationBusy)} onClick={() => setEditingRouteId(null)}>Отмена</button></div>
-              </> : <>
-                <div><b>{route.title}</b><p>{route.description || 'Личный маршрут прогулки'} · {route.visibility === 'shared' ? 'доступен по ссылке' : 'виден только тебе'}</p></div>
-                <div className="wishlist-actions"><button disabled={Boolean(routeMutationBusy)} onClick={() => beginOwnerRouteEdit(route)}>Изменить</button>{route.visibility === 'shared' ? <button disabled={Boolean(routeMutationBusy)} onClick={() => revokeOwnerRouteShare(route)}>Закрыть ссылку</button> : <button disabled={Boolean(routeMutationBusy)} onClick={() => shareOwnerRoute(route)}>Получить ссылку</button>}<button className="danger-action" disabled={Boolean(routeMutationBusy)} onClick={() => setPendingRouteDeletion(route)}>Удалить</button></div>
-              </>}
-            </article>)}</div>}
-          </section>
-          {pendingRouteDeletion && <section className="delete-care-dialog" role="dialog" aria-modal="true" aria-label="Удалить маршрут">
-            <article><b>Удалить маршрут «{pendingRouteDeletion.title}»?</b><p>Он исчезнет с личной карты. Если маршрут был доступен по ссылке, ссылка тоже перестанет работать.</p><div className="wishlist-actions"><button disabled={Boolean(routeMutationBusy)} onClick={() => setPendingRouteDeletion(null)}>Оставить</button><button className="danger-action" disabled={Boolean(routeMutationBusy)} onClick={() => deleteOwnerRoute(pendingRouteDeletion)}>Удалить маршрут</button></div></article>
-          </section>}
-        </WatercolorScreen>}
-
         {error && <p className="error-text" role="alert">{error}</p>}
-        {notice !== 'idle' && <div className="toast" role="status" aria-live="polite">{notice === 'loaded' ? 'Данные загружены' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
+        {notice !== 'idle' && <div className="toast" role="status" aria-live="polite">{notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
       </section>
 
       <DesktopContextPanel

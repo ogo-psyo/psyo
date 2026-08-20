@@ -55,7 +55,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
     .update(patch)
     .eq('id', id)
     .eq('owner_id', ownerId)
-    .select('id, owner_id, pet_id, title, description, color, visibility, moderation_status, share_token, created_at, updated_at')
+    .select('id, owner_id, pet_id, title, description, color, visibility, moderation_status, share_token, route_source, started_at, duration_seconds, distance_meters, created_at, updated_at')
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

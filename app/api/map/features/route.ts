@@ -39,6 +39,12 @@ function shareUrl(request: Request, id: string) {
   return `${origin}/map/share/${id}`;
 }
 
+function nonNegativeInteger(value: unknown, maximum: number) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0) return null;
+  return Math.min(maximum, Math.round(number));
+}
+
 export async function GET(request: Request) {
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
@@ -117,6 +123,12 @@ export async function POST(request: Request) {
       const { data: pet } = await supabase.from('pets').select('id').eq('id', body.petId).eq('owner_id', ownerId).maybeSingle();
       if (!pet) return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
     }
+    const routeSource = body.routeSource === 'recorded' ? 'recorded' : 'planned';
+    const startedAt = routeSource === 'recorded' && typeof body.startedAt === 'string' && Number.isFinite(Date.parse(body.startedAt))
+      ? new Date(body.startedAt).toISOString()
+      : null;
+    const durationSeconds = nonNegativeInteger(body.durationSeconds, 60 * 60 * 24);
+    const distanceMeters = nonNegativeInteger(body.distanceMeters, 500_000);
 
     const { data, error } = await supabase.from('map_routes').insert({
       owner_id: ownerId,
@@ -128,6 +140,10 @@ export async function POST(request: Request) {
       color: typeof body.color === 'string' ? body.color : '#3b82f6',
       path: lineString,
       share_token: visibility === 'shared' ? crypto.randomUUID() : null,
+      route_source: routeSource,
+      started_at: startedAt,
+      duration_seconds: durationSeconds,
+      distance_meters: distanceMeters,
     }).select('*').single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -24,6 +24,10 @@ export type MapFeature = {
   visibility: 'private' | 'shared' | 'public';
 };
 
+export type MapLayerFilter = 'all' | 'routes' | 'places' | 'risks';
+export type MapUserLocation = { lat: number; lng: number; accuracy?: number };
+export type MapFocusPoint = { lat: number; lng: number; token: number };
+
 export type LiveMapProps = {
   zones?: ZoneFeature[];
   features?: MapFeature[];
@@ -32,7 +36,13 @@ export type LiveMapProps = {
   routePoints?: number[][];
   onPick?: (point: { lat: number; lng: number }) => void;
   onMapClick?: (event: { latlng: { lat: number; lng: number } }) => void;
+  onCenterChange?: (point: { lat: number; lng: number }) => void;
   onRouteDraw?: (points: { lat: number; lng: number }[]) => void;
+  filter?: MapLayerFilter;
+  userLocation?: MapUserLocation | null;
+  focusPoint?: MapFocusPoint | null;
+  fitDraftRoute?: boolean;
+  accessibleLabel?: string;
 };
 
 const LiveMapClient = dynamic(

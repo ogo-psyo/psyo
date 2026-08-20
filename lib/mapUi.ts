@@ -6,7 +6,16 @@ export type OwnerRouteView = {
   description?: string;
   path: { type: 'LineString'; coordinates: number[][] };
   visibility: 'private' | 'shared';
+  routeSource: 'recorded' | 'planned';
+  startedAt?: string;
+  durationSeconds?: number;
+  distanceMeters?: number;
 };
+
+function finiteNonNegative(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? Math.round(number) : undefined;
+}
 
 function routePath(value: unknown): OwnerRouteView['path'] | null {
   if (!value || typeof value !== 'object') return null;
@@ -28,6 +37,9 @@ export function normalizeOwnerRoutes(value: unknown): OwnerRouteView[] {
     const id = typeof source.id === 'string' ? source.id.trim() : '';
     const path = routePath(source.path);
     if (!id || !path) return [];
+    const startedAt = typeof source.started_at === 'string' ? source.started_at : typeof source.startedAt === 'string' ? source.startedAt : undefined;
+    const durationSeconds = finiteNonNegative(source.duration_seconds ?? source.durationSeconds);
+    const distanceMeters = finiteNonNegative(source.distance_meters ?? source.distanceMeters);
     return [{
       id,
       petId: typeof source.pet_id === 'string' ? source.pet_id : typeof source.petId === 'string' ? source.petId : undefined,
@@ -36,6 +48,10 @@ export function normalizeOwnerRoutes(value: unknown): OwnerRouteView[] {
       description: typeof source.description === 'string' && source.description.trim() ? source.description.trim() : undefined,
       path,
       visibility: source.visibility === 'shared' ? 'shared' : 'private',
+      routeSource: source.route_source === 'recorded' || source.routeSource === 'recorded' ? 'recorded' : 'planned',
+      ...(startedAt ? { startedAt } : {}),
+      ...(durationSeconds !== undefined ? { durationSeconds } : {}),
+      ...(distanceMeters !== undefined ? { distanceMeters } : {}),
     }];
   });
 }

@@ -460,7 +460,7 @@ input::placeholder, textarea::placeholder { color: var(--soft); }
 .pillar-grid article, .unlock-grid article { padding: 12px; }
 .pillar-grid article span, .unlock-grid article span { margin-bottom: 10px; }
 .error-text { color: var(--danger); font-weight: 750; font-size: 13px; }
-.toast { position: fixed; left: 50%; bottom: 96px; translate: -50% 0; z-index: 50; border-radius: 999px; padding: 13px 18px; color: var(--primary-ink); background: linear-gradient(135deg, var(--primary), var(--cyan)); font-weight: 800; box-shadow: var(--shadow); }
+.toast { position: fixed; left: 50%; bottom: 96px; translate: -50% 0; z-index: 50; border-radius: 999px; padding: 13px 18px; color: var(--primary-ink); background: linear-gradient(135deg, var(--primary), var(--cyan)); font-weight: 800; box-shadow: var(--shadow); pointer-events: none; }
 
 .onboarding-canvas { background: radial-gradient(circle at 16% -6%, oklch(0.70 0.13 33 / .26), transparent 30%), radial-gradient(circle at 86% 12%, oklch(0.25 0.055 268 / .18), transparent 30%), var(--bg); }
 .onboarding-shell { display: grid; align-content: center; min-height: min(900px, calc(100vh - 36px)); }

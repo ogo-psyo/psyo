@@ -23,7 +23,24 @@ assert.deepEqual(restored[0], {
   description: 'Лучше после девяти',
   path: { type: 'LineString', coordinates: [[37.61, 55.75], [37.62, 55.76]] },
   visibility: 'private',
+  routeSource: 'planned',
 });
+
+const recorded = normalizeOwnerRoutes([{
+  id: 'route-recorded',
+  pet_id: 'pet-1',
+  title: 'Утренняя прогулка',
+  visibility: 'private',
+  route_source: 'recorded',
+  started_at: '2026-08-20T06:30:00.000Z',
+  duration_seconds: 1834,
+  distance_meters: 2410,
+  path: { type: 'LineString', coordinates: [[37.61, 55.75], [37.62, 55.76]] },
+}])[0];
+assert.equal(recorded.routeSource, 'recorded');
+assert.equal(recorded.startedAt, '2026-08-20T06:30:00.000Z');
+assert.equal(recorded.durationSeconds, 1834);
+assert.equal(recorded.distanceMeters, 2410);
 
 const updated = upsertOwnerRoute(restored, { ...restored[0], title: 'Новый заголовок', visibility: 'shared' });
 assert.equal(updated.length, 1, 'editing a route must not duplicate it');
@@ -39,9 +56,12 @@ for (const token of [
   'async function deleteOwnerRoute',
   'async function shareOwnerRoute',
   'async function revokeOwnerRouteShare',
-  'Мои маршруты',
+  'Сохранённое на карте',
   'Закрыть ссылку',
-  'Изменить маршрут',
+  '>Изменить</button>',
+  'routeSource: mapRouteMeta?.routeSource',
+  'route.durationSeconds',
+  'route.distanceMeters',
 ]) {
   assert.ok(page.includes(token), `personal route UI is missing: ${token}`);
 }

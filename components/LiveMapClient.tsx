@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { AttributionControl, Circle, Marker, MapContainer, Polyline, Popup, TileLayer, useMapEvents } from 'react-leaflet';
+import { useEffect, useRef, useState } from 'react';
+import { AttributionControl, Circle, CircleMarker, MapContainer, Polyline, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import type { LiveMapProps, MapFeature } from './LiveMap';
 import 'leaflet/dist/leaflet.css';
 
@@ -55,12 +55,12 @@ function draftRoutePositions(routePoints: number[][]): [number, number][] {
     .filter((point): point is [number, number] => Boolean(point && Number.isFinite(point[0]) && Number.isFinite(point[1])));
 }
 
-function MapEvents({ onMapClick, onPick }: Pick<LiveMapProps, 'onMapClick' | 'onPick'>) {
-  useMapEvents({
+function MapEvents({ onMapClick, onPick, onCenterChange }: Pick<LiveMapProps, 'onMapClick' | 'onPick' | 'onCenterChange'>) {
+  const map = useMapEvents({
     click(event) {
       const point = {
-        lat: Number(event.latlng.lat.toFixed(3)),
-        lng: Number(event.latlng.lng.toFixed(3)),
+        lat: Number(event.latlng.lat.toFixed(5)),
+        lng: Number(event.latlng.lng.toFixed(5)),
       };
       if (onMapClick) {
         onMapClick({ latlng: point });
@@ -68,7 +68,90 @@ function MapEvents({ onMapClick, onPick }: Pick<LiveMapProps, 'onMapClick' | 'on
       }
       onPick?.(point);
     },
+    moveend() {
+      const center = map.getCenter();
+      onCenterChange?.({ lat: center.lat, lng: center.lng });
+    },
   });
+  useEffect(() => {
+    const center = map.getCenter();
+    onCenterChange?.({ lat: center.lat, lng: center.lng });
+  }, [map, onCenterChange]);
+  return null;
+}
+
+function reducedMotion() {
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function MapAccessibility({ label }: { label: string }) {
+  const map = useMap();
+  useEffect(() => {
+    const container = map.getContainer();
+    container.setAttribute('role', 'region');
+    container.setAttribute('aria-label', label);
+  }, [label, map]);
+  return null;
+}
+
+function MapViewport({ zones, features, userLocation, focusPoint, routePoints, fitDraftRoute }: Pick<LiveMapProps, 'zones' | 'features' | 'userLocation' | 'focusPoint' | 'routePoints' | 'fitDraftRoute'>) {
+  const map = useMap();
+  const orientedRef = useRef(false);
+  const focusTokenRef = useRef<number | null>(null);
+  const fittedDraftRef = useRef('');
+
+  useEffect(() => {
+    const draft = draftRoutePositions(routePoints || []);
+    const draftSignature = fitDraftRoute && draft.length > 1
+      ? `${draft.length}:${draft[0].join(',')}:${draft.at(-1)?.join(',')}`
+      : '';
+    if (draftSignature && draftSignature !== fittedDraftRef.current) {
+      fittedDraftRef.current = draftSignature;
+      const fitCompletedRoute = () => {
+        map.invalidateSize({ animate: false });
+        const mapHeight = map.getSize().y;
+        map.fitBounds(draft, {
+          paddingTopLeft: [44, 76],
+          paddingBottomRight: [44, Math.round(mapHeight * 0.58)],
+          maxZoom: 17,
+          animate: false,
+        });
+      };
+      fitCompletedRoute();
+      const refitTimer = window.setTimeout(fitCompletedRoute, 140);
+      orientedRef.current = true;
+      return () => window.clearTimeout(refitTimer);
+    }
+    if (focusPoint && focusPoint.token !== focusTokenRef.current) {
+      focusTokenRef.current = focusPoint.token;
+      map.setView([focusPoint.lat, focusPoint.lng], 16, { animate: !reducedMotion() });
+      return;
+    }
+    if (userLocation && !orientedRef.current) {
+      orientedRef.current = true;
+      map.setView([userLocation.lat, userLocation.lng], 16, { animate: !reducedMotion() });
+      return;
+    }
+    if (orientedRef.current) return;
+    const points: [number, number][] = [];
+    for (const zone of zones || []) {
+      const lat = toNumber(zone.approximate_lat);
+      const lng = toNumber(zone.approximate_lng);
+      if (lat !== null && lng !== null) points.push([lat, lng]);
+    }
+    for (const feature of features || []) {
+      if (feature.type === 'point') {
+        const lat = toNumber(feature.lat);
+        const lng = toNumber(feature.lng);
+        if (lat !== null && lng !== null) points.push([lat, lng]);
+      } else {
+        points.push(...featureRoutePositions(feature.path));
+      }
+    }
+    if (points.length === 1) map.setView(points[0], 15, { animate: false });
+    if (points.length > 1) map.fitBounds(points, { padding: [44, 44], maxZoom: 15, animate: false });
+    orientedRef.current = true;
+  }, [features, fitDraftRoute, focusPoint, map, routePoints, userLocation, zones]);
   return null;
 }
 
@@ -79,6 +162,12 @@ export function LiveMapClient({
   routePoints = [],
   onPick,
   onMapClick,
+  onCenterChange,
+  filter = 'all',
+  userLocation,
+  focusPoint,
+  fitDraftRoute = false,
+  accessibleLabel = 'Интерактивная карта прогулок и сохранённых мест',
 }: LiveMapProps) {
   const [tilesReady, setTilesReady] = useState(false);
   const [tilesFailed, setTilesFailed] = useState(false);
@@ -89,24 +178,38 @@ export function LiveMapClient({
       lng: toNumber(zone.approximate_lng),
       radius: Number(zone.radius_meters || zone.radiusMeters || 500),
     }))
-    .filter((zone) => zone.lat !== null && zone.lng !== null);
+    .filter((zone) => zone.lat !== null && zone.lng !== null)
+    .filter((zone) => filter === 'all' || (filter === 'risks' ? zone.type === 'risk_zone' || zone.type === 'risk' : filter === 'places' ? zone.type !== 'risk_zone' && zone.type !== 'risk' : false));
+  const mappedFeatures = features.filter((feature) => filter === 'all'
+    || (filter === 'routes' && feature.type === 'route')
+    || (filter === 'risks' && feature.type === 'point' && (feature.zone_type === 'risk_zone' || feature.zone_type === 'risk'))
+    || (filter === 'places' && feature.type === 'point' && feature.zone_type !== 'risk_zone' && feature.zone_type !== 'risk'));
   const draftPositions = draftRoutePositions(routePoints);
 
   return (
     <div className="live-map-frame">
-      <MapContainer center={defaultCenter} zoom={12} className="live-map" zoomControl attributionControl={false}>
+      <MapContainer center={defaultCenter} zoom={12} className="live-map" zoomControl attributionControl={false} aria-label={accessibleLabel}>
+        <MapAccessibility label={accessibleLabel} />
         <AttributionControl prefix={false} />
         <TileLayer
           url={mapTiles}
           attribution={mapAttribution}
           subdomains="abcd"
           maxZoom={20}
+          keepBuffer={6}
+          updateWhenIdle={false}
           eventHandlers={{
             load: () => setTilesReady(true),
             tileerror: () => setTilesFailed(true),
           }}
         />
-        <MapEvents onMapClick={onMapClick} onPick={onPick} />
+        <MapEvents onMapClick={onMapClick} onPick={onPick} onCenterChange={onCenterChange} />
+        <MapViewport zones={zones} features={features} userLocation={userLocation} focusPoint={focusPoint} routePoints={routePoints} fitDraftRoute={fitDraftRoute} />
+
+        {userLocation && <>
+          <Circle center={[userLocation.lat, userLocation.lng]} radius={Math.max(40, Math.min(userLocation.accuracy || 80, 600))} pathOptions={{ color: '#07814d', fillColor: '#3df881', fillOpacity: 0.12, weight: 1 }} interactive={false} />
+          <CircleMarker center={[userLocation.lat, userLocation.lng]} radius={8} pathOptions={{ color: '#fafffb', fillColor: '#07814d', fillOpacity: 1, weight: 3 }}><Popup>Вы здесь</Popup></CircleMarker>
+        </>}
 
         {mappedZones.map((zone) => {
         const color = zoneColor(zone.type);
@@ -127,7 +230,7 @@ export function LiveMapClient({
         );
         })}
 
-        {features.map((feat) => {
+        {mappedFeatures.map((feat) => {
         if (feat.type === 'point' && feat.lat && feat.lng) {
           const color = zoneColor(feat.zone_type || 'safe_place');
           return (
@@ -174,9 +277,9 @@ export function LiveMapClient({
         )}
 
         {picked && (
-          <Marker position={[picked.lat, picked.lng]}>
-            <Popup>Новая примерная точка зоны</Popup>
-          </Marker>
+          <CircleMarker center={[picked.lat, picked.lng]} radius={10} pathOptions={{ color: '#fff', fillColor: '#dd617c', fillOpacity: 1, weight: 4 }}>
+            <Popup>Новая примерная точка</Popup>
+          </CircleMarker>
         )}
       </MapContainer>
 
