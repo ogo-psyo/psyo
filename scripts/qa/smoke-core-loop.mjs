@@ -33,9 +33,9 @@ async function runScenario(viewport, label) {
   }, profile);
   await page.reload({ waitUntil: 'networkidle' });
 
-  const livingDay = page.locator('.living-day');
+  const livingDay = page.locator('[data-production-journey="today"]');
   await livingDay.waitFor();
-  await page.getByRole('heading', { name: profile.dogName, exact: true }).waitFor();
+  await page.getByRole('heading', { name: `${profile.dogName} сегодня`, exact: true }).waitFor();
   await page.getByRole('button', { name: 'Спросить Псё', exact: true }).waitFor();
   for (const item of ['всё', 'псё', 'карта', 'гав', 'вещи']) await page.locator('.app-tabs').getByText(item, { exact: true }).waitFor();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
@@ -55,13 +55,13 @@ async function runOnboardingScenario() {
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
 
-  if (await page.locator('.living-day').count()) {
+  if (await page.locator('[data-production-journey="today"]').count()) {
     await page.getByRole('button', { name: 'Спросить Псё', exact: true }).waitFor();
     await page.locator('.app-tabs').getByText('гав', { exact: true }).waitFor();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
     if (overflow) throw new Error('living day has horizontal overflow on 390px viewport');
     await page.close();
-    return { label: 'living-day-mobile', navigation: true, assistant: true, noHorizontalOverflow: true };
+    return { label: 'production-journey-mobile', navigation: true, assistant: true, noHorizontalOverflow: true };
   }
 
   await page.getByRole('button', { name: 'Добавить собаку', exact: true }).first().click();

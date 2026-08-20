@@ -6,12 +6,13 @@ import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { LiveMap } from '@/components/LiveMap';
 import { FloatingNote, PaperSheet, WatercolorScreen } from '@/components/watercolor';
 import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
+import { ProductionAssistantSheet, ProductionJourney } from '@/components/journey/ProductionJourney';
 import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
 import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
 import { ObservationEditor, type ObservationEditorDraft } from '@/components/care/ObservationEditor';
 import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
-import { AllFunctionsHub, type AllFunctionTarget, type DogModuleSummary } from '@/components/home/AllFunctionsHub';
+import type { DogModuleSummary } from '@/components/home/AllFunctionsHub';
 import { HabitScreen, type HabitDraft, type HabitView } from '@/components/habits/HabitScreen';
 import { HealthTimelineScreen } from '@/components/health/HealthTimelineScreen';
 import { NextCareCard } from '@/components/today/NextCareCard';
@@ -459,6 +460,8 @@ export default function Home() {
   const [notice, setNotice] = useState<Notice>('idle');
   const [error, setError] = useState('');
   const [tab, setTabState] = useState<Tab>('today');
+  const [journeyDetail, setJourneyDetail] = useState<PrimaryRoute | null>(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [reminders, setReminders] = useState<ReminderView[]>([]);
@@ -1168,6 +1171,8 @@ export default function Home() {
     : tab === 'card'
       ? 'profile'
       : tab as PrimaryRoute;
+  const isJourneyRoute = (['today', 'profile', 'map', 'nearby', 'things'] as const).includes(tab as PrimaryRoute)
+    && journeyDetail !== tab;
   const activeReminders = useMemo(() => reminders.filter((reminder) => reminder.status !== 'done'), [reminders]);
   const doneReminders = useMemo(() => reminders.filter((reminder) => reminder.status === 'done'), [reminders]);
   const wantedWishlist = useMemo(() => wishlist.filter((item) => item.status !== 'bought' && item.status !== 'not_suitable'), [wishlist]);
@@ -2948,7 +2953,7 @@ export default function Home() {
 
   return (
     <main className="app-canvas">
-      <section ref={phoneShellRef} className={`phone-shell tab-${tab}`}>
+      <section ref={phoneShellRef} className={`phone-shell tab-${tab}${hasDog && isJourneyRoute ? ' journey-active' : ''}`}>
         <header className="app-header">
           <div className="app-wordmark">
             <p>план ухода и памятка</p>
@@ -3006,37 +3011,111 @@ export default function Home() {
           <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>
         </section>}
 
-        {hasDog && <AppNavigation active={activePrimaryRoute} onNavigate={setTab} />}
+        {hasDog && <AppNavigation active={activePrimaryRoute} onNavigate={(route) => {
+          setJourneyDetail(null);
+          setAssistantOpen(false);
+          setTab(route);
+        }} />}
 
-        {hasDog && tab !== 'assistant' && <button className="production-floating-assistant" type="button" onClick={() => setTab('assistant')}><Sparkle weight="fill" aria-hidden="true" /><span>Спросить Псё</span></button>}
+        {hasDog && isJourneyRoute && <button className="production-floating-assistant" type="button" aria-label="Спросить Псё" onClick={() => setAssistantOpen(true)}><Sparkle weight="fill" aria-hidden="true" /><span>Спросить</span></button>}
 
-        {hasDog && tab === 'today' && <AllFunctionsHub
+        {hasDog && tab === 'today' && !journeyDetail && <ProductionJourney route="today"
           dogName={profile.dogName}
-          dogNameAccusative={petNameAccs}
           breedLabel={breedLabel}
-          summary={dogSummary}
-          activeReminders={activeReminders.length}
-          observations={observations.length}
-          documents={documents.length}
-          habits={habits.length}
-          places={zones.length + ownerRoutes.length}
-          nearby={socialCandidates.nearby.length + socialCandidates.city.length}
-          things={wantedWishlist.length}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
-          reminderFeature={<NextCareCard
-            care={todayCare}
-            onPrimaryAction={() => todayCare.reminderId
-              ? completeReminder(todayCare.reminderId)
-              : todayCare.target === 'history'
-                ? (setCareView('history'), setTab('calendar'))
-                : setTab('calendar')}
-            onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
-          />}
-          healthFeature={<button className="all-health-summary" type="button" onClick={() => setTab('health')}>
-            <span><b>{observations.length ? observationSummary(observations[0]) : 'Добавить первое наблюдение'}</b><small>{observations.length ? 'Открыть историю наблюдений' : 'Записать только то, что заметили'}</small></span>
-            <ArrowRight weight="bold" aria-hidden="true" />
-          </button>}
-          onNavigate={(target: AllFunctionTarget) => setTab(target)}
+          careTitle={todayCare.title}
+          careDetail={todayCare.detail}
+          careDone={!todayCare.reminderId}
+          onCareAction={() => todayCare.reminderId
+            ? completeReminder(todayCare.reminderId)
+            : (setCareView(todayCare.target === 'history' ? 'history' : 'active'), setTab('calendar'))}
+          nearbyTitle={(socialCandidates.nearby[0] || socialCandidates.city[0])?.name
+            ? `${(socialCandidates.nearby[0] || socialCandidates.city[0]).name} зовёт гулять`
+            : 'Дать Гав'}
+          nearbyDetail={(socialCandidates.nearby[0] || socialCandidates.city[0])?.distance || 'Найти компанию без публикации точного адреса'}
+          latestDocument={documents[0]?.title}
+          latestDocumentDetail={documents[0]?.clinic || (documents.length ? `${documents.length} в личной истории` : undefined)}
+          onNavigate={(route) => {
+            setJourneyDetail(null);
+            setTab(route);
+          }}
+        />}
+
+        {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ProductionJourney route="profile"
+          dogName={profile.dogName}
+          breedLabel={breedLabel}
+          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
+          careTitle={todayCare.title}
+          careDetail={todayCare.detail}
+          documentCount={documents.length}
+          latestDocument={documents[0]?.title}
+          latestDocumentDetail={documents[0]?.clinic || documents[0]?.originalName}
+          latestObservation={observations[0] ? observationSummary(observations[0]) : undefined}
+          onNavigate={(route) => {
+            if (route === 'profile') setJourneyDetail('profile');
+            else { setJourneyDetail(null); setTab(route); }
+          }}
+        />}
+
+        {hasDog && tab === 'map' && journeyDetail !== 'map' && <ProductionJourney route="map"
+          dogName={profile.dogName}
+          breedLabel={breedLabel}
+          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
+          map={<LiveMap zones={zones} features={ownerRoutes} />}
+          riskTitle={zones.find((zone) => zone.type === 'risk_zone')?.title}
+          routeTitle={ownerRoutes[0]?.title}
+          onNavigate={(route) => {
+            if (route === 'map') setJourneyDetail('map');
+            else { setJourneyDetail(null); setTab(route); }
+          }}
+        />}
+
+        {hasDog && tab === 'nearby' && journeyDetail !== 'nearby' && <ProductionJourney route="nearby"
+          dogName={profile.dogName}
+          breedLabel={breedLabel}
+          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
+          discoverable={socialProfile?.discoverable}
+          candidates={[...socialCandidates.nearby, ...socialCandidates.city].slice(0, 2).map((candidate) => ({
+            id: candidate.petId,
+            name: candidate.name,
+            distance: candidate.distance || candidate.district || 'в вашем городе',
+            availability: candidate.sharedScenarios.includes('walk') ? 'готовы к прогулке' : 'готовы познакомиться',
+            note: candidate.reasons.slice(0, 2).join(' · ') || 'Контакт откроется только по согласию',
+            onOpen: () => setJourneyDetail('nearby'),
+          }))}
+          onOpenSocial={() => setJourneyDetail('nearby')}
+          onNavigate={(route) => {
+            if (route === 'nearby') setJourneyDetail('nearby');
+            else { setJourneyDetail(null); setTab(route); }
+          }}
+        />}
+
+        {hasDog && tab === 'things' && journeyDetail !== 'things' && <ProductionJourney route="things"
+          dogName={profile.dogName}
+          breedLabel={breedLabel}
+          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
+          things={wantedWishlist.slice(0, 3).map((item, index) => ({
+            id: item.id,
+            title: item.title,
+            detail: item.reason || (item.priority === 'high' ? 'важно купить' : 'в личном списке'),
+            tone: index === 1 ? 'rose' : index === 2 ? 'green' : 'mint',
+          }))}
+          onAddThing={() => { setJourneyDetail('things'); setThingCaptureOpen(true); }}
+          onNavigate={(route) => {
+            if (route === 'things') setJourneyDetail('things');
+            else { setJourneyDetail(null); setTab(route); }
+          }}
+        />}
+
+        {hasDog && assistantOpen && <ProductionAssistantSheet
+          dogName={profile.dogName}
+          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
+          question={assistantQuestion}
+          answer={assistantAnswer}
+          loading={assistantLoading}
+          onQuestionChange={setAssistantQuestion}
+          onAsk={(question) => { void askAssistant(question); }}
+          onClose={() => setAssistantOpen(false)}
         />}
 
         {hasDog && tab === 'habits' && <HabitScreen
@@ -3164,7 +3243,7 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'nearby' && <WatercolorScreen className="nearby-composition" tone="rose" eyebrow="свои рядом" title="Гав" caption="Подай сигнал, найди компанию для прогулки и договорись без публикации точного адреса.">
+        {hasDog && tab === 'nearby' && journeyDetail === 'nearby' && <WatercolorScreen className="nearby-composition" tone="rose" eyebrow="свои рядом" title="Гав" caption="Подай сигнал, найди компанию для прогулки и договорись без публикации точного адреса.">
           <ol className="nearby-trust-flow" aria-label="Как открывается контакт">
             <li><b>Покажи анкету</b><span>без точного адреса</span></li>
             <li><b>Дождись согласия</b><span>с обеих сторон</span></li>
@@ -3410,7 +3489,7 @@ export default function Home() {
           </article>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'profile' && <WatercolorScreen className="profile-ux-2025" tone="gold" eyebrow="умный профиль" title={profile.dogName || 'Профиль пса'} caption={profileReady ? 'Минимум готов: Псё уже персонализирует подсказки, места и напоминания.' : `Следующий шаг: ${missingProfileFields[0] || 'сохранить профиль'}.`}>
+        {hasDog && tab === 'profile' && journeyDetail === 'profile' && <WatercolorScreen className="profile-ux-2025" tone="gold" eyebrow="умный профиль" title={profile.dogName || 'Профиль пса'} caption={profileReady ? 'Минимум готов: Псё уже персонализирует подсказки, места и напоминания.' : `Следующий шаг: ${missingProfileFields[0] || 'сохранить профиль'}.`}>
           <section className="smart-profile-hero" aria-label="Сводка профиля собаки">
             <div className="smart-profile-identity">
               <GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="large" />
@@ -3585,7 +3664,7 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'things' && <WatercolorScreen className="things-composition" tone="gold" eyebrow="вещи" title={`Что нужно ${petNameDatv}`} caption="Личный список покупок и того, что заканчивается." aside={<ShoppingBag className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'things' && journeyDetail === 'things' && <WatercolorScreen className="things-composition" tone="gold" eyebrow="вещи" title={`Что нужно ${petNameDatv}`} caption="Личный список покупок и того, что заканчивается." aside={<ShoppingBag className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
           <div className="screen-primary-action">
             <button className="primary" type="button" aria-expanded={thingCaptureOpen} onClick={() => setThingCaptureOpen((open) => !open)}>
               {thingCaptureOpen ? 'Закрыть добавление' : 'Добавить вещь'}
@@ -3644,7 +3723,7 @@ export default function Home() {
 
         </WatercolorScreen>}
 
-        {hasDog && tab === 'map' && <WatercolorScreen className="places-composition" tone="green" eyebrow="мир вокруг" title="Карта прогулок" caption="Живые маршруты, полезные места и предупреждения владельцев." aside={<MapPin className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'map' && journeyDetail === 'map' && <WatercolorScreen className="places-composition" tone="green" eyebrow="мир вокруг" title="Карта прогулок" caption="Живые маршруты, полезные места и предупреждения владельцев." aside={<MapPin className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
           <div className="screen-primary-action">
             <button className="primary" type="button" aria-expanded={mapComposerOpen} onClick={() => setMapComposerOpen((open) => !open)}>
               {mapComposerOpen ? 'Закрыть добавление' : 'Добавить место или маршрут'}

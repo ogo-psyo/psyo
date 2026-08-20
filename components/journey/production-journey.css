@@ -1,0 +1,199 @@
+@import '../../app/design-v3/design-v3.css';
+
+:root {
+  --production-palette-mint: #cbfedb;
+  --production-palette-green: #98df73;
+  --production-palette-signal: #3df881;
+  --production-palette-emerald: #07814d;
+  --production-palette-coral: #dd617c;
+}
+
+.phone-shell.journey-active {
+  width: 100%;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  padding: 0 !important;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #f4fff7;
+}
+
+.journey-active .app-header,
+.journey-active .pet-switcher,
+.journey-active .auth-inline-panel {
+  display: none;
+}
+
+.production-journey-screen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding-bottom: calc(164px + env(safe-area-inset-bottom));
+}
+
+.production-journey-avatar > * {
+  width: 100%;
+  height: 100%;
+}
+
+.production-journey-avatar img,
+.production-journey-avatar canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.journey-active .app-tabs {
+  z-index: 19;
+  inset: auto 10px calc(8px + env(safe-area-inset-bottom));
+  width: auto;
+  min-height: 66px;
+  padding: 7px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border: 0;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 12px 34px rgba(23,63,49,.18), inset 0 1px 0 #fff;
+}
+
+.journey-active .app-tabs button {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 4px;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: #315e4d;
+  box-shadow: none;
+  text-transform: capitalize;
+}
+
+.journey-active .app-tabs .ui-button-content {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 3px;
+}
+
+.journey-active .app-tabs button.active {
+  background: #3df881;
+  color: #06472f;
+  box-shadow: inset 0 1px 0 #fff, 0 4px 10px rgba(7,129,77,.09);
+}
+
+.journey-active .app-tab-icon {
+  width: 23px;
+  height: 23px;
+}
+
+.journey-active .app-tabs button > span:last-child {
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.journey-active .app-tabs .ui-button-content > span:last-child {
+  max-width: 100%;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.journey-active .production-floating-assistant {
+  z-index: 20;
+  right: 18px;
+  bottom: calc(82px + env(safe-area-inset-bottom));
+  min-width: 108px;
+  height: 54px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 18px;
+  background: #06472f;
+  color: #3df881;
+  box-shadow: 0 12px 26px rgba(23,63,49,.28), inset 0 1px 0 rgba(255,255,255,.2);
+}
+
+.journey-active .production-floating-assistant span {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.production-journey-details {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(7,129,77,.16);
+}
+
+.production-journey-details > :first-child {
+  margin-top: 0;
+}
+
+.production-journey-map .live-map-frame,
+.production-journey-map .live-map {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: inherit;
+}
+
+.production-journey-map .live-map-frame {
+  overflow: hidden;
+}
+
+.production-journey-empty {
+  min-height: 82px;
+}
+
+.production-journey-empty .v3-candidate-avatar svg {
+  font-size: 26px;
+}
+
+.production-assistant-backdrop {
+  position: absolute;
+}
+
+.production-assistant-answer {
+  max-height: 130px;
+  overflow-y: auto;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #fff;
+  color: #06472f;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+@media (max-width: 359px) {
+  .production-journey-screen { padding-inline: 14px; }
+  .v3-orbit { min-height: 326px; }
+  .v3-orbit-copy { max-width: 176px; }
+  .v3-now { grid-template-columns: 1fr; }
+  .v3-now button { width: 100%; }
+  .v3-things-hero { grid-template-columns: 1fr 94px; padding: 16px; }
+  .v3-food-pack { height: 124px; }
+}
+
+@media (min-width: 760px) {
+  .phone-shell.journey-active {
+    width: min(430px, 100%);
+    height: min(844px, calc(100dvh - 64px)) !important;
+    min-height: min(700px, calc(100dvh - 64px)) !important;
+    border-radius: 34px;
+    box-shadow: 0 32px 80px rgba(20,52,39,.24);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .production-journey-screen,
+  .production-assistant-backdrop,
+  .production-assistant-answer { scroll-behavior: auto; animation: none; transition: none; }
+}

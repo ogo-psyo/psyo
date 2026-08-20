@@ -1,3 +1,5 @@
+@import '../components/journey/production-journey.css';
+
 :root {
   --psyo-ink: #101426;
   --psyo-ink-soft: #2f3547;
