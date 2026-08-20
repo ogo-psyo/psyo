@@ -1499,19 +1499,24 @@ export default function Home() {
 
   function normalizeObservation(raw: any): ObservationView | null {
     if (!raw || typeof raw !== 'object') return null;
+    const id = String(raw.id || '');
+    const note = String(raw.note || '').trim();
+    const isLegacyDemoObservation = raw.source === 'demo'
+      || (id === 'observation-1' && note === 'демо-наблюдение');
+    if (isLegacyDemoObservation) return null;
     const metadata = raw.metadata && typeof raw.metadata === 'object' && !Array.isArray(raw.metadata) ? raw.metadata : {};
     const createdAt = String(raw.observedAt || raw.observed_at || raw.createdAt || raw.created_at || new Date().toISOString());
     const date = new Date(createdAt);
     const type = String(raw.type || '');
     const value = String(raw.value || '');
     return {
-      id: String(raw.id || guestId('observation')),
+      id: id || guestId('observation'),
       petId: raw.petId || raw.pet_id ? String(raw.petId || raw.pet_id) : undefined,
       mood: String(raw.mood || metadata.mood || (type === 'mood' ? value : '')).trim() || undefined,
       appetite: String(raw.appetite || metadata.appetite || (type === 'appetite' ? value : '')).trim() || undefined,
       stool: String(raw.stool || metadata.stool || (type === 'stool' ? value : '')).trim() || undefined,
       energy: String(raw.energy || metadata.energy || (type === 'energy' ? value : '')).trim() || undefined,
-      note: String(raw.note || '').trim() || undefined,
+      note: note || undefined,
       createdAt: Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString(),
       syncStatus: raw.syncStatus === 'saved' ? 'saved' : 'local',
     };
@@ -3188,7 +3193,7 @@ export default function Home() {
         {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ProductionJourney route="profile"
           dogName={profile.dogName}
           breedLabel={breedLabel}
-          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
+          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" fill />}
           profileFacts={[profile.lifeStage, profile.weight, profile.energyLevel].filter(Boolean)}
           profileEntries={profileJourneyEntries}
           observationPoints={observations.map((item) => ({ id: item.id, createdAt: item.createdAt, mood: item.mood, appetite: item.appetite, stool: item.stool, energy: item.energy, note: item.note }))}

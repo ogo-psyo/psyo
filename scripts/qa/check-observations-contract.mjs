@@ -14,6 +14,10 @@ const files = {
 
 const failures = [];
 
+if (files.bootstrap.includes("note: 'демо-наблюдение'")) {
+  failures.push('demo observation must not leak into personal history');
+}
+
 for (const token of [
   'create table if not exists public.pet_observations',
   'pet_id uuid not null references public.pets(id) on delete cascade',

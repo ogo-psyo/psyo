@@ -262,6 +262,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 
 .generated-avatar { position: relative; width: 220px; height: 220px; max-width: 100%; margin: 0 auto; display: grid; place-items: center; border-radius: 42px; isolation: isolate; }
 .generated-avatar.small { width: 62px; height: 62px; border-radius: 20px; }
+.generated-avatar.fill { width: 100% !important; height: 100% !important; max-width: none; margin: 0; border-radius: inherit; }
 .avatar-aura { position: absolute; inset: -14%; border-radius: 999px; background: radial-gradient(circle, oklch(0.78 0.085 205 / .24), oklch(0.80 0.09 165 / .14) 42%, transparent 68%); filter: blur(14px); z-index: -1; }
 .avatar-image { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; box-shadow: 0 16px 34px oklch(0.36 0.04 190 / .18), 0 0 0 1px oklch(1 0 0 / .9); }
 .avatar-placeholder { width: 100%; height: 100%; display: grid; place-items: center; align-content: center; gap: 6px; border: 1px solid var(--line); border-radius: inherit; background: var(--surface-2); color: var(--muted); text-transform: uppercase; font-size: 10px; font-weight: 800; }

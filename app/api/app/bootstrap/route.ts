@@ -20,7 +20,7 @@ function demoBootstrap(): AppBootstrap {
     reminders: [{ id: 'reminder-1', petId: 'demo-pet', type: 'parasite', title: 'Поставить дату обработки', dueAt: now, recurrence: 'monthly', status: 'active' }],
     zones: [{ id: 'zone-1', petId: 'demo-pet', type: 'home_area', title: 'Домашняя зона', radiusMeters: 500 }],
     wishlist: [{ id: 'wish-1', petId: 'demo-pet', title: 'Адресник с QR', category: 'gear', reason: 'Безопасность на прогулке', priority: 'medium', status: 'wanted' }],
-    observations: [{ id: 'observation-1', petId: 'demo-pet', type: 'mood', value: 'спокойная', note: 'демо-наблюдение', observedAt: now, mood: 'спокойная', appetite: 'обычный', stool: 'обычный', energy: 'обычная', source: 'demo', metadata: { mood: 'спокойная', appetite: 'обычный', stool: 'обычный', energy: 'обычная' }, createdAt: now, updatedAt: now }],
+    observations: [],
   };
 }
 

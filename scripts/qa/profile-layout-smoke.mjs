@@ -15,20 +15,30 @@ try {
     await page.evaluate((storedProfile) => {
       localStorage.setItem('pso.topapp.onboarding.v1', 'done');
       localStorage.setItem('pso.product.profile.v5', JSON.stringify(storedProfile));
+      localStorage.setItem('pso.topapp.observations.v1', JSON.stringify([{ id: 'observation-1', source: 'demo', note: 'демо-наблюдение', mood: 'спокойная', appetite: 'обычный', stool: 'обычный', energy: 'обычная', createdAt: new Date().toISOString() }]));
     }, profile);
     await page.reload({ waitUntil: 'networkidle' });
     await page.locator('.app-tabs button[data-route="profile"]').click({ force: true });
     await page.locator('[data-production-journey="profile"]').waitFor();
 
+    if (await page.getByText('демо-наблюдение', { exact: true }).count()) throw new Error(`${width}: demo observation leaked into personal history`);
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem('pso.topapp.observations.v1') || '[]').length === 0);
+
     const layout = await page.evaluate(() => {
       const card = document.querySelector('[data-slot="card"]')?.getBoundingClientRect();
       const items = [...document.querySelectorAll('[data-slot="item"]')].map((node) => node.getBoundingClientRect());
       const footerButtons = [...document.querySelectorAll('[data-slot="card-footer"] button')].map((node) => node.getBoundingClientRect());
+      const avatarFrame = document.querySelector('.profile-life-card-header .v3-dog-avatar')?.getBoundingClientRect();
+      const avatar = document.querySelector('.profile-life-card-header .generated-avatar')?.getBoundingClientRect();
+      const avatarImage = document.querySelector('.profile-life-card-header .avatar-image')?.getBoundingClientRect();
       return {
         scrollWidth: document.documentElement.scrollWidth,
         card: card && { left: card.left, right: card.right },
         items: items.map((rect) => ({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom })),
         footerButtons: footerButtons.map((rect) => ({ left: rect.left, right: rect.right })),
+        avatarFrame: avatarFrame && { width: avatarFrame.width, height: avatarFrame.height },
+        avatar: avatar && { width: avatar.width, height: avatar.height },
+        avatarImage: avatarImage && { width: avatarImage.width, height: avatarImage.height },
       };
     });
     if (layout.scrollWidth > width) throw new Error(`${width}: horizontal overflow ${layout.scrollWidth}/${width}`);
@@ -36,6 +46,9 @@ try {
     if (layout.items.length !== 2 || layout.items.some((item) => item.left < 14 || item.right > width - 14)) throw new Error(`${width}: item escaped content margins`);
     if (layout.items[0].bottom >= layout.items[1].top) throw new Error(`${width}: action items overlap`);
     if (layout.footerButtons.length !== 2 || layout.footerButtons[0].right > layout.footerButtons[1].left) throw new Error(`${width}: card footer actions overlap`);
+    if (!layout.avatarFrame || !layout.avatar || !layout.avatarImage) throw new Error(`${width}: profile avatar is missing`);
+    if (Math.abs(layout.avatar.width - layout.avatarFrame.width) > 1 || Math.abs(layout.avatar.height - layout.avatarFrame.height) > 1) throw new Error(`${width}: avatar does not fill its frame`);
+    if (Math.abs(layout.avatarImage.width - layout.avatarFrame.width) > 1 || Math.abs(layout.avatarImage.height - layout.avatarFrame.height) > 1) throw new Error(`${width}: avatar image does not fill its frame`);
 
     const wellbeing = page.locator('[data-profile-wellbeing]');
     await wellbeing.waitFor();

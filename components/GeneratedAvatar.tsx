@@ -6,19 +6,21 @@ export function GeneratedAvatar({
   ready = false,
   imageUrl = '',
   demo = false,
+  fill = false,
 }: {
   profile: DogProfile;
   size?: 'small' | 'large';
   ready?: boolean;
   imageUrl?: string;
   demo?: boolean;
+  fill?: boolean;
 }) {
   const breed = getBreed(profile.breedId);
   const style = getAvatarStyle(profile.selectedStyle);
   const source = imageUrl || profile.avatarImageUrl || (ready || demo ? '/demo-avatar.png' : '');
 
   return (
-    <div className={`generated-avatar ${size} style-${profile.selectedStyle} ${ready ? 'ready' : 'idle'}`} aria-label="Портрет собаки">
+    <div className={`generated-avatar ${size}${fill ? ' fill' : ''} style-${profile.selectedStyle} ${ready ? 'ready' : 'idle'}`} aria-label="Портрет собаки">
       <span className="avatar-aura" />
       {source ? (
         <img className="avatar-image" src={source} alt={profile.avatarSource === 'uploaded' ? 'Фото собаки' : 'Портрет собаки'} />
