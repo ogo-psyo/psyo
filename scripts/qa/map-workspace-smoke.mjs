@@ -89,6 +89,28 @@ try {
       await page.locator('[data-route-flow="idle"]').waitFor();
       await page.getByRole('button', { name: /Сохранённое на карте/ }).click();
       await page.locator('.production-map-saved-row.route p').getByText(/мин/).waitFor();
+      const savedLayout = await page.evaluate(() => {
+        const filters = document.querySelector('.production-map-filters')?.getBoundingClientRect();
+        const lastFilter = document.querySelector('.production-map-filters button:last-child')?.getBoundingClientRect();
+        const sheet = document.querySelector('[data-map-snap-sheet]')?.getBoundingClientRect();
+        const toast = document.querySelector('.toast')?.getBoundingClientRect();
+        return {
+          filters: filters && { left: filters.left, right: filters.right },
+          lastFilter: lastFilter && { left: lastFilter.left, right: lastFilter.right },
+          toastOverlapsSheet: Boolean(sheet && toast && toast.bottom > sheet.top && toast.top < sheet.bottom),
+          overflow: document.documentElement.scrollWidth > window.innerWidth,
+        };
+      });
+      if (savedLayout.overflow || !savedLayout.filters || !savedLayout.lastFilter || savedLayout.lastFilter.right > savedLayout.filters.right + 1) throw new Error('390: saved-map filters are clipped');
+      if (savedLayout.toastOverlapsSheet) throw new Error('390: transient map notice overlaps saved actions');
+      if (outDir) await page.screenshot({ path: `${outDir}/map-saved-${width}.png`, fullPage: false });
+      await page.locator('.production-map-saved-row.route').getByRole('button', { name: 'Убрать' }).first().click();
+      const deleteDialog = page.getByRole('alertdialog', { name: /Убрать/ });
+      await deleteDialog.waitFor();
+      if (await deleteDialog.locator('xpath=ancestor::*[@data-map-saved-content]').count()) throw new Error('390: route delete dialog is still rendered inside the saved list');
+      if (outDir) await page.screenshot({ path: `${outDir}/map-delete-dialog-${width}.png`, fullPage: false });
+      await deleteDialog.getByRole('button', { name: 'Оставить' }).click();
+      await deleteDialog.waitFor({ state: 'hidden' });
       await page.getByRole('button', { name: /Сохранённое на карте/ }).click();
     } else {
       await page.locator('[data-route-flow="record-review"]').getByRole('button', { name: 'Отменить', exact: true }).click();

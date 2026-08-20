@@ -1393,6 +1393,13 @@
 .production-map-snap-sheet { bottom: calc(90px + env(safe-area-inset-bottom)); max-height: min(58dvh, 500px); }
 .production-route-controller { bottom: calc(10px + env(safe-area-inset-bottom)); max-height: min(62dvh, 560px); overflow-y: auto; overscroll-behavior: contain; padding: 14px; }
 
+.phone-shell.journey-active.tab-map .toast {
+  top: calc(174px + env(safe-area-inset-top));
+  bottom: auto;
+  color: #fff;
+  background: #07814d;
+}
+
 .phone-shell.journey-active:has(.production-map-workspace.route-focus) .app-tabs {
   visibility: hidden;
   opacity: 0;
@@ -1442,9 +1449,8 @@
 .production-map-sheet-body { max-height: calc(min(58dvh, 500px) - 186px); overflow-y: auto; overscroll-behavior: contain; padding: 2px 10px 14px; }
 .risk-sheet .production-map-sheet-body { max-height: calc(min(58dvh, 500px) - 68px); }
 .production-map-sheet-body[hidden] { display: none; }
-.production-map-filters { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 8px; scrollbar-width: none; }
-.production-map-filters::-webkit-scrollbar { display: none; }
-.production-map-filters button { min-height: 44px; flex: 0 0 auto; padding: 0 12px; border: 0; border-radius: 13px; background: #fff; color: #315e4d; font-size: 12px; font-weight: 850; }
+.production-map-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px 0 8px; }
+.production-map-filters button { min-width: 0; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 12px; border: 0; border-radius: 13px; background: #fff; color: #315e4d; font-size: 12px; font-weight: 850; text-align: start; }
 .production-map-filters button span { min-width: 20px; display: inline-grid; place-items: center; margin-inline-start: 4px; padding: 2px 4px; border-radius: 99px; background: #eafbed; font-variant-numeric: tabular-nums; }
 .production-map-filters button.active { background: #cbfedb; color: #06472f; box-shadow: inset 0 0 0 1px #07814d; }
 .production-map-filters button.risk.active { background: #ffe8ed; color: #9e3450; box-shadow: inset 0 0 0 1px #dd617c; }
@@ -1551,6 +1557,17 @@
 .production-map-row-actions { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
 .production-map-route-edit { grid-column: 2 / -1; display: grid; gap: 7px; }
 .production-map-route-edit span { display: flex; gap: 7px; }
+
+.route-delete-backdrop { z-index: 900; }
+.route-delete-dialog { grid-template-columns: 48px minmax(0, 1fr); align-items: start; width: min(390px, 100%); }
+.route-delete-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 15px; background: #fff0f3; color: #9e3450; }
+.route-delete-icon svg { width: 24px; height: 24px; }
+.route-delete-dialog > .route-delete-copy { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.route-delete-copy h2 { margin: 0; color: #06472f; font-size: 20px; line-height: 1.15; }
+.route-delete-copy p { margin: 0; color: #456d5d; font-size: 14px; font-weight: 700; line-height: 1.45; }
+.route-delete-actions { grid-column: 1 / -1; display: grid !important; grid-template-columns: 1fr 1fr; gap: 9px; }
+.route-delete-actions button { min-height: 48px; border: 0; border-radius: 15px; color: #06472f; background: #eafbed; font-size: 13px; font-weight: 900; }
+.route-delete-actions .danger-action { color: #fff; background: #9e3450; }
 
 .production-map-workspace button:focus-visible,
 .production-map-workspace .leaflet-container:focus-visible { outline: 3px solid #06472f; outline-offset: 3px; }

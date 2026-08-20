@@ -8,6 +8,7 @@ import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation
 import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
 import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';
+import { RouteDeleteDialog } from '@/components/journey/RouteDeleteDialog';
 import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
 import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
@@ -642,6 +643,12 @@ export default function Home() {
   useEffect(() => {
     resetViewScroll();
   }, [tab]);
+
+  useEffect(() => {
+    if (notice === 'idle') return;
+    const timer = window.setTimeout(() => setNotice('idle'), 1600);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   useEffect(() => {
     if (tab !== 'nearby') return;
@@ -3086,7 +3093,6 @@ export default function Home() {
       {editingRouteId === route.id ? <div className="production-map-route-edit"><input value={routeTitleDraft} onChange={(event) => setRouteTitleDraft(event.target.value)} aria-label="Название маршрута" /><input value={routeDescriptionDraft} onChange={(event) => setRouteDescriptionDraft(event.target.value)} aria-label="Заметка о маршруте" /><span><button type="button" disabled={Boolean(routeMutationBusy) || !routeTitleDraft.trim()} onClick={() => updateOwnerRoute(route.id, { title: routeTitleDraft.trim(), description: routeDescriptionDraft.trim() })}>Сохранить</button><button type="button" onClick={() => setEditingRouteId(null)}>Отмена</button></span></div> : <><div><b>{route.title}</b><p>{route.routeSource === 'recorded' ? `${route.startedAt ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(new Date(route.startedAt)) + ' · ' : ''}${route.durationSeconds !== undefined ? `${Math.floor(route.durationSeconds / 60)} мин · ` : ''}${route.distanceMeters !== undefined ? route.distanceMeters < 1000 ? `${route.distanceMeters} м` : `${(route.distanceMeters / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} км` : 'Записанная прогулка'}` : route.description || 'Маршрут построен заранее'} · {route.visibility === 'shared' ? 'по ссылке' : 'только вам'}</p></div><div className="production-map-row-actions"><button type="button" onClick={() => beginOwnerRouteEdit(route)}>Изменить</button><button type="button" onClick={() => route.visibility === 'shared' ? revokeOwnerRouteShare(route) : shareOwnerRoute(route)}>{route.visibility === 'shared' ? 'Закрыть ссылку' : 'Поделиться'}</button><button type="button" className="danger-action" onClick={() => setPendingRouteDeletion(route)}>Убрать</button></div></>}
     </article>)}
     {removedZone && <div className="restore-notice" role="status"><span>Место убрано</span><button type="button" onClick={restoreZone}>Вернуть</button></div>}
-    {pendingRouteDeletion && <section className="delete-care-dialog" role="dialog" aria-modal="true" aria-label="Удалить маршрут"><article><b>Удалить маршрут «{pendingRouteDeletion.title}»?</b><p>Он исчезнет с карты, а открытая ссылка перестанет работать.</p><div className="wishlist-actions"><button type="button" disabled={Boolean(routeMutationBusy)} onClick={() => setPendingRouteDeletion(null)}>Оставить</button><button type="button" className="danger-action" disabled={Boolean(routeMutationBusy)} onClick={() => { if (pendingRouteDeletion) void deleteOwnerRoute(pendingRouteDeletion); }}>Удалить маршрут</button></div></article></section>}
   </section>;
 
   return (
@@ -3927,6 +3933,12 @@ export default function Home() {
         busy={careDeletionBusy}
         onCancel={() => setPendingCareDeletion(null)}
         onConfirm={confirmCareDeletion}
+      />
+      <RouteDeleteDialog
+        route={pendingRouteDeletion}
+        busy={Boolean(routeMutationBusy)}
+        onCancel={() => setPendingRouteDeletion(null)}
+        onConfirm={deleteOwnerRoute}
       />
       <CoreOnboarding
         open={dogCreationOpen}
