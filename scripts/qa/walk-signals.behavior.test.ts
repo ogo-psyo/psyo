@@ -38,3 +38,13 @@ test('stale, distant and overlong drafts are rejected or bounded', () => {
   assert.equal(result.ok, true);
   if (result.ok) assert.equal(result.value.note?.length, 180);
 });
+
+test('signal city follows the coarse location instead of a stale client default', () => {
+  const result = normalizeWalkSignalInput({
+    ...valid,
+    city: 'moscow',
+    coarseLocation: { lat: 59.93, lng: 30.32 },
+  }, now);
+  assert.equal(result.ok, true);
+  if (result.ok) assert.equal(result.value.city, 'saint_petersburg');
+});

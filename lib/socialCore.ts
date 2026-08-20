@@ -201,18 +201,18 @@ export function normalizeWalkSignalInput(input: unknown, now = Date.now()):
     return { ok: false, code: 'EXACT_LOCATION_FORBIDDEN', field: 'coarseLocation' };
   }
   const petId = String(source.petId ?? '').trim();
-  const city = String(source.city ?? '').trim();
   const district = cleanText(source.district, 50);
   const coarseLocation = quantizeCoarseLocation(source.coarseLocation);
   const pace = String(source.pace ?? '').trim() as WalkPace;
   const startsAtMs = Date.parse(String(source.startsAt ?? ''));
   const note = cleanText(source.note, 180);
   if (!petId) return { ok: false, code: 'PET_ID_REQUIRED', field: 'petId' };
-  if (!citySet.has(city)) return { ok: false, code: 'INVALID_CITY', field: 'city' };
   if (district && (!safeDistrictPattern.test(district) || /\d/.test(district) || districtAddressMarkers.test(district))) {
     return { ok: false, code: 'INVALID_DISTRICT', field: 'district' };
   }
   if (!coarseLocation) return { ok: false, code: 'COARSE_LOCATION_REQUIRED', field: 'coarseLocation' };
+  const city = socialCityForLocation(coarseLocation);
+  if (!city) return { ok: false, code: 'INVALID_CITY', field: 'coarseLocation' };
   if (!walkPaces.has(pace)) return { ok: false, code: 'INVALID_PACE', field: 'pace' };
   if (!Number.isFinite(startsAtMs) || startsAtMs < now - 15 * 60 * 1000 || startsAtMs > now + 48 * 60 * 60 * 1000) {
     return { ok: false, code: 'INVALID_START_TIME', field: 'startsAt' };
@@ -220,7 +220,7 @@ export function normalizeWalkSignalInput(input: unknown, now = Date.now()):
   const durationMs = startsAtMs <= now + 30 * 60 * 1000 ? 2 * 60 * 60 * 1000 : 3 * 60 * 60 * 1000;
   return { ok: true, value: {
     petId,
-    city: city as SocialCity,
+    city,
     district,
     coarseLocation,
     startsAt: new Date(startsAtMs).toISOString(),
@@ -262,6 +262,50 @@ export function distanceKm(left: CoarseLocation, right: CoarseLocation) {
   const a = Math.sin(deltaLat / 2) ** 2
     + Math.cos(toRadians(left.lat)) * Math.cos(toRadians(right.lat)) * Math.sin(deltaLng / 2) ** 2;
   return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+const supportedCityBounds: Array<{ city: SocialCity; minLat: number; maxLat: number; minLng: number; maxLng: number }> = [
+  { city: 'moscow', minLat: 55.45, maxLat: 56.05, minLng: 36.8, maxLng: 38.2 },
+  { city: 'saint_petersburg', minLat: 59.65, maxLat: 60.25, minLng: 29.4, maxLng: 31.0 },
+];
+
+export function socialCityForLocation(location: CoarseLocation): SocialCity | null {
+  const coarse = quantizeCoarseLocation(location);
+  if (!coarse) return null;
+  return supportedCityBounds.find((bounds) => coarse.lat >= bounds.minLat && coarse.lat <= bounds.maxLat
+    && coarse.lng >= bounds.minLng && coarse.lng <= bounds.maxLng)?.city ?? null;
+}
+
+export function parseWalkSignalViewerSearch(searchParams: Pick<URLSearchParams, 'get'>): CoarseLocation | null {
+  const rawLat = searchParams.get('lat');
+  const rawLng = searchParams.get('lng');
+  if (rawLat === null || rawLng === null || rawLat.trim() === '' || rawLng.trim() === '') return null;
+  const lat = Number(rawLat);
+  const lng = Number(rawLng);
+  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+}
+
+export function normalizeWalkSignalViewerInput(input: unknown):
+  | { ok: true; value: { city: SocialCity; location: CoarseLocation; radiusKm: number } }
+  | { ok: false; code: 'VIEWER_LOCATION_REQUIRED' | 'CITY_NOT_SUPPORTED' } {
+  const source = sourceRecord(input);
+  const location = quantizeCoarseLocation(source.location);
+  if (!location) return { ok: false, code: 'VIEWER_LOCATION_REQUIRED' };
+  const city = socialCityForLocation(location);
+  if (!city) return { ok: false, code: 'CITY_NOT_SUPPORTED' };
+  return { ok: true, value: { city, location, radiusKm: 3 } };
+}
+
+export function filterWalkSignalsForViewer<T extends { ownerId: string; location: CoarseLocation; expiresAt: string }>(input: {
+  rows: T[];
+  viewerOwnerId: string;
+  viewerLocation: CoarseLocation;
+  radiusKm: number;
+  now?: number;
+}) {
+  const now = input.now ?? Date.now();
+  return input.rows.filter((row) => Date.parse(row.expiresAt) > now
+    && (row.ownerId === input.viewerOwnerId || distanceKm(input.viewerLocation, row.location) <= input.radiusKm));
 }
 
 function distanceLabel(km: number): SocialCandidate['distance'] {

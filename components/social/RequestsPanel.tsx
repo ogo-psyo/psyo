@@ -48,7 +48,9 @@ export function RequestsPanel({
   const [reportingId, setReportingId] = useState<string | null>(null);
   const [blockingId, setBlockingId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
-  if (requests.length === 0) return null;
+  if (requests.length === 0) return <section className="social-requests-panel social-requests-empty" aria-labelledby="social-requests-title">
+    <div className="social-section-heading"><div><h3 id="social-requests-title">Откликов пока нет</h3><p>Когда кто-то откликнется на ваш Гав или анкету, запрос появится здесь автоматически.</p></div></div>
+  </section>;
 
   return (
     <section className="social-requests-panel" aria-labelledby="social-requests-title">

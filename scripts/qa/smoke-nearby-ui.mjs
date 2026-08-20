@@ -13,7 +13,9 @@ const css = read('components/journey/production-journey.css');
 const api = read('app/api/social/signals/route.ts');
 
 assert.match(page, /<ProductionWoofWorkspace/);
-assert.match(page, /\/api\/social\/signals\?petId=/);
+assert.match(page, /new URLSearchParams\(\{ petId \}\)/);
+assert.match(page, /signalParams\.set\('lat'/);
+assert.match(page, /signalParams\.set\('lng'/);
 assert.match(page, /signalId/);
 assert.match(workspace, /Сейчас рядом/);
 assert.match(workspace, /Знакомства/);
@@ -30,9 +32,10 @@ assert.match(map, /privacyRadiusMeters/);
 assert.match(map, /approximateLocation/);
 assert.doesNotMatch(map, /userLocation|exactLocation|coordinates/);
 assert.match(api, /normalizeWalkSignalInput/);
+assert.match(api, /viewerLocation/);
 assert.match(api, /closeWalkSignal/);
 assert.match(css, /\.production-woof-workspace/);
-assert.match(css, /bottom:\s*calc\(144px/);
+assert.match(css, /\.woof-give-button[^}]+left:\s*14px/s);
 assert.match(css, /@media\s*\(max-width:\s*340px\)/);
 
 console.log('nearby UI smoke: PASS');

@@ -3,9 +3,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   blurredSignalLocation,
   canRevealTelegramContact,
+  filterWalkSignalsForViewer,
   groupSocialCandidates,
   normalizeSocialProfileInput,
   normalizeWalkSignalInput,
+  normalizeWalkSignalViewerInput,
   validateSocialContactBoundary,
   type SocialCandidateSource,
   type SocialContactRequest,
@@ -265,18 +267,26 @@ export async function closeWalkSignal(input: { supabase: SupabaseClient; ownerId
   return { ok: true as const };
 }
 
-export async function listWalkSignals(supabase: SupabaseClient, ownerId: string, petId: string) {
+export async function listWalkSignals(supabase: SupabaseClient, ownerId: string, petId: string, viewerLocation?: { lat: number; lng: number } | null) {
   const pet = await requireOwnedPet(supabase, ownerId, petId);
   if (!pet) return { code: 'PET_NOT_FOUND' as const };
   const { data: discovery, error: discoveryError } = await supabase.from('social_discovery_profiles')
-    .select('city').eq('pet_id', petId).maybeSingle();
+    .select('city, coarse_lat, coarse_lng').eq('pet_id', petId).maybeSingle();
   if (discoveryError) throw new Error('SOCIAL_STORAGE_FAILED');
-  const { data: ownSignal, error: ownSignalError } = discovery?.city
+  const profileLocation = discovery && Number.isFinite(Number(discovery.coarse_lat)) && Number.isFinite(Number(discovery.coarse_lng))
+    ? { lat: Number(discovery.coarse_lat), lng: Number(discovery.coarse_lng) }
+    : null;
+  const requestedViewer = normalizeWalkSignalViewerInput({ location: viewerLocation ?? profileLocation });
+  const { data: ownSignal, error: ownSignalError } = requestedViewer.ok
     ? { data: null, error: null }
-    : await supabase.from('social_walk_signals').select('city').eq('owner_id', ownerId).eq('pet_id', petId).eq('status', 'active').maybeSingle();
+    : await supabase.from('social_walk_signals').select('city, coarse_lat, coarse_lng').eq('owner_id', ownerId).eq('pet_id', petId).eq('status', 'active').maybeSingle();
   if (ownSignalError) throw new Error('SOCIAL_STORAGE_FAILED');
-  const city = discovery?.city || ownSignal?.city;
-  if (!city) return { signals: [] as WalkSignal[] };
+  const ownLocation = ownSignal && Number.isFinite(Number(ownSignal.coarse_lat)) && Number.isFinite(Number(ownSignal.coarse_lng))
+    ? { lat: Number(ownSignal.coarse_lat), lng: Number(ownSignal.coarse_lng) }
+    : null;
+  const viewer = requestedViewer.ok ? requestedViewer : normalizeWalkSignalViewerInput({ location: ownLocation });
+  if (!viewer.ok) return { code: viewer.code };
+  const { city, location, radiusKm } = viewer.value;
   const excluded = await excludedOwnerIds(supabase, ownerId);
   const now = new Date().toISOString();
   await supabase.from('social_walk_signals').update({ status: 'expired' })
@@ -286,9 +296,20 @@ export async function listWalkSignals(supabase: SupabaseClient, ownerId: string,
     .eq('city', city).eq('status', 'active').gt('expires_at', now)
     .order('starts_at', { ascending: true }).limit(100);
   if (error) throw new Error('SOCIAL_STORAGE_FAILED');
-  const signals = (data ?? []).filter((row: any) => row.owner_id === ownerId || !excluded.has(row.owner_id))
+  const visibleRows = filterWalkSignalsForViewer({
+    rows: (data ?? []).map((row: any) => ({
+      ...row,
+      ownerId: row.owner_id,
+      location: { lat: Number(row.coarse_lat), lng: Number(row.coarse_lng) },
+      expiresAt: row.expires_at,
+    })),
+    viewerOwnerId: ownerId,
+    viewerLocation: location,
+    radiusKm,
+  });
+  const signals = visibleRows.filter((row: any) => row.owner_id === ownerId || !excluded.has(row.owner_id))
     .map((row: any) => mapWalkSignal(row, ownerId)).filter(Boolean) as WalkSignal[];
-  return { signals };
+  return { signals, viewer: { approximateLocation: location, radiusMeters: radiusKm * 1000, city } };
 }
 
 export function hashInviteToken(token: string) {

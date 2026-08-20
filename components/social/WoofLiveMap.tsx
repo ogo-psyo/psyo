@@ -2,9 +2,12 @@
 
 import dynamic from 'next/dynamic';
 import type { WalkSignal } from '@/lib/socialCore';
+import type { CoarseLocation } from '@/lib/socialCore';
 
 export type WoofLiveMapProps = {
   signals: WalkSignal[];
+  viewerLocation: CoarseLocation | null;
+  viewerRadiusMeters: number;
   selectedId: string | null;
   onSelect: (id: string) => void;
 };

@@ -1614,6 +1614,7 @@
 .woof-map-layer[aria-hidden="true"] { visibility: hidden; }
 .woof-map-status { display: grid; place-items: center; color: #315e4d; font-weight: 850; background: #cbfedb; }
 .woof-live-map { background: #cbfedb; }
+.woof-map-await { position: absolute; inset: 0; background: radial-gradient(circle at 50% 38%, rgba(61,248,129,.32), transparent 26%), #cbfedb; }
 .woof-live-map .leaflet-control-zoom { display: none; }
 .woof-live-map .leaflet-control-attribution { max-width: calc(100vw - 20px); padding: 3px 6px; white-space: normal; font-size: 9px; }
 .woof-live-map:focus-visible { outline: 3px solid #06472f; outline-offset: -4px; }
@@ -1641,19 +1642,20 @@
 .woof-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .woof-signal-main p, .woof-signal-note, .woof-location-copy { margin: 0; }
 .woof-signal-main b { font-size: 17px; }
-.woof-signal-main span { display: block; margin-top: 3px; color: #446c5d; font-size: 12px; font-weight: 750; }
+.woof-signal-main span { display: block; margin-top: 3px; color: #315e4d; font-size: 13px; font-weight: 750; }
 .woof-signal-note { color: #204f3e; font-size: 14px; line-height: 1.35; }
-.woof-location-copy, .woof-privacy { display: flex; align-items: flex-start; gap: 7px; color: #446c5d; font-size: 11px; font-weight: 750; line-height: 1.35; }
+.woof-location-copy, .woof-privacy { display: flex; align-items: flex-start; gap: 7px; color: #315e4d; font-size: 13px; font-weight: 750; line-height: 1.35; }
 .woof-location-copy svg, .woof-privacy svg { flex: 0 0 auto; width: 17px; height: 17px; color: #07814d; }
 .woof-signal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .woof-signal-actions button { min-height: 46px; border: 1px solid rgba(6,71,47,.15); border-radius: 15px; background: #effbf2; color: #06472f; font-weight: 900; }
 .woof-primary { min-height: 50px; border: 0; border-radius: 17px; background: #3df881; color: #06472f; box-shadow: 0 9px 20px rgba(7,129,77,.19); font-size: 14px; font-weight: 950; }
 .woof-primary:disabled { opacity: .55; }
-.woof-give-button { position: absolute; z-index: 660; right: 14px; bottom: calc(88px + env(safe-area-inset-bottom)); min-width: 158px; min-height: 50px; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 0 18px; border: 0; border-radius: 18px; background: #06472f; color: #f7fff9; box-shadow: 0 13px 30px rgba(6,71,47,.3); font-size: 14px; font-weight: 950; }
+.woof-give-button { position: absolute; z-index: 660; right: 14px; bottom: calc(84px + env(safe-area-inset-bottom)); left: 14px; min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 0 18px; border: 0; border-radius: 18px; background: #06472f; color: #f7fff9; box-shadow: 0 13px 30px rgba(6,71,47,.3); font-size: 15px; font-weight: 950; }
 .woof-give-button svg { width: 20px; height: 20px; color: #3df881; }
-.woof-empty-live { position: absolute; z-index: 630; right: 28px; bottom: calc(170px + env(safe-area-inset-bottom)); left: 28px; display: grid; justify-items: center; gap: 6px; padding: 20px; border-radius: 24px; background: rgba(247,255,249,.94); box-shadow: 0 14px 36px rgba(6,71,47,.18); text-align: center; }
+.woof-empty-live { position: absolute; z-index: 630; right: 20px; bottom: calc(152px + env(safe-area-inset-bottom)); left: 20px; display: grid; justify-items: center; gap: 7px; padding: 18px; border-radius: 24px; background: rgba(247,255,249,.96); box-shadow: 0 14px 36px rgba(6,71,47,.18); text-align: center; }
 .woof-empty-live > svg { width: 30px; height: 30px; color: #07814d; }
-.woof-empty-live p { margin: 0; color: #446c5d; font-size: 12px; line-height: 1.4; }
+.woof-empty-live p { margin: 0; color: #315e4d; font-size: 14px; line-height: 1.4; }
+.woof-location-state button { min-width: 180px; min-height: 46px; margin-top: 4px; border: 0; border-radius: 15px; background: #06472f; color: #f7fff9; font-weight: 900; }
 
 .woof-meet-feed { position: absolute; inset: 0; overflow-y: auto; padding: calc(82px + env(safe-area-inset-top)) 14px calc(170px + env(safe-area-inset-bottom)); background: linear-gradient(180deg,#f7fff9 0,#effbf2 50%,#cbfedb 120%); }
 .woof-meet-intro { padding: 18px 2px 10px; }
@@ -1695,7 +1697,7 @@
 .woof-expiry svg { flex: 0 0 auto; width: 17px; height: 17px; color: #07814d; }
 .woof-error-state button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 14px; background: #06472f; color: white; font-weight: 900; }
 
-.woof-overlay { position: absolute; z-index: 800; inset: 0; overflow-y: auto; padding: calc(18px + env(safe-area-inset-top)) 10px calc(18px + env(safe-area-inset-bottom)); background: rgba(239,251,242,.98); }
+.woof-overlay { position: absolute; z-index: 800; inset: 0; overflow-y: auto; padding: calc(18px + env(safe-area-inset-top)) 10px calc(104px + env(safe-area-inset-bottom)); background: rgba(239,251,242,.98); }
 .woof-overlay .social-profile-sheet, .woof-overlay .social-requests-panel { margin-top: 46px; }
 .woof-overlay-close { width: 100%; min-height: 50px; margin-top: 12px; border: 0; border-radius: 17px; background: #06472f; color: white; font-weight: 900; }
 .woof-profile-sheet { position: relative; inset: auto; max-height: none; margin-top: 32px; box-shadow: 0 14px 40px rgba(6,71,47,.16); }
@@ -1715,13 +1717,14 @@
 
 .phone-shell.journey-active:has(.production-woof-workspace) .production-floating-assistant { display: none; }
 .phone-shell.journey-active:has(.production-woof-workspace) .app-tabs { z-index: 700; }
+.phone-shell.journey-active:has(.production-woof-workspace .woof-overlay) .app-tabs { visibility: hidden; pointer-events: none; }
 .phone-shell.journey-active:has(.production-woof-workspace) > .app-header,
 .phone-shell.journey-active:has(.production-woof-workspace) > .pet-switcher { visibility: hidden; pointer-events: none; }
 .production-woof-workspace button:focus-visible, .production-woof-workspace input:focus-visible, .production-woof-workspace textarea:focus-visible { outline: 3px solid #06472f; outline-offset: 3px; }
 
 @media (max-width: 340px) {
   .woof-mode-switch button { padding: 0 4px; font-size: 11px; }
-  .woof-signal-card { bottom: calc(142px + env(safe-area-inset-bottom)); }
+  .woof-signal-card { bottom: calc(148px + env(safe-area-inset-bottom)); }
   .woof-signal-note { display: none; }
   .woof-pace button { padding-inline: 3px; font-size: 10px; }
 }

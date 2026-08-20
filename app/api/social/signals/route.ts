@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { closeWalkSignal, listWalkSignals, normalizeWalkSignalInput, saveWalkSignal } from '@/lib/server/socialService';
 import { socialRequestContext, socialStorageError } from '@/lib/server/socialHttp';
+import { parseWalkSignalViewerSearch } from '@/lib/socialCore';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,11 +13,16 @@ function idempotencyKey(request: Request, body: any) {
 export async function GET(request: Request) {
   const context = await socialRequestContext(request);
   if ('response' in context) return context.response;
-  const petId = new URL(request.url).searchParams.get('petId');
+  const url = new URL(request.url);
+  const petId = url.searchParams.get('petId');
+  const viewerLocation = parseWalkSignalViewerSearch(url.searchParams);
   if (!petId) return NextResponse.json({ error: 'PET_ID_REQUIRED' }, { status: 400 });
   try {
-    const result = await listWalkSignals(context.supabase, context.ownerId, petId);
-    if ('code' in result) return NextResponse.json({ error: result.code }, { status: 404 });
+    const result = await listWalkSignals(context.supabase, context.ownerId, petId, viewerLocation);
+    if ('code' in result) {
+      const status = result.code === 'VIEWER_LOCATION_REQUIRED' || result.code === 'CITY_NOT_SUPPORTED' ? 409 : 404;
+      return NextResponse.json({ error: result.code }, { status });
+    }
     return NextResponse.json(result);
   } catch (error) {
     return socialStorageError(error);

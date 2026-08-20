@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, Check, ClockCountdown, Crosshair, PawPrint, ShieldCheck, UsersThree, X } from '@phosphor-icons/react';
+import { Check, ClockCountdown, Crosshair, PawPrint, ShieldCheck, UsersThree, X } from '@phosphor-icons/react';
 import type { CandidateGroup, CoarseLocation, SocialCandidate, SocialProfile, SocialScenario, WalkPace, WalkSignal } from '@/lib/socialCore';
 import type { SocialRequestView } from './RequestsPanel';
 import { RequestsPanel } from './RequestsPanel';
@@ -15,22 +15,26 @@ type Props = {
   avatar: ReactNode;
   profile: SocialProfile | null;
   signals: WalkSignal[];
+  viewerLocation: CoarseLocation | null;
+  viewerRadiusMeters: number;
+  signalReason: string;
   candidates: CandidateGroup;
   requests: SocialRequestView[];
   state: 'idle' | 'loading' | 'ready' | 'error';
   busyId: string | null;
   locating: boolean;
   missingTelegramUsernameAction?: string | null;
-  onBack: () => void;
   onSaveProfile: (draft: Omit<SocialProfile, 'petId'>) => void | Promise<void>;
   onHideProfile: () => void | Promise<void>;
   onLocateProfile: (ready: (location: CoarseLocation) => void) => void;
+  onLocateViewer: () => void;
   onSaveSignal: (draft: SignalDraft) => void | Promise<void>;
   onCloseSignal: (status: 'completed' | 'cancelled') => void | Promise<void>;
   onRequest: (petId: string, scenario: SocialScenario, signalId?: string) => void | Promise<void>;
   onUpdateRequest: (id: string, action: 'accept' | 'reject' | 'cancel' | 'block') => void | Promise<void>;
   onReport: (id: string, reason: string) => void | Promise<void>;
   onOpenContact: (url: string) => void;
+  onRefresh: () => void | Promise<void>;
   onRetry: () => void | Promise<void>;
 };
 
@@ -98,6 +102,7 @@ export function ProductionWoofWorkspace(props: Props) {
   const candidateOverlayRef = useRef<HTMLDivElement | null>(null);
   const requestsOverlayRef = useRef<HTMLDivElement | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const refreshRef = useRef(props.onRefresh);
   const allCandidates = useMemo(() => [...props.candidates.nearby, ...props.candidates.city], [props.candidates]);
   const selectedSignal = props.signals.find((signal) => signal.id === selectedSignalId)
     || props.signals.find((signal) => !signal.isMine)
@@ -106,6 +111,27 @@ export function ProductionWoofWorkspace(props: Props) {
   const ownSignal = props.signals.find((signal) => signal.isMine) || null;
   const selectedCandidate = allCandidates.find((candidate) => candidate.petId === selectedCandidateId) || null;
   const activeModal = signalComposer ? 'composer' : profileEditor ? 'profile' : selectedCandidate ? 'candidate' : requestsOpen ? 'requests' : null;
+
+  useEffect(() => {
+    if (props.viewerLocation) setLocation(props.viewerLocation);
+  }, [props.viewerLocation]);
+
+  useEffect(() => { refreshRef.current = props.onRefresh; }, [props.onRefresh]);
+
+  useEffect(() => {
+    const refreshIfVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      Promise.resolve(refreshRef.current()).catch(() => undefined);
+    };
+    const timer = window.setInterval(refreshIfVisible, 12_000);
+    window.addEventListener('focus', refreshIfVisible);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refreshIfVisible);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
+  }, []);
 
   function closeActiveModal() {
     if (activeModal === 'composer') setSignalComposer(false);
@@ -171,20 +197,21 @@ export function ProductionWoofWorkspace(props: Props) {
 
   return <section ref={rootRef} className="production-woof-workspace" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
     <div className="woof-map-layer" aria-hidden={mode !== 'live'}>
-      <WoofLiveMap signals={props.signals} selectedId={selectedSignal?.id ?? null} onSelect={(id) => setSelectedSignalId(id)} />
+      {props.viewerLocation ? <WoofLiveMap signals={props.signals} viewerLocation={props.viewerLocation} viewerRadiusMeters={props.viewerRadiusMeters} selectedId={selectedSignal?.id ?? null} onSelect={(id) => setSelectedSignalId(id)} />
+        : <div className="woof-map-await" aria-hidden="true" />}
     </div>
 
     <header className="woof-topbar">
-      <button type="button" onClick={props.onBack} aria-label="Назад"><ArrowLeft /></button>
+      <button type="button" onClick={props.onLocateViewer} aria-label="Показать мой район" disabled={props.locating}><Crosshair /></button>
       <div className="woof-mode-switch" aria-label="Режим Гав">
         <button type="button" aria-pressed={mode === 'live'} onClick={() => setMode('live')}>Сейчас рядом</button>
         <button type="button" aria-pressed={mode === 'meet'} onClick={() => setMode('meet')}>Знакомства</button>
       </div>
-      <button type="button" onClick={() => setRequestsOpen(true)} aria-label={`Отклики и связи: ${props.requests.length}`}><UsersThree /><span>{props.requests.length || ''}</span></button>
+      <button type="button" onClick={() => setRequestsOpen(true)} aria-label={`Отклики и связи: ${props.requests.length}`}><UsersThree />{props.requests.length > 0 && <span>{props.requests.length}</span>}</button>
     </header>
 
     {mode === 'live' && <>
-      <div className="woof-live-heading"><span className="woof-live-dot" />{props.state === 'loading' ? 'Ищу Гав-сигналы…' : `${props.signals.filter((signal) => !signal.isMine).length} сейчас рядом`}</div>
+      <div className="woof-live-heading"><span className="woof-live-dot" />{props.locating || props.state === 'loading' ? 'Ищу ваш район…' : `${props.signals.filter((signal) => !signal.isMine).length} поблизости`}</div>
       {selectedSignal && <article className="woof-signal-card" aria-live="polite">
         <div className="woof-signal-main">
           <DogPortrait candidate={{ name: selectedSignal.name, avatarUrl: selectedSignal.avatarUrl }} />
@@ -198,15 +225,17 @@ export function ProductionWoofWorkspace(props: Props) {
         </div> : <button className="woof-primary" type="button" disabled={props.busyId === selectedSignal.petId} onClick={() => props.onRequest(selectedSignal.petId, 'walk', selectedSignal.id)}>Откликнуться</button>}
       </article>}
       {props.state === 'error' ? <article className="woof-empty-live woof-error-state" role="alert"><PawPrint /><b>Район не загрузился</b><p>Проверьте соединение — Псё не будет выдавать ошибку за отсутствие собак.</p><button type="button" onClick={() => props.onRetry()}>Повторить</button></article>
-        : !selectedSignal && props.state !== 'loading' && <article className="woof-empty-live"><PawPrint /><b>Пока тихо</b><p>Дайте Гав — соседи увидят примерную зону, время и темп прогулки.</p></article>}
-      <button ref={composerTriggerRef} className="woof-give-button" type="button" onClick={() => setSignalComposer(true)}>{ownSignal ? 'Изменить Гав' : 'Дать Гав'}<PawPrint weight="fill" /></button>
+        : props.signalReason === 'CITY_NOT_SUPPORTED' ? <article className="woof-empty-live"><PawPrint /><b>Здесь Гав ещё не работает</b><p>Сейчас живые сигналы доступны в Москве и Санкт-Петербурге.</p></article>
+          : props.signalReason === 'VIEWER_LOCATION_REQUIRED' ? <article className="woof-empty-live woof-location-state"><Crosshair /><b>Покажите район рядом</b><p>Точная точка не сохраняется — для поиска используется округлённая зона.</p><button type="button" onClick={props.onLocateViewer} disabled={props.locating}>{props.locating ? 'Определяю…' : 'Показать рядом'}</button></article>
+            : !selectedSignal && props.state !== 'loading' && <article className="woof-empty-live"><PawPrint /><b>В радиусе 3 км пока тихо</b><p>Ваш Гав станет первой живой точкой района.</p></article>}
+      {props.signalReason !== 'CITY_NOT_SUPPORTED' && <button ref={composerTriggerRef} className="woof-give-button" type="button" onClick={() => setSignalComposer(true)}>{ownSignal ? 'Изменить Гав' : 'Дать Гав'}<PawPrint weight="fill" /></button>}
     </>}
 
     {mode === 'meet' && <main className="woof-meet-feed">
       <div className="woof-meet-intro"><p className="woof-kicker">найти своих</p><h1>Знакомства</h1><p>Спокойный поиск постоянной компании — без показа геопозиции.</p></div>
-      <div className="woof-meet-tools">
+      {props.profile?.discoverable && <div className="woof-meet-tools">
         <button type="button" onClick={() => setProfileEditor(true)}>{props.profile?.discoverable ? 'Моя анкета' : 'Создать анкету'}</button>
-      </div>
+      </div>}
       {props.state === 'error' ? <article className="woof-empty-meet" role="alert"><PawPrint /><h2>Анкеты не загрузились</h2><p>Это сбой соединения, а не пустой поиск.</p><button className="woof-primary" type="button" onClick={() => props.onRetry()}>Повторить</button></article>
       : allCandidates.length > 0 ? <div className="woof-candidate-grid">{allCandidates.map((candidate) => <button className="woof-candidate-card" type="button" key={candidate.petId} onClick={() => setSelectedCandidateId(candidate.petId)}>
         <DogPortrait candidate={candidate} />
@@ -224,7 +253,7 @@ export function ProductionWoofWorkspace(props: Props) {
       <button className="woof-location-button" type="button" onClick={locateSignal}><Crosshair />{locating ? 'Определяю примерную зону…' : location ? 'Примерная зона выбрана' : 'Выбрать район рядом со мной'}</button>
       <p className="woof-privacy"><ShieldCheck />На карте появится зона радиусом 700 м, а не ваша точка.</p>
       <p className="woof-expiry"><ClockCountdown />{when === 'now' ? 'Гав исчезнет автоматически через 2 часа.' : 'Гав исчезнет через 3 часа после выбранного времени.'}</p>
-      <button className="woof-primary" type="button" disabled={!location || props.busyId === 'signal'} onClick={submitSignal}>{props.busyId === 'signal' ? 'Сохраняю…' : ownSignal ? 'Обновить Гав' : 'Дать Гав'}</button>
+      <button className="woof-primary" type="button" disabled={!location || props.busyId === 'signal'} onClick={submitSignal}>{props.busyId === 'signal' ? 'Сохраняю…' : !location ? 'Сначала выберите район' : ownSignal ? 'Обновить Гав' : 'Дать Гав'}</button>
     </section>}
 
     {profileEditor && <div ref={profileOverlayRef} className="woof-overlay" role="dialog" aria-modal="true" aria-label="Моя анкета знакомства"><button className="woof-overlay-x" type="button" onClick={() => setProfileEditor(false)} aria-label="Закрыть"><X /></button><SocialProfileSheet dogName={props.dogName} profile={props.profile} busy={props.busyId === 'profile'} locating={props.locating} onSave={props.onSaveProfile} onHide={props.onHideProfile} onLocate={props.onLocateProfile} /><button className="woof-overlay-close" type="button" onClick={() => setProfileEditor(false)}>Готово</button></div>}

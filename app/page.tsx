@@ -490,6 +490,9 @@ export default function Home() {
   const [socialCandidates, setSocialCandidates] = useState<CandidateGroup>({ nearby: [], city: [] });
   const [socialRequests, setSocialRequests] = useState<SocialRequestView[]>([]);
   const [walkSignals, setWalkSignals] = useState<WalkSignal[]>([]);
+  const [walkSignalReason, setWalkSignalReason] = useState('');
+  const [socialViewerLocation, setSocialViewerLocation] = useState<CoarseLocation | null>(null);
+  const [socialViewerRadiusMeters, setSocialViewerRadiusMeters] = useState(3000);
   const [nearbyState, setNearbyState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [nearbyReason, setNearbyReason] = useState('');
   const [socialBusyId, setSocialBusyId] = useState<string | null>(null);
@@ -665,7 +668,21 @@ export default function Home() {
     }
 
     const controller = new AbortController();
-    loadSocialSurface(controller.signal).catch((lookupError) => {
+    const bootstrap = async () => {
+      let viewerLocation = socialViewerLocation;
+      if (!viewerLocation && navigator.geolocation) {
+        setSocialLocating(true);
+        viewerLocation = await new Promise<CoarseLocation | null>((resolve) => navigator.geolocation.getCurrentPosition(
+          (position) => resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
+          () => resolve(null),
+          { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
+        ));
+        setSocialLocating(false);
+        if (viewerLocation) setSocialViewerLocation(viewerLocation);
+      }
+      await loadSocialSurface(controller.signal, viewerLocation);
+    };
+    bootstrap().catch((lookupError) => {
       if (lookupError instanceof DOMException && lookupError.name === 'AbortError') return;
       setSocialCandidates({ nearby: [], city: [] });
       setNearbyReason('NEARBY_LOOKUP_FAILED');
@@ -704,17 +721,24 @@ export default function Home() {
     return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
   }
 
-  async function loadSocialSurface(signal?: AbortSignal) {
+  async function loadSocialSurface(signal?: AbortSignal, viewerLocationOverride?: CoarseLocation | null) {
     const petId = profile.backendPetId;
     if (!petId) return;
     setNearbyState('loading');
     setNearbyReason('');
+    setWalkSignalReason('');
     const requestOptions = { headers: authHeaders(), credentials: 'include' as const, signal };
+    const viewerLocation = viewerLocationOverride ?? socialViewerLocation;
+    const signalParams = new URLSearchParams({ petId });
+    if (viewerLocation) {
+      signalParams.set('lat', String(viewerLocation.lat));
+      signalParams.set('lng', String(viewerLocation.lng));
+    }
     const [profileResponse, candidatesResponse, requestsResponse, signalsResponse] = await Promise.all([
       fetch(`/api/social/profile?petId=${encodeURIComponent(petId)}`, requestOptions),
       fetch(`/api/social/candidates?petId=${encodeURIComponent(petId)}`, requestOptions),
       fetch(`/api/social/requests?petId=${encodeURIComponent(petId)}`, requestOptions),
-      fetch(`/api/social/signals?petId=${encodeURIComponent(petId)}`, requestOptions),
+      fetch(`/api/social/signals?${signalParams.toString()}`, requestOptions),
     ]);
     const [profilePayload, candidatesPayload, requestsPayload, signalsPayload] = await Promise.all([
       profileResponse.json().catch(() => ({})),
@@ -722,11 +746,20 @@ export default function Home() {
       requestsResponse.json().catch(() => ({})),
       signalsResponse.json().catch(() => ({})),
     ]);
-    if (!profileResponse.ok || !requestsResponse.ok || !signalsResponse.ok) throw new Error('SOCIAL_SURFACE_FAILED');
+    if (!profileResponse.ok || !requestsResponse.ok) throw new Error('SOCIAL_SURFACE_FAILED');
     setSocialProfile(profilePayload.profile ?? null);
     setSocialRequests(Array.isArray(requestsPayload.requests) ? requestsPayload.requests : []);
     setMissingTelegramUsernameAction(requestsPayload.missingTelegramUsernameAction ?? null);
-    setWalkSignals(Array.isArray(signalsPayload.signals) ? signalsPayload.signals : []);
+    if (signalsResponse.ok) {
+      setWalkSignals(Array.isArray(signalsPayload.signals) ? signalsPayload.signals : []);
+      if (signalsPayload.viewer?.approximateLocation) setSocialViewerLocation(signalsPayload.viewer.approximateLocation);
+      if (Number.isFinite(Number(signalsPayload.viewer?.radiusMeters))) setSocialViewerRadiusMeters(Number(signalsPayload.viewer.radiusMeters));
+    } else if (signalsResponse.status === 409 && ['VIEWER_LOCATION_REQUIRED', 'CITY_NOT_SUPPORTED'].includes(signalsPayload.error)) {
+      setWalkSignals([]);
+      setWalkSignalReason(signalsPayload.error);
+    } else {
+      throw new Error('SOCIAL_SIGNALS_FAILED');
+    }
     if (candidatesResponse.ok) {
       setSocialCandidates({
         nearby: Array.isArray(candidatesPayload.nearby) ? candidatesPayload.nearby : [],
@@ -739,6 +772,34 @@ export default function Home() {
       throw new Error('SOCIAL_DISCOVERY_FAILED');
     }
     setNearbyState('ready');
+  }
+
+  async function refreshLiveSocial(signal?: AbortSignal) {
+    const petId = profile.backendPetId;
+    if (!petId) return;
+    const signalParams = new URLSearchParams({ petId });
+    if (socialViewerLocation) {
+      signalParams.set('lat', String(socialViewerLocation.lat));
+      signalParams.set('lng', String(socialViewerLocation.lng));
+    }
+    const requestOptions = { headers: authHeaders(), credentials: 'include' as const, signal };
+    const [signalsResponse, requestsResponse] = await Promise.all([
+      fetch(`/api/social/signals?${signalParams.toString()}`, requestOptions),
+      fetch(`/api/social/requests?petId=${encodeURIComponent(petId)}`, requestOptions),
+    ]);
+    const [signalsPayload, requestsPayload] = await Promise.all([
+      signalsResponse.json().catch(() => ({})),
+      requestsResponse.json().catch(() => ({})),
+    ]);
+    if (signalsResponse.ok) {
+      setWalkSignals(Array.isArray(signalsPayload.signals) ? signalsPayload.signals : []);
+      setWalkSignalReason('');
+      if (signalsPayload.viewer?.approximateLocation) setSocialViewerLocation(signalsPayload.viewer.approximateLocation);
+    }
+    if (requestsResponse.ok) {
+      setSocialRequests(Array.isArray(requestsPayload.requests) ? requestsPayload.requests : []);
+      setMissingTelegramUsernameAction(requestsPayload.missingTelegramUsernameAction ?? null);
+    }
   }
 
   async function saveSocialProfile(draft: Omit<SocialProfile, 'petId'>) {
@@ -800,6 +861,27 @@ export default function Home() {
     );
   }
 
+  function locateForWalkSignals() {
+    if (!navigator.geolocation) {
+      setWalkSignalReason('VIEWER_LOCATION_REQUIRED');
+      return;
+    }
+    setSocialLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const next = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setSocialViewerLocation(next);
+        setSocialLocating(false);
+        loadSocialSurface(undefined, next).catch(() => setNearbyState('error'));
+      },
+      () => {
+        setSocialLocating(false);
+        setWalkSignalReason('VIEWER_LOCATION_REQUIRED');
+      },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 },
+    );
+  }
+
   async function sendSocialRequest(candidatePetId: string, scenario: SocialScenario, signalId?: string) {
     if (!profile.backendPetId || socialBusyId) return;
     const keyId = `${candidatePetId}:${scenario}:${signalId ?? 'profile'}`;
@@ -834,6 +916,7 @@ export default function Home() {
     if (!profile.backendPetId || socialBusyId) return;
     const idempotencyKey = `walk-signal:${crypto.randomUUID()}`;
     setSocialBusyId('signal');
+    setSocialViewerLocation(draft.location);
     setError('');
     try {
       const response = await fetch('/api/social/signals', {
@@ -3481,22 +3564,26 @@ export default function Home() {
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" fill />}
           profile={socialProfile}
           signals={walkSignals}
+          viewerLocation={socialViewerLocation}
+          viewerRadiusMeters={socialViewerRadiusMeters}
+          signalReason={walkSignalReason}
           candidates={socialCandidates}
           requests={socialRequests}
           state={nearbyState}
           busyId={socialBusyId}
           locating={socialLocating}
           missingTelegramUsernameAction={missingTelegramUsernameAction}
-          onBack={() => closeSecondaryFlow('today')}
           onSaveProfile={saveSocialProfile}
           onHideProfile={hideSocialProfile}
           onLocateProfile={locateForSocial}
+          onLocateViewer={locateForWalkSignals}
           onSaveSignal={saveWalkSignal}
           onCloseSignal={closeWalkSignal}
           onRequest={sendSocialRequest}
           onUpdateRequest={updateSocialRequest}
           onReport={reportSocialRequest}
           onOpenContact={openTelegramDestination}
+          onRefresh={refreshLiveSocial}
           onRetry={() => loadSocialSurface().catch(() => setNearbyState('error'))}
         />}
 
