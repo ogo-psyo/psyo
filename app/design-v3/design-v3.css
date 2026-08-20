@@ -155,7 +155,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .v3-prompt-list { display: grid; gap: 8px; margin-top: 14px; }.v3-prompt-list button { min-height: 44px; padding: 0 14px; border: 0; border-radius: 14px; background: var(--v3-green-soft); color: var(--v3-ink); text-align: left; font-size: 12px; font-weight: 900; cursor: pointer; }
 .v3-assistant-sheet > label { display: grid; grid-template-columns: 1fr 48px; gap: 8px; margin-top: 14px; }.v3-assistant-sheet input { width: 100%; min-height: 48px; padding: 0 14px; border: 0; border-radius: 15px; background: var(--v3-mint-soft); color: var(--v3-ink); outline: none; box-shadow: inset 0 2px 7px rgba(6,71,47,.08); }.v3-assistant-sheet label button { border: 0; border-radius: 15px; background: var(--v3-ink); color: var(--v3-signal); cursor: pointer; }.v3-assistant-sheet label button svg { font-size: 21px; }
 
-button:focus-visible, input:focus-visible { outline: 3px solid var(--v3-emerald); outline-offset: 3px; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid var(--v3-emerald); outline-offset: 3px; }
 button:active { transform: translateY(1px); }
 @media (min-width: 760px) { .v3-stage { padding: 32px; }.v3-phone { height: 844px; border-radius: 34px; box-shadow: 0 32px 80px rgba(20,52,39,.24); }.v3-screen { height: 844px; }.v3-assistant-backdrop { border-radius: 34px; overflow: hidden; } }
 @media (prefers-reduced-motion: reduce) { .v3-screen, .v3-assistant-sheet { animation: none; } }

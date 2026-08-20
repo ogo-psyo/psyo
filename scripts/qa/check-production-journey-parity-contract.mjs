@@ -19,7 +19,9 @@ for (const route of ['today', 'profile', 'map', 'nearby', 'things']) {
 }
 requireText(page, '<ProductionAssistantSheet', 'assistant overlay');
 requireText(shell, 'production-journey-orbit', 'accepted Today composition');
-requireText(shell, 'production-journey-passport', 'accepted profile composition');
+requireText(shell, 'profile-life-card', 'accepted profile composition');
+requireText(shell, 'data-slot="card"', 'structured profile card');
+requireText(shell, 'data-slot="item-group"', 'structured profile actions');
 requireText(shell, 'production-journey-map', 'accepted live map composition');
 requireText(shell, 'production-journey-woof', 'accepted Гав composition');
 requireText(shell, 'production-journey-shelf', 'accepted Things composition');

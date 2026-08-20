@@ -59,7 +59,11 @@ try {
   await page.getByRole('button', { name: 'Закрыть', exact: true }).click({ force: true });
 
   await page.locator('.app-tabs button[data-route="profile"]').click({ force: true });
-  await page.getByRole('button', { name: 'Открыть профиль', exact: true }).click({ force: true });
+  await page.locator('[data-profile-journey-action="add-document"]').click({ force: true });
+  await page.locator('.profile-life-document-form').waitFor();
+  await page.screenshot({ path: `${outDir}/profile-document.png`, fullPage: false });
+  await page.getByRole('button', { name: 'Закрыть', exact: true }).click({ force: true });
+  await page.getByRole('button', { name: 'Изменить', exact: true }).click({ force: true });
   await page.locator('.profile-ux-2025').waitFor();
   await page.locator('.app-tabs button[data-route="map"]').click({ force: true });
   await page.getByRole('button', { name: 'Все', exact: true }).click({ force: true });

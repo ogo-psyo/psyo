@@ -1,12 +1,12 @@
 'use client';
 
 import { ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, CalendarDots, FilePdf, MapPin, PawPrint, Plus, ShoppingBag, Sparkle, Trash } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, FilePdf, Files, MapPin, PawPrint, Plus, ShoppingBag, Sparkle, TextT, Trash, UploadSimple } from '@phosphor-icons/react';
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { LiveMap } from '@/components/LiveMap';
 import { FloatingNote, PaperSheet, WatercolorScreen } from '@/components/watercolor';
 import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
-import { ProductionAssistantSheet, ProductionJourney } from '@/components/journey/ProductionJourney';
+import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
 import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
 import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
@@ -475,7 +475,9 @@ export default function Home() {
   const [documents, setDocuments] = useState<DocumentView[]>([]);
   const [documentUploadOpen, setDocumentUploadOpen] = useState(false);
   const [documentUploading, setDocumentUploading] = useState(false);
+  const [documentFileName, setDocumentFileName] = useState('');
   const [documentBusyId, setDocumentBusyId] = useState<string | null>(null);
+  const documentUploadTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [habits, setHabits] = useState<HabitView[]>([]);
   const [habitLoading, setHabitLoading] = useState(false);
   const [habitBusyId, setHabitBusyId] = useState<string | null>(null);
@@ -1323,6 +1325,43 @@ export default function Home() {
   const publicCardMissing = useMemo(() => publicCardChecks.filter((item) => !item.done).map((item) => item.missing), [publicCardChecks]);
   const publicCardShows = (key: PublicCardFieldKey) => publicCardVisibleFields.includes(key);
   const todayCare = useMemo(() => buildTodayCareView(reminders), [reminders]);
+  const profileJourneyEntries = useMemo<JourneyProfileEntry[]>(() => {
+    const dateLabel = (value?: string | null) => value
+      ? new Date(value).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+      : 'Недавно';
+    return [
+      ...documents.map((item) => ({
+        id: item.id,
+        kind: 'document' as const,
+        when: dateLabel(item.documentDate || item.createdAt),
+        title: item.title,
+        detail: item.clinic || item.originalName || 'Документ из личной истории',
+        meta: item.kind === 'analysis' ? 'Анализ · приватно' : 'Документ · приватно',
+        href: `/api/documents/${item.id}`,
+        sortAt: item.documentDate || item.createdAt,
+      })),
+      ...doneReminders.map((item) => ({
+        id: item.id,
+        kind: 'care' as const,
+        when: dateLabel(item.completedAt || item.dueAt),
+        title: item.title,
+        detail: 'Отмечено выполненным',
+        meta: 'Забота',
+        onOpen: () => { setCareView('history'); setTab('calendar'); },
+        sortAt: item.completedAt || item.dueAt,
+      })),
+      ...observations.map((item) => ({
+        id: item.id,
+        kind: 'observation' as const,
+        when: dateLabel(item.createdAt),
+        title: observationSummary(item),
+        detail: item.note && item.note !== observationSummary(item) ? item.note : 'Записано владельцем',
+        meta: 'Наблюдение',
+        onOpen: () => setTab('health'),
+        sortAt: item.createdAt,
+      })),
+    ].sort((a, b) => new Date(b.sortAt).getTime() - new Date(a.sortAt).getTime()).slice(0, 8);
+  }, [documents, doneReminders, observations]);
   const nextBestAction = useMemo(() => {
     if (!profile.backendPetId) return { emoji: '⏰', title: 'Запланировать первую заботу', caption: 'Добавь имя собаки и выбери первое дело: обработка, вакцина, груминг или своё.', action: 'Добавить питомца', target: 'profile' as Tab };
     if (todayCare.reminderId) return {
@@ -1760,6 +1799,7 @@ export default function Home() {
       if (!response.ok) throw new Error(payload?.error || 'UPLOAD_FAILED');
       setDocuments((current) => [payload.document, ...current]);
       setDocumentUploadOpen(false);
+      setDocumentFileName('');
       formElement.reset();
       setNotice('saved');
       window.setTimeout(() => setNotice('idle'), 1400);
@@ -3017,7 +3057,7 @@ export default function Home() {
           setTab(route);
         }} />}
 
-        {hasDog && isJourneyRoute && <button className="production-floating-assistant" type="button" aria-label="Спросить Псё" onClick={() => setAssistantOpen(true)}><Sparkle weight="fill" aria-hidden="true" /><span>Спросить</span></button>}
+        {hasDog && isJourneyRoute && tab !== 'profile' && <button className="production-floating-assistant" type="button" aria-label="Спросить Псё" onClick={() => setAssistantOpen(true)}><Sparkle weight="fill" aria-hidden="true" /><span>Спросить</span></button>}
 
         {hasDog && tab === 'today' && !journeyDetail && <ProductionJourney route="today"
           dogName={profile.dogName}
@@ -3045,17 +3085,37 @@ export default function Home() {
           dogName={profile.dogName}
           breedLabel={breedLabel}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
+          profileFacts={[profile.lifeStage, profile.weight, profile.energyLevel].filter(Boolean)}
+          profileEntries={profileJourneyEntries}
+          observationPoints={observations.map((item) => ({ id: item.id, createdAt: item.createdAt, mood: item.mood, appetite: item.appetite, stool: item.stool, energy: item.energy, note: item.note }))}
           careTitle={todayCare.title}
           careDetail={todayCare.detail}
           documentCount={documents.length}
           latestDocument={documents[0]?.title}
           latestDocumentDetail={documents[0]?.clinic || documents[0]?.originalName}
           latestObservation={observations[0] ? observationSummary(observations[0]) : undefined}
+          onAddDocument={(trigger) => { documentUploadTriggerRef.current = trigger; setDocumentFileName(''); setDocumentUploadOpen(true); }}
+          onEditProfile={() => setJourneyDetail('profile')}
+          onAddObservation={() => setTab('health')}
+          onOpenCare={() => { setCareView('active'); setTab('calendar'); }}
+          onAskAssistant={() => setAssistantOpen(true)}
           onNavigate={(route) => {
             if (route === 'profile') setJourneyDetail('profile');
             else { setJourneyDetail(null); setTab(route); }
           }}
         />}
+
+        {hasDog && tab === 'profile' && documentUploadOpen && <ProductionDocumentSheet dogName={petNameGent} returnFocusTo={documentUploadTriggerRef.current} onClose={() => { setDocumentUploadOpen(false); setDocumentFileName(''); }}>
+          <form className="profile-life-document-form" data-slot="field-group" onSubmit={uploadPetDocument}>
+            <label data-slot="field"><span data-slot="field-label">Что это</span><span className="document-field-control"><TextT weight="regular" aria-hidden="true" /><input data-slot="input" name="title" required placeholder="Например, общий анализ крови" /></span></label>
+            <label data-slot="field"><span data-slot="field-label">Тип документа</span><span className="document-field-control document-select-control"><Files weight="regular" aria-hidden="true" /><select data-slot="input" name="kind" defaultValue="analysis"><option value="analysis">Анализ</option><option value="prescription">Назначение</option><option value="vaccination">Вакцинация</option><option value="other">Другое</option></select><CaretDown className="document-field-action" weight="regular" aria-hidden="true" /></span></label>
+            <label data-slot="field"><span data-slot="field-label">Дата документа <small>необязательно</small></span><span className="document-field-control"><CalendarBlank weight="regular" aria-hidden="true" /><input data-slot="input" name="documentDate" type="date" /></span></label>
+            <label data-slot="field"><span data-slot="field-label">Клиника <small>необязательно</small></span><span className="document-field-control"><Buildings weight="regular" aria-hidden="true" /><input data-slot="input" name="clinic" placeholder="Название клиники" /></span></label>
+            <label className="document-file-drop" data-slot="field"><input data-slot="input" name="file" type="file" required accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(event) => setDocumentFileName(event.currentTarget.files?.[0]?.name || '')} aria-describedby={`profile-document-help${error ? ' profile-document-error' : ''}`} /><span className="document-file-drop-media" aria-hidden="true">{documentFileName ? <CheckCircle weight="fill" /> : <UploadSimple weight="regular" />}</span><span className="document-file-drop-copy"><b data-document-file-name>{documentFileName || 'Выбрать PDF или фото'}</b><small data-slot="field-description" id="profile-document-help">До 4 МБ · файл останется приватным</small></span><span className="document-file-drop-action" aria-hidden="true">{documentFileName ? 'Готово' : 'Выбрать'}</span></label>
+            {error && <p className="profile-life-form-error" data-slot="field-error" id="profile-document-error" role="alert">{error}</p>}
+            <button className="primary" data-slot="button" type="submit" disabled={documentUploading}>{documentUploading ? 'Добавляю…' : <><CheckCircle weight="regular" /> Добавить в историю {petNameGent}</>}</button>
+          </form>
+        </ProductionDocumentSheet>}
 
         {hasDog && tab === 'map' && journeyDetail !== 'map' && <ProductionJourney route="map"
           dogName={profile.dogName}

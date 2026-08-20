@@ -19,6 +19,8 @@
     "qa:prod:smoke": "node scripts/qa/smoke-prod-release.mjs",
     "qa:journey:parity": "node scripts/qa/check-production-journey-parity-contract.mjs",
     "qa:journey:visual": "node scripts/qa/production-journey-visual.mjs",
+    "qa:profile-journey:contract": "node scripts/qa/check-profile-journey-contract.mjs",
+    "qa:profile-layout": "node scripts/qa/profile-layout-smoke.mjs",
     "qa:identity:isolation": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/qa/check-telegram-initdata-contract.mjs && node scripts/qa/check-owner-isolation-foundation.mjs && node scripts/qa/smoke-owner-isolation-fixtures.mjs",
     "qa:profile-ui": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/qa/profile-ui.behavior.test.ts"
   },
