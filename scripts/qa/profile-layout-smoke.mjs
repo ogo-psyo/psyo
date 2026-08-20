@@ -4,7 +4,7 @@ const base = process.env.BASE_URL || 'http://127.0.0.1:3101';
 const profile = {
   dogName: 'Мята', breedId: 'mixed', breedGroupId: 'mixed', lifeStage: 'взрослая', size: 'средняя',
   vaccineStatus: 'актуально', parasiteStatus: 'скоро нужно', socialMode: 'сначала спросить',
-  energyLevel: 'активный', photos: [], selectedStyle: 'city', backendPetId: 'guest-profile-layout',
+  energyLevel: 'активный', photos: [], selectedStyle: 'city', avatarImageUrl: '/demo-avatar.png', backendPetId: 'guest-profile-layout',
 };
 
 const browser = await chromium.launch({ headless: true });
