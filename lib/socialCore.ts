@@ -5,6 +5,7 @@ export type SocialScenario = typeof socialScenarios[number];
 export type SocialCity = typeof socialCities[number];
 export type SocialRequestStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'blocked';
 export type SocialRequestAction = 'accept' | 'reject' | 'cancel' | 'block';
+export type WalkPace = 'calm' | 'balanced' | 'active';
 
 export type CoarseLocation = { lat: number; lng: number };
 
@@ -22,6 +23,12 @@ export type SocialCandidateSource = {
   ownerId: string;
   name: string;
   avatarUrl: string | null;
+  lifeStage?: string | null;
+  weightKg?: number | null;
+  temperament?: string | null;
+  energyLevel?: string | null;
+  dogFriendly?: string | null;
+  playStyle?: string | null;
   profile: SocialProfile;
 };
 
@@ -29,6 +36,12 @@ export type SocialCandidate = {
   petId: string;
   name: string;
   avatarUrl: string | null;
+  lifeStage: string | null;
+  weightKg: number | null;
+  temperament: string | null;
+  energyLevel: string | null;
+  dogFriendly: string | null;
+  playStyle: string | null;
   city: SocialCity;
   district: string | null;
   scenarios: SocialScenario[];
@@ -41,6 +54,35 @@ export type SocialCandidate = {
 export type CandidateGroup = {
   nearby: SocialCandidate[];
   city: SocialCandidate[];
+};
+
+export type WalkSignal = {
+  id: string;
+  petId: string;
+  name: string;
+  avatarUrl: string | null;
+  city: SocialCity;
+  district: string | null;
+  approximateLocation: CoarseLocation;
+  privacyRadiusMeters: 700;
+  startsAt: string;
+  expiresAt: string;
+  pace: WalkPace;
+  note: string | null;
+  temperament: string | null;
+  dogFriendly: string | null;
+  isMine: boolean;
+  contactVisibility: 'hidden_until_mutual_consent';
+};
+
+export type WalkSignalInput = {
+  petId: string;
+  city: SocialCity;
+  district: string | null;
+  coarseLocation: CoarseLocation;
+  startsAt: string;
+  pace: WalkPace;
+  note: string | null;
 };
 
 export type SocialContactBoundaryResult =
@@ -63,6 +105,7 @@ const forbiddenContactKeys = ['telegramUsername', 'telegram_username', 'telegram
 const forbiddenExactLocationKeys = ['exactLocation', 'exact_location', 'latitude', 'longitude', 'coordinates'];
 const districtAddressMarkers = /(улица|ул\.|дом|д\.|корпус|квартира|кв\.|подъезд|строение|проспект|переулок|шоссе|набережная)/i;
 const safeDistrictPattern = /^[А-ЯЁа-яё -]{2,50}$/;
+const walkPaces = new Set<WalkPace>(['calm', 'balanced', 'active']);
 
 function sourceRecord(input: unknown): Record<string, unknown> {
   return input && typeof input === 'object' ? input as Record<string, unknown> : {};
@@ -148,6 +191,69 @@ export function normalizeSocialProfileInput(input: unknown): ProfileValidationRe
   };
 }
 
+export function normalizeWalkSignalInput(input: unknown, now = Date.now()):
+  | { ok: true; value: WalkSignalInput & { expiresAt: string } }
+  | { ok: false; code: string; field?: string } {
+  const source = sourceRecord(input);
+  const contactBoundary = validateSocialContactBoundary(input);
+  if (!contactBoundary.ok) return contactBoundary;
+  if (forbiddenExactLocationKeys.some((key) => key in source)) {
+    return { ok: false, code: 'EXACT_LOCATION_FORBIDDEN', field: 'coarseLocation' };
+  }
+  const petId = String(source.petId ?? '').trim();
+  const city = String(source.city ?? '').trim();
+  const district = cleanText(source.district, 50);
+  const coarseLocation = quantizeCoarseLocation(source.coarseLocation);
+  const pace = String(source.pace ?? '').trim() as WalkPace;
+  const startsAtMs = Date.parse(String(source.startsAt ?? ''));
+  const note = cleanText(source.note, 180);
+  if (!petId) return { ok: false, code: 'PET_ID_REQUIRED', field: 'petId' };
+  if (!citySet.has(city)) return { ok: false, code: 'INVALID_CITY', field: 'city' };
+  if (district && (!safeDistrictPattern.test(district) || /\d/.test(district) || districtAddressMarkers.test(district))) {
+    return { ok: false, code: 'INVALID_DISTRICT', field: 'district' };
+  }
+  if (!coarseLocation) return { ok: false, code: 'COARSE_LOCATION_REQUIRED', field: 'coarseLocation' };
+  if (!walkPaces.has(pace)) return { ok: false, code: 'INVALID_PACE', field: 'pace' };
+  if (!Number.isFinite(startsAtMs) || startsAtMs < now - 15 * 60 * 1000 || startsAtMs > now + 48 * 60 * 60 * 1000) {
+    return { ok: false, code: 'INVALID_START_TIME', field: 'startsAt' };
+  }
+  const durationMs = startsAtMs <= now + 30 * 60 * 1000 ? 2 * 60 * 60 * 1000 : 3 * 60 * 60 * 1000;
+  return { ok: true, value: {
+    petId,
+    city: city as SocialCity,
+    district,
+    coarseLocation,
+    startsAt: new Date(startsAtMs).toISOString(),
+    expiresAt: new Date(startsAtMs + durationMs).toISOString(),
+    pace,
+    note,
+  } };
+}
+
+export function walkSignalFingerprint(input: WalkSignalInput & { expiresAt: string }) {
+  return JSON.stringify({
+    petId: input.petId,
+    city: input.city,
+    district: input.district,
+    coarseLocation: input.coarseLocation,
+    startsAt: input.startsAt,
+    expiresAt: input.expiresAt,
+    pace: input.pace,
+    note: input.note,
+  });
+}
+
+/** Deterministic display-only offset, bounded inside the disclosed 700 m area. */
+export function blurredSignalLocation(id: string, location: CoarseLocation): CoarseLocation {
+  let seed = 2166136261;
+  for (const char of id) seed = Math.imul(seed ^ char.charCodeAt(0), 16777619);
+  const angle = ((seed >>> 0) % 360) * Math.PI / 180;
+  const meters = 180 + ((seed >>> 8) % 170);
+  const latOffset = (meters * Math.sin(angle)) / 111_320;
+  const lngOffset = (meters * Math.cos(angle)) / (111_320 * Math.max(0.2, Math.cos(location.lat * Math.PI / 180)));
+  return { lat: Number((location.lat + latOffset).toFixed(5)), lng: Number((location.lng + lngOffset).toFixed(5)) };
+}
+
 export function distanceKm(left: CoarseLocation, right: CoarseLocation) {
   const toRadians = (value: number) => value * Math.PI / 180;
   const earthRadiusKm = 6371;
@@ -178,6 +284,12 @@ function candidateProjection(candidate: SocialCandidateSource, mine: SocialProfi
     petId: candidate.petId,
     name: candidate.name,
     avatarUrl: candidate.avatarUrl,
+    lifeStage: candidate.lifeStage ?? null,
+    weightKg: candidate.weightKg ?? null,
+    temperament: candidate.temperament ?? null,
+    energyLevel: candidate.energyLevel ?? null,
+    dogFriendly: candidate.dogFriendly ?? null,
+    playStyle: candidate.playStyle ?? null,
     city: candidate.profile.city,
     district: candidate.profile.district,
     scenarios: candidate.profile.scenarios,

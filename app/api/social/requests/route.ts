@@ -3,9 +3,7 @@ import { socialScenarios, validateSocialContactBoundary, type SocialScenario } f
 import { readIdempotencyKey, socialRequestContext, socialStorageError } from '@/lib/server/socialHttp';
 import {
   contactUrlForRequestRow,
-  areRequestPetsDiscoverable,
   enforceSocialRateLimit,
-  isOwnerPairBlocked,
   excludedOwnerIds,
   requireOwnedPet,
   socialRequestFingerprint,
@@ -47,6 +45,8 @@ export async function POST(request: Request) {
   const senderPetId = typeof body?.senderPetId === 'string' ? body.senderPetId : '';
   const recipientPetId = typeof body?.recipientPetId === 'string' ? body.recipientPetId : '';
   const scenario = typeof body?.scenario === 'string' ? body.scenario : '';
+  const signalId = typeof body?.signalId === 'string' ? body.signalId : null;
+  const source = signalId ? 'signal' : 'organic';
   const message = typeof body?.message === 'string' ? body.message.trim().slice(0, 500) || null : null;
   const idempotencyKey = readIdempotencyKey(request, body);
   if (!senderPetId || !recipientPetId || !socialScenarios.includes(scenario as SocialScenario) || !idempotencyKey) {
@@ -56,7 +56,8 @@ export async function POST(request: Request) {
     senderPetId,
     recipientPetId,
     scenario: scenario as SocialScenario,
-    source: 'organic',
+    source,
+    signalId,
     message,
   });
   try {
@@ -87,21 +88,27 @@ export async function POST(request: Request) {
     if (!recipientPet || recipientPet.owner_id === context.ownerId) {
       return NextResponse.json({ error: 'RECIPIENT_NOT_AVAILABLE' }, { status: 404 });
     }
-    const [profiles, excluded] = await Promise.all([
+    const [profiles, excluded, signalLookup] = await Promise.all([
       context.supabase.from('social_discovery_profiles')
         .select('pet_id, discoverable, city, scenarios')
         .in('pet_id', [senderPetId, recipientPetId]),
       excludedOwnerIds(context.supabase, context.ownerId),
+      signalId
+        ? context.supabase.from('social_walk_signals').select('id, pet_id, owner_id, status, expires_at')
+          .eq('id', signalId).eq('pet_id', recipientPetId).eq('status', 'active').gt('expires_at', new Date().toISOString()).maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
     ]);
-    if (profiles.error) return socialStorageError();
+    if (profiles.error || signalLookup.error) return socialStorageError();
     if (excluded.has(recipientPet.owner_id)) {
       return NextResponse.json({ error: 'RECIPIENT_NOT_AVAILABLE' }, { status: 404 });
     }
     const senderProfile = profiles.data?.find((profile) => profile.pet_id === senderPetId);
     const recipientProfile = profiles.data?.find((profile) => profile.pet_id === recipientPetId);
-    if (!senderProfile?.discoverable || !recipientProfile?.discoverable
-      || senderProfile.city !== recipientProfile.city
-      || !senderProfile.scenarios?.includes(scenario) || !recipientProfile.scenarios?.includes(scenario)) {
+    const organicAvailable = senderProfile?.discoverable && recipientProfile?.discoverable
+      && senderProfile.city === recipientProfile.city
+      && senderProfile.scenarios?.includes(scenario) && recipientProfile.scenarios?.includes(scenario);
+    const signalAvailable = signalId && signalLookup.data?.owner_id === recipientPet.owner_id && scenario === 'walk';
+    if (signalId ? !signalAvailable : !organicAvailable) {
       return NextResponse.json({ error: 'RECIPIENT_NOT_AVAILABLE' }, { status: 404 });
     }
 
@@ -111,7 +118,8 @@ export async function POST(request: Request) {
       sender_pet_id: senderPetId,
       recipient_pet_id: recipientPetId,
       scenario,
-      source: 'organic',
+      source,
+      signal_id: signalId,
       message,
       status: 'pending',
       idempotency_key: idempotencyKey,
@@ -158,20 +166,23 @@ export async function GET(request: Request) {
     if (error) return socialStorageError();
     const excluded = await excludedOwnerIds(context.supabase, context.ownerId);
     const otherPetIds = [...new Set((data ?? []).map((row) => row.sender_pet_id === petId ? row.recipient_pet_id : row.sender_pet_id))];
-    const { data: otherPets, error: petsError } = otherPetIds.length
-      ? await context.supabase.from('pets').select('id, name, avatar_url').in('id', otherPetIds)
-      : { data: [], error: null };
-    if (petsError) return socialStorageError();
+    const requestPetIds = [...new Set((data ?? []).flatMap((row) => [row.sender_pet_id, row.recipient_pet_id]))];
+    const [petsLookup, discoveryLookup] = await Promise.all([
+      otherPetIds.length ? context.supabase.from('pets').select('id, name, avatar_url').in('id', otherPetIds) : Promise.resolve({ data: [], error: null }),
+      requestPetIds.length ? context.supabase.from('social_discovery_profiles').select('pet_id, discoverable').in('pet_id', requestPetIds) : Promise.resolve({ data: [], error: null }),
+    ]);
+    if (petsLookup.error || discoveryLookup.error) return socialStorageError();
+    const otherPets = petsLookup.data;
     const petsById = new Map((otherPets ?? []).map((pet) => [pet.id, { name: pet.name, avatar_url: pet.avatar_url }]));
+    const discoverablePets = new Set((discoveryLookup.data ?? []).filter((item) => item.discoverable).map((item) => item.pet_id));
     const requests = [];
     for (const row of data ?? []) {
       const otherOwnerId = row.sender_owner_id === context.ownerId ? row.recipient_owner_id : row.sender_owner_id;
       if (excluded.has(otherOwnerId)) continue;
-      const pairBlocked = await isOwnerPairBlocked(context.supabase, context.ownerId, otherOwnerId);
-      if (pairBlocked) continue;
-      const participantsAvailable = row.source === 'invite'
+      const pairBlocked = false;
+      const participantsAvailable = row.source === 'invite' || row.source === 'signal'
         ? true
-        : await areRequestPetsDiscoverable(context.supabase, row.sender_pet_id, row.recipient_pet_id);
+        : discoverablePets.has(row.sender_pet_id) && discoverablePets.has(row.recipient_pet_id);
       const contactUrl = contactUrlForRequestRow(row, context.ownerId, pairBlocked, participantsAvailable);
       requests.push(compactRequest(row, contactUrl, petId, petsById));
     }

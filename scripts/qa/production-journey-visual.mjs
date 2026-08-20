@@ -70,7 +70,7 @@ try {
   await page.locator('.places-composition').waitFor();
   await page.locator('.app-tabs button[data-route="nearby"]').click({ force: true });
   await page.getByRole('button', { name: /Гав/, exact: true }).last().click({ force: true });
-  await page.locator('.nearby-composition').waitFor();
+  await page.locator('.production-woof-workspace').waitFor();
   await page.locator('.app-tabs button[data-route="things"]').click({ force: true });
   await page.getByRole('button', { name: /Добавить/, exact: false }).first().click({ force: true });
   await page.locator('.things-composition').waitFor();

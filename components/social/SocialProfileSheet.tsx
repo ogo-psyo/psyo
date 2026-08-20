@@ -7,7 +7,6 @@ const scenarioOptions: Array<{ value: SocialScenario; label: string }> = [
   { value: 'meet', label: 'Знакомство' },
   { value: 'walk', label: 'Прогулка' },
   { value: 'socialize', label: 'Социализация' },
-  { value: 'mating', label: 'Случка' },
 ];
 
 const districtOptions: Record<SocialCity, string[]> = {

@@ -23,6 +23,7 @@ import { CandidateCard } from '@/components/social/CandidateCard';
 import { CityCommunities, type CityCommunity } from '@/components/social/CityCommunities';
 import { RequestsPanel, type SocialRequestView } from '@/components/social/RequestsPanel';
 import { SocialProfileSheet } from '@/components/social/SocialProfileSheet';
+import { ProductionWoofWorkspace } from '@/components/social/ProductionWoofWorkspace';
 import { SelectField } from '@/components/ui/FormControls';
 import {
   anchorCards,
@@ -59,7 +60,7 @@ import { buildAppReadiness, type ReadinessLevel } from '@/lib/readiness';
 import { buildTodayCareView } from '@/lib/today';
 import { normalizeOwnerRoutes, removeOwnerRoute, upsertOwnerRoute, type OwnerRouteView } from '@/lib/mapUi';
 import { rc1Config } from '@/lib/rc1';
-import type { CandidateGroup, CoarseLocation, SocialProfile, SocialScenario } from '@/lib/socialCore';
+import type { CandidateGroup, CoarseLocation, SocialProfile, SocialScenario, WalkPace, WalkSignal } from '@/lib/socialCore';
 import type { ActionSuggestion } from '@/packages/contracts';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
@@ -488,6 +489,7 @@ export default function Home() {
   const [socialProfile, setSocialProfile] = useState<SocialProfile | null>(null);
   const [socialCandidates, setSocialCandidates] = useState<CandidateGroup>({ nearby: [], city: [] });
   const [socialRequests, setSocialRequests] = useState<SocialRequestView[]>([]);
+  const [walkSignals, setWalkSignals] = useState<WalkSignal[]>([]);
   const [nearbyState, setNearbyState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [nearbyReason, setNearbyReason] = useState('');
   const [socialBusyId, setSocialBusyId] = useState<string | null>(null);
@@ -656,6 +658,7 @@ export default function Home() {
       setSocialProfile(null);
       setSocialCandidates({ nearby: [], city: [] });
       setSocialRequests([]);
+      setWalkSignals([]);
       setNearbyReason('AUTH_OR_PET_REQUIRED');
       setNearbyState('idle');
       return;
@@ -707,20 +710,23 @@ export default function Home() {
     setNearbyState('loading');
     setNearbyReason('');
     const requestOptions = { headers: authHeaders(), credentials: 'include' as const, signal };
-    const [profileResponse, candidatesResponse, requestsResponse] = await Promise.all([
+    const [profileResponse, candidatesResponse, requestsResponse, signalsResponse] = await Promise.all([
       fetch(`/api/social/profile?petId=${encodeURIComponent(petId)}`, requestOptions),
       fetch(`/api/social/candidates?petId=${encodeURIComponent(petId)}`, requestOptions),
       fetch(`/api/social/requests?petId=${encodeURIComponent(petId)}`, requestOptions),
+      fetch(`/api/social/signals?petId=${encodeURIComponent(petId)}`, requestOptions),
     ]);
-    const [profilePayload, candidatesPayload, requestsPayload] = await Promise.all([
+    const [profilePayload, candidatesPayload, requestsPayload, signalsPayload] = await Promise.all([
       profileResponse.json().catch(() => ({})),
       candidatesResponse.json().catch(() => ({})),
       requestsResponse.json().catch(() => ({})),
+      signalsResponse.json().catch(() => ({})),
     ]);
-    if (!profileResponse.ok || !requestsResponse.ok) throw new Error('SOCIAL_SURFACE_FAILED');
+    if (!profileResponse.ok || !requestsResponse.ok || !signalsResponse.ok) throw new Error('SOCIAL_SURFACE_FAILED');
     setSocialProfile(profilePayload.profile ?? null);
     setSocialRequests(Array.isArray(requestsPayload.requests) ? requestsPayload.requests : []);
     setMissingTelegramUsernameAction(requestsPayload.missingTelegramUsernameAction ?? null);
+    setWalkSignals(Array.isArray(signalsPayload.signals) ? signalsPayload.signals : []);
     if (candidatesResponse.ok) {
       setSocialCandidates({
         nearby: Array.isArray(candidatesPayload.nearby) ? candidatesPayload.nearby : [],
@@ -794,9 +800,9 @@ export default function Home() {
     );
   }
 
-  async function sendSocialRequest(candidatePetId: string, scenario: SocialScenario) {
+  async function sendSocialRequest(candidatePetId: string, scenario: SocialScenario, signalId?: string) {
     if (!profile.backendPetId || socialBusyId) return;
-    const keyId = `${candidatePetId}:${scenario}`;
+    const keyId = `${candidatePetId}:${scenario}:${signalId ?? 'profile'}`;
     const idempotencyKey = socialRequestKeysRef.current[keyId] ?? `social-request:${crypto.randomUUID()}`;
     socialRequestKeysRef.current[keyId] = idempotencyKey;
     setSocialBusyId(candidatePetId);
@@ -809,6 +815,7 @@ export default function Home() {
           senderPetId: profile.backendPetId,
           recipientPetId: candidatePetId,
           scenario,
+          signalId,
           idempotencyKey,
         }),
       });
@@ -821,6 +828,48 @@ export default function Home() {
     } finally {
       setSocialBusyId(null);
     }
+  }
+
+  async function saveWalkSignal(draft: { startsAt: string; pace: WalkPace; note: string; location: CoarseLocation }) {
+    if (!profile.backendPetId || socialBusyId) return;
+    const idempotencyKey = `walk-signal:${crypto.randomUUID()}`;
+    setSocialBusyId('signal');
+    setError('');
+    try {
+      const response = await fetch('/api/social/signals', {
+        method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey, ...authHeaders() },
+        body: JSON.stringify({
+          petId: profile.backendPetId,
+          city: socialProfile?.city ?? 'moscow',
+          district: socialProfile?.district ?? null,
+          coarseLocation: draft.location,
+          startsAt: draft.startsAt,
+          pace: draft.pace,
+          note: draft.note,
+          idempotencyKey,
+        }),
+      });
+      if (!response.ok) {
+        setError('Не получилось дать Гав. Проверь время и попробуй ещё раз.');
+        return;
+      }
+      await loadSocialSurface();
+    } finally { setSocialBusyId(null); }
+  }
+
+  async function closeWalkSignal(status: 'completed' | 'cancelled') {
+    if (!profile.backendPetId || socialBusyId) return;
+    setSocialBusyId('signal');
+    try {
+      const response = await fetch('/api/social/signals', {
+        method: 'DELETE', credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ petId: profile.backendPetId, status }),
+      });
+      if (!response.ok) { setError('Не получилось завершить Гав. Попробуй ещё раз.'); return; }
+      await loadSocialSurface();
+    } finally { setSocialBusyId(null); }
   }
 
   async function updateSocialRequest(id: string, action: 'accept' | 'reject' | 'cancel' | 'block') {
@@ -3102,7 +3151,7 @@ export default function Home() {
 
   return (
     <main className="app-canvas">
-      <section ref={phoneShellRef} className={`phone-shell tab-${tab}${hasDog && isJourneyRoute ? ' journey-active' : ''}`}>
+      <section ref={phoneShellRef} className={`phone-shell tab-${tab}${hasDog && (isJourneyRoute || journeyDetail === 'nearby') ? ' journey-active' : ''}`}>
         <header className="app-header">
           <div className="app-wordmark">
             <p>план ухода и памятка</p>
@@ -3427,7 +3476,31 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'nearby' && journeyDetail === 'nearby' && <WatercolorScreen className="nearby-composition" tone="rose" eyebrow="свои рядом" title="Гав" caption="Подай сигнал, найди компанию для прогулки и договорись без публикации точного адреса.">
+        {hasDog && tab === 'nearby' && journeyDetail === 'nearby' && <ProductionWoofWorkspace
+          dogName={profile.dogName || 'Собака'}
+          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" fill />}
+          profile={socialProfile}
+          signals={walkSignals}
+          candidates={socialCandidates}
+          requests={socialRequests}
+          state={nearbyState}
+          busyId={socialBusyId}
+          locating={socialLocating}
+          missingTelegramUsernameAction={missingTelegramUsernameAction}
+          onBack={() => closeSecondaryFlow('today')}
+          onSaveProfile={saveSocialProfile}
+          onHideProfile={hideSocialProfile}
+          onLocateProfile={locateForSocial}
+          onSaveSignal={saveWalkSignal}
+          onCloseSignal={closeWalkSignal}
+          onRequest={sendSocialRequest}
+          onUpdateRequest={updateSocialRequest}
+          onReport={reportSocialRequest}
+          onOpenContact={openTelegramDestination}
+          onRetry={() => loadSocialSurface().catch(() => setNearbyState('error'))}
+        />}
+
+        {hasDog && tab === 'nearby' && journeyDetail === 'nearby' && Boolean(0) && <WatercolorScreen className="nearby-composition" tone="rose" eyebrow="свои рядом" title="Гав" caption="Подай сигнал, найди компанию для прогулки и договорись без публикации точного адреса.">
           <ol className="nearby-trust-flow" aria-label="Как открывается контакт">
             <li><b>Покажи анкету</b><span>без точного адреса</span></li>
             <li><b>Дождись согласия</b><span>с обеих сторон</span></li>

@@ -46,6 +46,7 @@ export function RequestsPanel({
   onOpenChat: (url: string) => void;
 }) {
   const [reportingId, setReportingId] = useState<string | null>(null);
+  const [blockingId, setBlockingId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   if (requests.length === 0) return null;
 
@@ -87,7 +88,7 @@ export function RequestsPanel({
 
               {request.status !== 'blocked' && (
                 <div className="social-safety-actions">
-                  <button type="button" disabled={busy} onClick={() => onAction(request.id, 'block')}>Заблокировать</button>
+                  <button type="button" disabled={busy} onClick={() => setBlockingId(request.id)}>Заблокировать</button>
                   <button type="button" disabled={busy} onClick={() => { setReportingId(request.id); setReason(''); }}>Пожаловаться</button>
                 </div>
               )}
@@ -110,6 +111,13 @@ export function RequestsPanel({
                   </div>
                 </form>
               )}
+              {blockingId === request.id && <div className="social-block-confirm" role="dialog" aria-modal="true" aria-label="Подтвердить блокировку">
+                <p>Скрыть владельца и все его запросы? Это действие можно будет отменить только через поддержку.</p>
+                <div className="social-request-actions">
+                  <button type="button" disabled={busy} onClick={() => { setBlockingId(null); onAction(request.id, 'block'); }}>Заблокировать</button>
+                  <button type="button" onClick={() => setBlockingId(null)}>Отмена</button>
+                </div>
+              </div>}
             </article>
           );
         })}

@@ -1,18 +1,22 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
+  blurredSignalLocation,
   canRevealTelegramContact,
   groupSocialCandidates,
   normalizeSocialProfileInput,
+  normalizeWalkSignalInput,
   validateSocialContactBoundary,
   type SocialCandidateSource,
   type SocialContactRequest,
   type SocialProfile,
   type SocialScenario,
+  type WalkSignal,
+  type WalkSignalInput,
 } from '@/lib/socialCore';
 import type { VerifiedTelegramContact } from '@/lib/server/telegram';
 
-export { normalizeSocialProfileInput, validateSocialContactBoundary };
+export { normalizeSocialProfileInput, normalizeWalkSignalInput, validateSocialContactBoundary };
 
 export const MISSING_TELEGRAM_USERNAME_ACTION = 'Добавьте имя пользователя в настройках Telegram, чтобы открыть чат';
 
@@ -148,29 +152,143 @@ export async function listCandidates(supabase: SupabaseClient, ownerId: string, 
   const mine = mapSocialProfile(mineRow);
 
   const excluded = await excludedOwnerIds(supabase, ownerId);
-  const candidateRows: any[] = [];
-  for (let from = 0; from < 1000; from += 200) {
-    const { data, error } = await supabase.from('social_discovery_profiles')
-      .select('*, pets!inner(id, owner_id, name, avatar_url)')
-      .eq('discoverable', true).eq('city', mine.city).neq('pet_id', petId)
-      .order('pet_id', { ascending: true }).range(from, from + 199);
-    if (error) throw new Error('SOCIAL_STORAGE_FAILED');
-    candidateRows.push(...(data ?? []));
-    if ((data ?? []).length < 200) break;
-  }
+  const { data: candidateRows, error: candidateError } = await supabase.from('social_discovery_profiles')
+    .select('*, pets!inner(id, owner_id, name, avatar_url, life_stage, weight_kg, social_profiles(temperament, energy_level, dog_friendly, play_style))')
+    .eq('discoverable', true).eq('city', mine.city).neq('pet_id', petId)
+    .order('updated_at', { ascending: false }).limit(120);
+  if (candidateError) throw new Error('SOCIAL_STORAGE_FAILED');
 
-  const candidates: SocialCandidateSource[] = candidateRows.flatMap((row: any) => {
+  const candidates: SocialCandidateSource[] = (candidateRows ?? []).flatMap((row: any) => {
     const candidatePet = Array.isArray(row.pets) ? row.pets[0] : row.pets;
     if (!candidatePet || candidatePet.owner_id === ownerId) return [];
+    const traits = Array.isArray(candidatePet.social_profiles) ? candidatePet.social_profiles[0] : candidatePet.social_profiles;
     return [{
       petId: candidatePet.id,
       ownerId: candidatePet.owner_id,
       name: candidatePet.name,
       avatarUrl: candidatePet.avatar_url ?? null,
+      lifeStage: candidatePet.life_stage ?? null,
+      weightKg: Number.isFinite(Number(candidatePet.weight_kg)) ? Number(candidatePet.weight_kg) : null,
+      temperament: traits?.temperament ?? null,
+      energyLevel: traits?.energy_level ?? null,
+      dogFriendly: traits?.dog_friendly ?? null,
+      playStyle: traits?.play_style ?? null,
       profile: mapSocialProfile(row),
     }];
   });
   return { groups: groupSocialCandidates({ mine, candidates, excludedOwnerIds: excluded }) };
+}
+
+function signalPayload(input: WalkSignalInput & { expiresAt: string }) {
+  return {
+    city: input.city,
+    district: input.district,
+    coarse_lat: input.coarseLocation.lat,
+    coarse_lng: input.coarseLocation.lng,
+    starts_at: input.startsAt,
+    expires_at: input.expiresAt,
+    pace: input.pace,
+    note: input.note,
+    status: 'active',
+  };
+}
+
+function mapWalkSignal(row: any, ownerId: string): WalkSignal | null {
+  const pet = Array.isArray(row.pets) ? row.pets[0] : row.pets;
+  if (!pet) return null;
+  const profile = Array.isArray(pet.social_profiles) ? pet.social_profiles[0] : pet.social_profiles;
+  const raw = { lat: Number(row.coarse_lat), lng: Number(row.coarse_lng) };
+  if (!Number.isFinite(raw.lat) || !Number.isFinite(raw.lng)) return null;
+  return {
+    id: row.id,
+    petId: row.pet_id,
+    name: pet.name,
+    avatarUrl: pet.avatar_url ?? null,
+    city: row.city,
+    district: row.district ?? null,
+    approximateLocation: blurredSignalLocation(row.id, raw),
+    privacyRadiusMeters: 700,
+    startsAt: row.starts_at,
+    expiresAt: row.expires_at,
+    pace: row.pace,
+    note: row.note ?? null,
+    temperament: profile?.temperament ?? null,
+    dogFriendly: profile?.dog_friendly ?? null,
+    isMine: row.owner_id === ownerId,
+    contactVisibility: 'hidden_until_mutual_consent',
+  };
+}
+
+export async function saveWalkSignal(input: {
+  supabase: SupabaseClient;
+  ownerId: string;
+  value: WalkSignalInput & { expiresAt: string };
+  idempotencyKey: string;
+}) {
+  const pet = await requireOwnedPet(input.supabase, input.ownerId, input.value.petId);
+  if (!pet) return { code: 'PET_NOT_FOUND' as const };
+  const fingerprint = createHash('sha256').update(JSON.stringify(input.value)).digest('hex');
+  const { data: replay, error: replayError } = await input.supabase.from('social_walk_signals')
+    .select('*').eq('owner_id', input.ownerId).eq('idempotency_key', input.idempotencyKey).maybeSingle();
+  if (replayError) throw new Error('SOCIAL_STORAGE_FAILED');
+  if (replay) {
+    if (replay.request_fingerprint !== fingerprint) return { code: 'IDEMPOTENCY_KEY_REUSED' as const };
+    return { signal: replay, replayed: true };
+  }
+  const { data: current, error: currentError } = await input.supabase.from('social_walk_signals')
+    .select('id').eq('pet_id', input.value.petId).eq('status', 'active').maybeSingle();
+  if (currentError) throw new Error('SOCIAL_STORAGE_FAILED');
+  if (current) {
+    const { data, error } = await input.supabase.from('social_walk_signals').update({
+      ...signalPayload(input.value), idempotency_key: input.idempotencyKey, request_fingerprint: fingerprint,
+    }).eq('id', current.id).eq('owner_id', input.ownerId).select('*').single();
+    if (error) throw new Error('SOCIAL_STORAGE_FAILED');
+    return { signal: data };
+  }
+  const { data, error } = await input.supabase.from('social_walk_signals').insert({
+    owner_id: input.ownerId,
+    pet_id: input.value.petId,
+    ...signalPayload(input.value),
+    idempotency_key: input.idempotencyKey,
+    request_fingerprint: fingerprint,
+  }).select('*').single();
+  if (error) throw new Error(error.message || 'SOCIAL_STORAGE_FAILED');
+  return { signal: data };
+}
+
+export async function closeWalkSignal(input: { supabase: SupabaseClient; ownerId: string; petId: string; status: 'completed' | 'cancelled' }) {
+  const pet = await requireOwnedPet(input.supabase, input.ownerId, input.petId);
+  if (!pet) return { code: 'PET_NOT_FOUND' as const };
+  const { error } = await input.supabase.from('social_walk_signals').update({ status: input.status })
+    .eq('owner_id', input.ownerId).eq('pet_id', input.petId).eq('status', 'active');
+  if (error) throw new Error('SOCIAL_STORAGE_FAILED');
+  return { ok: true as const };
+}
+
+export async function listWalkSignals(supabase: SupabaseClient, ownerId: string, petId: string) {
+  const pet = await requireOwnedPet(supabase, ownerId, petId);
+  if (!pet) return { code: 'PET_NOT_FOUND' as const };
+  const { data: discovery, error: discoveryError } = await supabase.from('social_discovery_profiles')
+    .select('city').eq('pet_id', petId).maybeSingle();
+  if (discoveryError) throw new Error('SOCIAL_STORAGE_FAILED');
+  const { data: ownSignal, error: ownSignalError } = discovery?.city
+    ? { data: null, error: null }
+    : await supabase.from('social_walk_signals').select('city').eq('owner_id', ownerId).eq('pet_id', petId).eq('status', 'active').maybeSingle();
+  if (ownSignalError) throw new Error('SOCIAL_STORAGE_FAILED');
+  const city = discovery?.city || ownSignal?.city;
+  if (!city) return { signals: [] as WalkSignal[] };
+  const excluded = await excludedOwnerIds(supabase, ownerId);
+  const now = new Date().toISOString();
+  await supabase.from('social_walk_signals').update({ status: 'expired' })
+    .eq('status', 'active').lte('expires_at', now);
+  const { data, error } = await supabase.from('social_walk_signals')
+    .select('*, pets!inner(id, name, avatar_url, social_profiles(temperament, dog_friendly))')
+    .eq('city', city).eq('status', 'active').gt('expires_at', now)
+    .order('starts_at', { ascending: true }).limit(100);
+  if (error) throw new Error('SOCIAL_STORAGE_FAILED');
+  const signals = (data ?? []).filter((row: any) => row.owner_id === ownerId || !excluded.has(row.owner_id))
+    .map((row: any) => mapWalkSignal(row, ownerId)).filter(Boolean) as WalkSignal[];
+  return { signals };
 }
 
 export function hashInviteToken(token: string) {
@@ -181,7 +299,8 @@ export function socialRequestFingerprint(input: {
   senderPetId: string;
   recipientPetId: string;
   scenario: SocialScenario;
-  source: 'organic' | 'invite';
+  source: 'organic' | 'invite' | 'signal';
+  signalId?: string | null;
   message?: string | null;
 }) {
   return createHash('sha256').update(JSON.stringify({
@@ -189,6 +308,7 @@ export function socialRequestFingerprint(input: {
     recipientPetId: input.recipientPetId,
     scenario: input.scenario,
     source: input.source,
+    signalId: input.signalId ?? null,
     message: input.message ?? null,
   })).digest('hex');
 }
