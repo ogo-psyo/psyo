@@ -20,6 +20,14 @@ const results = [];
 try {
   for (const viewport of [{ width: 320, height: 720 }, { width: 390, height: 844 }]) {
     const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
+    await page.route('**/api/observations/extract', async (route) => {
+      const body = route.request().postDataJSON();
+      const candidates = String(body.transcript).includes('большого дерева') ? [] : [
+        { id: `${body.captureId}:energy`, captureId: body.captureId, petId: body.petId, metric: 'energy', value: 'спит больше обычного', direction: 'down', observedAt: body.observedAt, onsetAt: body.observedAt, authorId: 'owner', source: body.source, confidence: .92, transcriptSpan: 'больше спит со вчера', confirmed: false },
+        { id: `${body.captureId}:appetite`, captureId: body.captureId, petId: body.petId, metric: 'appetite', value: 'как обычно', direction: 'stable', observedAt: body.observedAt, onsetAt: body.observedAt, authorId: 'owner', source: body.source, confidence: .9, transcriptSpan: 'ест как обычно', confirmed: false },
+      ];
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ candidates, decisions: candidates.map((candidate) => ({ candidateId: candidate.id, operation: 'create', analyticsEligible: true, reason: 'no_comparable_observation' })) }) });
+    });
     await page.context().grantPermissions(['microphone'], { origin: base });
     let transcriptionRequests = 0;
     page.on('request', (request) => { if (request.url().includes('/api/stt/transcribe')) transcriptionRequests += 1; });
@@ -45,6 +53,8 @@ try {
     await capture.getByText('Энергия', { exact: true }).waitFor();
     await capture.getByText('Аппетит', { exact: true }).waitFor();
     await capture.getByText('0 заметок', { exact: true }).waitFor();
+    await capture.getByText('Новая запись', { exact: false }).first().waitFor();
+    await capture.locator('.voice-capture-facts input').first().fill('спит заметно больше обычного');
 
     const metrics = await page.evaluate(() => {
       const captureElement = document.querySelector('.voice-observation-capture');
@@ -58,13 +68,19 @@ try {
         scrollWidth: document.documentElement.scrollWidth,
         inputFontSize: Number.parseFloat(getComputedStyle(textarea).fontSize),
         smallControls: controls.filter((control) => control.width > 0 && control.height > 0 && (control.width < 44 || control.height < 44)),
+        navigationHidden: getComputedStyle(document.querySelector('.app-tabs')).display === 'none',
       };
     });
     if (metrics.scrollWidth > metrics.viewport) throw new Error(`${viewport.width}: horizontal overflow`);
     if (metrics.inputFontSize < 16) throw new Error(`${viewport.width}: input font triggers iOS zoom`);
     if (metrics.smallControls.length) throw new Error(`${viewport.width}: small controls ${JSON.stringify(metrics.smallControls)}`);
+    if (!metrics.navigationHidden) throw new Error(`${viewport.width}: bottom navigation overlaps the active capture flow`);
     results.push(metrics);
     await page.screenshot({ path: `${outDir}/review-${viewport.width}.png`, fullPage: false });
+    await capture.getByLabel('Проверь расшифровку').fill('Мы славно погуляли около большого дерева.');
+    await capture.getByRole('button', { name: 'Разобрать на показатели' }).click();
+    await capture.getByText('Показатели не найдены', { exact: true }).waitFor();
+    await capture.getByText('Ничего не сохранено.', { exact: false }).waitFor();
     await page.close();
   }
   console.log(JSON.stringify({ ok: true, results }, null, 2));

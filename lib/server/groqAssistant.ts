@@ -1,5 +1,5 @@
 const GROQ_CHAT_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const DEFAULT_MODEL = 'qwen/qwen3.6-27b';
+const DEFAULT_MODEL = 'openai/gpt-oss-20b';
 
 export type GroqAssistantDependencies = {
   apiKey?: string;

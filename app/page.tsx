@@ -61,7 +61,7 @@ import { buildAppReadiness, type ReadinessLevel } from '@/lib/readiness';
 import { buildTodayCareView } from '@/lib/today';
 import { normalizeOwnerRoutes, removeOwnerRoute, upsertOwnerRoute, type OwnerRouteView } from '@/lib/mapUi';
 import { rc1Config } from '@/lib/rc1';
-import { ingestionFingerprint, type ObservationCandidate } from '@/lib/observationIngestion';
+import { extractObservationCandidates, ingestionFingerprint, type IngestionDecision, type ObservationCandidate } from '@/lib/observationIngestion';
 import type { CandidateGroup, CoarseLocation, SocialProfile, SocialScenario, WalkPace, WalkSignal } from '@/lib/socialCore';
 import type { ActionSuggestion } from '@/packages/contracts';
 
@@ -549,6 +549,9 @@ export default function Home() {
   const [assistantQuestion, setAssistantQuestion] = useState('');
   const [assistantAnswer, setAssistantAnswer] = useState('');
   const [assistantActions, setAssistantActions] = useState<ActionSuggestion[]>([]);
+  const [assistantThreadId, setAssistantThreadId] = useState('');
+  const [assistantDiagnostic, setAssistantDiagnostic] = useState<{ provider?: string; mode?: string }>({});
+  const [assistantMessages, setAssistantMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [breedSearch, setBreedSearch] = useState('');
   const [assistantLoading, setAssistantLoading] = useState(false);
   const [dogCreationOpen, setDogCreationOpen] = useState(false);
@@ -561,6 +564,14 @@ export default function Home() {
   const [dogDeleteName, setDogDeleteName] = useState('');
   const [accountDeleteConfirmation, setAccountDeleteConfirmation] = useState('');
   const [telegramSession, setTelegramSession] = useState<TelegramSessionView>({ mode: 'loading' });
+
+  useEffect(() => {
+    setAssistantThreadId('');
+    setAssistantMessages([]);
+    setAssistantAnswer('');
+    setAssistantActions([]);
+    setAssistantDiagnostic({});
+  }, [profile.backendPetId]);
   const [billing, setBilling] = useState<BillingView | null>(null);
   const [careFeedback, setCareFeedback] = useState<CareFeedback>(null);
   const [pendingCareDeletion, setPendingCareDeletion] = useState<PendingCareDeletion>(null);
@@ -1884,6 +1895,22 @@ export default function Home() {
     return { transcript: payload.transcript, durationSeconds: Number(payload.durationSeconds) || 0 };
   }
 
+  async function extractVoiceObservationCandidates(input: { transcript: string; captureId: string; observedAt: string; source: 'voice' | 'text' }) {
+    if (!profile.backendPetId) throw new Error('PET_REQUIRED');
+    if (isGuestMode()) {
+      const candidates = extractObservationCandidates({ ...input, petId: profile.backendPetId, authorId: 'guest' });
+      return { candidates, decisions: candidates.map((candidate) => ({ candidateId: candidate.id, operation: 'create' as const, analyticsEligible: Boolean(candidate.onsetAt), reason: 'guest_preview' })) };
+    }
+    if (!session?.access_token && !telegramSession.ownerId) throw new Error('AUTH_REQUIRED');
+    const response = await fetch('/api/observations/extract', {
+      method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ petId: profile.backendPetId, ...input }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(String(payload.error || 'OBSERVATION_EXTRACTION_FAILED'));
+    return { candidates: Array.isArray(payload.candidates) ? payload.candidates as ObservationCandidate[] : [], decisions: Array.isArray(payload.decisions) ? payload.decisions as IngestionDecision[] : [] };
+  }
+
   async function saveVoiceObservationCandidates(candidates: ObservationCandidate[]) {
     if (!candidates.length) throw new Error('EMPTY_CANDIDATE_BATCH');
     if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) throw new Error('AUTH_REQUIRED');
@@ -1905,6 +1932,7 @@ export default function Home() {
     setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
     finishCareMutation(scope);
     await loadRealModules(profile.backendPetId);
+    return { decisions: Array.isArray(payload.decisions) ? payload.decisions as IngestionDecision[] : [], summary: payload.summary || {} };
   }
 
   function startObservationEdit(observation: ObservationView) {
@@ -2751,11 +2779,13 @@ export default function Home() {
       ensureGuestPetId();
     }
     setAssistantLoading(true); setAssistantActions([]); setError('');
+    setAssistantMessages((current) => [...current, { role: 'user', content: question }]);
     const response = await fetch('/api/assistant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         ...(isGuestMode() ? {} : { petId: profile.backendPetId }),
+        ...(assistantThreadId ? { threadId: assistantThreadId } : {}),
         question,
         context: {
           pet: { name: profile.dogName, life_stage: profile.lifeStage, weight_kg: parseFloat(profile.weight) || undefined },
@@ -2767,10 +2797,16 @@ export default function Home() {
     });
     const result = await response.json();
     setAssistantLoading(false);
-    if (!response.ok) return setError('Псё не ответил');
-    setAssistantQuestion(question);
-    setAssistantAnswer(result.answer || 'Нет ответа');
+    if (!response.ok) {
+      setAssistantMessages((current) => current.slice(0, -1));
+      return setError('Псё не ответил. Проверь связь и попробуй ещё раз.');
+    }
+    setAssistantQuestion('');
+    setAssistantAnswer(result.answer || 'Не получилось составить ответ. Уточни вопрос.');
+    setAssistantMessages((current) => [...current, { role: 'assistant', content: result.answer || 'Не получилось составить ответ. Уточни вопрос.' }]);
     setAssistantActions(Array.isArray(result.actionSuggestions) ? result.actionSuggestions : []);
+    setAssistantThreadId(typeof result.threadId === 'string' ? result.threadId : assistantThreadId);
+    setAssistantDiagnostic({ provider: result.provider, mode: result.mode });
   }
 
   async function handleApplyAction(action: ActionSuggestion) {
@@ -3357,6 +3393,7 @@ export default function Home() {
             petName={profile.dogName}
             authorId={telegramSession.ownerId || session?.user.email || 'owner'}
             onTranscribe={transcribeVoiceObservation}
+            onExtract={extractVoiceObservationCandidates}
             onSave={saveVoiceObservationCandidates}
           />}
           onCareAction={() => todayCare.reminderId
@@ -3474,7 +3511,10 @@ export default function Home() {
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
           question={assistantQuestion}
           answer={assistantAnswer}
+          messages={assistantMessages}
           loading={assistantLoading}
+          actions={<AssistantActionButtons actions={assistantActions} onApply={handleApplyAction} />}
+          diagnostic={assistantDiagnostic}
           onQuestionChange={setAssistantQuestion}
           onAsk={(question) => { void askAssistant(question); }}
           onClose={() => setAssistantOpen(false)}

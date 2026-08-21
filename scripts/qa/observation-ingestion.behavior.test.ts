@@ -172,3 +172,34 @@ test('returns no candidates instead of turning unstructured speech into a note',
   });
   assert.deepEqual(candidates, []);
 });
+
+test('understands a natural positive meal update from the real device acceptance', () => {
+  const candidates = extractObservationCandidates({
+    transcript: 'Мята сегодня активно поела, довольная и бодрая.',
+    captureId: 'capture-real-acceptance',
+    petId: 'pet-mint',
+    authorId: 'ruslan',
+    observedAt: '2026-08-21T09:30:00.000Z',
+    source: 'voice',
+  });
+
+  assert.deepEqual(candidates.map(({ metric, value, direction, source }) => ({ metric, value, direction, source })), [
+    { metric: 'appetite', value: 'поела хорошо', direction: 'stable', source: 'voice' },
+    { metric: 'mood', value: 'довольная', direction: 'up', source: 'voice' },
+    { metric: 'energy', value: 'бодрая', direction: 'stable', source: 'voice' },
+  ]);
+});
+
+test('preserves text provenance instead of marking typed input as voice', () => {
+  const candidates = extractObservationCandidates({
+    transcript: 'Мята сегодня бодрая и ест как обычно.',
+    captureId: 'capture-text',
+    petId: 'pet-mint',
+    authorId: 'ruslan',
+    observedAt: '2026-08-21T09:30:00.000Z',
+    source: 'text',
+  });
+
+  assert.ok(candidates.length > 0);
+  assert.ok(candidates.every((item) => item.source === 'text'));
+});

@@ -68,6 +68,7 @@ declare
   v_observed_at timestamptz;
   v_onset_at timestamptz;
   v_confidence numeric;
+  v_input_source text;
   v_operation text;
   v_analytics_eligible boolean;
   v_metadata jsonb;
@@ -120,9 +121,11 @@ begin
     v_observed_at := (v_candidate ->> 'observedAt')::timestamptz;
     v_onset_at := nullif(v_candidate ->> 'onsetAt', '')::timestamptz;
     v_confidence := (v_candidate ->> 'confidence')::numeric;
+    v_input_source := coalesce(v_candidate ->> 'source', 'voice');
 
-    if v_metric not in ('mood', 'energy', 'appetite', 'stool', 'sleep')
+    if v_metric not in ('mood', 'energy', 'appetite', 'stool', 'sleep', 'activity', 'symptom', 'behavior_change')
       or v_direction not in ('down', 'stable', 'up', 'unknown')
+      or v_input_source not in ('voice', 'text')
       or length(v_value) not between 1 and 120
       or coalesce((v_candidate ->> 'confirmed')::boolean, false) is not true
       or v_confidence < 0.8 or v_confidence > 1 then
@@ -150,7 +153,8 @@ begin
         'ingestionStatus', 'ready',
         'notesCreated', 0,
         'audioRetainedByPsyo', false,
-        'transcriptionProvider', 'groq_whisper_large_v3_turbo',
+        'inputSource', v_input_source,
+        'transcriptionProvider', case when v_input_source = 'voice' then 'groq_whisper_large_v3_turbo' else null end,
         'sources', jsonb_build_array(jsonb_build_object('captureId', p_capture_id, 'candidateId', v_candidate ->> 'id'))
       )
     );

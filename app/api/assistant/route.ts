@@ -26,6 +26,18 @@ function classifyQuestion(question: string): AssistantKind {
   return 'general';
 }
 
+const profileValueLabels: Record<string, string> = {
+  unknown: 'не указано', adult: 'взрослая', puppy: 'щенок', senior: 'пожилая',
+  medium: 'средняя', high: 'высокая', low: 'низкая',
+  ask_first: 'сначала спросить', ok: 'можно знакомиться', calm_dogs_only: 'только со спокойными собаками',
+  up_to_date: 'актуально', due_soon: 'скоро проверить', overdue: 'просрочено',
+};
+
+function humanProfileValue(value: unknown) {
+  const normalized = String(value || '').trim();
+  return profileValueLabels[normalized] ?? normalized.replaceAll('_', ' ');
+}
+
 function buildAnswer(question: string, context: any, reminders: any[]) {
   const pet = context?.pet;
   const passport = context?.passport ?? {};
@@ -33,12 +45,12 @@ function buildAnswer(question: string, context: any, reminders: any[]) {
   const name = pet?.name || 'собаки';
   const kind = classifyQuestion(question);
   const facts = [
-    pet?.life_stage ? `возраст: ${pet.life_stage}` : null,
+    pet?.life_stage ? `возраст: ${humanProfileValue(pet.life_stage)}` : null,
     pet?.weight_kg ? `вес: ${pet.weight_kg} кг` : null,
-    passport.vaccine_status ? `вакцины: ${passport.vaccine_status}` : null,
-    passport.parasite_status ? `обработка: ${passport.parasite_status}` : null,
-    social.energy_level ? `энергия: ${social.energy_level}` : null,
-    social.social_mode ? `знакомства: ${social.social_mode}` : null,
+    passport.vaccine_status ? `вакцины: ${humanProfileValue(passport.vaccine_status)}` : null,
+    passport.parasite_status ? `обработка: ${humanProfileValue(passport.parasite_status)}` : null,
+    social.energy_level ? `энергия: ${humanProfileValue(social.energy_level)}` : null,
+    social.social_mode ? `знакомства: ${humanProfileValue(social.social_mode)}` : null,
     Array.isArray(social.triggers) && social.triggers.length ? `триггеры: ${social.triggers.join(', ')}` : null,
   ].filter(Boolean);
   const reminderLine = reminders.length ? `Ближайшие задачи: ${reminders.slice(0, 3).map((item) => item.title).join('; ')}.` : 'Активных задач ухода пока нет — стоит завести хотя бы одну.';
@@ -46,9 +58,9 @@ function buildAnswer(question: string, context: any, reminders: any[]) {
 
   if (kind === 'health_triage') return `${base}\n\nБез диагноза: 1) зафиксируй симптом, время, аппетит, воду, стул и активность; 2) проверь, нет ли красных флагов — кровь, повторная рвота/понос, сильная вялость, затруднённое дыхание, боль, судороги, травма; 3) при красных флагах — ветеринар срочно. Если красных флагов нет, запиши наблюдение и поставь напоминание проверить динамику.`;
   if (kind === 'training') return `${base}\n\nПлан на 7 дней: короткие сессии по 5–10 минут, один критерий за раз, награда за спокойное поведение до возбуждения. Если есть триггеры — увеличь дистанцию, не тащи в контакт. При агрессии/панике лучше подключить кинолога.`;
-  if (kind === 'care') return `${base}\n\nCare-план: выбери одну регулярную задачу на неделю, поставь напоминание, после выполнения отмечай “готово” или “+1д”. Для вакцин/лекарств сверяй схему с врачом, я не заменяю назначение.`;
+  if (kind === 'care') return `${base}\n\nПлан ухода: выбери одно регулярное дело на неделю, поставь напоминание, после выполнения отметь его готовым или перенеси на день. Для вакцин и лекарств сверяй схему с ветеринаром.`;
   if (kind === 'shopping') return `${base}\n\nПодбор без агрессивной рекламы: сначала размер/вес/энергия/триггеры, потом товар. Для прогулок важнее безопасная посадка шлейки/ошейника, для дома — игрушки под стиль игры и уровень возбуждения.`;
-  return `${base}\n\nЯ могу помочь в трёх режимах: care-loop на сегодня, безопасный triage здоровья без диагнозов, или план воспитания. Лучше начни с конкретной ситуации: что произошло, когда, как часто, что уже пробовали.`;
+  return `${base}\n\nМогу помочь с делами на сегодня, безопасно разобрать изменения самочувствия без диагноза или составить план воспитания. Напиши, что произошло, когда, как часто и что уже пробовали.`;
 }
 
 function tomorrowDate() {
@@ -119,28 +131,34 @@ function buildActionSuggestions(question: string, context: any): ActionSuggestio
   }];
 }
 
-function buildAssistantPrompt(question: string, context: any, reminders: any[], rulesAnswer: string) {
+function buildAssistantPrompt(question: string, context: any, reminders: any[], rulesAnswer: string, history: any[] = []) {
   const pet = context?.pet;
   const passport = context?.passport ?? {};
   const social = context?.social ?? {};
   const facts = [
     pet?.name ? `имя: ${pet.name}` : null,
-    pet?.life_stage ? `возрастная группа: ${pet.life_stage}` : null,
+    pet?.life_stage ? `возрастная группа: ${humanProfileValue(pet.life_stage)}` : null,
     pet?.weight_kg ? `вес: ${pet.weight_kg} кг` : null,
-    passport.vaccine_status ? `вакцины: ${passport.vaccine_status}` : null,
-    passport.parasite_status ? `обработка: ${passport.parasite_status}` : null,
-    social.energy_level ? `энергия: ${social.energy_level}` : null,
-    social.social_mode ? `социальность: ${social.social_mode}` : null,
+    passport.vaccine_status ? `вакцины: ${humanProfileValue(passport.vaccine_status)}` : null,
+    passport.parasite_status ? `обработка: ${humanProfileValue(passport.parasite_status)}` : null,
+    social.energy_level ? `энергия: ${humanProfileValue(social.energy_level)}` : null,
+    social.social_mode ? `социальность: ${humanProfileValue(social.social_mode)}` : null,
     Array.isArray(social.triggers) && social.triggers.length ? `триггеры: ${social.triggers.slice(0, 5).join(', ')}` : null,
     reminders.length ? `задачи: ${reminders.slice(0, 3).map((item) => item.title).join('; ')}` : null,
+    context?.observations?.length ? `наблюдения: ${context.observations.slice(0, 5).map((item: any) => `${humanProfileValue(item.type)} — ${humanProfileValue(item.value)}`).join('; ')}` : null,
+    context?.documents?.length ? `документы: ${context.documents.slice(0, 4).map((item: any) => item.title).join('; ')}` : null,
+    context?.routes?.length ? `прогулки: ${context.routes.slice(0, 4).map((item: any) => `${item.title || 'маршрут'}${item.distance_meters ? `, ${Math.round(item.distance_meters / 100) / 10} км` : ''}`).join('; ')}` : null,
   ].filter(Boolean).join('; ');
+
+  const conversation = history.slice(-8).map((item: any) => `${item.role === 'assistant' ? 'Псё' : 'Владелец'}: ${String(item.content || '').slice(0, 500)}`).join('\n');
 
   return [
     `Категория: ${classifyQuestion(question)}.`,
     facts ? `Контекст профиля: ${facts}.` : 'Контекста профиля почти нет.',
+    conversation ? `Предыдущий диалог:\n${conversation}` : null,
     `Вопрос пользователя: ${question.slice(0, 900)}`,
     `Safety baseline: ${rulesAnswer.split('\n\n').slice(-1)[0].slice(0, 500)}`,
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 type AssistantRouteDependencies = {
@@ -174,18 +192,32 @@ async function assistantPost(request: Request, dependencies: AssistantRouteDepen
   const supabase = auth.supabase ?? admin;
   let context = !body?.petId && body?.context && typeof body.context === 'object' ? body.context : null;
   let reminders: any[] = !body?.petId && Array.isArray(body?.reminders) ? body.reminders.slice(0, 5) : [];
+  let history: any[] = [];
+  let threadId: string | undefined;
 
   if (body?.petId) {
     if (!supabase) return NextResponse.json({ error: 'ASSISTANT_STORAGE_UNAVAILABLE' }, { status: 503 });
-    const [pet, passport, social, reminderResult] = await Promise.all([
+    const [pet, passport, social, reminderResult, observationResult, documentResult, routeResult] = await Promise.all([
       supabase.from('pets').select('*').eq('id', body.petId).eq('owner_id', ownerId!).maybeSingle(),
       supabase.from('pet_passports').select('*').eq('pet_id', body.petId).maybeSingle(),
       supabase.from('social_profiles').select('*').eq('pet_id', body.petId).maybeSingle(),
       supabase.from('reminders').select('id,title,type,due_at,status').eq('pet_id', body.petId).neq('status', 'done').order('due_at', { ascending: true }).limit(5),
+      supabase.from('pet_observations').select('id,type,value,observed_at,source,metadata').eq('pet_id', body.petId).is('deleted_at', null).order('observed_at', { ascending: false }).limit(8),
+      supabase.from('pet_documents').select('id,title,kind,document_date,created_at').eq('pet_id', body.petId).order('created_at', { ascending: false }).limit(5),
+      supabase.from('map_routes').select('id,title,activity_type,distance_meters,started_at,created_at').eq('pet_id', body.petId).order('created_at', { ascending: false }).limit(5),
     ]);
     if (!pet.data) return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
-    context = { pet: pet.data, passport: passport.data, social: social.data };
+    context = { pet: pet.data, passport: passport.data, social: social.data, observations: observationResult.data ?? [], documents: documentResult.data ?? [], routes: routeResult.data ?? [] };
     reminders = reminderResult.data ?? [];
+
+    if (body?.threadId) {
+      const existingThread = await supabase.from('assistant_threads').select('id,pet_id,kind').eq('id', body.threadId).eq('pet_id', body.petId).maybeSingle();
+      if (existingThread.data?.id) {
+        threadId = existingThread.data.id;
+        const previousMessages = await supabase.from('assistant_messages').select('role,content,created_at').eq('thread_id', threadId).order('created_at', { ascending: false }).limit(8);
+        history = [...(previousMessages.data ?? [])].reverse();
+      }
+    }
   }
 
   const kind = classifyQuestion(question);
@@ -194,22 +226,22 @@ async function assistantPost(request: Request, dependencies: AssistantRouteDepen
     ownerId: body?.petId ? ownerId : null,
     kind,
     rulesAnswer,
-    prompt: buildAssistantPrompt(question, context, reminders, rulesAnswer),
+    prompt: buildAssistantPrompt(question, context, reminders, rulesAnswer, history),
     supabase: admin ?? supabase,
   });
   const answer = generated.answer;
   const usage = 'usage' in generated ? generated.usage : undefined;
   const actionSuggestions = buildActionSuggestions(question, context);
-  let threadId: string | undefined;
-
   if (supabase && ownerId && body?.petId) {
-    const { data: thread } = await supabase.from('assistant_threads').insert({ pet_id: body.petId, kind, title: question.slice(0, 80) }).select('id').single();
-    if (thread?.id) {
-      threadId = thread.id;
+    if (!threadId) {
+      const { data: thread } = await supabase.from('assistant_threads').insert({ pet_id: body.petId, kind, title: question.slice(0, 80) }).select('id').single();
+      threadId = thread?.id;
+    }
+    if (threadId) {
       await supabase.from('assistant_messages').insert([
-        { thread_id: thread.id, role: 'user', content: question, metadata: { source: 'app' } },
+        { thread_id: threadId, role: 'user', content: question, metadata: { source: 'app' } },
         {
-          thread_id: thread.id,
+          thread_id: threadId,
           role: 'assistant',
           content: answer,
           model: generated.provider,
@@ -227,6 +259,18 @@ async function assistantPost(request: Request, dependencies: AssistantRouteDepen
       ]);
     }
   }
+
+  console.info('assistant_response', {
+    authenticated: Boolean(ownerId), kind, provider: generated.provider, mode: generated.mode,
+    fallbackReason: generated.provider === 'rules' ? generated.reason ?? null : null,
+    context: {
+      observations: context?.observations?.length ?? 0,
+      documents: context?.documents?.length ?? 0,
+      routes: context?.routes?.length ?? 0,
+      reminders: reminders.length,
+      history: history.length,
+    },
+  });
 
   const responseBody: AssistantResponse & Record<string, unknown> = {
     ...(supabase ? { mode: 'supabase-context' } : demoModeResponse('Connect Supabase + LLM provider to persist threads and generate real answers.')),

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type ReactNode } from 'react';
+import { wellbeingValue, type WellbeingMetric } from '@/lib/wellbeingScoring';
 import {
   ArrowRight,
   CalendarCheck,
@@ -108,38 +109,6 @@ const wellbeingMetricLabels = {
   stool: 'Пищеварение',
   energy: 'Энергия',
 } as const;
-
-type WellbeingMetric = keyof typeof wellbeingMetricLabels;
-
-function wellbeingValue(metric: WellbeingMetric, raw?: string): number | null {
-  const value = raw?.trim().toLowerCase();
-  if (!value) return null;
-  if (metric === 'mood') {
-    if (value.includes('радост')) return 4;
-    if (value.includes('спокой')) return 3;
-    if (value.includes('тревож')) return 2;
-    if (value.includes('вял')) return 1;
-  }
-  if (metric === 'appetite') {
-    if (value.includes('обыч')) return 3;
-    if (value.includes('выше')) return 2.5;
-    if (value.includes('ниже')) return 2;
-    if (value.includes('не ел') || value.includes('не ела')) return 1;
-  }
-  if (metric === 'stool') {
-    if (value.includes('обыч')) return 3;
-    if (value.includes('мяг')) return 2;
-    if (value.includes('жид')) return 1;
-    if (value.includes('не был') || value.includes('не было')) return 2;
-  }
-  if (metric === 'energy') {
-    if (value.includes('обыч')) return 3;
-    if (value.includes('много')) return 2.5;
-    if (value.includes('мало')) return 2;
-    if (value.includes('сонн') || value.includes('нет сил')) return 1;
-  }
-  return 2.5;
-}
 
 function observationScore(point: JourneyObservationPoint) {
   const values = (Object.keys(wellbeingMetricLabels) as WellbeingMetric[])
@@ -368,32 +337,46 @@ export function ProductionJourney(props: ProductionJourneyProps) {
 }
 
 export function ProductionAssistantSheet({
-  dogName, avatar, question, answer, loading, onQuestionChange, onAsk, onClose,
+  dogName, avatar, question, answer, messages, loading, actions, diagnostic, onQuestionChange, onAsk, onClose,
 }: {
   dogName: string;
   avatar: ReactNode;
   question: string;
   answer: string;
+  messages?: Array<{ role: 'user' | 'assistant'; content: string }>;
   loading: boolean;
+  actions?: ReactNode;
+  diagnostic?: { provider?: string; mode?: string };
   onQuestionChange: (value: string) => void;
   onAsk: (question?: string) => void;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
-    inputRef.current?.focus();
-    function onKeyDown(event: KeyboardEvent) { if (event.key === 'Escape') onClose(); }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
-  return <div className="v3-assistant-backdrop production-assistant-backdrop" role="presentation" onMouseDown={onClose}>
-    <section className="v3-assistant-sheet" role="dialog" aria-modal="true" aria-labelledby="production-assistant-title" onMouseDown={(event) => event.stopPropagation()}>
+    triggerRef.current = document.activeElement as HTMLElement | null;
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+    window.requestAnimationFrame(() => inputRef.current?.focus());
+    return () => { const trigger = triggerRef.current; window.requestAnimationFrame(() => trigger?.focus()); };
+  }, []);
+  const closeSheet = () => { if (dialogRef.current?.open) dialogRef.current.close(); onClose(); };
+  return <dialog ref={dialogRef} className="v3-assistant-backdrop production-assistant-backdrop" aria-labelledby="production-assistant-title" aria-describedby="production-assistant-description" data-assistant-provider={diagnostic?.provider || 'pending'} data-assistant-mode={diagnostic?.mode || 'pending'} onCancel={(event) => { event.preventDefault(); closeSheet(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSheet(); }}>
+    <section className="v3-assistant-sheet">
       <div className="v3-sheet-handle" />
-      <header><div className="v3-assistant-mark"><Sparkle weight="fill" /></div><div><span>контекст: {dogName}</span><h2 id="production-assistant-title">Спросить Псё</h2></div><button type="button" onClick={onClose} aria-label="Закрыть"><X weight="bold" /></button></header>
-      <div className="v3-assistant-context"><DogAvatar avatar={avatar} small /><p>Учту профиль {dogName}, дела и добавленные документы. Не заменяю ветеринара.</p></div>
-      <div className="v3-prompt-list"><button type="button" onClick={() => onAsk('Что важно проверить по последнему анализу?')}>Что важно проверить по анализу?</button><button type="button" onClick={() => onAsk('Подбери спокойный маршрут для прогулки сегодня')}>Подобрать спокойный маршрут</button><button type="button" onClick={() => onAsk('Что учесть перед знакомством собак?')}>Что учесть перед знакомством?</button></div>
-      {answer && <div className="production-assistant-answer" role="status">{answer}</div>}
-      <label><input ref={inputRef} value={question} onChange={(event) => onQuestionChange(event.target.value)} aria-label="Вопрос ассистенту" placeholder={`Спроси о ${dogName}…`} /><button type="button" disabled={loading || !question.trim()} aria-label="Отправить" onClick={() => onAsk()}>{loading ? <Sparkle weight="fill" /> : <PaperPlaneTilt weight="fill" />}</button></label>
+      <header><div className="v3-assistant-mark"><Sparkle weight="fill" /></div><div><span>контекст: {dogName}</span><h2 id="production-assistant-title">Спросить Псё</h2></div><button type="button" onClick={closeSheet} aria-label="Закрыть"><X weight="bold" /></button></header>
+      <div className="production-assistant-scroll">
+        <div className="v3-assistant-context"><DogAvatar avatar={avatar} small /><p id="production-assistant-description">Учту профиль {dogName}, дела, наблюдения, прогулки, документы и этот диалог. Не заменяю ветеринара.</p></div>
+        <div className="v3-prompt-list"><button type="button" onClick={() => onAsk('Что важно проверить по последнему анализу?')}>Что важно проверить по анализу?</button><button type="button" onClick={() => onAsk('Подбери спокойный маршрут для прогулки сегодня')}>Подобрать спокойный маршрут</button><button type="button" onClick={() => onAsk('Что учесть перед знакомством собак?')}>Что учесть перед знакомством?</button></div>
+        {messages?.length ? <div className="production-assistant-conversation" aria-live="polite">{messages.map((message, index) => <article className={message.role} key={`${message.role}-${index}`}><b>{message.role === 'assistant' ? 'Псё' : 'Вы'}</b><p>{message.content}</p></article>)}</div> : answer && <div className="production-assistant-answer" role="status">{answer}</div>}
+        {actions}
+      </div>
+      <form className="production-assistant-composer" onSubmit={(event) => { event.preventDefault(); onAsk(); }}>
+        <label className="sr-only" htmlFor="production-assistant-question">Вопрос ассистенту</label>
+        <input id="production-assistant-question" ref={inputRef} value={question} onChange={(event) => onQuestionChange(event.target.value)} placeholder={`Спроси о ${dogName}…`} />
+        <button type="submit" disabled={loading || !question.trim()} aria-label={loading ? 'Псё думает' : 'Отправить'}>{loading ? <Sparkle weight="fill" /> : <PaperPlaneTilt weight="fill" />}</button>
+      </form>
     </section>
-  </div>;
+  </dialog>;
 }

@@ -10,6 +10,7 @@ function query(data: unknown) {
     select: () => value,
     eq: () => value,
     neq: () => value,
+    is: () => value,
     order: () => value,
     limit: () => value,
     maybeSingle: async () => ({ data, error: null }),
@@ -26,6 +27,7 @@ function fakeSupabase() {
       if (table === 'pet_passports') return query({ vaccine_status: 'up_to_date' });
       if (table === 'social_profiles') return query({ energy_level: 'medium', triggers: ['шум'] });
       if (table === 'reminders') return query([{ id: 'reminder-1', title: 'Обработка', status: 'active' }]);
+      if (table === 'pet_observations' || table === 'pet_documents' || table === 'map_routes') return query([]);
       if (table === 'assistant_threads') return { insert: () => query({ id: 'thread-1' }) };
       if (table === 'assistant_messages') return { insert: async () => ({ data: [], error: null }) };
       throw new Error(`unexpected table ${table}`);

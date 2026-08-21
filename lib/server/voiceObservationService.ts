@@ -20,6 +20,7 @@ function normalizedCandidates(candidates: ObservationCandidate[], petId: string)
     if (candidate.petId !== petId) throw new VoiceIngestionError('PET_MISMATCH');
     if (!allowedMetrics.has(candidate.metric)) throw new VoiceIngestionError('INVALID_CANDIDATE_METRIC');
     if (!allowedDirections.has(candidate.direction)) throw new VoiceIngestionError('INVALID_CANDIDATE_DIRECTION');
+    if (!['voice', 'text'].includes(candidate.source)) throw new VoiceIngestionError('INVALID_CANDIDATE_SOURCE');
     if (!Number.isFinite(candidate.confidence) || candidate.confidence < 0.8 || candidate.confidence > 1) {
       throw new VoiceIngestionError('CONFIDENCE_TOO_LOW');
     }
@@ -39,6 +40,7 @@ function normalizedCandidates(candidates: ObservationCandidate[], petId: string)
       onsetAt: onsetAt?.toISOString() ?? null,
       confidence: candidate.confidence,
       transcriptSpan: candidate.transcriptSpan.slice(0, 200),
+      source: candidate.source,
       confirmed: true,
     };
   });

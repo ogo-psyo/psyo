@@ -59,6 +59,7 @@ type CandidateExtractionInput = {
   petId: string;
   authorId: string;
   observedAt: string;
+  source?: 'voice' | 'text';
 };
 
 function parseIso(value: string, field: string) {
@@ -84,6 +85,7 @@ export function extractObservationCandidates(input: CandidateExtractionInput): O
   parseIso(input.observedAt, 'observed_at');
   const candidates: ObservationCandidate[] = [];
   const onsetAt = onsetFromTranscript(transcript, input.observedAt);
+  const source = input.source ?? 'voice';
 
   const lowerEnergy = transcript.match(/(больше\s+спит(?:\s+со\s+вчера)?|менее\s+актив\w*|быстрее\s+уста[её]т|вял\w*)/i);
   if (lowerEnergy) {
@@ -97,31 +99,52 @@ export function extractObservationCandidates(input: CandidateExtractionInput): O
       observedAt: input.observedAt,
       onsetAt,
       authorId: input.authorId,
-      source: 'voice',
+      source,
       confidence: 0.92,
       transcriptSpan: lowerEnergy[0].toLocaleLowerCase('ru-RU'),
       confirmed: false,
     });
   }
 
+  const positiveAppetite = transcript.match(/(?:активно|хорошо|с\s+аппетитом)\s+(?:поел[аи]?|ест|кушает)|(?:поел[аи]?|ест|кушает)\s+(?:активно|хорошо|с\s+аппетитом)/i);
   const stableAppetite = transcript.match(/(?:ест|кушает|аппетит)\s+(?:как\s+)?обычн[а-яё]*/i);
   const lowerAppetite = transcript.match(/(?:ест|кушает)\s+(?:заметно\s+)?(?:меньше|хуже)|не\s+(?:ест|ела)|аппетит\s+(?:хуже|ниже)/i);
-  const appetite = lowerAppetite || stableAppetite;
+  const appetite = lowerAppetite || stableAppetite || positiveAppetite;
   if (appetite) {
     candidates.push({
       id: `${input.captureId}:appetite`,
       captureId: input.captureId,
       petId: input.petId,
       metric: 'appetite',
-      value: lowerAppetite ? (/не\s+(?:ест|ела)/i.test(lowerAppetite[0]) ? 'не ела' : 'ест меньше') : 'как обычно',
+      value: lowerAppetite ? (/не\s+(?:ест|ела)/i.test(lowerAppetite[0]) ? 'не ела' : 'ест меньше') : positiveAppetite ? 'поела хорошо' : 'как обычно',
       direction: lowerAppetite ? 'down' : 'stable',
       observedAt: input.observedAt,
       onsetAt: onsetFromTranscript(appetite[0], input.observedAt) || (/сегодня/i.test(transcript) ? input.observedAt : null),
       authorId: input.authorId,
-      source: 'voice',
+      source,
       confidence: 0.9,
       transcriptSpan: appetite[0].toLocaleLowerCase('ru-RU').replace(/^кушает/, 'ест'),
       confirmed: false,
+    });
+  }
+
+  const positiveMood = transcript.match(/довольн[а-яё]*|радостн[а-яё]*|в\s+хорошем\s+настроении/i);
+  if (positiveMood) {
+    candidates.push({
+      id: `${input.captureId}:mood`, captureId: input.captureId, petId: input.petId,
+      metric: 'mood', value: positiveMood[0].toLocaleLowerCase('ru-RU'), direction: 'up',
+      observedAt: input.observedAt, onsetAt, authorId: input.authorId, source, confidence: 0.9,
+      transcriptSpan: positiveMood[0].toLocaleLowerCase('ru-RU'), confirmed: false,
+    });
+  }
+
+  const stableEnergy = transcript.match(/бодр[а-яё]*|энергичн[а-яё]*|активн(?:ая|ый|ое|ые)\b/i);
+  if (stableEnergy && !lowerEnergy) {
+    candidates.push({
+      id: `${input.captureId}:energy`, captureId: input.captureId, petId: input.petId,
+      metric: 'energy', value: stableEnergy[0].toLocaleLowerCase('ru-RU'), direction: 'stable',
+      observedAt: input.observedAt, onsetAt, authorId: input.authorId, source, confidence: 0.9,
+      transcriptSpan: stableEnergy[0].toLocaleLowerCase('ru-RU'), confirmed: false,
     });
   }
 

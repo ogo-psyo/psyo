@@ -17,7 +17,7 @@ async function main() {
     results.push({ chars: result.text.length, inputTokens: result.usage.inputTokens, outputTokens: result.usage.outputTokens });
   }
 
-  console.log(JSON.stringify({ ok: true, model: process.env.GROQ_ASSISTANT_MODEL || 'qwen/qwen3.6-27b', results }));
+  console.log(JSON.stringify({ ok: true, model: process.env.GROQ_ASSISTANT_MODEL || 'openai/gpt-oss-20b', results }));
 }
 
 main().catch((error) => {

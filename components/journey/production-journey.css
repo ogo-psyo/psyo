@@ -1,5 +1,18 @@
 @import '../../app/design-v3/design-v3.css';
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 :root {
   --production-palette-mint: #cbfedb;
   --production-palette-green: #98df73;
@@ -551,15 +564,24 @@
 
 .voice-capture-facts article > div {
   min-width: 0;
+  flex: 1;
 }
 
 .voice-capture-facts article b {
   font-size: 15px;
 }
 
-.voice-capture-facts article p {
-  margin: 3px 0;
-  font-size: 14px;
+.voice-capture-facts article input {
+  width: 100%;
+  min-height: 44px;
+  margin: 6px 0;
+  padding: 0 11px;
+  border: 1px solid rgba(7,129,77,.2);
+  border-radius: 12px;
+  background: #f4fff7;
+  color: #06472f;
+  font: inherit;
+  font-size: 16px;
   font-weight: 800;
 }
 
@@ -588,6 +610,18 @@
   font-size: 12px;
   font-weight: 700;
 }
+
+.voice-capture-empty {
+  display: grid;
+  gap: 4px;
+  padding: 13px 14px;
+  border-radius: 16px;
+  background: #fff4d7;
+  color: #5e4818;
+}
+
+.voice-capture-empty b { font-size: 14px; }
+.voice-capture-empty p { margin: 0; font-size: 13px; font-weight: 700; line-height: 1.4; }
 
 .voice-observation-capture.is-saved {
   display: flex;
@@ -1742,7 +1776,14 @@
 }
 
 .production-assistant-backdrop {
-  position: absolute;
+  overscroll-behavior: contain;
+}
+
+.production-assistant-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 4px;
 }
 
 .production-assistant-answer {
@@ -1756,6 +1797,49 @@
   font-size: 13px;
   font-weight: 750;
   line-height: 1.45;
+}
+
+.production-assistant-conversation {
+  display: grid;
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.production-assistant-conversation article {
+  width: fit-content;
+  max-width: 92%;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: #fff;
+  color: #06472f;
+}
+
+.production-assistant-conversation article.user {
+  justify-self: end;
+  background: #cbfedb;
+}
+
+.production-assistant-conversation b { font-size: 11px; }
+.production-assistant-conversation p { margin: 3px 0 0; white-space: pre-wrap; font-size: 13px; font-weight: 750; line-height: 1.45; }
+
+.production-assistant-composer {
+  position: sticky;
+  bottom: 4px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  background: var(--v3-paper);
+}
+
+.production-assistant-composer button {
+  min-width: 48px;
+  min-height: 48px;
+  border: 0;
+  border-radius: 15px;
+  background: var(--v3-ink);
+  color: var(--v3-signal);
 }
 
 /* Map workspace: full-screen map with two route scenarios. */
@@ -2256,6 +2340,9 @@
 
 .phone-shell.journey-active:has(.production-woof-workspace) .production-floating-assistant { display: none; }
 .phone-shell.journey-active:has(.voice-observation-capture:not(.is-idle)) .production-floating-assistant { display: none; }
+.phone-shell.journey-active:has(.voice-observation-capture:not(.is-idle):not(.is-saved)) .app-tabs {
+  display: none !important;
+}
 .phone-shell.journey-active:has(.production-woof-workspace) .app-tabs { z-index: 700; }
 .phone-shell.journey-active:has(.production-woof-workspace .woof-overlay) .app-tabs { visibility: hidden; pointer-events: none; }
 .phone-shell.journey-active:has(.production-woof-workspace) > .app-header,

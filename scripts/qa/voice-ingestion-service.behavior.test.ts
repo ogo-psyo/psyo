@@ -44,6 +44,7 @@ test('sends one bounded confirmed batch to the atomic Supabase RPC', async () =>
   assert.equal(calls[0].params.p_owner_id, '00000000-0000-4000-8000-000000000001');
   assert.equal(calls[0].params.p_pet_id, '00000000-0000-4000-8000-000000000010');
   assert.equal(calls[0].params.p_idempotency_key, 'voice-capture-1234');
+  assert.equal((calls[0].params.p_candidates as any[])[0].source, 'voice');
   assert.deepEqual(result.summary, { merge: 1 });
 });
 
