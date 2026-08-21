@@ -21,9 +21,18 @@ function fixtureSupabase() {
   let threadInserts = 0;
   const messageInserts: unknown[] = [];
   const data: Record<string, unknown> = {
-    pets: { id: 'pet-1', owner_id: 'owner-1', name: 'Мята', life_stage: 'adult' },
-    pet_passports: { vaccine_status: 'unknown', parasite_status: 'unknown' },
-    social_profiles: { energy_level: 'medium', social_mode: 'ask_first', triggers: ['шум'] },
+    pets: {
+      id: 'pet-1', owner_id: 'owner-1', name: 'Плутон', breed_id: 'xoloitzcuintli',
+      breed_group_id: 'primitive', custom_breed: null, sex: 'кобель', life_stage: 'adult', weight_kg: 17,
+    },
+    pet_passports: {
+      vaccine_status: 'unknown', parasite_status: 'unknown', diet: 'сухой корм',
+      allergies: 'курица', medication: null, health_notes: null,
+    },
+    social_profiles: {
+      energy_level: 'medium', social_mode: 'ask_first', temperament: 'осторожный',
+      play_style: 'нюховые игры', trainability: 'работает за еду', triggers: ['шум'],
+    },
     reminders: [{ id: 'reminder-1', title: 'Обработка', status: 'active' }],
     pet_observations: [{ type: 'energy', value: 'бодрая', observed_at: '2026-08-21T09:00:00Z' }],
     pet_documents: [{ title: 'Общий анализ крови', kind: 'analysis', document_date: '2026-08-20' }],
@@ -79,6 +88,11 @@ test('builds context from observations, documents, walks and recent thread histo
   assert.match(generatedInput.prompt, /Общий анализ крови/);
   assert.match(generatedInput.prompt, /Вечерний маршрут/);
   assert.match(generatedInput.prompt, /Мята тянет вечером/);
+  assert.match(generatedInput.prompt, /порода: Ксолоитцкуинтли \/ ксоло/);
+  assert.match(generatedInput.prompt, /рацион: сухой корм/);
+  assert.match(generatedInput.prompt, /аллергии: курица/);
+  assert.match(generatedInput.prompt, /темперамент: осторожный/);
+  assert.doesNotMatch(generatedInput.prompt, /breed_id|xoloitzcuintli|primitive/);
 });
 
 test('rules fallback translates database enums and never leaks internal product jargon', async () => {
@@ -93,4 +107,5 @@ test('rules fallback translates database enums and never leaks internal product 
   assert.doesNotMatch(body.answer, /unknown|ask_first|care-loop|triage/i);
   assert.match(body.answer, /не указано/);
   assert.match(body.answer, /сначала спросить/);
+  assert.match(body.answer, /порода: Ксолоитцкуинтли \/ ксоло/);
 });
