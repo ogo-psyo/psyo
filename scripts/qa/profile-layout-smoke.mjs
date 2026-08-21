@@ -60,6 +60,21 @@ try {
     if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)) throw new Error(`${width}: health caused horizontal overflow`);
     await page.screenshot({ path: `${output}/profile-memory-health-${width}.png`, fullPage: true });
 
+    const healthEditorTrigger = page.getByRole('button', { name: /Изменить постоянные данные/ }).last();
+    await healthEditorTrigger.scrollIntoViewIfNeeded();
+    await healthEditorTrigger.click();
+    const profileEditor = page.locator('dialog[aria-labelledby="profile-editor-title"]');
+    await profileEditor.waitFor();
+    if (!(await profileEditor.evaluate((node) => node.contains(document.activeElement)))) throw new Error(`${width}: profile editor did not receive focus`);
+    await page.screenshot({ path: `${output}/profile-memory-editor-${width}.png`, fullPage: true });
+    const allergyInput = profileEditor.getByLabel('Аллергии и непереносимости');
+    await allergyInput.fill('курица и индейка');
+    if (Number.parseFloat(await allergyInput.evaluate((node) => getComputedStyle(node).fontSize)) < 16) throw new Error(`${width}: profile editor input can trigger iOS zoom`);
+    await profileEditor.getByRole('button', { name: 'Сохранить' }).click();
+    await profileEditor.waitFor({ state: 'hidden' });
+    if (!(await healthEditorTrigger.evaluate((node) => node === document.activeElement))) throw new Error(`${width}: profile editor did not restore focus`);
+    if (!(await page.getByText('курица и индейка', { exact: true }).isVisible())) throw new Error(`${width}: saved health data did not return to the new read view`);
+
     const documentTrigger = page.locator('[data-profile-memory-action="add-document"]');
     await documentTrigger.scrollIntoViewIfNeeded();
     await documentTrigger.click();
@@ -76,12 +91,39 @@ try {
     await identity.waitFor();
     const paths = await identity.getByText(/Использовать фото|Создать образ|Без изображения/).count();
     if (paths < 3) throw new Error(`${width}: identity chooser is incomplete`);
-    if (!(await identity.getByText('Генератор пока выключен').isVisible())) throw new Error(`${width}: disabled generation is not honest`);
+    if (!(await identity.getByText('Появится после подключения генератора изображений').isVisible())) throw new Error(`${width}: disabled generation is not honest`);
+    const disabledGenerator = identity.getByLabel('Создание образа пока недоступно');
+    if (!(await disabledGenerator.isVisible())) throw new Error(`${width}: unavailable generator is not visibly explained`);
+    if (await disabledGenerator.evaluate((node) => ['BUTTON', 'SUMMARY', 'DETAILS'].includes(node.tagName))) throw new Error(`${width}: unavailable generator still looks interactive`);
     await page.keyboard.press('Escape');
     await identity.waitFor({ state: 'hidden' });
 
     await page.getByRole('button', { name: /Характер/ }).first().click();
     await page.getByRole('heading', { name: 'Характер', exact: true }).waitFor();
+    const characterBeforeCancel = await workspace.locator('article h2').first().textContent();
+    const characterTrigger = page.getByRole('button', { name: /Уточнить портрет/ });
+    await characterTrigger.scrollIntoViewIfNeeded();
+    await characterTrigger.click();
+    await profileEditor.waitFor();
+    await profileEditor.getByLabel('Темперамент').selectOption({ label: 'уверенный' });
+    await page.keyboard.press('Escape');
+    await profileEditor.waitFor({ state: 'hidden' });
+    if (!(await characterTrigger.evaluate((node) => node === document.activeElement))) throw new Error(`${width}: character editor did not restore focus`);
+    if (await workspace.locator('article h2').first().textContent() !== characterBeforeCancel) throw new Error(`${width}: cancel mutated the character read view`);
+    if (await page.locator('[data-profile-memory]').count() !== 1) throw new Error(`${width}: new profile flow escaped into the legacy profile editor`);
+
+    for (const [surfaceName, editorButtonName] of [['С окружающими', /Уточнить повадки/], ['Паспорт и внешность', /Изменить постоянные данные/]]) {
+      await page.getByRole('button', { name: 'Вернуться к обзору' }).click();
+      await page.getByRole('button', { name: new RegExp(surfaceName) }).first().click();
+      await page.getByRole('heading', { name: surfaceName, exact: true }).waitFor();
+      const editorTrigger = page.getByRole('button', { name: editorButtonName }).last();
+      await editorTrigger.scrollIntoViewIfNeeded();
+      await editorTrigger.click();
+      await profileEditor.waitFor();
+      await profileEditor.getByRole('button', { name: 'Закрыть редактор' }).click();
+      await profileEditor.waitFor({ state: 'hidden' });
+      if (!(await editorTrigger.evaluate((node) => node === document.activeElement))) throw new Error(`${width}: ${surfaceName} editor did not restore focus`);
+    }
     const inputSizes = await workspace.locator('input:not([type]), input[type="text"], input[type="search"], input[type="email"], input[type="tel"], input[type="number"], textarea').evaluateAll((nodes) => nodes.map((node) => parseFloat(getComputedStyle(node).fontSize)));
     if (inputSizes.some((size) => size < 16)) throw new Error(`${width}: editable input can trigger iOS zoom`);
     await page.close();

@@ -23,10 +23,11 @@ import {
   WarningCircle,
   X,
 } from '@phosphor-icons/react';
-import type { DogProfile } from '@/lib/data';
+import { breedCatalog, type DogProfile } from '@/lib/data';
 import styles from './ProfileMemoryWorkspace.module.css';
 
 type Surface = 'overview' | 'health' | 'character' | 'social' | 'passport' | 'history' | 'capture';
+type EditorDomain = 'health' | 'character' | 'social' | 'passport';
 type ObservationPoint = { id: string; createdAt: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string };
 type DocumentPoint = { id: string; title: string; clinic?: string | null; originalName: string; createdAt: string };
 type ReminderPoint = { id: string; title: string; status: string; dueAt: string; completedAt?: string };
@@ -59,8 +60,7 @@ type Props = {
   onDiscardAvatarDraft: () => void;
   onUseNoAvatar: () => void;
   onRollbackAvatar: () => void;
-  onEditProfile: () => void;
-  onAddObservation: () => void;
+  onSaveProfile: (profile: DogProfile) => Promise<string | null>;
   onAddDocument: (trigger: HTMLButtonElement) => void;
   onAskAssistant: () => void;
 };
@@ -100,10 +100,25 @@ function valueOrEmpty(value?: string, empty = 'Пока не заполнено'
   return value?.trim() || empty;
 }
 
+function EditorField(props: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; multiline?: boolean }) {
+  return <label className={styles.editorField}><span>{props.label}</span>{props.multiline
+    ? <textarea value={props.value} onChange={(event) => props.onChange(event.target.value)} placeholder={props.placeholder} maxLength={800} />
+    : <input value={props.value} onChange={(event) => props.onChange(event.target.value)} placeholder={props.placeholder} maxLength={180} />}</label>;
+}
+
+function EditorSelect(props: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
+  return <label className={styles.editorField}><span>{props.label}</span><select value={props.value} onChange={(event) => props.onChange(event.target.value)}><option value="">Не указано</option>{props.options.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>;
+}
+
 export function ProfileMemoryWorkspace(props: Props) {
   const [surface, setSurface] = useState<Surface>('overview');
+  const [editor, setEditor] = useState<EditorDomain | null>(null);
+  const [editorDraft, setEditorDraft] = useState<DogProfile | null>(null);
+  const [editorSaving, setEditorSaving] = useState(false);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const editorDialogRef = useRef<HTMLDialogElement | null>(null);
   const identityTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const editorTriggerRef = useRef<HTMLButtonElement | null>(null);
   const latest = props.observations[0];
   const activeReminders = props.reminders.filter((item) => item.status !== 'completed' && item.status !== 'done');
   const hasIdentity = Boolean(props.imageUrl);
@@ -114,6 +129,13 @@ export function ProfileMemoryWorkspace(props: Props) {
     if (props.identityOpen && !dialog.open) dialog.showModal();
     if (!props.identityOpen && dialog.open) dialog.close();
   }, [props.identityOpen]);
+
+  useEffect(() => {
+    const dialog = editorDialogRef.current;
+    if (!dialog) return;
+    if (editor && !dialog.open) dialog.showModal();
+    if (!editor && dialog.open) dialog.close();
+  }, [editor]);
 
   const history = useMemo(() => {
     const observations = props.observations.map((item) => ({
@@ -150,6 +172,28 @@ export function ProfileMemoryWorkspace(props: Props) {
   const closeIdentity = () => {
     props.onCloseIdentity();
     window.setTimeout(() => identityTriggerRef.current?.focus(), 0);
+  };
+
+  const openEditor = (domain: EditorDomain, trigger?: HTMLButtonElement | null) => {
+    editorTriggerRef.current = trigger || (document.activeElement instanceof HTMLButtonElement ? document.activeElement : null);
+    setEditorDraft({ ...props.profile, habits: props.profile.habits.map((habit) => ({ ...habit })) });
+    setEditor(domain);
+  };
+
+  const closeEditor = () => {
+    setEditor(null);
+    setEditorDraft(null);
+    window.setTimeout(() => editorTriggerRef.current?.focus(), 0);
+  };
+
+  const updateEditorProfile = (patch: Partial<DogProfile>) => setEditorDraft((current) => current ? { ...current, ...patch } : current);
+
+  const saveEditor = async () => {
+    if (editorSaving || !editorDraft) return;
+    setEditorSaving(true);
+    const saved = await props.onSaveProfile(editorDraft);
+    setEditorSaving(false);
+    if (saved) closeEditor();
   };
 
   const header = (title: string) => (
@@ -235,7 +279,7 @@ export function ProfileMemoryWorkspace(props: Props) {
               <div><span>Обработки</span><b>{valueOrEmpty(props.profile.parasiteStatus, 'Статус не указан')}</b></div>
               <div><span>Документы</span><b>{props.documents.length ? `${props.documents.length} в истории` : 'Пока нет'}</b></div>
             </section>
-            <div className={styles.domainActions}><button className={styles.primaryAction} type="button" onClick={props.onAddObservation}><NotePencil /> Добавить наблюдение</button><button className={styles.secondaryAction} type="button" data-profile-memory-action="add-document" onClick={(event) => props.onAddDocument(event.currentTarget)}><UploadSimple /> Добавить документ</button></div>
+            <div className={styles.domainActions}><button className={styles.primaryAction} type="button" onClick={() => setSurface('capture')}><NotePencil /> Добавить наблюдение</button><button className={styles.secondaryAction} type="button" data-profile-memory-action="add-document" onClick={(event) => props.onAddDocument(event.currentTarget)}><UploadSimple /> Добавить документ</button><button className={styles.secondaryAction} type="button" onClick={(event) => openEditor('health', event.currentTarget)}><FirstAid /> Изменить постоянные данные</button></div>
           </section>}
 
           {surface === 'character' && <section className={styles.domainSurface}>
@@ -248,16 +292,16 @@ export function ProfileMemoryWorkspace(props: Props) {
                 ['Общительность', props.profile.socialMode, 'сам по себе', 'ко всем'],
                 ['Возбуждение', props.profile.energyLevel, 'ровный', 'возбудимый'],
                 ['Обучаемость', props.profile.trainability, 'нужна мотивация', 'быстро схватывает'],
-              ].map(([label, value, from, to]) => <div className={styles.traitRow} key={label}><button type="button" onClick={props.onEditProfile}><span>{label}</span><b>{valueOrEmpty(value)}</b><CaretRight /></button><div className={styles.traitAxis} style={{ '--position': `${traitPosition(value)}%` } as CSSProperties}><i /><span>{from}</span><span>{to}</span></div></div>)}
+              ].map(([label, value, from, to]) => <div className={styles.traitRow} key={label}><button type="button" onClick={(event) => openEditor('character', event.currentTarget)}><span>{label}</span><b>{valueOrEmpty(value)}</b><CaretRight /></button><div className={styles.traitAxis} style={{ '--position': `${traitPosition(value)}%` } as CSSProperties}><i /><span>{from}</span><span>{to}</span></div></div>)}
             </section>
             <section className={styles.motivators}><h2>Что помогает</h2><div><b>Стиль игры</b><span>{valueOrEmpty(props.profile.playStyle)}</span></div><div><b>Оставаться одному</b><span>{valueOrEmpty(props.profile.aloneTime)}</span></div></section>
             <p className={styles.domainNote}><Info /> Устойчивое изменение Псё предложит подтвердить — профиль не меняется молча.</p>
-            <button className={styles.primaryAction} type="button" onClick={props.onEditProfile}><NotePencil /> Уточнить портрет</button>
+            <button className={styles.primaryAction} type="button" onClick={(event) => openEditor('character', event.currentTarget)}><NotePencil /> Уточнить портрет</button>
           </section>}
 
           {surface === 'social' && <section className={styles.domainSurface}>
             {header('С окружающими')}
-            <article className={styles.socialIntro}><h2>Как знакомиться с {props.profile.dogName}</h2><p>{valueOrEmpty(props.profile.socialMode, 'Правило контакта пока не указано.')}</p><button type="button" onClick={props.onEditProfile}>Изменить правило</button></article>
+            <article className={styles.socialIntro}><h2>Как знакомиться с {props.profile.dogName}</h2><p>{valueOrEmpty(props.profile.socialMode, 'Правило контакта пока не указано.')}</p><button type="button" onClick={(event) => openEditor('social', event.currentTarget)}>Изменить правило</button></article>
             <section className={styles.patternGroup}><h2>Люди и животные</h2>
               <article><div><b>Дети</b><strong>{valueOrEmpty(props.profile.childFriendly)}</strong><small>Подтверждено владельцем</small></div></article>
               <article><div><b>Собаки</b><strong>{valueOrEmpty(props.profile.dogFriendly)}</strong><small>Контекст важнее общей оценки</small></div></article>
@@ -265,16 +309,16 @@ export function ProfileMemoryWorkspace(props: Props) {
             </section>
             <section className={styles.patternGroup}><h2>Триггеры и помощь</h2><article><div><b>Что может напрячь</b><strong>{valueOrEmpty(props.profile.triggers)}</strong><small>Сохраняется как правило безопасности</small></div></article>{props.profile.habits.map((habit) => <article key={habit.id}><div><b>{habit.title}</b><strong>{habit.value}</strong><small>Слова владельца</small></div></article>)}</section>
             <p className={styles.domainNote}><Info /> Повадка хранится как контекст → реакция → что помогает, а не как ярлык «хорошо/плохо».</p>
-            <button className={styles.primaryAction} type="button" onClick={props.onEditProfile}><NotePencil /> Уточнить повадки</button>
+            <button className={styles.primaryAction} type="button" onClick={(event) => openEditor('social', event.currentTarget)}><NotePencil /> Уточнить повадки</button>
           </section>}
 
           {surface === 'passport' && <section className={styles.domainSurface}>
             {header('Паспорт и внешность')}
             <div className={styles.passportIdentity}><button type="button" className={`${styles.passportPhoto} ${styles.passportPhotoButton}`} onClick={openIdentity}>{hasIdentity ? <img src={props.imageUrl} alt={`Фото ${props.profile.dogName}`} /> : <span><PawPrint weight="duotone" />Добавить образ</span>}</button><div><h2>{props.profile.dogName}</h2><p>{props.breedLabel}</p><span>{valueOrEmpty(props.profile.sex, 'Пол не указан')} · {valueOrEmpty(props.profile.age || props.profile.lifeStage, 'Возраст не указан')}</span></div></div>
-            <section className={styles.passportFacts}><header><h2>Основное</h2><button type="button" onClick={props.onEditProfile}>Редактировать</button></header>
+            <section className={styles.passportFacts}><header><h2>Основное</h2><button type="button" onClick={(event) => openEditor('passport', event.currentTarget)}>Редактировать</button></header>
               <div><span>Порода</span><b>{props.breedLabel}</b></div><div><span>Вес</span><b>{valueOrEmpty(props.profile.weight)}</b></div><div><span>Размер</span><b>{valueOrEmpty(props.profile.size)}</b></div><div><span>Шерсть</span><b>{valueOrEmpty(props.profile.coatType)}</b></div><div><span>Окрас</span><b>{valueOrEmpty(props.profile.colorMarks)}</b></div><div><span>Микрочип</span><b>{valueOrEmpty(props.profile.microchip)}</b></div><div><span>Клиника</span><b>{valueOrEmpty(props.profile.vetClinic)}</b></div>
             </section>
-            <button className={styles.primaryAction} type="button" onClick={props.onEditProfile}><NotePencil /> Изменить постоянные данные</button>
+            <button className={styles.primaryAction} type="button" onClick={(event) => openEditor('passport', event.currentTarget)}><NotePencil /> Изменить постоянные данные</button>
           </section>}
 
           {surface === 'history' && <section className={styles.domainSurface}>
@@ -299,12 +343,64 @@ export function ProfileMemoryWorkspace(props: Props) {
           {props.avatarDraftUrl && props.avatarDraftSource && <section className={styles.identityPreview}><img src={props.avatarDraftUrl} alt="Предпросмотр нового образа" /><div><b>{props.avatarDraftSource === 'uploaded' ? 'Фото готово' : 'Черновик готов'}</b><p>Текущий образ не изменится, пока ты не подтвердишь выбор.</p></div><button type="button" className={styles.identityPrimary} onClick={props.onActivateAvatar}>Использовать этот образ</button><button type="button" className={styles.identityQuiet} onClick={props.onDiscardAvatarDraft}>Не использовать</button></section>}
           {!props.avatarDraftUrl && <div className={styles.identityChoices}>
             <label className={!props.avatarCapabilities.uploadsEnabled ? styles.isDisabled : ''}><input type="file" disabled={!props.avatarCapabilities.uploadsEnabled} accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={props.onPhotoChange} /><UploadSimple weight="bold" /><span><b>Использовать фото</b><small>{props.avatarCapabilities.uploadsEnabled ? 'Приватная загрузка · до 8 МБ' : 'Загрузка пока недоступна'}</small></span><CaretRight /></label>
-            <details className={!props.avatarCapabilities.generationEnabled ? styles.isDisabled : ''}><summary><Sparkle weight="bold" /><span><b>Создать образ</b><small>{props.avatarCapabilities.generationEnabled ? 'Добровольный художественный вариант' : 'Генератор пока выключен'}</small></span><CaretRight /></summary>{props.avatarCapabilities.generationEnabled && <div className={styles.generatorForm}><label htmlFor="profile-avatar-prompt">Каким должен быть образ</label><textarea id="profile-avatar-prompt" value={props.avatarOwnerPrompt} onChange={(event) => props.onAvatarPromptChange(event.target.value)} maxLength={280} placeholder="Например, сохранить белое пятно на груди" /><label className={styles.identityConsent}><input type="checkbox" checked={props.avatarConsent} onChange={(event) => props.onAvatarConsentChange(event.target.checked)} /><span>Разрешаю передать описание и выбранное фото сервису генерации. Это художественный образ, не точная копия.</span></label><button type="button" className={styles.identityPrimary} disabled={!props.avatarConsent || props.avatarState === 'rendering'} onClick={props.onGenerateAvatar}>{props.avatarState === 'rendering' ? 'Создаю черновик…' : 'Создать черновик'}</button></div>}</details>
+            {props.avatarCapabilities.generationEnabled ? <details><summary><Sparkle weight="bold" /><span><b>Создать образ</b><small>Добровольный художественный вариант</small></span><CaretRight /></summary><div className={styles.generatorForm}><label htmlFor="profile-avatar-prompt">Каким должен быть образ</label><textarea id="profile-avatar-prompt" value={props.avatarOwnerPrompt} onChange={(event) => props.onAvatarPromptChange(event.target.value)} maxLength={280} placeholder="Например, сохранить белое пятно на груди" /><label className={styles.identityConsent}><input type="checkbox" checked={props.avatarConsent} onChange={(event) => props.onAvatarConsentChange(event.target.checked)} /><span>Разрешаю передать описание и выбранное фото сервису генерации. Это художественный образ, не точная копия.</span></label><button type="button" className={styles.identityPrimary} disabled={!props.avatarConsent || props.avatarState === 'rendering'} onClick={props.onGenerateAvatar}>{props.avatarState === 'rendering' ? 'Создаю черновик…' : 'Создать черновик'}</button></div></details> : <div className={styles.identityUnavailable} aria-label="Создание образа пока недоступно"><Sparkle weight="bold" /><span><b>Создать образ</b><small>Появится после подключения генератора изображений</small></span></div>}
             <button type="button" onClick={props.onUseNoAvatar}><PawPrint weight="bold" /><span><b>Без изображения</b><small>Нейтральный профиль без случайной собаки</small></span><CaretRight /></button>
           </div>}
           {props.error && <p className={styles.identityError} role="alert">{props.error}</p>}
           <footer>{props.profile.avatarSource !== 'none' && <button type="button" onClick={props.onRollbackAvatar}><ClockCounterClockwise /> Вернуть предыдущий</button>}<p><ShieldCheck /> Фото хранится приватно и не публикуется автоматически.</p></footer>
         </div>
+      </dialog>
+
+      <dialog ref={editorDialogRef} className={styles.editorDialog} aria-labelledby="profile-editor-title" onCancel={(event) => { event.preventDefault(); closeEditor(); }} onClose={() => { if (editor) setEditor(null); }}>
+        {editor && editorDraft && <form className={styles.editorSheet} onSubmit={(event) => { event.preventDefault(); void saveEditor(); }}>
+          <header><div><h2 id="profile-editor-title">{editor === 'health' ? 'Здоровье и уход' : editor === 'character' ? 'Характер' : editor === 'social' ? 'С окружающими' : 'Паспорт и внешность'}</h2><p>Изменения относятся только к {props.profile.dogName} и сохраняются в её приватном профиле.</p></div><button type="button" aria-label="Закрыть редактор" onClick={closeEditor}><X weight="bold" /></button></header>
+
+          <div className={styles.editorFields}>
+            {editor === 'health' && <>
+              <EditorField label="Питание" value={editorDraft.diet} onChange={(diet) => updateEditorProfile({ diet })} placeholder="Корм, режим, что нельзя" />
+              <EditorField label="Аллергии и непереносимости" value={editorDraft.allergies} onChange={(allergies) => updateEditorProfile({ allergies })} placeholder="Если есть" />
+              <EditorField label="Лекарства и курсы" value={editorDraft.medication} onChange={(medication) => updateEditorProfile({ medication })} placeholder="Название, режим — только со слов владельца" />
+              <EditorField label="Ветклиника" value={editorDraft.vetClinic} onChange={(vetClinic) => updateEditorProfile({ vetClinic })} placeholder="Клиника, врач, телефон" />
+              <EditorSelect label="Прививки" value={editorDraft.vaccineStatus} options={['актуально', 'скоро нужно', 'просрочено', 'не знаю']} onChange={(vaccineStatus) => updateEditorProfile({ vaccineStatus })} />
+              <EditorSelect label="Обработка от паразитов" value={editorDraft.parasiteStatus} options={['актуально', 'скоро нужно', 'просрочено', 'не знаю']} onChange={(parasiteStatus) => updateEditorProfile({ parasiteStatus })} />
+              <EditorField label="Важное о здоровье" value={editorDraft.healthNotes} onChange={(healthNotes) => updateEditorProfile({ healthNotes })} placeholder="Хронические состояния, операции, важные инструкции" multiline />
+            </>}
+
+            {editor === 'character' && <>
+              <EditorSelect label="Темперамент" value={editorDraft.temperament} options={['осторожный', 'уверенный', 'мягкий', 'самостоятельный', 'общительный']} onChange={(temperament) => updateEditorProfile({ temperament })} />
+              <EditorSelect label="Энергия" value={editorDraft.energyLevel} options={['спокойная', 'умеренная', 'активная', 'очень активная']} onChange={(energyLevel) => updateEditorProfile({ energyLevel })} />
+              <EditorSelect label="Обучаемость" value={editorDraft.trainability} options={['нужна мотивация', 'постепенно осваивает', 'быстро схватывает']} onChange={(trainability) => updateEditorProfile({ trainability })} />
+              <EditorField label="Как любит играть" value={editorDraft.playStyle} onChange={(playStyle) => updateEditorProfile({ playStyle })} placeholder="Нюховые игры, перетяжки, бег…" />
+              <EditorField label="Как остаётся один" value={editorDraft.aloneTime} onChange={(aloneTime) => updateEditorProfile({ aloneTime })} placeholder="Что помогает успокоиться" />
+              <EditorField label="Личная деталь" value={editorDraft.bio} onChange={(bio) => updateEditorProfile({ bio })} placeholder="То, что узнают близкие" multiline />
+            </>}
+
+            {editor === 'social' && <>
+              <EditorSelect label="Как начинать знакомство" value={editorDraft.socialMode} options={['сначала спросить владельца', 'можно подойти спокойно', 'лучше держать дистанцию', 'контакт не нужен']} onChange={(socialMode) => updateEditorProfile({ socialMode })} />
+              <EditorSelect label="С детьми" value={editorDraft.childFriendly} options={['спокойно', 'осторожно', 'нужна дистанция', 'не знаю']} onChange={(childFriendly) => updateEditorProfile({ childFriendly })} />
+              <EditorSelect label="С собаками" value={editorDraft.dogFriendly} options={['дружелюбно', 'только спокойные собаки', 'нужна дистанция', 'не знаю']} onChange={(dogFriendly) => updateEditorProfile({ dogFriendly })} />
+              <EditorSelect label="С кошками" value={editorDraft.catFriendly} options={['спокойно', 'интересуется', 'нужна дистанция', 'не знаю']} onChange={(catFriendly) => updateEditorProfile({ catFriendly })} />
+              <EditorField label="Триггеры" value={editorDraft.triggers} onChange={(triggers) => updateEditorProfile({ triggers })} placeholder="Самокаты, резкие звуки, тесный лифт…" multiline />
+            </>}
+
+            {editor === 'passport' && <>
+              <EditorField label="Имя" value={editorDraft.dogName} onChange={(dogName) => updateEditorProfile({ dogName })} />
+              <label className={styles.editorField}><span>Порода</span><select value={editorDraft.breedId} onChange={(event) => { const breed = breedCatalog.find((item) => item.id === event.target.value); if (breed) updateEditorProfile({ breedId: breed.id, breedGroupId: breed.groupId }); }}>{breedCatalog.map((breed) => <option key={breed.id} value={breed.id}>{breed.title}</option>)}</select></label>
+              {editorDraft.breedId === 'custom' && <EditorField label="Своя порода или тип" value={editorDraft.breedCustom} onChange={(breedCustom) => updateEditorProfile({ breedCustom })} placeholder="Как вы называете породу" />}
+              <EditorField label="Возраст или дата рождения" value={editorDraft.age} onChange={(age) => updateEditorProfile({ age })} placeholder="Например, 3 года или 12.05.2023" />
+              <EditorSelect label="Пол" value={editorDraft.sex} options={['сука', 'кобель']} onChange={(sex) => updateEditorProfile({ sex })} />
+              <EditorSelect label="Стерилизация" value={editorDraft.neutered} options={['да', 'нет', 'не знаю']} onChange={(neutered) => updateEditorProfile({ neutered })} />
+              <EditorField label="Вес" value={editorDraft.weight} onChange={(weight) => updateEditorProfile({ weight })} placeholder="Например, 8,4 кг" />
+              <EditorSelect label="Размер" value={editorDraft.size} options={['миниатюрный', 'маленький', 'средний', 'крупный', 'очень крупный']} onChange={(size) => updateEditorProfile({ size })} />
+              <EditorField label="Шерсть" value={editorDraft.coatType} onChange={(coatType) => updateEditorProfile({ coatType })} placeholder="Короткая, длинная, почти без шерсти…" />
+              <EditorField label="Окрас и особые отметины" value={editorDraft.colorMarks} onChange={(colorMarks) => updateEditorProfile({ colorMarks })} placeholder="Белое пятно на груди…" />
+              <EditorField label="Микрочип" value={editorDraft.microchip} onChange={(microchip) => updateEditorProfile({ microchip })} placeholder="Номер или не установлен" />
+            </>}
+          </div>
+
+          {props.error && <p className={styles.editorError} role="alert">{props.error}</p>}
+          <footer><button type="button" className={styles.editorCancel} onClick={closeEditor}>Отмена</button><button type="submit" className={styles.editorSave} disabled={editorSaving || !editorDraft.dogName.trim()}>{editorSaving ? 'Сохраняю…' : 'Сохранить'}</button></footer>
+        </form>}
       </dialog>
     </section>
   );

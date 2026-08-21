@@ -2278,21 +2278,23 @@ export default function Home() {
     updateProfile({ avatarImageUrl: renderUrl, avatarSource: result.source || 'none' });
   }
 
-  async function savePrivateProfile() {
-    if (!profile.dogName.trim()) { setError('Сначала добавь имя собаки.'); return null; }
-    if (profileSaving) return profile.backendPetId || null;
+  async function savePrivateProfile(nextProfile?: DogProfile) {
+    const profileToSave = nextProfile || profile;
+    if (!profileToSave.dogName.trim()) { setError('Сначала добавь имя собаки.'); return null; }
+    if (profileSaving) return profileToSave.backendPetId || null;
     setProfileSaving(true);
     setError('');
     if (isGuestMode()) {
       ensureGuestPetId();
+      setProfile(profileToSave);
       setNotice('saved');
       window.setTimeout(() => setNotice('idle'), 1600);
       setProfileSaving(false);
-      return profile.backendPetId || guestPetIdRef.current;
+      return profileToSave.backendPetId || guestPetIdRef.current;
     }
     try {
-      const idempotencyKey = profile.backendPetId ? '' : (addDogKeyRef.current ?? `add-pet:${crypto.randomUUID()}`);
-      if (!profile.backendPetId) addDogKeyRef.current = idempotencyKey;
+      const idempotencyKey = profileToSave.backendPetId ? '' : (addDogKeyRef.current ?? `add-pet:${crypto.randomUUID()}`);
+      if (!profileToSave.backendPetId) addDogKeyRef.current = idempotencyKey;
       const response = await fetch('/api/v1/pets', {
         method: 'POST',
         credentials: 'include',
@@ -2301,13 +2303,13 @@ export default function Home() {
           ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
           ...authHeaders(),
         },
-        body: JSON.stringify({ profile: { ...profile, isPublic: false } }),
+        body: JSON.stringify({ profile: { ...profileToSave, isPublic: false } }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result?.error || 'Не удалось сохранить профиль');
-      const savedPetId = result.pet?.id || profile.backendPetId;
+      const savedPetId = result.pet?.id || profileToSave.backendPetId;
       addDogKeyRef.current = null;
-      updateProfile({ backendPetId: savedPetId, isPublic: false });
+      setProfile({ ...profileToSave, backendPetId: savedPetId, isPublic: false });
       if (savedPetId) setActivePetId(savedPetId);
       await loadBootstrap(undefined, savedPetId);
       setNotice('saved');
@@ -3589,8 +3591,7 @@ export default function Home() {
           onDiscardAvatarDraft={discardAvatarDraft}
           onUseNoAvatar={useNoAvatar}
           onRollbackAvatar={rollbackAvatar}
-          onEditProfile={() => setJourneyDetail('profile')}
-          onAddObservation={() => setTab('health')}
+          onSaveProfile={savePrivateProfile}
           onAddDocument={(trigger) => { documentUploadTriggerRef.current = trigger; setDocumentFileName(''); setDocumentUploadOpen(true); }}
           onAskAssistant={() => setAssistantOpen(true)}
         />}
@@ -4160,7 +4161,7 @@ export default function Home() {
                 <ChoiceBubbles label="Вакцины" value={profile.vaccineStatus} options={vaccineOptions} onChange={(value) => updateProfile({ vaccineStatus: value })} />
                 <ChoiceBubbles label="Обработка" value={profile.parasiteStatus} options={parasiteOptions} onChange={(value) => updateProfile({ parasiteStatus: value })} />
               </div>
-              <button className="primary full" type="button" disabled={profileSaving || !profile.dogName.trim()} onClick={savePrivateProfile}>{profileSaving ? 'Сохраняю…' : 'Сохранить личный профиль'}</button>
+              <button className="primary full" type="button" disabled={profileSaving || !profile.dogName.trim()} onClick={() => { void savePrivateProfile(); }}>{profileSaving ? 'Сохраняю…' : 'Сохранить личный профиль'}</button>
               <p className="privacy-hint">Профиль виден только тебе. Памятка для других публикуется отдельно.</p>
             </div>
           </details>

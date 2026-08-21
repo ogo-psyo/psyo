@@ -20,12 +20,20 @@ for (const path of ['Использовать фото', 'Создать обр�
 
 assert.match(component, /avatarCapabilities\.uploadsEnabled/);
 assert.match(component, /avatarCapabilities\.generationEnabled/);
-assert.match(component, /Генератор пока выключен/);
+assert.match(component, /Появится после подключения генератора изображений/);
 assert.match(component, /ничего не попадёт в память без подтверждения/i);
 assert.match(component, /Неподтверждённое не влияет на выводы/);
 assert.match(component, /showModal\(\)/);
 assert.match(component, /identityTriggerRef\.current\?\.focus\(\)/);
+assert.match(component, /editorTriggerRef\.current\?\.focus\(\)/);
+assert.match(component, /openEditor\('health'/);
+assert.match(component, /openEditor\('character'/);
+assert.match(component, /openEditor\('social'/);
+assert.match(component, /openEditor\('passport'/);
+assert.match(component, /onSaveProfile/);
+assert.doesNotMatch(component, /onEditProfile|onAddObservation/);
 assert.match(page, /onOpenIdentity=\{\(\) =>/);
+assert.match(page, /onSaveProfile=\{savePrivateProfile\}/);
 assert.match(journey, /production-today-identity/);
 assert.match(css, /min-height:\s*72px/);
 assert.match(css, /font:\s*650 16px/);
