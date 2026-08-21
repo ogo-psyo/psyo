@@ -45,6 +45,9 @@ try {
     await input.press('Enter');
     await dialog.getByText('Начните с более тихого участка', { exact: false }).waitFor();
     await dialog.getByRole('button', { name: 'Поставить короткую тренировку' }).waitFor();
+    await dialog.locator('.v3-assistant-sheet').evaluate(async (element) => {
+      await Promise.all(element.getAnimations().map((animation) => animation.finished));
+    });
 
     const metrics = await dialog.evaluate((element) => {
       const rect = element.getBoundingClientRect();
