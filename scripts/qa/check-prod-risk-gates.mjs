@@ -5,6 +5,8 @@ const files = {
   env: readFileSync('.env.example', 'utf8'),
   rc1: readFileSync('lib/rc1.ts', 'utf8'),
   assistant: readFileSync('app/api/assistant/route.ts', 'utf8'),
+  assistantService: readFileSync('lib/server/assistantAnswerService.ts', 'utf8'),
+  groqAssistant: readFileSync('lib/server/groqAssistant.ts', 'utf8'),
   entitlements: readFileSync('app/api/billing/entitlements/route.ts', 'utf8'),
   testReport: readFileSync('docs/TEST_REPORT.md', 'utf8'),
 };
@@ -17,6 +19,7 @@ for (const line of [
   'NEW_INVOICES_ENABLED=false',
   'TELEGRAM_NOTIFICATIONS_ENABLED=false',
   'AI_QA_ENABLED=false',
+  'ASSISTANT_GROQ_ENABLED=false',
   'AVATAR_GENERATION_ENABLED=false',
   'UPLOADS_ENABLED=false',
 ]) {
@@ -57,12 +60,14 @@ if (!telegramWebhook.includes("process.env.VERCEL_ENV === 'production'") || !tel
   failures.push('telegram webhook must require TELEGRAM_WEBHOOK_SECRET in production');
 }
 
-for (const token of [
-  'if (!rc1Config.flags.ai_qa_enabled)',
-  "mode: 'rules_only_ai_disabled'",
-  'generatePollinationsAnswer',
-]) {
-  if (!files.assistant.includes(token)) failures.push(`assistant route missing AI privacy gate token: ${token}`);
+for (const token of ['generateGuardedAssistantAnswer', 'getAppSessionFromRequest', 'principalsAgree']) {
+  if (!files.assistant.includes(token)) failures.push(`assistant route missing owner/safety integration: ${token}`);
+}
+for (const token of ['rules_health_boundary', 'rules_guest', 'ASSISTANT_UNSAFE_RESPONSE', 'claimAssistantCapacity']) {
+  if (!files.assistantService.includes(token)) failures.push(`assistant service missing deterministic safety/fallback gate: ${token}`);
+}
+for (const token of ['ASSISTANT_GROQ_ENABLED', 'ASSISTANT_LLM_DISABLED', 'max_completion_tokens: 700']) {
+  if (!files.groqAssistant.includes(token)) failures.push(`Groq assistant provider missing release/cost gate: ${token}`);
 }
 
 for (const token of [

@@ -1,21 +1,15 @@
 import { NextResponse } from 'next/server';
-import { rc1Config } from '@/lib/rc1';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
 import { getRequestAuth } from '@/lib/server/auth';
 import type { ActionSuggestion, AssistantResponse } from '@/packages/contracts';
+import { getAppSessionFromRequest } from '@/lib/server/appSession';
+import { principalsAgree } from '@/lib/socialCore';
+import {
+  generateGuardedAssistantAnswer,
+  type AssistantKind,
+} from '@/lib/server/assistantAnswerService';
 
 export const runtime = 'nodejs';
-
-type AssistantProvider = 'pollinations' | 'rules';
-
-const POLLINATIONS_SYSTEM = [
-  'Ты ассистент Псё — приложения про цифровой мир собаки и Care OS.',
-  'Отвечай по-русски: 1 короткое вступление + 3–5 bullets, максимум 900 символов.',
-  'Без markdown-таблиц, корпоративного тона, агрессивных продаж и выдуманных фактов.',
-  'Не ставь диагнозы. Дозировка лекарств и антибиотик/антибиотики — только от ветеринара. При красных флагах здоровья отправляй к ветеринару срочно.',
-  'Если данных мало — честно скажи, каких 1–3 фактов не хватает.',
-  'Не выдумывай породу, профиль или экипировку; из предметов можно упоминать только поводок, шлейку, ошейник, лакомство, игрушку.',
-].join(' ');
 
 const MEDICAL_SAFETY_BLOCKLIST = ['диагноз', 'дозировка', 'антибиотик'];
 
@@ -24,9 +18,9 @@ function hasMedicalSafetyTerm(question: string) {
   return MEDICAL_SAFETY_BLOCKLIST.some((term) => lowerQuestion.includes(term));
 }
 
-function classifyQuestion(question: string) {
+function classifyQuestion(question: string): AssistantKind {
   if (hasMedicalSafetyTerm(question) || /вакцин|привив|рвот|понос|кров|температ|болит|хром|вет|здоров|лекар/i.test(question)) return 'health_triage';
-  if (/повод|лай|тян|один|команд|подзыв|тренир|поведен/i.test(question)) return 'training';
+  if (/повод|(?:^|\s)лай(?:\s|$)|лает|лаять|тян|один|команд|подзыв|тренир|поведен/i.test(question)) return 'training';
   if (/корм|еда|режим|грум|уход|обработ/i.test(question)) return 'care';
   if (/куп|товар|игруш|амуниц|ошейн|шлейк/i.test(question)) return 'shopping';
   return 'general';
@@ -149,53 +143,19 @@ function buildAssistantPrompt(question: string, context: any, reminders: any[], 
   ].join('\n');
 }
 
-async function generatePollinationsAnswer(question: string, context: any, reminders: any[], rulesAnswer: string) {
-  const prompt = buildAssistantPrompt(question, context, reminders, rulesAnswer);
-  const params = new URLSearchParams({
-    model: 'openai-fast',
-    temperature: '0',
-    private: 'true',
-    system: POLLINATIONS_SYSTEM,
-  });
-  const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?${params.toString()}`, {
-    signal: AbortSignal.timeout(25_000),
-  });
-  if (!response.ok) throw new Error(`Pollinations failed: ${response.status}`);
-  const answer = (await response.text()).trim();
-  if (!answer || /^(error|rate limit|too many requests)/i.test(answer)) throw new Error('Pollinations returned empty/error text');
-  if (answer.includes('|---') || answer.length > 1800) throw new Error('Pollinations returned an overlong answer');
-  return answer;
+type AssistantRouteDependencies = {
+  admin: () => ReturnType<typeof getSupabaseAdmin>;
+  generate: typeof generateGuardedAssistantAnswer;
+};
+
+export function createAssistantPostHandler(dependencies: AssistantRouteDependencies = {
+  admin: getSupabaseAdmin,
+  generate: generateGuardedAssistantAnswer,
+}) {
+  return (request: Request) => assistantPost(request, dependencies);
 }
 
-async function generateAssistantAnswer(question: string, context: any, reminders: any[]) {
-  const rulesAnswer = buildAnswer(question, context, reminders);
-
-  if (!rc1Config.flags.ai_qa_enabled) {
-    return {
-      answer: rulesAnswer,
-      provider: 'rules' as AssistantProvider,
-      mode: 'rules_only_ai_disabled',
-    };
-  }
-
-  try {
-    return {
-      answer: await generatePollinationsAnswer(question, context, reminders, rulesAnswer),
-      provider: 'pollinations' as AssistantProvider,
-      mode: 'pollinations_text_fallback',
-      fallbackAnswer: rulesAnswer,
-    };
-  } catch (error) {
-    return {
-      answer: rulesAnswer,
-      provider: 'rules' as AssistantProvider,
-      mode: 'rules_fallback',
-      reason: error instanceof Error ? error.message : 'unknown_error',
-    };
-  }
-}
-
-export async function POST(request: Request) {
+async function assistantPost(request: Request, dependencies: AssistantRouteDependencies) {
   const body = await request.json().catch(() => null);
   const question = String(body?.question || '').trim();
 
@@ -204,17 +164,21 @@ export async function POST(request: Request) {
   }
 
   const auth = await getRequestAuth(request);
-  const supabase = auth.supabase ?? getSupabaseAdmin();
-  let context = body?.context && typeof body.context === 'object' ? body.context : null;
-  let reminders: any[] = Array.isArray(body?.reminders) ? body.reminders.slice(0, 5) : [];
-
-  if (supabase && body?.petId && !auth.user) {
-    return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
+  const appSession = getAppSessionFromRequest(request);
+  if (!principalsAgree({ bearerOwnerId: auth.user?.id, sessionOwnerId: appSession?.ownerId })) {
+    return NextResponse.json({ error: 'IDENTITY_PRINCIPAL_MISMATCH' }, { status: 401 });
   }
+  const ownerId = auth.user?.id ?? appSession?.ownerId ?? null;
+  if (body?.petId && !ownerId) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
+  const admin = dependencies.admin();
+  const supabase = auth.supabase ?? admin;
+  let context = !body?.petId && body?.context && typeof body.context === 'object' ? body.context : null;
+  let reminders: any[] = !body?.petId && Array.isArray(body?.reminders) ? body.reminders.slice(0, 5) : [];
 
-  if (supabase && auth.user && body?.petId) {
+  if (body?.petId) {
+    if (!supabase) return NextResponse.json({ error: 'ASSISTANT_STORAGE_UNAVAILABLE' }, { status: 503 });
     const [pet, passport, social, reminderResult] = await Promise.all([
-      supabase.from('pets').select('*').eq('id', body.petId).eq('owner_id', auth.user!.id).maybeSingle(),
+      supabase.from('pets').select('*').eq('id', body.petId).eq('owner_id', ownerId!).maybeSingle(),
       supabase.from('pet_passports').select('*').eq('pet_id', body.petId).maybeSingle(),
       supabase.from('social_profiles').select('*').eq('pet_id', body.petId).maybeSingle(),
       supabase.from('reminders').select('id,title,type,due_at,status').eq('pet_id', body.petId).neq('status', 'done').order('due_at', { ascending: true }).limit(5),
@@ -224,19 +188,42 @@ export async function POST(request: Request) {
     reminders = reminderResult.data ?? [];
   }
 
-  const generated = await generateAssistantAnswer(question, context, reminders);
+  const kind = classifyQuestion(question);
+  const rulesAnswer = buildAnswer(question, context, reminders);
+  const generated = await dependencies.generate({
+    ownerId: body?.petId ? ownerId : null,
+    kind,
+    rulesAnswer,
+    prompt: buildAssistantPrompt(question, context, reminders, rulesAnswer),
+    supabase: admin ?? supabase,
+  });
   const answer = generated.answer;
+  const usage = 'usage' in generated ? generated.usage : undefined;
   const actionSuggestions = buildActionSuggestions(question, context);
   let threadId: string | undefined;
 
-  if (supabase && auth.user && body?.petId) {
-    const kind = classifyQuestion(question);
+  if (supabase && ownerId && body?.petId) {
     const { data: thread } = await supabase.from('assistant_threads').insert({ pet_id: body.petId, kind, title: question.slice(0, 80) }).select('id').single();
     if (thread?.id) {
       threadId = thread.id;
       await supabase.from('assistant_messages').insert([
         { thread_id: thread.id, role: 'user', content: question, metadata: { source: 'app' } },
-        { thread_id: thread.id, role: 'assistant', content: answer, model: generated.provider, metadata: { safety: 'no_diagnosis', kind, mode: generated.mode } },
+        {
+          thread_id: thread.id,
+          role: 'assistant',
+          content: answer,
+          model: generated.provider,
+          tokens_in: usage?.inputTokens ?? null,
+          tokens_out: usage?.outputTokens ?? null,
+          metadata: {
+            safety: 'no_diagnosis',
+            safetyLevel: generated.safetyLevel,
+            confidence: generated.confidence,
+            sourceBasis: generated.sourceBasis,
+            kind,
+            mode: generated.mode,
+          },
+        },
       ]);
     }
   }
@@ -250,9 +237,14 @@ export async function POST(request: Request) {
     actionSuggestions,
     provider: generated.provider,
     mode: generated.mode,
+    safetyLevel: generated.safetyLevel,
+    confidence: generated.confidence,
+    sourceBasis: generated.sourceBasis,
     ...(generated.provider === 'rules' ? { reason: generated.reason } : {}),
     safety: 'No diagnosis. Red flags and professional escalation required for health concerns.',
   };
 
   return NextResponse.json(responseBody);
 }
+
+export const POST = createAssistantPostHandler();

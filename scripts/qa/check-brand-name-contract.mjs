@@ -7,12 +7,13 @@ const files = {
   manifest: readFileSync('app/manifest.ts', 'utf8'),
   admin: readFileSync('app/admin/page.tsx', 'utf8'),
   assistant: readFileSync('app/api/assistant/route.ts', 'utf8'),
+  assistantService: readFileSync('lib/server/assistantAnswerService.ts', 'utf8'),
   product: readFileSync('PRODUCT.md', 'utf8'),
   design: readFileSync('DESIGN.md', 'utf8'),
 };
 
 const failures = [];
-const visibleApp = [files.page, files.layout, files.manifest, files.admin, files.assistant].join('\n');
+const visibleApp = [files.page, files.layout, files.manifest, files.admin, files.assistant, files.assistantService].join('\n');
 
 for (const token of [
   '<h1>Псё</h1>',

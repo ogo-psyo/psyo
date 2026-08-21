@@ -31,9 +31,10 @@ PLUS_PAYWALL_ENABLED=false
 NEW_INVOICES_ENABLED=false
 TELEGRAM_NOTIFICATIONS_ENABLED=false
 AI_QA_ENABLED=false
+ASSISTANT_GROQ_ENABLED=false
 ```
 
-`AI_QA_ENABLED=false` means `/api/assistant` must use local rules fallback and must not call the external text provider.
+`AI_QA_ENABLED=false` keeps the legacy experimental provider disabled. `ASSISTANT_GROQ_ENABLED=false` is the default kill switch for Groq assistant calls; production enables it only after the owner, safety, rate-limit and smoke gates pass.
 
 ## Manual Visual Check
 
