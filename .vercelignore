@@ -3,6 +3,7 @@ artifacts
 .impeccable
 playwright-report
 test-results
+scripts/qa/woof-review-screenshots.mjs
 *.log
 .env
 .env.*
