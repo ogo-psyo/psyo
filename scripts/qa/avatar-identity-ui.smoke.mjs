@@ -27,16 +27,12 @@ try {
     }, profile);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.locator('.app-tabs button[data-route="profile"]').click({ force: true });
-    await page.locator('[data-production-journey="profile"]').waitFor();
-    await page.getByRole('button', { name: 'Изменить' }).first().click();
-    await page.locator('#dog-identity-title').waitFor({ state: 'attached' });
-    const details = page.locator('details').filter({ hasText: 'Фото и заметки' });
-    await details.locator('summary').click();
-    await page.locator('#dog-identity-title').waitFor();
-    await page.locator('.dog-identity-editor').scrollIntoViewIfNeeded();
+    await page.locator('[data-profile-memory]').waitFor();
+    await page.getByRole('button', { name: /Настроить образ/ }).click();
+    await page.locator('dialog[open]').waitFor();
 
-    const result = await page.locator('.dog-identity-editor').evaluate((node) => {
-      const controls = [...node.querySelectorAll('button, textarea, input:not([type="file"]):not([type="checkbox"]), label.identity-source-action')];
+    const result = await page.locator('dialog[open]').evaluate((node) => {
+      const controls = [...node.querySelectorAll('button, summary, textarea, input:not([type="file"]):not([type="checkbox"]), label:has(input[type="file"])')];
       const undersized = controls.map((control) => {
         const rect = control.getBoundingClientRect();
         return { text: control.textContent?.trim().slice(0, 60), width: rect.width, height: rect.height };
@@ -45,7 +41,7 @@ try {
       return {
         documentWidth: document.documentElement.scrollWidth,
         viewportWidth: window.innerWidth,
-        sourceActions: node.querySelectorAll('.identity-source-action').length,
+        sourceActions: [...node.querySelectorAll('label, button, summary')].filter((item) => /Использовать фото|Создать образ|Без изображения/.test(item.textContent || '')).length,
         hasUnexpectedImage: Boolean(node.querySelector('img[src*="demo-avatar"]')),
         undersized,
         fontSizes,
@@ -57,15 +53,15 @@ try {
     if (result.undersized.length) throw new Error(`${width}: undersized controls ${JSON.stringify(result.undersized)}`);
     if (result.fontSizes.some((size) => size < 16)) throw new Error(`${width}: an editable input can trigger iOS zoom`);
 
-    const fileInput = page.locator('.identity-source-action input[type="file"]');
+    const fileInput = page.locator('dialog input[type="file"]');
     await fileInput.focus();
     const focusVisible = await fileInput.locator('..').evaluate((label) => getComputedStyle(label).outlineStyle !== 'none');
     if (!focusVisible) throw new Error(`${width}: upload choice has no visible keyboard focus`);
 
-    await page.getByRole('button', { name: /Создать образ/ }).first().click();
-    await page.locator('#avatar-owner-prompt').waitFor();
-    const honestyCopy = await page.getByText(/художественный образ.*не точная копия/i).isVisible();
-    if (!honestyCopy) throw new Error(`${width}: text-only generation lacks likeness honesty copy`);
+    const generationSummary = page.locator('dialog summary').filter({ hasText: 'Создать образ' });
+    await generationSummary.click();
+    const honestyCopy = await page.getByText(/художественный вариант|Генератор пока выключен/i).isVisible();
+    if (!honestyCopy) throw new Error(`${width}: generation path is missing honest availability copy`);
 
     await page.screenshot({ path: `${output}/avatar-identity-${width}.png`, fullPage: true });
     await page.close();

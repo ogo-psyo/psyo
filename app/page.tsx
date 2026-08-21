@@ -18,6 +18,7 @@ import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
 import type { DogModuleSummary } from '@/components/home/AllFunctionsHub';
 import { HabitScreen, type HabitDraft, type HabitView } from '@/components/habits/HabitScreen';
 import { HealthTimelineScreen } from '@/components/health/HealthTimelineScreen';
+import { ProfileMemoryWorkspace } from '@/components/profile/ProfileMemoryWorkspace';
 import { NextCareCard } from '@/components/today/NextCareCard';
 import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
 import { CandidateCard } from '@/components/social/CandidateCard';
@@ -2234,6 +2235,15 @@ export default function Home() {
     }
   }
 
+  function discardAvatarDraft() {
+    setAvatarDraftAssetId('');
+    setAvatarDraftSource(null);
+    setAvatarReferenceAssetId('');
+    setGeneratedAvatarUrl('');
+    setAvatarState('idle');
+    setError('');
+  }
+
   async function useNoAvatar() {
     if (profile.avatarSource !== 'none' && !window.confirm(`Убрать текущий образ ${profile.dogName || 'собаки'}? Его можно будет вернуть кнопкой «Вернуть предыдущий».`)) return;
     const petId = profile.backendPetId || activePetId;
@@ -3534,34 +3544,55 @@ export default function Home() {
           onCareAction={() => todayCare.reminderId
             ? completeReminder(todayCare.reminderId)
             : (setCareView(todayCare.target === 'history' ? 'history' : 'active'), setTab('calendar'))}
+          onOpenIdentity={() => {
+            setJourneyDetail(null);
+            setTab('profile');
+            setAvatarComposerOpen(true);
+          }}
           onNavigate={(route) => {
             setJourneyDetail(null);
             setTab(route);
           }}
         />}
 
-        {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ProductionJourney route="profile"
-          dogName={profile.dogName}
+        {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ProfileMemoryWorkspace
+          profile={profile}
           breedLabel={breedLabel}
-          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" fill />}
-          profileFacts={[profile.lifeStage, profile.weight, profile.energyLevel].filter(Boolean)}
-          profileEntries={profileJourneyEntries}
-          observationPoints={observations.map((item) => ({ id: item.id, createdAt: item.createdAt, mood: item.mood, appetite: item.appetite, stool: item.stool, energy: item.energy, note: item.note }))}
-          careTitle={todayCare.title}
-          careDetail={todayCare.detail}
-          documentCount={documents.length}
-          latestDocument={documents[0]?.title}
-          latestDocumentDetail={documents[0]?.clinic || documents[0]?.originalName}
-          latestObservation={observations[0] ? observationSummary(observations[0]) : undefined}
-          onAddDocument={(trigger) => { documentUploadTriggerRef.current = trigger; setDocumentFileName(''); setDocumentUploadOpen(true); }}
+          imageUrl={generatedAvatarUrl || profile.avatarImageUrl}
+          observations={observations.map((item) => ({ id: item.id, createdAt: item.createdAt, mood: item.mood, appetite: item.appetite, stool: item.stool, energy: item.energy, note: item.note }))}
+          documents={documents}
+          reminders={reminders}
+          voiceCapture={<VoiceObservationCapture
+            petId={profile.backendPetId || activePetId}
+            petName={profile.dogName}
+            authorId={telegramSession.ownerId || session?.user.email || 'owner'}
+            onTranscribe={transcribeVoiceObservation}
+            onExtract={extractVoiceObservationCandidates}
+            onSave={saveVoiceObservationCandidates}
+          />}
+          identityOpen={avatarComposerOpen}
+          avatarCapabilities={avatarCapabilities}
+          avatarDraftUrl={avatarDraftAssetId ? generatedAvatarUrl : ''}
+          avatarDraftSource={avatarDraftSource}
+          avatarState={avatarState}
+          avatarOwnerPrompt={avatarOwnerPrompt}
+          avatarConsent={avatarConsent}
+          error={error}
+          onBack={() => setTab('today')}
+          onOpenIdentity={() => { setError(''); setAvatarComposerOpen(true); }}
+          onCloseIdentity={() => setAvatarComposerOpen(false)}
+          onPhotoChange={handlePhotos}
+          onAvatarPromptChange={setAvatarOwnerPrompt}
+          onAvatarConsentChange={setAvatarConsent}
+          onGenerateAvatar={() => createAvatar()}
+          onActivateAvatar={activateAvatarDraft}
+          onDiscardAvatarDraft={discardAvatarDraft}
+          onUseNoAvatar={useNoAvatar}
+          onRollbackAvatar={rollbackAvatar}
           onEditProfile={() => setJourneyDetail('profile')}
           onAddObservation={() => setTab('health')}
-          onOpenCare={() => { setCareView('active'); setTab('calendar'); }}
+          onAddDocument={(trigger) => { documentUploadTriggerRef.current = trigger; setDocumentFileName(''); setDocumentUploadOpen(true); }}
           onAskAssistant={() => setAssistantOpen(true)}
-          onNavigate={(route) => {
-            if (route === 'profile') setJourneyDetail('profile');
-            else { setJourneyDetail(null); setTab(route); }
-          }}
         />}
 
         {hasDog && tab === 'profile' && documentUploadOpen && <ProductionDocumentSheet dogName={petNameGent} returnFocusTo={documentUploadTriggerRef.current} onClose={() => { setDocumentUploadOpen(false); setDocumentFileName(''); }}>

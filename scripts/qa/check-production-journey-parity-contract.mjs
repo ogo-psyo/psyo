@@ -14,22 +14,25 @@ function rejectText(text, marker, label) {
 
 const page = source('app/page.tsx');
 const shell = source('components/journey/ProductionJourney.tsx');
+const profileMemory = source('components/profile/ProfileMemoryWorkspace.tsx');
 const css = source('components/journey/production-journey.css');
 const globals = source('app/globals.css');
 
 requireText(page, "from '@/components/journey/ProductionJourney'", 'production root');
-for (const route of ['today', 'profile', 'map', 'nearby', 'things']) {
+for (const route of ['today', 'map', 'nearby', 'things']) {
   requireText(page, `<ProductionJourney route="${route}"`, `production route ${route}`);
 }
+requireText(page, '<ProfileMemoryWorkspace', 'production profile memory route');
 requireText(page, '<ProductionAssistantSheet', 'assistant overlay');
 requireText(shell, 'production-today-summary', 'useful Today summary');
 requireText(shell, 'production-today-history', 'real Today history');
 requireText(page, 'profileEntries={profileJourneyEntries}', 'Today real-event data');
 rejectText(shell, 'v3-orbit-bubble', 'non-interactive Today badges');
 rejectText(shell, 'Открыть Гав', 'duplicate Today navigation');
-requireText(shell, 'profile-life-card', 'accepted profile composition');
-requireText(shell, 'data-slot="card"', 'structured profile card');
-requireText(shell, 'data-slot="item-group"', 'structured profile actions');
+requireText(profileMemory, 'data-profile-memory', 'accepted profile memory composition');
+requireText(profileMemory, "surface === 'health'", 'profile health drill-down');
+requireText(profileMemory, "surface === 'character'", 'profile character drill-down');
+requireText(profileMemory, "surface === 'social'", 'profile social drill-down');
 requireText(shell, 'production-journey-map', 'accepted live map composition');
 requireText(shell, 'production-journey-woof', 'accepted Гав composition');
 requireText(shell, 'production-journey-shelf', 'accepted Things composition');

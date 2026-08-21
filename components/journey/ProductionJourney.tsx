@@ -69,6 +69,7 @@ type BaseProps = {
   breedLabel: string;
   avatar: ReactNode;
   onNavigate: (route: 'today' | 'profile' | 'map' | 'nearby' | 'things' | 'calendar' | 'health') => void;
+  onOpenIdentity?: () => void;
   children?: ReactNode;
 };
 
@@ -213,7 +214,9 @@ function TodayScreen(props: ProductionJourneyProps) {
           ? <span className="production-today-complete"><Check weight="bold" /> День свободен от обязательных дел</span>
           : <button type="button" onClick={props.onCareAction}><Check weight="bold" /> Отметить выполненным</button>}
       </div>
-      <DogAvatar avatar={props.avatar} />
+      {props.onOpenIdentity
+        ? <button type="button" className="production-today-identity" aria-label={`Изменить фото или образ ${props.dogName}`} onClick={props.onOpenIdentity}><DogAvatar avatar={props.avatar} /><span>Изменить образ</span></button>
+        : <DogAvatar avatar={props.avatar} />}
     </section>
     {props.voiceCapture}
     <section className="production-today-history" aria-labelledby="production-today-history-title">

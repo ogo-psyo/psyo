@@ -1,99 +1,92 @@
 import { chromium } from 'playwright';
 
 const base = process.env.BASE_URL || 'http://127.0.0.1:3101';
+const output = process.env.OUTPUT_DIR || '/tmp';
 const profile = {
-  dogName: 'Мята', breedId: 'mixed', breedGroupId: 'mixed', lifeStage: 'взрослая', size: 'средняя',
-  vaccineStatus: 'актуально', parasiteStatus: 'скоро нужно', socialMode: 'сначала спросить',
-  energyLevel: 'активный', photos: [], selectedStyle: 'city', avatarImageUrl: '/demo-avatar.png', backendPetId: 'guest-profile-layout',
+  dogName: 'Очень Длинное Имя Собаки', breedId: 'xoloitzcuintli', breedGroupId: 'primitive', age: '3 года', lifeStage: 'взрослая', sex: 'кобель',
+  weight: '8,4 кг', size: 'средний', coatType: 'почти без шерсти', colorMarks: 'белое пятно на груди', microchip: '',
+  vaccineStatus: 'актуально', parasiteStatus: 'скоро нужно', socialMode: 'сначала спросить', energyLevel: 'активный', temperament: 'осторожный, но любопытный',
+  trainability: 'быстро схватывает', playStyle: 'нюховые игры', childFriendly: 'осторожно', dogFriendly: 'только спокойные собаки', catFriendly: 'не знаю',
+  triggers: 'самокаты и громкие пакеты', allergies: 'курица', medication: '', healthNotes: '', bio: 'Любит искать запахи', habits: [], photos: [], selectedStyle: 'city', avatarImageUrl: '/demo-avatar.png', avatarSource: 'uploaded', backendPetId: '11111111-1111-4111-8111-111111111111',
 };
 
 const browser = await chromium.launch({ headless: true });
 try {
   for (const width of [320, 390]) {
     const page = await browser.newPage({ viewport: { width, height: 844 } });
+    await page.route('**/api/app/bootstrap*', async (route) => {
+      const pet = { id: profile.backendPetId, owner_id: 'owner-a', name: profile.dogName, breed_id: profile.breedId, breed_group_id: profile.breedGroupId, avatar_url: profile.avatarImageUrl, avatar_source: 'uploaded', photo_urls: [] };
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+        mode: 'demo', connected: true, activePetId: pet.id, pet, pets: [pet],
+        passport: { weight: profile.weight, allergies: profile.allergies, vaccine_status: profile.vaccineStatus, parasite_status: profile.parasiteStatus },
+        social: { social_mode: profile.socialMode, triggers: [profile.triggers] }, reminders: [], zones: [], routes: [], wishlist: [], documents: [],
+        observations: [{ id: 'observation-1', petId: pet.id, appetite: 'ниже обычного', energy: 'обычная', note: 'Ест меньше второй день', createdAt: new Date().toISOString() }],
+        avatarCapabilities: { identityEnabled: true, uploadsEnabled: true, generationEnabled: false, providerReady: false },
+      }) });
+    });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.evaluate((storedProfile) => {
       localStorage.setItem('pso.topapp.onboarding.v1', 'done');
       localStorage.setItem('pso.product.profile.v5', JSON.stringify(storedProfile));
-      localStorage.setItem('pso.topapp.observations.v1', JSON.stringify([{ id: 'observation-1', source: 'demo', note: 'демо-наблюдение', mood: 'спокойная', appetite: 'обычный', stool: 'обычный', energy: 'обычная', createdAt: new Date().toISOString() }]));
     }, profile);
     await page.reload({ waitUntil: 'networkidle' });
-    await page.locator('.app-tabs button[data-route="profile"]').click({ force: true });
-    await page.locator('[data-production-journey="profile"]').waitFor();
-
-    if (await page.getByText('демо-наблюдение', { exact: true }).count()) throw new Error(`${width}: demo observation leaked into personal history`);
-    await page.waitForFunction(() => JSON.parse(localStorage.getItem('pso.topapp.observations.v1') || '[]').length === 0);
-
-    const layout = await page.evaluate(() => {
-      const card = document.querySelector('[data-slot="card"]')?.getBoundingClientRect();
-      const items = [...document.querySelectorAll('[data-slot="item"]')].map((node) => node.getBoundingClientRect());
-      const footerButtons = [...document.querySelectorAll('[data-slot="card-footer"] button')].map((node) => node.getBoundingClientRect());
-      const avatarFrame = document.querySelector('.profile-life-card-header .v3-dog-avatar')?.getBoundingClientRect();
-      const avatar = document.querySelector('.profile-life-card-header .generated-avatar')?.getBoundingClientRect();
-      const avatarImage = document.querySelector('.profile-life-card-header .avatar-image')?.getBoundingClientRect();
-      return {
-        scrollWidth: document.documentElement.scrollWidth,
-        card: card && { left: card.left, right: card.right },
-        items: items.map((rect) => ({ left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom })),
-        footerButtons: footerButtons.map((rect) => ({ left: rect.left, right: rect.right })),
-        avatarFrame: avatarFrame && { width: avatarFrame.width, height: avatarFrame.height },
-        avatar: avatar && { width: avatar.width, height: avatar.height },
-        avatarImage: avatarImage && { width: avatarImage.width, height: avatarImage.height },
-      };
-    });
-    if (layout.scrollWidth > width) throw new Error(`${width}: horizontal overflow ${layout.scrollWidth}/${width}`);
-    if (!layout.card || layout.card.left < 14 || layout.card.right > width - 14) throw new Error(`${width}: card escaped content margins`);
-    if (layout.items.length !== 2 || layout.items.some((item) => item.left < 14 || item.right > width - 14)) throw new Error(`${width}: item escaped content margins`);
-    if (layout.items[0].bottom >= layout.items[1].top) throw new Error(`${width}: action items overlap`);
-    if (layout.footerButtons.length !== 2 || layout.footerButtons[0].right > layout.footerButtons[1].left) throw new Error(`${width}: card footer actions overlap`);
-    if (!layout.avatarFrame || !layout.avatar || !layout.avatarImage) throw new Error(`${width}: profile avatar is missing`);
-    if (Math.abs(layout.avatar.width - layout.avatarFrame.width) > 1 || Math.abs(layout.avatar.height - layout.avatarFrame.height) > 1) throw new Error(`${width}: avatar does not fill its frame`);
-    if (Math.abs(layout.avatarImage.width - layout.avatarFrame.width) > 1 || Math.abs(layout.avatarImage.height - layout.avatarFrame.height) > 1) throw new Error(`${width}: avatar image does not fill its frame`);
-
-    const wellbeing = page.locator('[data-profile-wellbeing]');
-    await wellbeing.waitFor();
-    const trendLayout = await wellbeing.evaluate((node) => {
-      const chart = node.querySelector('.profile-wellbeing-chart')?.getBoundingClientRect();
-      const summary = node.querySelector('summary')?.getBoundingClientRect();
-      return { chart: chart && { left: chart.left, right: chart.right }, summary: summary && { left: summary.left, right: summary.right } };
-    });
-    if (!trendLayout.chart || trendLayout.chart.left < 14 || trendLayout.chart.right > width - 14) throw new Error(`${width}: wellbeing chart escaped content margins`);
-    if (!trendLayout.summary || trendLayout.summary.left < 14 || trendLayout.summary.right > width - 14) throw new Error(`${width}: wellbeing summary escaped content margins`);
-    await wellbeing.locator('summary').click();
-    if (!(await wellbeing.locator('details').evaluate((node) => node.hasAttribute('open')))) throw new Error(`${width}: wellbeing conclusions did not expand`);
-    if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)) throw new Error(`${width}: expanded wellbeing caused horizontal overflow`);
-    await wellbeing.locator('summary').click();
-
-    const trigger = page.locator('[data-profile-journey-action="add-document"]');
-    await trigger.click();
-    const dialog = page.locator('.profile-document-dialog');
-    await dialog.waitFor();
-    const sheet = await page.evaluate(() => {
-      const dialogNode = document.querySelector('.profile-document-dialog');
-      const rect = document.querySelector('[data-slot="sheet-content"]')?.getBoundingClientRect();
-      const fields = [...document.querySelectorAll('.profile-life-document-form [data-slot="field"]')].map((node) => node.getBoundingClientRect());
-      const nativeFileInput = document.querySelector('.document-file-drop input[type="file"]');
-      const fileDrop = document.querySelector('.document-file-drop')?.getBoundingClientRect();
-      return {
-        focusInside: Boolean(dialogNode?.contains(document.activeElement)),
-        rect: rect && { left: rect.left, right: rect.right, bottom: rect.bottom },
-        fields: fields.map((field) => ({ top: field.top, left: field.left })),
-        nativeFileInputHidden: nativeFileInput ? getComputedStyle(nativeFileInput).position === 'absolute' && getComputedStyle(nativeFileInput).opacity === '0' && getComputedStyle(nativeFileInput).clipPath !== 'none' : false,
-        fileDrop: fileDrop && { left: fileDrop.left, right: fileDrop.right },
-      };
-    });
-    if (!sheet.focusInside) throw new Error(`${width}: focus did not move into sheet`);
-    if (!sheet.rect || sheet.rect.left < 0 || sheet.rect.right > width || Math.abs(sheet.rect.bottom - 844) > 1) throw new Error(`${width}: sheet escaped viewport`);
-    if (sheet.fields.some((field, index) => index > 0 && field.top <= sheet.fields[index - 1].top)) throw new Error(`${width}: form fields are not in a stable single column`);
-    if (!sheet.nativeFileInputHidden) throw new Error(`${width}: native file control is still visible`);
-    if (!sheet.fileDrop || sheet.fileDrop.left < 18 || sheet.fileDrop.right > width - 18) throw new Error(`${width}: file drop escaped sheet margins`);
+    const homeIdentity = page.getByRole('button', { name: /Изменить фото или образ/ });
+    await homeIdentity.click();
+    const homeIdentityDialog = page.locator('dialog[open]');
+    await homeIdentityDialog.waitFor();
+    if (!(await homeIdentityDialog.getByText('Использовать фото').isVisible())) throw new Error(`${width}: home portrait did not open identity chooser`);
     await page.keyboard.press('Escape');
-    await dialog.waitFor({ state: 'detached' });
-    await page.waitForFunction(() => document.activeElement?.matches('[data-profile-journey-action="add-document"]'));
-    if (!(await trigger.evaluate((node) => node === document.activeElement))) throw new Error(`${width}: focus did not return to trigger`);
+    await homeIdentityDialog.waitFor({ state: 'hidden' });
+    await page.locator('.app-tabs button[data-route="profile"]').click({ force: true });
+    const workspace = page.locator('[data-profile-memory]');
+    await workspace.waitFor();
+
+    const overview = await workspace.evaluate((node) => {
+      const controls = [...node.querySelectorAll('button, summary')].map((control) => {
+        const rect = control.getBoundingClientRect();
+        return { width: rect.width, height: rect.height, text: control.textContent?.trim().slice(0, 50) };
+      });
+      return { scrollWidth: document.documentElement.scrollWidth, viewport: window.innerWidth, controls, surface: node.getAttribute('data-surface') };
+    });
+    if (overview.surface !== 'overview') throw new Error(`${width}: profile did not open on overview`);
+    if (overview.scrollWidth > overview.viewport) throw new Error(`${width}: horizontal overflow ${overview.scrollWidth}/${overview.viewport}`);
+    const undersized = overview.controls.filter((item) => item.width > 0 && item.height > 0 && (item.width < 44 || item.height < 44));
+    if (undersized.length) throw new Error(`${width}: undersized overview controls ${JSON.stringify(undersized)}`);
+    await page.screenshot({ path: `${output}/profile-memory-overview-${width}.png`, fullPage: true });
+
+    await page.getByRole('button', { name: /Здоровье/ }).first().click();
+    await page.getByRole('heading', { name: 'Здоровье', exact: true }).waitFor();
+    if (await workspace.getAttribute('data-surface') !== 'health') throw new Error(`${width}: health drill-down did not open`);
+    if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)) throw new Error(`${width}: health caused horizontal overflow`);
+    await page.screenshot({ path: `${output}/profile-memory-health-${width}.png`, fullPage: true });
+
+    const documentTrigger = page.locator('[data-profile-memory-action="add-document"]');
+    await documentTrigger.scrollIntoViewIfNeeded();
+    await documentTrigger.click();
+    const documentDialog = page.locator('.profile-document-dialog');
+    await documentDialog.waitFor();
+    if (!(await documentDialog.evaluate((node) => node.contains(document.activeElement)))) throw new Error(`${width}: document sheet did not receive focus`);
+    await documentDialog.getByRole('button', { name: 'Закрыть' }).click();
+    await documentDialog.waitFor({ state: 'detached' });
+    if (!(await documentTrigger.evaluate((node) => node === document.activeElement))) throw new Error(`${width}: document sheet did not restore focus`);
+
+    await page.getByRole('button', { name: 'Вернуться к обзору' }).click();
+    await page.getByRole('button', { name: /Изменить фото или образ/ }).click();
+    const identity = page.locator('dialog[open]');
+    await identity.waitFor();
+    const paths = await identity.getByText(/Использовать фото|Создать образ|Без изображения/).count();
+    if (paths < 3) throw new Error(`${width}: identity chooser is incomplete`);
+    if (!(await identity.getByText('Генератор пока выключен').isVisible())) throw new Error(`${width}: disabled generation is not honest`);
+    await page.keyboard.press('Escape');
+    await identity.waitFor({ state: 'hidden' });
+
+    await page.getByRole('button', { name: /Характер/ }).first().click();
+    await page.getByRole('heading', { name: 'Характер', exact: true }).waitFor();
+    const inputSizes = await workspace.locator('input:not([type]), input[type="text"], input[type="search"], input[type="email"], input[type="tel"], input[type="number"], textarea').evaluateAll((nodes) => nodes.map((node) => parseFloat(getComputedStyle(node).fontSize)));
+    if (inputSizes.some((size) => size < 16)) throw new Error(`${width}: editable input can trigger iOS zoom`);
     await page.close();
   }
-  console.log('profile layout smoke: ok (320, 390)');
+  console.log('profile memory layout smoke: ok (320, 390)');
 } finally {
   await browser.close();
 }
