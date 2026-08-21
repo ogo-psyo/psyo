@@ -63,7 +63,9 @@ async function assertStatus(path, cookie, expectedStatus, options = {}) {
 }
 
 async function createReminder(cookie, petId, ownerKey, dogKey) {
+  const idempotencyKey = `qa-isolation:${ownerKey}:${dogKey}:${Date.now()}`;
   const body = await assertStatus('/api/reminders', cookie, 201, {
+    headers: { 'idempotency-key': idempotencyKey },
     body: {
       petId,
       title: `qa-isolation-${ownerKey}-${dogKey}-${Date.now()}`,
@@ -83,7 +85,12 @@ async function cleanup() {
   const failures = [];
   for (const item of created.splice(0).reverse()) {
     try {
-      const result = await request(`/api/reminders/${encodeURIComponent(item.id)}`, { method: 'DELETE', cookie: item.cookie, body: {} });
+      const result = await request(`/api/reminders/${encodeURIComponent(item.id)}`, {
+        method: 'DELETE',
+        cookie: item.cookie,
+        headers: { 'idempotency-key': `qa-isolation:cleanup:${item.id}` },
+        body: {},
+      });
       if (result.response.status !== 200 && result.response.status !== 404) failures.push(item.id);
     } catch {
       failures.push(item.id);
@@ -129,19 +136,23 @@ try {
   const crossOwnerRead = await assertStatus(`/api/reminders?petId=${encodeURIComponent(config.ownerBPet1Id)}`, ownerA.cookie, 200);
   assert.equal((crossOwnerRead?.reminders || []).some((item) => item.id === reminderB1.id), false);
   await assertStatus('/api/reminders', ownerB.cookie, 404, {
+    headers: { 'idempotency-key': `qa-isolation:cross-create:${Date.now()}` },
     body: { petId: config.ownerAPet1Id, title: 'qa-cross-owner-denied', dueAt: new Date().toISOString() },
   });
   await assertStatus(`/api/reminders/${encodeURIComponent(reminderB1.id)}`, ownerA.cookie, 404, {
     method: 'PATCH',
+    headers: { 'idempotency-key': `qa-isolation:cross-update:${Date.now()}` },
     body: { title: 'qa-cross-owner-update-denied' },
   });
   await assertStatus(`/api/reminders/${encodeURIComponent(reminderB1.id)}`, ownerA.cookie, 404, {
     method: 'DELETE',
+    headers: { 'idempotency-key': `qa-isolation:cross-delete:${Date.now()}` },
     body: {},
   });
 
   await assertStatus(`/api/reminders/${encodeURIComponent(reminderA1.id)}`, ownerA.cookie, 200, {
     method: 'PATCH',
+    headers: { 'idempotency-key': `qa-isolation:owned-update:${Date.now()}` },
     body: { title: `qa-isolation-updated-${Date.now()}` },
   });
 
