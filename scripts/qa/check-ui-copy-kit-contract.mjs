@@ -57,7 +57,7 @@ const requiredHumanCopy = [
   'Портрет собаки',
   'пример памятки',
   'Примерное место выбрано',
-  'Сделать портрет',
+  'Создать образ',
 ];
 
 const allUi = Object.values(uiFiles).join('\n');

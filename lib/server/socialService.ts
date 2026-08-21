@@ -68,10 +68,17 @@ export function socialProfilePayload(profile: Omit<SocialProfile, 'petId'>) {
   };
 }
 
+// Private lifecycle assets are never projected into social surfaces. Legacy
+// public avatar_url is visible only while the owner-selected source is uploaded.
+export function socialAvatarUrl(pet: { avatar_url?: string | null; avatar_source?: string | null; active_avatar_asset_id?: string | null }) {
+  if (pet.avatar_source === 'none' || pet.active_avatar_asset_id) return null;
+  return pet.avatar_source === 'uploaded' || !pet.avatar_source ? pet.avatar_url ?? null : null;
+}
+
 export async function requireOwnedPet(supabase: SupabaseClient, ownerId: string, petId: string) {
   const { data, error } = await supabase
     .from('pets')
-    .select('id, owner_id, name, avatar_url')
+    .select('id, owner_id, name, avatar_url, avatar_source, active_avatar_asset_id')
     .eq('id', petId)
     .eq('owner_id', ownerId)
     .maybeSingle();
@@ -155,7 +162,7 @@ export async function listCandidates(supabase: SupabaseClient, ownerId: string, 
 
   const excluded = await excludedOwnerIds(supabase, ownerId);
   const { data: candidateRows, error: candidateError } = await supabase.from('social_discovery_profiles')
-    .select('*, pets!inner(id, owner_id, name, avatar_url, life_stage, weight_kg, social_profiles(temperament, energy_level, dog_friendly, play_style))')
+    .select('*, pets!inner(id, owner_id, name, avatar_url, avatar_source, active_avatar_asset_id, life_stage, weight_kg, social_profiles(temperament, energy_level, dog_friendly, play_style))')
     .eq('discoverable', true).eq('city', mine.city).neq('pet_id', petId)
     .order('updated_at', { ascending: false }).limit(120);
   if (candidateError) throw new Error('SOCIAL_STORAGE_FAILED');
@@ -168,7 +175,7 @@ export async function listCandidates(supabase: SupabaseClient, ownerId: string, 
       petId: candidatePet.id,
       ownerId: candidatePet.owner_id,
       name: candidatePet.name,
-      avatarUrl: candidatePet.avatar_url ?? null,
+      avatarUrl: socialAvatarUrl(candidatePet),
       lifeStage: candidatePet.life_stage ?? null,
       weightKg: Number.isFinite(Number(candidatePet.weight_kg)) ? Number(candidatePet.weight_kg) : null,
       temperament: traits?.temperament ?? null,
@@ -205,7 +212,7 @@ function mapWalkSignal(row: any, ownerId: string): WalkSignal | null {
     id: row.id,
     petId: row.pet_id,
     name: pet.name,
-    avatarUrl: pet.avatar_url ?? null,
+    avatarUrl: socialAvatarUrl(pet),
     city: row.city,
     district: row.district ?? null,
     approximateLocation: blurredSignalLocation(row.id, raw),
@@ -292,7 +299,7 @@ export async function listWalkSignals(supabase: SupabaseClient, ownerId: string,
   await supabase.from('social_walk_signals').update({ status: 'expired' })
     .eq('status', 'active').lte('expires_at', now);
   const { data, error } = await supabase.from('social_walk_signals')
-    .select('*, pets!inner(id, name, avatar_url, social_profiles(temperament, dog_friendly))')
+    .select('*, pets!inner(id, name, avatar_url, avatar_source, active_avatar_asset_id, social_profiles(temperament, dog_friendly))')
     .eq('city', city).eq('status', 'active').gt('expires_at', now)
     .order('starts_at', { ascending: true }).limit(100);
   if (error) throw new Error('SOCIAL_STORAGE_FAILED');

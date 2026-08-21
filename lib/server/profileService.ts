@@ -156,12 +156,21 @@ export function buildPetProfilePersistencePayload(input: { user: ProfileOwner; p
 }
 
 export function mapPetProfileDto(row: any) {
+  const avatarSource = row.avatar_source || (row.avatar_url ? 'uploaded' : 'none');
+  const avatarUrl = avatarSource === 'none'
+    ? null
+    : row.active_avatar_asset_id
+      ? `/api/v1/pets/${row.id}/avatar/assets/${row.active_avatar_asset_id}/render`
+      : avatarSource === 'uploaded' ? row.avatar_url || null : null;
   return {
     id: row.id,
     name: row.name,
     species: 'dog' as const,
     breedId: row.breed_id,
     breedGroupId: row.breed_group_id,
+    avatarSource,
+    activeAvatarAssetId: row.active_avatar_asset_id || null,
+    avatarUrl,
     publicSlug: row.public_slug,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

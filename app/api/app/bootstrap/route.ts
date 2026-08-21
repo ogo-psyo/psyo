@@ -3,8 +3,25 @@ import type { AppBootstrap } from '@/lib/domain';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
 import { ensureProfile, getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
+import { rc1Config } from '@/lib/rc1';
 
 export const runtime = 'nodejs';
+
+function avatarCapabilities() {
+  const budget = Number(process.env.AVATAR_DAILY_BUDGET_CENTS || '0');
+  const estimate = Number(process.env.AVATAR_OPENAI_ESTIMATED_COST_CENTS || '0');
+  const providerReady = process.env.AVATAR_OPENAI_ENABLED === 'true'
+    && Boolean(process.env.OPENAI_API_KEY)
+    && Number.isSafeInteger(budget) && budget > 0
+    && Number.isSafeInteger(estimate) && estimate > 0;
+  return {
+    identityEnabled: rc1Config.flags.uploads_enabled || rc1Config.flags.avatar_generation_enabled,
+    uploadsEnabled: rc1Config.flags.uploads_enabled,
+    generationEnabled: rc1Config.flags.avatar_generation_enabled && providerReady,
+    providerReady,
+    consentVersion: 'avatar-provider-v1',
+  };
+}
 
 function demoBootstrap(): AppBootstrap {
   const now = new Date().toISOString();
@@ -38,7 +55,7 @@ export async function GET(request: Request) {
   const appSession = getAppSessionFromRequest(request);
   const supabase = auth.supabase ?? getSupabaseAdmin();
 
-  if (!supabase) return NextResponse.json({ ...demoBootstrap(), ...demoModeResponse('Configure Supabase env to load real app state.') });
+  if (!supabase) return NextResponse.json({ ...demoBootstrap(), avatarCapabilities: avatarCapabilities(), ...demoModeResponse('Configure Supabase env to load real app state.') });
   if (auth.user) await ensureProfile(auth.user);
 
   const ownerId = auth.user?.id ?? appSession?.ownerId;
@@ -49,6 +66,7 @@ export async function GET(request: Request) {
       empty: true,
       user: null,
       message: 'Sign in to load private app state.',
+      avatarCapabilities: avatarCapabilities(),
     });
   }
 
@@ -63,7 +81,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', connected: true, error: 'PET_NOT_FOUND_OR_NOT_OWNED' }, { status: 404 });
   }
 
-  if (!selectedPet) return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', connected: true, empty: true, pets: [], user: { id: ownerId, email: auth.user?.email ?? null }, message: 'No pets yet.' });
+  if (!selectedPet) return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', connected: true, empty: true, pets: [], user: { id: ownerId, email: auth.user?.email ?? null }, avatarCapabilities: avatarCapabilities(), message: 'No pets yet.' });
 
   const petId = selectedPet.id;
   const [passportResult, socialResult, remindersResult, zonesResult, routesResult, wishlistResult, observationsResult, documentsResult] = await Promise.all([
@@ -103,5 +121,6 @@ export async function GET(request: Request) {
       sizeBytes: row.size_bytes,
       createdAt: row.created_at,
     })),
+    avatarCapabilities: avatarCapabilities(),
   });
 }

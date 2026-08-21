@@ -31,7 +31,6 @@ import {
   avatarStyles,
   breedCatalog,
   breedGroups,
-  buildAvatarPrompt,
   coatOptions,
   defaultProfile,
   energyOptions,
@@ -39,7 +38,6 @@ import {
   getBreedGroup,
   getBreedLabel,
   getBreedCare,
-  getAvatarStyle,
   lifeStageOptions,
   maxPhotos,
   parasiteOptions,
@@ -73,7 +71,7 @@ type ReminderView = { id: string; petId: string; type: string; title: string; du
 type ReminderHistoryItem = { id: string; eventType?: string; payload?: { dueAt?: string; completedAt?: string; nextDueAt?: string | null }; createdAt: string };
 type WishlistView = { id: string; petId: string; title: string; category: string; reason?: string; url?: string; priority: string; status: string; created_at?: string };
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; visibility?: 'private' | 'shared' | 'public'; share_token?: string | null; created_at?: string };
-type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; photo_urls?: string[] };
+type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; avatar_source?: 'none' | 'uploaded' | 'generated'; active_avatar_asset_id?: string | null; photo_urls?: string[] };
 type AuthSession = { access_token: string; user: { email?: string } };
 type ObservationView = { id: string; petId?: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
 type ObservationDraft = { mood: string; appetite: string; stool: string; energy: string; note?: string };
@@ -383,11 +381,18 @@ function dbToProfile(payload: any, preferredPetId?: string): Partial<DogProfile>
   if ((!payload?.connected && payload?.mode !== 'demo') || !pet) return null;
   const passport = payload.passport ?? {};
   const social = payload.social ?? {};
+  const avatarSource = pet.avatar_source || pet.avatarSource || (pet.avatar_url || pet.avatarUrl ? 'uploaded' : 'none');
+  const activeAvatarAssetId = pet.active_avatar_asset_id || pet.activeAvatarAssetId;
+  const avatarImageUrl = avatarSource === 'none'
+    ? ''
+    : activeAvatarAssetId
+      ? `/api/v1/pets/${pet.id}/avatar/assets/${activeAvatarAssetId}/render`
+      : avatarSource === 'uploaded' ? pet.avatar_url || pet.avatarUrl || '' : '';
   return {
     backendPetId: pet.id,
-    avatarImageUrl: pet.avatar_url || pet.avatarUrl || '',
-    avatarSource: pet.avatar_url || pet.avatarUrl ? 'uploaded' : 'none',
-    photoUrls: Array.isArray(pet.photo_urls || pet.photoUrls) ? (pet.photo_urls || pet.photoUrls).filter(Boolean) : pet.avatar_url || pet.avatarUrl ? [pet.avatar_url || pet.avatarUrl] : [],
+    avatarImageUrl,
+    avatarSource,
+    photoUrls: avatarSource === 'none' ? [] : Array.isArray(pet.photo_urls || pet.photoUrls) ? (pet.photo_urls || pet.photoUrls).filter(Boolean) : pet.avatar_url || pet.avatarUrl ? [pet.avatar_url || pet.avatarUrl] : [],
     dogName: pet.name || '',
     breedId: pet.breed_id || pet.breedId || 'mixed',
     breedGroupId: pet.breed_group_id || pet.breedGroupId || 'mixed',
@@ -461,6 +466,13 @@ export default function Home() {
   const [profileHydrated, setProfileHydrated] = useState(false);
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
   const [generatedAvatarUrl, setGeneratedAvatarUrl] = useState('');
+  const [avatarDraftAssetId, setAvatarDraftAssetId] = useState('');
+  const [avatarReferenceAssetId, setAvatarReferenceAssetId] = useState('');
+  const [avatarDraftSource, setAvatarDraftSource] = useState<'uploaded' | 'generated' | null>(null);
+  const [avatarOwnerPrompt, setAvatarOwnerPrompt] = useState('');
+  const [avatarConsent, setAvatarConsent] = useState(false);
+  const [avatarComposerOpen, setAvatarComposerOpen] = useState(false);
+  const [avatarCapabilities, setAvatarCapabilities] = useState({ identityEnabled: false, uploadsEnabled: false, generationEnabled: false, providerReady: false });
   const [demoMode, setDemoMode] = useState(false);
   const [notice, setNotice] = useState<Notice>('idle');
   const [error, setError] = useState('');
@@ -1156,6 +1168,12 @@ export default function Home() {
     if (petId) params.set('petId', petId);
     const response = await fetch(`/api/app/bootstrap${params.size ? `?${params.toString()}` : ''}`, { headers });
     const payload = await response.json();
+    setAvatarCapabilities({
+      identityEnabled: payload?.avatarCapabilities?.identityEnabled === true,
+      uploadsEnabled: payload?.avatarCapabilities?.uploadsEnabled === true,
+      generationEnabled: payload?.avatarCapabilities?.generationEnabled === true,
+      providerReady: payload?.avatarCapabilities?.providerReady === true,
+    });
     const dbProfile = dbToProfile(payload, petId);
     const selectedPetId = String(petId || payload.activePetId || dbProfile?.backendPetId || payload.pet?.id || '');
     const belongsToSelectedPet = (item: any) => {
@@ -1163,19 +1181,27 @@ export default function Home() {
       return !selectedPetId || !itemPetId || itemPetId === selectedPetId;
     };
     setDemoMode(payload.mode === 'demo');
-    if (Array.isArray(payload.pets)) setPets(payload.pets.map((pet: any) => ({
+    if (Array.isArray(payload.pets)) setPets(payload.pets.map((pet: any) => {
+      const petAvatarSource = pet.avatar_source || pet.avatarSource || (pet.avatar_url || pet.avatarUrl ? 'uploaded' : 'none');
+      const petActiveAssetId = pet.active_avatar_asset_id || pet.activeAvatarAssetId;
+      return {
       id: String(pet.id),
       name: String(pet.name || 'Собака'),
       breed_id: pet.breed_id || pet.breedId,
       breed_group_id: pet.breed_group_id || pet.breedGroupId,
-      avatar_url: pet.avatar_url || pet.avatarUrl,
-      photo_urls: Array.isArray(pet.photo_urls || pet.photoUrls) ? pet.photo_urls || pet.photoUrls : [],
-    })));
+      avatar_url: petAvatarSource === 'none' ? undefined : petActiveAssetId
+        ? `/api/v1/pets/${pet.id}/avatar/assets/${petActiveAssetId}/render`
+        : petAvatarSource === 'uploaded' ? pet.avatar_url || pet.avatarUrl : undefined,
+      avatar_source: petAvatarSource,
+      active_avatar_asset_id: petActiveAssetId || null,
+      photo_urls: petAvatarSource === 'none' ? [] : Array.isArray(pet.photo_urls || pet.photoUrls) ? pet.photo_urls || pet.photoUrls : [],
+    };
+    }));
     if (dbProfile) {
       setActivePetId(selectedPetId);
       setProfile((current) => {
         const samePet = !petId || current.backendPetId === dbProfile.backendPetId;
-        return { ...current, ...dbProfile, photos: samePet ? current.photos : [], selectedStyle: current.selectedStyle };
+        return { ...current, ...dbProfile, photos: samePet ? current.photos : [], selectedStyle: samePet ? current.selectedStyle : 'city' };
       });
       setReminders((payload.reminders ?? []).filter(belongsToSelectedPet));
       setWishlist((payload.wishlist ?? []).filter(belongsToSelectedPet));
@@ -1306,7 +1332,6 @@ export default function Home() {
     }
     loadPublicDogCard(profile.backendPetId).catch(() => setPublishedPublicCardPath(''));
   }, [profile.backendPetId, session?.access_token, telegramSession.ownerId]);
-  const selectedStyle = useMemo(() => avatarStyles.find((style) => style.id === profile.selectedStyle) ?? avatarStyles[0], [profile.selectedStyle]);
   const selectedBreed = useMemo(() => breedCatalog.find((breed) => breed.id === profile.breedId) ?? breedCatalog[0], [profile.breedId]);
   const selectedBreedCare = useMemo(() => getBreedCare(profile.breedId), [profile.breedId]);
   const selectedBreedGroup = useMemo(() => getBreedGroup(profile.breedGroupId), [profile.breedGroupId]);
@@ -1318,8 +1343,6 @@ export default function Home() {
     return breedCatalog.filter((breed) => breed.groupId === profile.breedGroupId || breed.id === 'mixed' || breed.id === 'custom');
   }, [breedSearch, profile.breedGroupId]);
   const breedLabel = useMemo(() => getBreedLabel(profile), [profile]);
-  const avatarPrompt = useMemo(() => buildAvatarPrompt(profile), [profile]);
-  const hasPhoto = profile.photos.length > 0;
   const avatarReady = avatarState === 'ready';
   const hasDog = Boolean(profile.dogName.trim());
   const activePrimaryRoute: PrimaryRoute = tab === 'calendar' || tab === 'habits' || tab === 'health' || tab === 'assistant'
@@ -1591,6 +1614,14 @@ export default function Home() {
       setPickedZonePoint(null);
       setRoutePoints([]);
       setPublishedPublicCardPath('');
+      setGeneratedAvatarUrl('');
+      setAvatarDraftAssetId('');
+      setAvatarReferenceAssetId('');
+      setAvatarDraftSource(null);
+      setAvatarConsent(false);
+      setAvatarOwnerPrompt('');
+      setAvatarState('idle');
+      setAvatarComposerOpen(false);
       await loadBootstrap(undefined, nextPetId);
     } catch {
       setActivePetId(previousPetId);
@@ -2077,19 +2108,20 @@ export default function Home() {
     setError('');
   }
 
-  async function uploadPublicPhoto(file: File) {
-    if (!session?.access_token) return null;
+  async function uploadPrivateAvatarReference(file: File) {
+    const petId = profile.backendPetId || activePetId;
+    if (!petId) throw new Error('PET_REQUIRED');
     const form = new FormData();
     form.set('photo', file);
-    const response = await fetch('/api/avatar/upload', {
+    const response = await fetch(`/api/v1/pets/${petId}/avatar/assets`, {
       method: 'POST',
+      credentials: 'include',
       headers: authHeaders(),
       body: form,
     });
     const result = await response.json().catch(() => null);
-    if (response.status === 403 && result?.error === 'UPLOADS_DISABLED') return null;
-    if (!response.ok || !result?.publicUrl) throw new Error(result?.error || 'Не удалось загрузить фото');
-    return String(result.publicUrl);
+    if (!response.ok || !result?.asset?.id || !result?.asset?.renderUrl) throw new Error(result?.error || 'AVATAR_UPLOAD_FAILED');
+    return result.asset as { id: string; renderUrl: string };
   }
 
   function updateBreedGroup(value: BreedGroupId) {
@@ -2098,65 +2130,142 @@ export default function Home() {
   }
 
   async function handlePhotos(event: ChangeEvent<HTMLInputElement>) {
+    if (!avatarCapabilities.uploadsEnabled) {
+      event.target.value = '';
+      return setError('Приватная загрузка фото пока готовится. Текущий образ не изменён.');
+    }
     const files = Array.from(event.target.files ?? []);
     const imageFiles = files.filter((file) => file.type.startsWith('image/'));
     if (!imageFiles.length) return setError('Нужно фото собаки: JPG, PNG или HEIC.');
     if (imageFiles.find((file) => file.size > 8 * 1024 * 1024)) return setError('Фото больше 8 МБ. Выбери файл поменьше.');
-    const [photos, localAvatar] = await Promise.all([
-      filesToPhotos(imageFiles, maxPhotos),
-      fileToLocalAvatarDataUrl(imageFiles[0]),
-    ]);
-    setGeneratedAvatarUrl(''); setDemoMode(false); setAvatarState('ready');
-    updateProfile({ photos, avatarImageUrl: localAvatar, avatarSource: 'uploaded', createdAt: new Date().toISOString() });
-    if (session?.access_token) {
+    const localAvatar = await fileToLocalAvatarDataUrl(imageFiles[0]);
+    setGeneratedAvatarUrl(localAvatar); setDemoMode(false); setAvatarState('ready');
+    setAvatarDraftAssetId('local');
+    setAvatarDraftSource('uploaded');
+    if (profile.backendPetId || activePetId) {
       try {
-        const avatarBlob = await (await fetch(localAvatar)).blob();
-        const publicUrl = await uploadPublicPhoto(new File([avatarBlob], `${imageFiles[0].name || 'dog-photo'}.jpg`, { type: avatarBlob.type || 'image/jpeg' }));
-        if (publicUrl) {
-          updateProfile({ avatarImageUrl: publicUrl, photoUrls: [publicUrl], avatarSource: 'uploaded' });
-          setNotice('saved');
-          window.setTimeout(() => setNotice('idle'), 1400);
-        }
+        const asset = await uploadPrivateAvatarReference(imageFiles[0]);
+        setAvatarReferenceAssetId(asset.id);
+        setAvatarDraftAssetId(asset.id);
+        setGeneratedAvatarUrl(asset.renderUrl);
       } catch (uploadError) {
-        setError('Фото видно на этом устройстве. Сохранение фото пока не сработало.');
+        const code = uploadError instanceof Error ? uploadError.message : '';
+        setGeneratedAvatarUrl('');
+        setAvatarDraftAssetId('');
+        setAvatarDraftSource(null);
+        setError(code === 'UPLOADS_DISABLED'
+          ? 'Загрузка фото пока выключена. Текущий образ не изменён.'
+          : 'Приватное сохранение не сработало. Текущий образ не изменён.');
       }
     }
     event.target.value = '';
   }
 
   async function createAvatar(overrides: Partial<DogProfile> = {}) {
+    const petId = profile.backendPetId || activePetId;
+    if (!petId) return setError('Сначала сохрани профиль собаки.');
+    if (!avatarConsent) return setError('Сначала подтверди передачу описания и выбранного фото сервису генерации.');
     const avatarProfile = { ...profile, ...overrides };
-    const nextAvatarPrompt = buildAvatarPrompt(avatarProfile);
-    setError(''); setGeneratedAvatarUrl(''); setDemoMode(false); setAvatarState('rendering'); updateProfile({ avatarPrompt: nextAvatarPrompt });
+    setError(''); setDemoMode(false); setAvatarState('rendering');
     try {
-      const form = new FormData();
-      if (avatarProfile.photos.length) {
-        const source = avatarProfile.photos[0];
-        const blob = await (await fetch(source.dataUrl)).blob();
-        form.set('photo', new File([blob], source.name || 'dog-reference.png', { type: blob.type || 'image/png' }));
-      }
-      form.set('prompt', nextAvatarPrompt); form.set('dogName', avatarProfile.dogName); form.set('breedId', avatarProfile.breedId); form.set('styleId', avatarProfile.selectedStyle);
-      const response = await fetch('/api/avatar/generate', { method: 'POST', body: form });
-      const result = await response.json();
-      if (!response.ok || !result.imageUrl) throw new Error('generation unavailable');
+      const idempotencyKey = `avatar:${petId}:${crypto.randomUUID()}`;
+      const mode = avatarReferenceAssetId ? 'image_to_image' : 'text_to_image';
+      const response = await fetch(`/api/v1/pets/${petId}/avatar/jobs`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey, ...authHeaders() },
+        body: JSON.stringify({
+          mode,
+          referenceAssetId: avatarReferenceAssetId || undefined,
+          styleId: avatarProfile.selectedStyle,
+          ownerPrompt: avatarOwnerPrompt,
+          consentVersion: 'avatar-provider-v1',
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.asset?.id || !result?.asset?.renderUrl) throw new Error(result?.error || 'AVATAR_GENERATION_FAILED');
       await new Promise<void>((resolve, reject) => {
         const image = new Image();
         image.onload = () => resolve();
         image.onerror = () => reject(new Error('avatar image failed to load'));
-        image.src = result.imageUrl;
+        image.src = result.asset.renderUrl;
       });
-      setGeneratedAvatarUrl(result.imageUrl); setAvatarState('ready');
-      if (String(result.imageUrl).length < 450_000) {
-        updateProfile({
-          avatarImageUrl: result.imageUrl,
-          avatarSource: 'generated',
-          photoUrls: /^https?:\/\//i.test(result.imageUrl) ? [result.imageUrl] : profile.photoUrls,
-        });
-      }
-    } catch {
-      setDemoMode(true); setAvatarState('ready');
-      setError('Генерация временно недоступна — показываю пример аватара, не результат по фото.');
+      setGeneratedAvatarUrl(result.asset.renderUrl);
+      setAvatarDraftAssetId(result.asset.id);
+      setAvatarDraftSource('generated');
+      setAvatarState('ready');
+    } catch (generationError) {
+      setAvatarState('idle');
+      const code = generationError instanceof Error ? generationError.message : '';
+      const messages: Record<string, string> = {
+        AVATAR_GENERATION_DISABLED: 'Создание образа пока выключено.',
+        AVATAR_PROVIDER_DISABLED: 'Генератор пока не готов. Фото и профиль работают без него.',
+        AVATAR_OWNER_QUOTA: 'Лимит генераций на этот час исчерпан. Попробуй позже.',
+        AVATAR_DAILY_BUDGET_REACHED: 'Дневной лимит генератора исчерпан. Списаний не будет.',
+        AVATAR_MODERATION_REJECTED: 'Это описание нельзя использовать. Измени формулировку.',
+        AVATAR_PROVIDER_TIMEOUT: 'Генератор не ответил. Черновик не применён — можно повторить.',
+      };
+      setError(messages[code] || 'Образ не создался. Ничего не применено — можно повторить.');
     }
+  }
+
+  async function activateAvatarDraft() {
+    const petId = profile.backendPetId || activePetId;
+    if (!avatarDraftAssetId || !avatarDraftSource) return;
+    if (!petId || avatarDraftAssetId === 'local') {
+      updateProfile({ avatarImageUrl: generatedAvatarUrl, avatarSource: avatarDraftSource });
+      setAvatarDraftAssetId('');
+      setAvatarDraftSource(null);
+      return;
+    }
+    try {
+      const response = await fetch(`/api/v1/pets/${petId}/avatar/assets/${avatarDraftAssetId}/activate`, {
+        method: 'POST', credentials: 'include', headers: authHeaders(),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.error || 'AVATAR_ACTIVATION_FAILED');
+      updateProfile({ avatarImageUrl: generatedAvatarUrl, avatarSource: avatarDraftSource });
+      setAvatarDraftAssetId('');
+      setAvatarDraftSource(null);
+      setNotice('saved');
+      window.setTimeout(() => setNotice('idle'), 1400);
+    } catch {
+      setError('Не удалось применить образ. Черновик сохранён, можно повторить.');
+    }
+  }
+
+  async function useNoAvatar() {
+    if (profile.avatarSource !== 'none' && !window.confirm(`Убрать текущий образ ${profile.dogName || 'собаки'}? Его можно будет вернуть кнопкой «Вернуть предыдущий».`)) return;
+    const petId = profile.backendPetId || activePetId;
+    if (petId) {
+      const response = await fetch(`/api/v1/pets/${petId}/avatar/identity`, {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ action: 'none' }),
+      });
+      if (!response.ok) return setError('Не удалось убрать образ. Попробуй ещё раз.');
+    }
+    setGeneratedAvatarUrl('');
+    setAvatarDraftAssetId('');
+    setAvatarReferenceAssetId('');
+    setAvatarDraftSource(null);
+    updateProfile({ avatarImageUrl: '', avatarSource: 'none', photoUrls: [] });
+    setAvatarComposerOpen(false);
+  }
+
+  async function rollbackAvatar() {
+    const petId = profile.backendPetId || activePetId;
+    if (!petId) return;
+    const response = await fetch(`/api/v1/pets/${petId}/avatar/identity`, {
+      method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ action: 'rollback' }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) return setError(result?.error === 'AVATAR_ROLLBACK_UNAVAILABLE' ? 'Предыдущего образа пока нет.' : 'Не удалось вернуть предыдущий образ.');
+    const renderUrl = result.activeAssetId ? `/api/v1/pets/${petId}/avatar/assets/${result.activeAssetId}/render` : '';
+    setGeneratedAvatarUrl('');
+    setAvatarDraftAssetId('');
+    setAvatarDraftSource(null);
+    setAvatarReferenceAssetId('');
+    setAvatarComposerOpen(false);
+    updateProfile({ avatarImageUrl: renderUrl, avatarSource: result.source || 'none' });
   }
 
   async function savePrivateProfile() {
@@ -4081,7 +4190,51 @@ export default function Home() {
 
           <details className="profile-details smart-section"><summary><span>06</span><div><b>Фото и заметки</b></div></summary>
             <div className="details-body">
-              <div className="upload-inline"><label><input type="file" accept="image/*" multiple onChange={handlePhotos} /><span>{profile.avatarSource === 'uploaded' ? 'Фото уже выбрано · заменить' : hasPhoto ? 'Фото выбрано · сделать портретом' : 'Добавить фото'}</span></label><button onClick={() => createAvatar()}>{avatarState === 'rendering' ? 'Делаю портрет…' : 'Сделать портрет'}</button></div>
+              <section className="dog-identity-editor" aria-labelledby="dog-identity-title">
+                <div className="dog-identity-heading">
+                  <div><h3 id="dog-identity-title">Образ {profile.dogName || 'собаки'}</h3></div>
+                  <span className={`identity-source-badge source-${profile.avatarSource}`}>{profile.avatarSource === 'uploaded' ? 'ваше фото' : profile.avatarSource === 'generated' ? 'созданный образ' : 'без изображения'}</span>
+                </div>
+                <p className="dog-identity-lead">Вы выбираете, как выглядит профиль. Псё ничего не создаёт и не применяет автоматически.</p>
+
+                <div className="identity-source-grid" role="group" aria-label="Источник образа">
+                  <label className={`identity-source-action ${!avatarCapabilities.uploadsEnabled ? 'is-disabled' : ''}`} aria-disabled={!avatarCapabilities.uploadsEnabled}>
+                    <input type="file" disabled={!avatarCapabilities.uploadsEnabled} accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={handlePhotos} />
+                    <UploadSimple size={22} weight="bold" aria-hidden="true" /><b>Использовать фото</b><small>{avatarCapabilities.uploadsEnabled ? 'Приватная загрузка и предпросмотр' : 'Загрузка готовится'}</small>
+                  </label>
+                  <button className="identity-source-action" type="button" disabled={!avatarCapabilities.identityEnabled} onClick={() => { setAvatarComposerOpen(true); window.setTimeout(() => document.getElementById('avatar-owner-prompt')?.focus(), 0); }}>
+                    <Sparkle size={22} weight="fill" aria-hidden="true" /><b>Создать образ</b><small>По фото или вашему описанию</small>
+                  </button>
+                  <button className="identity-source-action" type="button" disabled={!avatarCapabilities.identityEnabled} onClick={useNoAvatar}>
+                    <PawPrint size={22} weight="duotone" aria-hidden="true" /><b>Без изображения</b><small>Нейтральный профиль</small>
+                  </button>
+                </div>
+
+                {avatarComposerOpen && <div className="identity-generator-settings" aria-label="Настройка генератора">
+                  <div className="section-title"><div><h3>Создать образ</h3></div><span>{avatarReferenceAssetId ? 'по фото' : 'по описанию'}</span></div>
+                  <label htmlFor="avatar-owner-prompt">Что важно сохранить во внешности
+                    <textarea id="avatar-owner-prompt" maxLength={280} value={avatarOwnerPrompt} onChange={(event) => setAvatarOwnerPrompt(event.target.value)} placeholder="Например: одно ухо стоит, белое пятно на груди" />
+                    <small>{avatarOwnerPrompt.length} / 280</small>
+                  </label>
+                  {!avatarReferenceAssetId && <p className="identity-feature-note">Без фото получится художественный образ по вашему описанию — не точная копия собаки.</p>}
+                  <div className="avatar-style-picker" role="group" aria-label="Стиль образа">
+                    {avatarStyles.map((style) => <button key={style.id} type="button" className={profile.selectedStyle === style.id ? 'active' : ''} onClick={() => updateProfile({ selectedStyle: style.id })} aria-pressed={profile.selectedStyle === style.id}>{style.title}</button>)}
+                  </div>
+                  <label className="identity-consent"><input type="checkbox" checked={avatarConsent} onChange={(event) => setAvatarConsent(event.target.checked)} /><span>Передать выбранное фото и описание OpenAI только для создания вариантов. Псё хранит результат приватно; применю его только я.</span></label>
+                  <button className="primary full" type="button" aria-busy={avatarState === 'rendering'} disabled={avatarState === 'rendering' || !avatarConsent || !avatarCapabilities.generationEnabled} onClick={() => createAvatar()}>{avatarState === 'rendering' ? 'Создаю черновик…' : avatarCapabilities.generationEnabled ? 'Создать образ' : 'Генератор пока выключен'}</button>
+                  {!avatarCapabilities.generationEnabled && <p className="identity-feature-note">Фото и нейтральный профиль доступны независимо от генератора. Платных вызовов сейчас нет.</p>}
+                </div>}
+
+                {error && <p className="identity-inline-error" role="alert">{error}</p>}
+
+                {avatarDraftAssetId && avatarDraftSource && <div className="identity-preview" aria-live="polite">
+                  <div><h3>Предпросмотр для {profile.dogName}</h3><p>Ещё не применено. {avatarDraftSource === 'uploaded' ? 'Ваше фото обработано и сохранено приватно.' : 'Это созданный вариант. Он не заменит текущий образ без подтверждения.'}</p></div>
+                  <GeneratedAvatar profile={{ ...profile, avatarSource: avatarDraftSource }} ready imageUrl={generatedAvatarUrl} size="large" />
+                  <div className="identity-preview-actions"><button className="primary" type="button" onClick={activateAvatarDraft}>Использовать этот образ</button><button className="secondary" type="button" onClick={() => { setAvatarDraftAssetId(''); setAvatarDraftSource(null); setAvatarReferenceAssetId(''); setGeneratedAvatarUrl(''); setAvatarState('idle'); }}>Не использовать</button></div>
+                </div>}
+
+                {avatarCapabilities.identityEnabled && profile.backendPetId && <div className="identity-history-actions"><button className="secondary" type="button" onClick={rollbackAvatar}>Вернуть предыдущий</button>{profile.avatarSource !== 'none' && <button className="secondary" type="button" onClick={useNoAvatar}>Убрать изображение</button>}</div>}
+              </section>
               {doneReminders.length === 0 && <article className="empty-state"><b>Пока заметок нет</b><p>Сохрани важное как дело в плане: после выполнения оно останется в истории ухода.</p></article>}
               {doneReminders.length > 0 && <div className="reminder-list">{doneReminders.slice(0, 5).map((reminder) => <article key={reminder.id} className="reminder-card done"><div><b>{reminder.title}</b><p>{new Date(reminder.completedAt || reminder.dueAt).toLocaleDateString('ru-RU')} · готово</p></div><div><button onClick={() => createReminder(reminder.title, reminder.type, 0)}>Создать снова</button></div></article>)}</div>}
               <button className="secondary full" onClick={() => setTab('calendar')}>Добавить дело в план</button>

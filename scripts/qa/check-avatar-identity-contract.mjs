@@ -1,0 +1,60 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const read = (path) => fs.readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
+const legacyGenerate = read('app/api/avatar/generate/route.ts');
+const legacyUpload = read('app/api/avatar/upload/route.ts');
+const jobRoute = read('app/api/v1/pets/[petId]/avatar/jobs/route.ts');
+const uploadRoute = read('app/api/v1/pets/[petId]/avatar/assets/route.ts');
+const activateRoute = read('app/api/v1/pets/[petId]/avatar/assets/[assetId]/activate/route.ts');
+const migration = read('supabase/migrations/20260821213000_avatar_identity_lifecycle.sql');
+const page = read('app/page.tsx');
+const ownerContext = read('lib/server/avatarIdentity.ts');
+const bootstrap = read('app/api/app/bootstrap/route.ts');
+const retention = read('app/api/internal/avatar-retention/route.ts');
+const privacy = read('app/legal/privacy/page.tsx');
+const vercel = read('vercel.json');
+
+assert.match(legacyGenerate, /AVATAR_API_MOVED/);
+assert.match(legacyUpload, /AVATAR_API_MOVED/);
+assert.doesNotMatch(legacyGenerate + legacyUpload + jobRoute, /pollinations/i);
+for (const source of [jobRoute, uploadRoute, activateRoute]) {
+  assert.match(source, /getAvatarOwnerContext/);
+  assert.match(source, /requireOwnedPet/);
+}
+assert.match(jobRoute, /AVATAR_OPENAI_ENABLED/);
+assert.match(jobRoute, /AVATAR_DAILY_BUDGET_CENTS/);
+assert.match(jobRoute, /idempotency/i);
+assert.match(jobRoute, /response_format[^\n]*b64_json/);
+assert.doesNotMatch(jobRoute, /fetch\(image\.url/);
+assert.match(jobRoute, /avatar-provider-v1|avatarConsentVersion/);
+assert.match(migration, /pet-avatar-private/);
+assert.match(migration, /active_avatar_asset_id/);
+assert.match(migration, /pet_avatar_selections/);
+assert.match(migration, /activate_pet_avatar_for_owner/);
+assert.match(migration, /claim_avatar_job_for_owner/);
+assert.match(migration, /claim_avatar_upload_for_owner/);
+assert.match(migration, /finalize_avatar_upload_for_owner/);
+assert.match(migration, /AVATAR_UPLOAD_IN_PROGRESS|status = 'ready'/);
+assert.match(migration, /pg_advisory_xact_lock/);
+assert.match(migration, /drop policy if exists "avatar jobs owner"/);
+assert.match(migration, /AVATAR_OWNER_PET_MISMATCH/);
+assert.match(migration, /set avatar_source = 'uploaded'/);
+assert.match(ownerContext, /principalsAgree/);
+assert.match(ownerContext, /const supabase = getSupabaseAdmin\(\)/);
+assert.match(bootstrap, /avatarCapabilities/);
+assert.match(retention, /CRON_SECRET/);
+assert.match(retention, /backlogRemaining/);
+assert.match(retention, /avatar_upload_reservations/);
+assert.match(vercel, /avatar-retention/);
+assert.match(privacy, /OpenAI/);
+assert.match(privacy, /24 часов/);
+assert.match(page, /Использовать фото/);
+assert.match(page, /Создать образ/);
+assert.match(page, /Без изображения/);
+assert.match(page, /Использовать этот образ/);
+assert.match(page, /window\.confirm/);
+assert.match(page, /setGeneratedAvatarUrl\(''\)/);
+assert.doesNotMatch(page, /показываю пример аватара/);
+
+console.log('avatar identity contract ok');

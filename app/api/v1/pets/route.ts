@@ -4,6 +4,7 @@ import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
 import { createPetProfileIdempotently, mapPetProfileDto, savePetProfile } from '@/lib/server/profileService';
 import { problem, validateCreatePetCommand } from '@/packages/contracts';
+import { purgeAvatarObjectsForPets } from '@/lib/server/avatarIdentity';
 
 export const runtime = 'nodejs';
 
@@ -129,6 +130,12 @@ export async function DELETE(request: Request) {
     return NextResponse.json(payload, { status: payload.status });
   }
   if (!supabase) return NextResponse.json({ error: 'STORAGE_REQUIRED' }, { status: 503 });
+
+  try {
+    await purgeAvatarObjectsForPets({ supabase, ownerId, petIds: [petId] });
+  } catch {
+    return NextResponse.json({ error: 'PET_AVATAR_PURGE_FAILED' }, { status: 500 });
+  }
 
   const deleted = await supabase
     .from('pets')

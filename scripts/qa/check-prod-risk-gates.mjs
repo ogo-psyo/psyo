@@ -21,6 +21,9 @@ for (const line of [
   'AI_QA_ENABLED=false',
   'ASSISTANT_GROQ_ENABLED=false',
   'AVATAR_GENERATION_ENABLED=false',
+  'AVATAR_OPENAI_ENABLED=false',
+  'AVATAR_DAILY_BUDGET_CENTS=0',
+  'AVATAR_OPENAI_ESTIMATED_COST_CENTS=0',
   'UPLOADS_ENABLED=false',
 ]) {
   if (!files.env.includes(line)) failures.push(`.env.example must keep risky prod flag disabled by default: ${line}`);
@@ -40,20 +43,18 @@ for (const token of [
 
 const avatarGenerate = readFileSync('app/api/avatar/generate/route.ts', 'utf8');
 const avatarUpload = readFileSync('app/api/avatar/upload/route.ts', 'utf8');
+const avatarJobs = readFileSync('app/api/v1/pets/[petId]/avatar/jobs/route.ts', 'utf8');
+const avatarAssets = readFileSync('app/api/v1/pets/[petId]/avatar/assets/route.ts', 'utf8');
 const telegramWebhook = readFileSync('app/api/telegram/webhook/route.ts', 'utf8');
 
-for (const token of [
-  'rc1Config.flags.avatar_generation_enabled',
-  "error: 'AUTH_REQUIRED'",
-]) {
-  if (!avatarGenerate.includes(token)) failures.push(`avatar generate route missing release/auth gate token: ${token}`);
+if (!avatarGenerate.includes('AVATAR_API_MOVED')) failures.push('legacy avatar generate route must stay retired');
+for (const token of ['rc1Config.flags.avatar_generation_enabled', 'AVATAR_OPENAI_ENABLED', 'AVATAR_DAILY_BUDGET_CENTS', 'getAvatarOwnerContext', 'requireOwnedPet']) {
+  if (!avatarJobs.includes(token)) failures.push(`pet-bound avatar job route missing release/auth gate token: ${token}`);
 }
 
-for (const token of [
-  'rc1Config.flags.uploads_enabled',
-  "error: 'UPLOADS_DISABLED'",
-]) {
-  if (!avatarUpload.includes(token)) failures.push(`avatar upload route missing upload gate token: ${token}`);
+if (!avatarUpload.includes('AVATAR_API_MOVED')) failures.push('legacy avatar upload route must stay retired');
+for (const token of ['rc1Config.flags.uploads_enabled', "error: 'UPLOADS_DISABLED'", 'getAvatarOwnerContext', 'requireOwnedPet']) {
+  if (!avatarAssets.includes(token)) failures.push(`pet-bound avatar upload route missing release/auth gate token: ${token}`);
 }
 
 if (!telegramWebhook.includes("process.env.VERCEL_ENV === 'production'") || !telegramWebhook.includes('return !isProduction')) {

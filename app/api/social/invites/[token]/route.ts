@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { inviteAvailability } from '@/lib/socialCore';
 import { readIdempotencyKey, socialRequestContext, socialStorageError } from '@/lib/server/socialHttp';
-import { consumeFriendInvite, hashInviteToken, requireOwnedPet } from '@/lib/server/socialService';
+import { consumeFriendInvite, hashInviteToken, requireOwnedPet, socialAvatarUrl } from '@/lib/server/socialService';
 
 export const runtime = 'nodejs';
 
@@ -10,7 +10,7 @@ async function findInvite(request: Request, token: string) {
   if ('response' in context) return { ok: false as const, response: context.response };
   const { data, error } = await context.supabase
     .from('social_friend_invites')
-    .select('id, inviter_owner_id, inviter_pet_id, scenario, expires_at, used_at, pets!social_friend_invites_inviter_pet_id_fkey(name, avatar_url)')
+    .select('id, inviter_owner_id, inviter_pet_id, scenario, expires_at, used_at, pets!social_friend_invites_inviter_pet_id_fkey(name, avatar_url, avatar_source, active_avatar_asset_id)')
     .eq('token_hash', hashInviteToken(token))
     .maybeSingle();
   if (error) return { ok: false as const, response: socialStorageError() };
@@ -28,7 +28,7 @@ export async function GET(request: Request, routeContext: { params: Promise<{ to
   return NextResponse.json({
     invite: {
       scenario: context.invite.scenario,
-      pet: { name: pet?.name ?? null, avatarUrl: pet?.avatar_url ?? null },
+      pet: { name: pet?.name ?? null, avatarUrl: pet ? socialAvatarUrl(pet) : null },
       expiresAt: context.invite.expires_at,
     },
     contactVisibility: 'hidden_until_mutual_consent',

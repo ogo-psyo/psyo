@@ -7,6 +7,7 @@ import {
   excludedOwnerIds,
   requireOwnedPet,
   socialRequestFingerprint,
+  socialAvatarUrl,
 } from '@/lib/server/socialService';
 
 export const runtime = 'nodejs';
@@ -168,12 +169,12 @@ export async function GET(request: Request) {
     const otherPetIds = [...new Set((data ?? []).map((row) => row.sender_pet_id === petId ? row.recipient_pet_id : row.sender_pet_id))];
     const requestPetIds = [...new Set((data ?? []).flatMap((row) => [row.sender_pet_id, row.recipient_pet_id]))];
     const [petsLookup, discoveryLookup] = await Promise.all([
-      otherPetIds.length ? context.supabase.from('pets').select('id, name, avatar_url').in('id', otherPetIds) : Promise.resolve({ data: [], error: null }),
+      otherPetIds.length ? context.supabase.from('pets').select('id, name, avatar_url, avatar_source, active_avatar_asset_id').in('id', otherPetIds) : Promise.resolve({ data: [], error: null }),
       requestPetIds.length ? context.supabase.from('social_discovery_profiles').select('pet_id, discoverable').in('pet_id', requestPetIds) : Promise.resolve({ data: [], error: null }),
     ]);
     if (petsLookup.error || discoveryLookup.error) return socialStorageError();
     const otherPets = petsLookup.data;
-    const petsById = new Map((otherPets ?? []).map((pet) => [pet.id, { name: pet.name, avatar_url: pet.avatar_url }]));
+    const petsById = new Map((otherPets ?? []).map((pet) => [pet.id, { name: pet.name, avatar_url: socialAvatarUrl(pet) }]));
     const discoverablePets = new Set((discoveryLookup.data ?? []).filter((item) => item.discoverable).map((item) => item.pet_id));
     const requests = [];
     for (const row of data ?? []) {

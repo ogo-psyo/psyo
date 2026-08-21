@@ -3,6 +3,7 @@ import { clearAppSessionCookie, getAppSessionFromRequest } from '@/lib/server/ap
 import { getRequestAuth } from '@/lib/server/auth';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
 import { problem } from '@/packages/contracts';
+import { purgeAvatarObjectsForPets } from '@/lib/server/avatarIdentity';
 
 export const runtime = 'nodejs';
 
@@ -23,6 +24,12 @@ export async function DELETE(request: Request) {
 
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ error: 'STORAGE_REQUIRED' }, { status: 503 });
+
+  try {
+    await purgeAvatarObjectsForPets({ supabase, ownerId });
+  } catch {
+    return NextResponse.json({ error: 'ACCOUNT_AVATAR_PURGE_FAILED' }, { status: 500 });
+  }
 
   const deleted = await supabase.auth.admin.deleteUser(ownerId);
   if (deleted.error) return NextResponse.json({ error: deleted.error.message }, { status: 500 });
