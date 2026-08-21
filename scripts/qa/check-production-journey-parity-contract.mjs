@@ -8,6 +8,10 @@ function requireText(text, marker, label) {
   if (!text.includes(marker)) throw new Error(`${label}: missing ${marker}`);
 }
 
+function rejectText(text, marker, label) {
+  if (text.includes(marker)) throw new Error(`${label}: found removed ${marker}`);
+}
+
 const page = source('app/page.tsx');
 const shell = source('components/journey/ProductionJourney.tsx');
 const css = source('components/journey/production-journey.css');
@@ -18,7 +22,11 @@ for (const route of ['today', 'profile', 'map', 'nearby', 'things']) {
   requireText(page, `<ProductionJourney route="${route}"`, `production route ${route}`);
 }
 requireText(page, '<ProductionAssistantSheet', 'assistant overlay');
-requireText(shell, 'production-journey-orbit', 'accepted Today composition');
+requireText(shell, 'production-today-summary', 'useful Today summary');
+requireText(shell, 'production-today-history', 'real Today history');
+requireText(page, 'profileEntries={profileJourneyEntries}', 'Today real-event data');
+rejectText(shell, 'v3-orbit-bubble', 'non-interactive Today badges');
+rejectText(shell, 'Открыть Гав', 'duplicate Today navigation');
 requireText(shell, 'profile-life-card', 'accepted profile composition');
 requireText(shell, 'data-slot="card"', 'structured profile card');
 requireText(shell, 'data-slot="item-group"', 'structured profile actions');

@@ -3,7 +3,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import {
   ArrowRight,
-  BellSimple,
   CalendarCheck,
   CaretRight,
   ChatCircleDots,
@@ -77,6 +76,7 @@ type ProductionJourneyProps = BaseProps & {
   careDetail?: string;
   careDone?: boolean;
   onCareAction?: () => void;
+  voiceCapture?: ReactNode;
   nearbyTitle?: string;
   nearbyDetail?: string;
   documentCount?: number;
@@ -228,25 +228,34 @@ function Header({ dogName, title, detail, avatar, onOpenProfile }: { dogName: st
 
 function TodayScreen(props: ProductionJourneyProps) {
   const careTitle = props.careTitle || 'Сегодня всё сделано';
-  const nearbyTitle = props.nearbyTitle || 'Дать Гав';
+  const recentEntries = (props.profileEntries || []).slice(0, 3);
+  const entryIcon = (kind: JourneyProfileEntry['kind']) => kind === 'document'
+    ? <FilePdf weight="duotone" />
+    : kind === 'care'
+      ? <Check weight="bold" />
+      : <ChatCircleDots weight="duotone" />;
   return <main className="v3-screen v3-all production-journey-screen" data-production-journey="today">
     <Header dogName={props.dogName} title={`${props.dogName} сегодня`} detail="ваш день вместе" avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
-    <section className="v3-orbit production-journey-orbit" aria-label={`Главное о ${props.dogName} сегодня`}>
-      <div className="v3-orbit-halo" />
-      <div className="v3-orbit-copy"><span>{props.careDone ? 'всё спокойно' : 'одно дело'}</span><strong>{props.careDone ? `У ${props.dogName} хороший день` : `День ${props.dogName} под контролем`}</strong><p>{props.careDone ? 'Можно придумать прогулку.' : 'Главное уже рядом. После него можно гулять.'}</p></div>
+    <section className={`production-today-summary${props.careDone ? ' is-complete' : ''}`} aria-labelledby="production-today-summary-title">
+      <div className="production-today-summary-copy">
+        <h2 id="production-today-summary-title">{props.careDone ? 'На сегодня всё сделано' : careTitle}</h2>
+        <p>{props.careDone ? 'Запланированных дел не осталось.' : props.careDetail || 'Ближайшее дело уже в плане.'}</p>
+        {props.careDone
+          ? <span className="production-today-complete"><Check weight="bold" /> День свободен от обязательных дел</span>
+          : <button type="button" onClick={props.onCareAction}><Check weight="bold" /> Отметить выполненным</button>}
+      </div>
       <DogAvatar avatar={props.avatar} />
-      <div className="v3-orbit-bubble bubble-care"><BellSimple weight="fill" /><b>{props.careDone ? 'готово' : 'сегодня'}</b><span>{careTitle}</span></div>
-      <div className="v3-orbit-bubble bubble-woof"><span className="v3-wave">)))</span><b>Гав</b><span>{nearbyTitle}</span></div>
     </section>
-    <section className="v3-now">
-      <div><span>Главное сейчас</span><h2>{careTitle}</h2><p>{props.careDetail || 'Открой план и добавь ближайшее дело'}</p></div>
-      <button type="button" onClick={props.onCareAction}><Check weight="bold" /> {props.careDone ? 'Открыть' : 'Готово'}</button>
+    {props.voiceCapture}
+    <section className="production-today-history" aria-labelledby="production-today-history-title">
+      <header><h2 id="production-today-history-title">Последнее в истории</h2></header>
+      {recentEntries.length ? <div className="production-today-history-list">{recentEntries.map((entry) => {
+        const content = <><span className={`production-today-history-icon ${entry.kind}`}>{entryIcon(entry.kind)}</span><span className="production-today-history-copy"><b>{entry.title}</b><small>{entry.detail}</small></span><time>{entry.when}</time></>;
+        if (entry.href) return <a key={entry.id} href={entry.href}>{content}</a>;
+        if (entry.onOpen) return <button key={entry.id} type="button" onClick={entry.onOpen}>{content}</button>;
+        return <div key={entry.id}>{content}</div>;
+      })}</div> : <p className="production-today-history-empty">Пока без новых записей. Здесь появятся только реальные события — выполненные дела, наблюдения и документы.</p>}
     </section>
-    <section className="v3-discovery">
-      <div className="v3-discovery-art"><span /><span /><span /></div>
-      <div><span>Живой сигнал</span><h2>{nearbyTitle}</h2><p>{props.nearbyDetail || 'Посмотри, кто хочет гулять рядом'}</p><button type="button" onClick={() => props.onNavigate('nearby')}>Открыть Гав <ArrowRight weight="bold" /></button></div>
-    </section>
-    <section className="v3-recent"><div><span>Недавно</span><b>{props.latestDocument || 'Добавить анализ из клиники'}</b><small>{props.latestDocumentDetail || 'PDF или фото останутся в истории собаки'}</small></div><FilePdf weight="duotone" /></section>
     {props.children}
   </main>;
 }

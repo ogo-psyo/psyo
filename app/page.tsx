@@ -6,6 +6,7 @@ import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { PaperSheet, WatercolorScreen } from '@/components/watercolor';
 import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
 import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
+import { VoiceObservationCapture } from '@/components/journey/VoiceObservationCapture';
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
 import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';
 import { RouteDeleteDialog } from '@/components/journey/RouteDeleteDialog';
@@ -60,6 +61,7 @@ import { buildAppReadiness, type ReadinessLevel } from '@/lib/readiness';
 import { buildTodayCareView } from '@/lib/today';
 import { normalizeOwnerRoutes, removeOwnerRoute, upsertOwnerRoute, type OwnerRouteView } from '@/lib/mapUi';
 import { rc1Config } from '@/lib/rc1';
+import { ingestionFingerprint, type ObservationCandidate } from '@/lib/observationIngestion';
 import type { CandidateGroup, CoarseLocation, SocialProfile, SocialScenario, WalkPace, WalkSignal } from '@/lib/socialCore';
 import type { ActionSuggestion } from '@/packages/contracts';
 
@@ -1863,6 +1865,48 @@ export default function Home() {
     }
   }
 
+  async function transcribeVoiceObservation(audio: Blob) {
+    const form = new FormData();
+    form.set('audio', new File([audio], 'pso-voice.webm', { type: audio.type || 'audio/webm' }));
+    let response: Response;
+    try {
+      response = await fetch('/api/stt/transcribe', {
+        method: 'POST',
+        credentials: 'include',
+        headers: authHeaders(),
+        body: form,
+      });
+    } catch {
+      throw new Error('NETWORK_ERROR');
+    }
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || typeof payload.transcript !== 'string') throw new Error(String(payload.error || 'STT_PROVIDER_UNAVAILABLE'));
+    return { transcript: payload.transcript, durationSeconds: Number(payload.durationSeconds) || 0 };
+  }
+
+  async function saveVoiceObservationCandidates(candidates: ObservationCandidate[]) {
+    if (!candidates.length) throw new Error('EMPTY_CANDIDATE_BATCH');
+    if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) throw new Error('AUTH_REQUIRED');
+    const captureId = candidates[0].captureId;
+    const scope = `observation:voice:${captureId}:${ingestionFingerprint(candidates)}`;
+    const response = await fetch('/api/observations/voice', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+      body: JSON.stringify({
+        petId: profile.backendPetId,
+        candidates,
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(String(payload.error || 'OBSERVATION_SAVE_FAILED'));
+    const saved = normalizeObservation(payload.observation || payload);
+    if (!saved) throw new Error('OBSERVATION_SAVE_FAILED');
+    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
+    finishCareMutation(scope);
+    await loadRealModules(profile.backendPetId);
+  }
+
   function startObservationEdit(observation: ObservationView) {
     setEditingObservationId(observation.id);
     setObservationEditDraft({
@@ -3307,15 +3351,17 @@ export default function Home() {
           careTitle={todayCare.title}
           careDetail={todayCare.detail}
           careDone={!todayCare.reminderId}
+          profileEntries={profileJourneyEntries}
+          voiceCapture={<VoiceObservationCapture
+            petId={profile.backendPetId || activePetId}
+            petName={profile.dogName}
+            authorId={telegramSession.ownerId || session?.user.email || 'owner'}
+            onTranscribe={transcribeVoiceObservation}
+            onSave={saveVoiceObservationCandidates}
+          />}
           onCareAction={() => todayCare.reminderId
             ? completeReminder(todayCare.reminderId)
             : (setCareView(todayCare.target === 'history' ? 'history' : 'active'), setTab('calendar'))}
-          nearbyTitle={(socialCandidates.nearby[0] || socialCandidates.city[0])?.name
-            ? `${(socialCandidates.nearby[0] || socialCandidates.city[0]).name} зовёт гулять`
-            : 'Дать Гав'}
-          nearbyDetail={(socialCandidates.nearby[0] || socialCandidates.city[0])?.distance || 'Найти компанию без публикации точного адреса'}
-          latestDocument={documents[0]?.title}
-          latestDocumentDetail={documents[0]?.clinic || (documents.length ? `${documents.length} в личной истории` : undefined)}
           onNavigate={(route) => {
             setJourneyDetail(null);
             setTab(route);

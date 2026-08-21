@@ -8,6 +8,7 @@ const required = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
+  'GROQ_API_KEY',
 ];
 
 const examplePath = join(root, '.env.example');
@@ -33,6 +34,7 @@ const files = [
   'app/api/reminders/route.ts',
   'app/api/wishlist/route.ts',
   'app/api/assistant/route.ts',
+  'app/api/stt/transcribe/route.ts',
 ];
 
 const referenced = new Set();
@@ -43,7 +45,7 @@ for (const file of files) {
   for (const match of content.matchAll(/process\.env\.([A-Z0-9_]+)/g)) referenced.add(match[1]);
 }
 
-const publicOrServer = [...referenced].filter((key) => key.startsWith('NEXT_PUBLIC_') || key.startsWith('SUPABASE_'));
+const publicOrServer = [...referenced].filter((key) => key.startsWith('NEXT_PUBLIC_') || key.startsWith('SUPABASE_') || key === 'GROQ_API_KEY');
 const undocumented = publicOrServer.filter((key) => !new RegExp(`^${key}=`, 'm').test(example));
 if (undocumented.length) {
   console.error(`Env keys referenced in code but missing from .env.example: ${undocumented.join(', ')}`);
