@@ -2,6 +2,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 
 const requiredFiles = [
+  'components/onboarding/CoreOnboarding.tsx',
   'app/api/v1/onboarding/activate/route.ts',
   'lib/server/onboardingService.ts',
   'supabase/migrations/20260813170000_onboarding_activation.sql',
@@ -14,9 +15,21 @@ for (const file of requiredFiles) {
 }
 
 if (!failures.length) {
-  const route = readFileSync(requiredFiles[0], 'utf8');
-  const service = readFileSync(requiredFiles[1], 'utf8');
-  const migration = `${readFileSync(requiredFiles[2], 'utf8')}\n${readFileSync(requiredFiles[3], 'utf8')}`;
+  const onboarding = readFileSync(requiredFiles[0], 'utf8');
+  const route = readFileSync(requiredFiles[1], 'utf8');
+  const service = readFileSync(requiredFiles[2], 'utf8');
+  const migration = `${readFileSync(requiredFiles[3], 'utf8')}\n${readFileSync(requiredFiles[4], 'utf8')}`;
+
+  for (const token of [
+    'id="dog-creation-age"',
+    'list="dog-creation-age-options"',
+    'id="dog-creation-breed"',
+    'list="dog-creation-breed-options"',
+    'disabled={busy || !dogName.trim()}',
+  ]) {
+    if (!onboarding.includes(token)) failures.push(`core onboarding free-input UX missing: ${token}`);
+  }
+  if (/<select id="dog-creation-(?:age|breed)"/.test(onboarding)) failures.push('age and breed must allow free text instead of forcing a select');
 
   for (const token of [
     'getAppSessionFromRequest(request)',

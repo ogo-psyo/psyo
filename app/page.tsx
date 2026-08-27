@@ -4407,7 +4407,7 @@ export default function Home() {
         dogName={heroNameDraft}
         lifeStage={profile.lifeStage}
         sex={profile.sex}
-        breedId={profile.breedId}
+        breedValue={profile.breedId === 'custom' ? profile.breedCustom : selectedBreed.id === 'mixed' ? '' : selectedBreed.title}
         lifeStageOptions={lifeStageOptions}
         sexOptions={sexOptions}
         breedOptions={breedCatalog}
@@ -4416,8 +4416,11 @@ export default function Home() {
         onLifeStageChange={(value) => updateProfile({ lifeStage: value })}
         onSexChange={(value) => updateProfile({ sex: value })}
         onBreedChange={(value) => {
-          const breed = breedCatalog.find((item) => item.id === value);
-          updateProfile({ breedId: value as BreedId, breedGroupId: breed?.groupId ?? 'mixed' });
+          const normalizedValue = value.trim().toLocaleLowerCase('ru');
+          const breed = breedCatalog.find((item) => item.title.toLocaleLowerCase('ru') === normalizedValue);
+          updateProfile(breed
+            ? { breedId: breed.id, breedGroupId: breed.groupId, breedCustom: '' }
+            : { breedId: value.trim() ? 'custom' : 'mixed', breedGroupId: 'mixed', breedCustom: value });
         }}
         onDismiss={() => { if (!onboardingSaving) setDogCreationOpen(false); }}
         onSubmit={saveMinimalDog}

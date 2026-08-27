@@ -7,7 +7,7 @@ export function CoreOnboarding({
   dogName,
   lifeStage,
   sex,
-  breedId,
+  breedValue,
   lifeStageOptions,
   sexOptions,
   breedOptions,
@@ -23,7 +23,7 @@ export function CoreOnboarding({
   dogName: string;
   lifeStage: string;
   sex: string;
-  breedId: string;
+  breedValue: string;
   lifeStageOptions: readonly string[];
   sexOptions: readonly string[];
   breedOptions: readonly { id: string; title: string }[];
@@ -93,7 +93,7 @@ export function CoreOnboarding({
         }}
       >
         <h2 id="dog-creation-title">Профиль собаки</h2>
-        <p>Соберём короткий каркас. Подробности появятся позже — внутри нужных функций.</p>
+        <p>Начни с имени. Остальное можно написать своими словами или заполнить позже.</p>
         <form onSubmit={(event) => { event.preventDefault(); void onSubmit(); }}>
           <label htmlFor="dog-creation-name">Имя собаки</label>
           <input
@@ -103,32 +103,53 @@ export function CoreOnboarding({
             onChange={(event) => onNameChange(event.target.value)}
             autoFocus
             autoComplete="off"
+            placeholder="Например, Боня"
             maxLength={80}
             disabled={busy}
           />
           <div className="dog-creation-core-fields">
-            <label htmlFor="dog-creation-age">Возраст
-              <select id="dog-creation-age" value={lifeStage} onChange={(event) => onLifeStageChange(event.target.value)} disabled={busy} required>
-                <option value="">Выбрать</option>
-                {lifeStageOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-              </select>
+            <label htmlFor="dog-creation-age">Возраст или дата рождения
+              <input
+                id="dog-creation-age"
+                list="dog-creation-age-options"
+                value={lifeStage}
+                onChange={(event) => onLifeStageChange(event.target.value)}
+                placeholder="2 года 4 месяца"
+                autoComplete="off"
+                maxLength={60}
+                disabled={busy}
+              />
+              <datalist id="dog-creation-age-options">
+                {lifeStageOptions.map((option) => <option key={option} value={option} />)}
+              </datalist>
             </label>
             <label htmlFor="dog-creation-sex">Пол
-              <select id="dog-creation-sex" value={sex} onChange={(event) => onSexChange(event.target.value)} disabled={busy} required>
-                <option value="">Выбрать</option>
+              <select id="dog-creation-sex" value={sex} onChange={(event) => onSexChange(event.target.value)} disabled={busy}>
+                <option value="">Не указывать</option>
                 {sexOptions.map((option) => <option key={option} value={option}>{option}</option>)}
               </select>
             </label>
           </div>
           <label htmlFor="dog-creation-breed">Порода
-            <select id="dog-creation-breed" value={breedId} onChange={(event) => onBreedChange(event.target.value)} disabled={busy}>
-              {breedOptions.map((option) => <option key={option.id} value={option.id}>{option.title}</option>)}
-            </select>
+            <input
+              id="dog-creation-breed"
+              list="dog-creation-breed-options"
+              value={breedValue}
+              onChange={(event) => onBreedChange(event.target.value)}
+              placeholder="Например, корги или метис"
+              autoComplete="off"
+              maxLength={80}
+              disabled={busy}
+              aria-describedby="dog-creation-breed-note"
+            />
+            <datalist id="dog-creation-breed-options">
+              {breedOptions.map((option) => <option key={option.id} value={option.title} />)}
+            </datalist>
           </label>
-          <small className="dog-creation-note">«Метис / не знаю» — полноценный вариант. Псё не угадывает здоровье по породе.</small>
+          <small id="dog-creation-breed-note" className="dog-creation-note">Можно указать любую породу, написать «метис» или оставить поле пустым.</small>
           <div className="onboarding-step-actions">
             <button type="button" onClick={onDismiss} disabled={busy}>Не сейчас</button>
-            <button className="primary" type="submit" disabled={busy || !dogName.trim() || !lifeStage || !sex}>
+            <button className="primary" type="submit" disabled={busy || !dogName.trim()}>
               {busy ? 'Создаю профиль…' : 'Завести профиль'}
             </button>
           </div>

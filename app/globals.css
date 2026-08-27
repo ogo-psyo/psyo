@@ -4172,6 +4172,7 @@ body { background: linear-gradient(160deg, #cbfedb 0%, #f7fff9 48%, #98df73 140%
 .dog-creation-core-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .dog-creation-sheet form { display: grid; gap: 12px; }
 .dog-creation-sheet label { display: grid; gap: 6px; font-weight: 900; }
+.dog-creation-sheet input,
 .dog-creation-sheet select { width: 100%; min-height: 48px; }
 .dog-creation-note { color: #3e6657; font-size: 11px; font-weight: 750; line-height: 1.4; }
 
@@ -4179,6 +4180,7 @@ body { background: linear-gradient(160deg, #cbfedb 0%, #f7fff9 48%, #98df73 140%
   .all-functions-heading { grid-template-columns: 1fr; align-items: start; }
   .all-dog-context { width: 100%; grid-template-columns: 46px minmax(0, 1fr) 18px; }
   .all-functions-heading h2 { max-width: none; }
+  .dog-creation-core-fields { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

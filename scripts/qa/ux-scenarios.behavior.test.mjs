@@ -103,9 +103,11 @@ try {
   if (screenshotDir) await empty.page.screenshot({ path: `${screenshotDir}/first-run.png`, fullPage: true });
   const firstRunButton = empty.page.getByRole('button', { name: 'Добавить собаку', exact: true });
   await firstRunButton.click();
-  const dialog = empty.page.getByRole('dialog', { name: 'Добавить собаку' });
+  const dialog = empty.page.getByRole('dialog', { name: 'Профиль собаки' });
   await dialog.waitFor();
-  if (await dialog.locator('input').count() !== 1) throw new Error('minimal onboarding has more than one input');
+  if (await dialog.locator('input').count() !== 3) throw new Error('onboarding must expose free input for name, age and breed');
+  if (await dialog.locator('#dog-creation-age').getAttribute('list') !== 'dog-creation-age-options') throw new Error('age input has no optional suggestions');
+  if (await dialog.locator('#dog-creation-breed').getAttribute('list') !== 'dog-creation-breed-options') throw new Error('breed input has no optional suggestions');
   if (await empty.page.evaluate(() => document.activeElement?.id) !== 'dog-creation-name') throw new Error('onboarding does not focus the name field');
   await empty.page.keyboard.press('Shift+Tab');
   if (await empty.page.evaluate(() => document.activeElement?.textContent?.trim()) !== 'Не сейчас') throw new Error('onboarding focus is not trapped');

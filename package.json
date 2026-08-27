@@ -17,6 +17,7 @@
     "qa:bootstrap": "node scripts/qa/smoke-bootstrap-auth.mjs",
     "qa:visual": "node scripts/qa/design-screenshots.mjs && node scripts/qa/design-state-screenshots.mjs",
     "qa:ux-scenarios": "node scripts/qa/ux-scenarios.behavior.test.mjs",
+    "qa:onboarding:visual": "node scripts/qa/onboarding-free-input-ui.smoke.mjs",
     "qa:prod:smoke": "node scripts/qa/smoke-prod-release.mjs",
     "qa:journey:parity": "node scripts/qa/check-production-journey-parity-contract.mjs",
     "qa:journey:visual": "node scripts/qa/production-journey-visual.mjs",
