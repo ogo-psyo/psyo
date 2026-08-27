@@ -4391,7 +4391,32 @@ body { background: linear-gradient(160deg, #cbfedb 0%, #f7fff9 48%, #98df73 140%
 }
 
 .dog-creation-sheet {
+  max-height: 100%;
+  overflow-y: auto;
   overscroll-behavior: contain;
+  scroll-padding-block: 18px 84px;
+}
+
+.care-dialog-backdrop.dog-creation-backdrop {
+  top: var(--dog-sheet-viewport-top, 0px);
+  bottom: auto;
+  height: var(--dog-sheet-viewport-height, 100dvh);
+  place-items: end center;
+  overflow-y: auto;
+  padding: clamp(10px, 3dvh, 20px);
+}
+
+.dog-creation-sheet:focus {
+  outline: none;
+}
+
+.dog-creation-sheet .onboarding-step-actions {
+  position: sticky;
+  z-index: 2;
+  bottom: 0;
+  margin: 0 -2px -2px;
+  padding: 10px 2px 2px;
+  background: linear-gradient(to bottom, rgb(255 253 248 / 0), #fffdf8 10px);
 }
 
 .dog-creation-sheet button.primary {

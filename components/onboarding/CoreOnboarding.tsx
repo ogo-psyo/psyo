@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { type FocusEvent, useEffect, useRef } from 'react';
 
 export function CoreOnboarding({
   open,
@@ -35,7 +35,7 @@ export function CoreOnboarding({
   onDismiss: () => void;
   onSubmit: () => Promise<void>;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -45,11 +45,25 @@ export function CoreOnboarding({
     previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const page = document.querySelector<HTMLElement>('.phone-shell');
     page?.setAttribute('inert', '');
-    inputRef.current?.focus();
-    const frame = window.requestAnimationFrame(() => inputRef.current?.focus());
+    const frame = window.requestAnimationFrame(() => dialogRef.current?.focus({ preventScroll: true }));
+
+    const viewport = window.visualViewport;
+    const syncVisibleViewport = () => {
+      const backdrop = backdropRef.current;
+      if (!backdrop) return;
+      backdrop.style.setProperty('--dog-sheet-viewport-top', `${Math.max(0, viewport?.offsetTop || 0)}px`);
+      backdrop.style.setProperty('--dog-sheet-viewport-height', `${Math.max(0, viewport?.height || window.innerHeight)}px`);
+    };
+    syncVisibleViewport();
+    viewport?.addEventListener('resize', syncVisibleViewport);
+    viewport?.addEventListener('scroll', syncVisibleViewport);
+    window.addEventListener('resize', syncVisibleViewport);
 
     return () => {
       window.cancelAnimationFrame(frame);
+      viewport?.removeEventListener('resize', syncVisibleViewport);
+      viewport?.removeEventListener('scroll', syncVisibleViewport);
+      window.removeEventListener('resize', syncVisibleViewport);
       page?.removeAttribute('inert');
       const returnTarget = previousFocusRef.current?.isConnected
         ? previousFocusRef.current
@@ -61,9 +75,15 @@ export function CoreOnboarding({
 
   if (!open) return null;
 
+  const keepFieldVisible = (event: FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const field = event.currentTarget;
+    window.setTimeout(() => field.scrollIntoView({ block: 'center', behavior: 'auto' }), 120);
+  };
+
   return (
     <div
-      className="care-dialog-backdrop"
+      ref={backdropRef}
+      className="care-dialog-backdrop dog-creation-backdrop"
       role="presentation"
       onMouseDown={(event) => {
         if (event.currentTarget === event.target && !busy) onDismiss();
@@ -75,6 +95,7 @@ export function CoreOnboarding({
         role="dialog"
         aria-modal="true"
         aria-labelledby="dog-creation-title"
+        tabIndex={-1}
         onKeyDown={(event) => {
           if (event.key === 'Escape' && !busy) onDismiss();
           if (event.key !== 'Tab') return;
@@ -97,11 +118,10 @@ export function CoreOnboarding({
         <form onSubmit={(event) => { event.preventDefault(); void onSubmit(); }}>
           <label htmlFor="dog-creation-name">Имя собаки</label>
           <input
-            ref={inputRef}
             id="dog-creation-name"
             value={dogName}
             onChange={(event) => onNameChange(event.target.value)}
-            autoFocus
+            onFocus={keepFieldVisible}
             autoComplete="off"
             placeholder="Например, Боня"
             maxLength={80}
@@ -114,6 +134,7 @@ export function CoreOnboarding({
                 list="dog-creation-age-options"
                 value={lifeStage}
                 onChange={(event) => onLifeStageChange(event.target.value)}
+                onFocus={keepFieldVisible}
                 placeholder="2 года 4 месяца"
                 autoComplete="off"
                 maxLength={60}
@@ -124,7 +145,7 @@ export function CoreOnboarding({
               </datalist>
             </label>
             <label htmlFor="dog-creation-sex">Пол
-              <select id="dog-creation-sex" value={sex} onChange={(event) => onSexChange(event.target.value)} disabled={busy}>
+              <select id="dog-creation-sex" value={sex} onChange={(event) => onSexChange(event.target.value)} onFocus={keepFieldVisible} disabled={busy}>
                 <option value="">Не указывать</option>
                 {sexOptions.map((option) => <option key={option} value={option}>{option}</option>)}
               </select>
@@ -136,6 +157,7 @@ export function CoreOnboarding({
               list="dog-creation-breed-options"
               value={breedValue}
               onChange={(event) => onBreedChange(event.target.value)}
+              onFocus={keepFieldVisible}
               placeholder="Например, корги или метис"
               autoComplete="off"
               maxLength={80}

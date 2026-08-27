@@ -62,6 +62,21 @@
   display: none;
 }
 
+.production-journey-avatar .avatar-placeholder {
+  border: 0;
+  padding: 0;
+  color: var(--v3-muted);
+}
+
+.production-journey-avatar .avatar-placeholder b {
+  display: none;
+}
+
+.production-journey-avatar .avatar-placeholder svg {
+  width: clamp(24px, 40%, 36px);
+  height: clamp(24px, 40%, 36px);
+}
+
 .production-journey-avatar img,
 .production-journey-avatar canvas {
   width: 100% !important;

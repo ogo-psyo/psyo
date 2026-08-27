@@ -35,6 +35,9 @@ requireText(profileMemory, "surface === 'character'", 'profile character drill-d
 requireText(profileMemory, "surface === 'social'", 'profile social drill-down');
 requireText(shell, 'production-journey-map', 'accepted live map composition');
 requireText(shell, 'production-journey-woof', 'accepted Гав composition');
+requireText(shell, 'Покажем профиль тем, кто тоже ищет компанию поблизости.', 'gender-neutral Гав copy');
+rejectText(shell, 'Покажем {props.dogName}', 'uninflected dog name in Гав copy');
+requireText(css, '.production-journey-avatar .avatar-placeholder b', 'compact avatar label guard');
 requireText(shell, 'production-journey-shelf', 'accepted Things composition');
 requireText(shell, 'map?: ReactNode', 'real map slot');
 requireText(globals, "@import '../components/journey/production-journey.css';", 'shared production style');

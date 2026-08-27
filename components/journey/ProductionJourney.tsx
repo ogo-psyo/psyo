@@ -299,7 +299,7 @@ function NearbyScreen(props: ProductionJourneyProps) {
     <Header dogName={props.dogName} title="Гав" detail="кто хочет гулять" avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
     <section className="v3-woof-signal production-journey-woof">
       <div className="v3-signal-rings"><span /><span /><span /><DogAvatar avatar={props.avatar} /></div>
-      <div><span>{props.discoverable ? 'Ваш сигнал включён' : 'Ваш сигнал выключен'}</span><h2>{props.discoverable ? 'Гав уже слышно' : 'Дать Гав?'}</h2><p>Покажем {props.dogName} подходящим собакам поблизости. Точный адрес останется скрыт.</p><button type="button" onClick={props.onOpenSocial}><span className="v3-wave">)))</span> {props.discoverable ? 'Настроить Гав' : 'Дать Гав'}</button></div>
+      <div><span>{props.discoverable ? 'Ваш сигнал включён' : 'Ваш сигнал выключен'}</span><h2>{props.discoverable ? 'Гав уже слышно' : 'Дать Гав?'}</h2><p>Покажем профиль тем, кто тоже ищет компанию поблизости. Точный адрес останется скрыт.</p><button type="button" onClick={props.onOpenSocial}><span className="v3-wave">)))</span> {props.discoverable ? 'Настроить Гав' : 'Дать Гав'}</button></div>
     </section>
     <section className="v3-woof-list">
       <header><h2>Зовут гулять</h2><button type="button" onClick={props.onOpenSocial}>Фильтры</button></header>

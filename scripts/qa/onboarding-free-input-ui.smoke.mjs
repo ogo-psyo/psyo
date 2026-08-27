@@ -29,6 +29,7 @@ try {
 
     const dialog = page.getByRole('dialog', { name: 'Профиль собаки' });
     await dialog.waitFor();
+    assert.equal(await dialog.evaluate((element) => document.activeElement === element), true, 'dialog should receive focus without opening the keyboard');
     assert.equal(await dialog.locator('input').count(), 3);
     assert.equal(await dialog.locator('#dog-creation-age').getAttribute('list'), 'dog-creation-age-options');
     assert.equal(await dialog.locator('#dog-creation-breed').getAttribute('list'), 'dog-creation-breed-options');
@@ -57,7 +58,19 @@ try {
     assert.ok(geometry.top >= 0 && geometry.bottom <= geometry.viewportHeight, `dialog is clipped vertically at ${viewport.width}px`);
     assert.ok(geometry.documentWidth <= geometry.viewportWidth, `page overflows horizontally at ${viewport.width}px`);
 
-    if (screenshotDir) await page.screenshot({ path: `${screenshotDir}/onboarding-${viewport.width}.png`, fullPage: true });
+    await dialog.locator('#dog-creation-breed').focus();
+    await page.setViewportSize({ width: viewport.width, height: 520 });
+    await page.waitForTimeout(180);
+    const keyboardGeometry = await dialog.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const action = element.querySelector('.onboarding-step-actions')?.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom, viewportHeight: window.innerHeight, actionTop: action?.top, actionBottom: action?.bottom };
+    });
+    assert.ok(keyboardGeometry.top >= 0, `dialog top is hidden with keyboard-sized viewport at ${viewport.width}px`);
+    assert.ok(keyboardGeometry.bottom <= keyboardGeometry.viewportHeight, `dialog bottom is hidden with keyboard-sized viewport at ${viewport.width}px`);
+    assert.ok(keyboardGeometry.actionTop >= keyboardGeometry.top && keyboardGeometry.actionBottom <= keyboardGeometry.bottom, `dialog actions are hidden with keyboard-sized viewport at ${viewport.width}px`);
+
+    if (screenshotDir) await page.screenshot({ path: `${screenshotDir}/onboarding-${viewport.width}.png`, fullPage: false, animations: 'disabled' });
     await context.close();
   }
   console.log('onboarding free-input ui smoke ok');
