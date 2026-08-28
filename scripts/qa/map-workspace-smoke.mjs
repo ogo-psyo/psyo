@@ -14,7 +14,7 @@ async function openMap(page) {
     localStorage.setItem('pso.topapp.onboarding.v1', 'done');
     localStorage.setItem('pso.product.profile.v5', JSON.stringify(storedProfile));
   }, profile);
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('.app-tabs button[data-route="map"]').click({ force: true });
   await page.locator('[data-production-map-workspace]').waitFor();
     await page.locator('.leaflet-container').waitFor({ timeout: 10000 });
@@ -48,7 +48,7 @@ try {
     if (geometry.overflow) throw new Error(`${width}: horizontal overflow`);
     if (!geometry.sheet || geometry.sheet.left < 8 || geometry.sheet.right > width - 8) throw new Error(`${width}: sheet escaped viewport`);
     if (!geometry.nav || geometry.sheet.bottom > geometry.nav.top + 1) throw new Error(`${width}: home sheet collides with navigation`);
-    if (!geometry.attribution?.text?.includes('OpenStreetMap') || !geometry.attribution.text.includes('CARTO')) throw new Error(`${width}: full attribution is missing`);
+    if (!geometry.attribution?.text?.includes('OpenStreetMap') || !geometry.attribution.text.includes('OpenFreeMap')) throw new Error(`${width}: full attribution is missing`);
     if (geometry.attribution.scrollWidth > geometry.attribution.clientWidth + 2) throw new Error(`${width}: attribution is clipped`);
 
     await page.getByRole('button', { name: /Начать прогулку/ }).waitFor();
@@ -58,8 +58,8 @@ try {
 
     await page.locator('[data-route-action="start"]').click();
     await page.locator('[data-route-flow="recording"]').waitFor();
-    await page.waitForFunction(() => JSON.parse(localStorage.getItem('pso.map.active-route.v1') || '{}').points?.length >= 1);
-    const beforeDiscardContinue = await page.evaluate(() => JSON.parse(localStorage.getItem('pso.map.active-route.v1') || '{}').points.length);
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find((key) => key.startsWith('pso.map.active-route.v3:')) || '') || '{}').points?.length >= 1);
+    const beforeDiscardContinue = await page.evaluate(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find((key) => key.startsWith('pso.map.active-route.v3:')) || '') || '{}').points.length);
     await page.getByRole('button', { name: 'Отменить', exact: true }).click();
     const dialog = page.getByRole('alertdialog');
     await dialog.waitFor();
@@ -67,14 +67,14 @@ try {
     if (!focusedInDialog) throw new Error(`${width}: discard dialog did not receive focus`);
     await page.getByRole('button', { name: 'Продолжить маршрут' }).click();
     await context.setGeolocation({ latitude: 55.74425, longitude: 37.60325 });
-    await page.waitForFunction((before) => JSON.parse(localStorage.getItem('pso.map.active-route.v1') || '{}').points?.length > before, beforeDiscardContinue);
+    await page.waitForFunction((before) => JSON.parse(localStorage.getItem(Object.keys(localStorage).find((key) => key.startsWith('pso.map.active-route.v3:')) || '') || '{}').points?.length > before, beforeDiscardContinue);
     if (await page.locator('.app-tabs').isVisible()) throw new Error(`${width}: navigation remains visible during recording`);
     if (outDir) await page.screenshot({ path: `${outDir}/map-recording-${width}.png`, fullPage: false });
     await page.getByRole('button', { name: 'Пауза', exact: true }).click();
     await page.locator('[data-route-flow="paused"]').waitFor();
     await context.setGeolocation({ latitude: 55.7442, longitude: 37.6032 });
     await page.getByRole('button', { name: /Продолжить/ }).click();
-    await page.waitForFunction(() => JSON.parse(localStorage.getItem('pso.map.active-route.v1') || '{}').points?.length >= 2);
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find((key) => key.startsWith('pso.map.active-route.v3:')) || '') || '{}').points?.length >= 2);
     await page.getByRole('button', { name: 'Пауза', exact: true }).click();
     await page.getByRole('button', { name: /Завершить/ }).click();
     await page.locator('[data-route-flow="record-review"]').waitFor();
@@ -151,9 +151,9 @@ try {
   await openMap(restorePage);
   await restorePage.locator('[data-route-action="start"]').click();
   await restorePage.locator('[data-route-flow="recording"]').waitFor();
-  await restorePage.waitForFunction(() => JSON.parse(localStorage.getItem('pso.map.active-route.v1') || '{}').points?.length >= 1);
+  await restorePage.waitForFunction(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find((key) => key.startsWith('pso.map.active-route.v3:')) || '') || '{}').points?.length >= 1);
   await restorePage.waitForTimeout(1100);
-  await restorePage.reload({ waitUntil: 'networkidle' });
+  await restorePage.reload({ waitUntil: 'domcontentloaded' });
   await restorePage.locator('[data-route-flow="paused"]').waitFor();
   await restorePage.getByText('Прогулка восстановлена и поставлена на паузу.').waitFor();
   await restorePage.getByRole('button', { name: 'Отменить', exact: true }).click();

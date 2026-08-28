@@ -10,6 +10,8 @@ const files = {
   schema: readFileSync('supabase/schema.sql', 'utf8'),
   migration: readFileSync('supabase/migrations/20260702120000_pet_observations.sql', 'utf8'),
   disclosure: readFileSync('components/today/ObservationDisclosure.tsx', 'utf8'),
+  health: readFileSync('components/health/HealthTimelineScreen.tsx', 'utf8'),
+  profileMemory: readFileSync('components/profile/ProfileMemoryWorkspace.tsx', 'utf8'),
 };
 
 const failures = [];
@@ -68,19 +70,19 @@ for (const token of [
 for (const token of [
   "type ObservationView",
   "observationsStorageKey",
-  "ObservationChoice",
   "submitObservation",
-  "tab === 'today'",
-  '<ObservationDisclosure',
-  'className="profile-observation-timeline"',
-  'aria-label="История наблюдений собаки"',
-  'Записать наблюдение',
 ]) {
-  if (!files.page.includes(token)) failures.push(`today observation UI missing: ${token}`);
+  if (!files.page.includes(token)) failures.push(`observation wiring missing: ${token}`);
 }
 
-for (const token of ['className="observation-disclosure"', 'Записать наблюдение', 'Последние записи']) {
-  if (!files.disclosure.includes(token)) failures.push(`observation disclosure missing: ${token}`);
+for (const token of ['<HealthTimelineScreen', 'onStartEdit={startObservationEdit}', 'onDelete={deleteObservation}']) {
+  if (!files.page.includes(token)) failures.push(`canonical health wiring missing: ${token}`);
+}
+for (const token of ['Записать наблюдение', 'aria-label="История наблюдений"', '<ObservationEditor', 'Изменить', 'Убрать']) {
+  if (!files.health.includes(token)) failures.push(`canonical health lifecycle missing: ${token}`);
+}
+if (files.profileMemory.includes("surface === 'health'")) {
+  failures.push('duplicate profile health surface is still present');
 }
 
 if (failures.length) {

@@ -12,6 +12,8 @@ export type HabitInput = {
   targetPerPeriod: number;
 };
 
+export type HabitUpdateInput = Omit<HabitInput, 'petId'>;
+
 export function normalizeHabitInput(value: unknown): HabitInput | null {
   const source = value && typeof value === 'object' ? value as Record<string, unknown> : {};
   const petId = String(source.petId ?? '').trim();
@@ -22,6 +24,14 @@ export function normalizeHabitInput(value: unknown): HabitInput | null {
   if (!petId || !habitKinds.has(kind) || !title || !cadences.has(cadence)) return null;
   if (!Number.isFinite(targetPerPeriod) || targetPerPeriod < 1 || targetPerPeriod > 12) return null;
   return { petId, kind, title, cadence, targetPerPeriod };
+}
+
+export function normalizeHabitUpdate(value: unknown): HabitUpdateInput | null {
+  const source = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  const normalized = normalizeHabitInput({ ...source, petId: 'owned-pet' });
+  if (!normalized) return null;
+  const { petId: _petId, ...update } = normalized;
+  return update;
 }
 
 function mapHabit(row: any) {
@@ -67,6 +77,42 @@ export async function createHabitForOwner(input: { supabase: SupabaseClient; own
   }).select('*').single();
   if (result.error) throw result.error;
   return mapHabit(result.data);
+}
+
+export async function updateHabitForOwner(input: { supabase: SupabaseClient; ownerId: string; habitId: string; update: HabitUpdateInput }) {
+  const owned = await input.supabase
+    .from('pet_habits')
+    .select('id, pets!inner(owner_id)')
+    .eq('id', input.habitId)
+    .eq('pets.owner_id', input.ownerId)
+    .eq('status', 'active')
+    .maybeSingle();
+  if (owned.error) throw owned.error;
+  if (!owned.data) throw new Error('HABIT_NOT_FOUND');
+  const result = await input.supabase.from('pet_habits').update({
+    kind: input.update.kind,
+    title: input.update.title,
+    cadence: input.update.cadence,
+    target_per_period: input.update.targetPerPeriod,
+    updated_at: new Date().toISOString(),
+  }).eq('id', input.habitId).eq('status', 'active').select('*, habit_checkins(id, completed_at)').single();
+  if (result.error) throw result.error;
+  return mapHabit(result.data);
+}
+
+export async function archiveHabitForOwner(input: { supabase: SupabaseClient; ownerId: string; habitId: string }) {
+  const owned = await input.supabase
+    .from('pet_habits')
+    .select('id, pets!inner(owner_id)')
+    .eq('id', input.habitId)
+    .eq('pets.owner_id', input.ownerId)
+    .eq('status', 'active')
+    .maybeSingle();
+  if (owned.error) throw owned.error;
+  if (!owned.data) throw new Error('HABIT_NOT_FOUND');
+  const result = await input.supabase.from('pet_habits').update({ status: 'archived', updated_at: new Date().toISOString() }).eq('id', input.habitId).eq('status', 'active').select('id,status').single();
+  if (result.error) throw result.error;
+  return { id: result.data.id, status: result.data.status };
 }
 
 export async function checkInHabitForOwner(input: {

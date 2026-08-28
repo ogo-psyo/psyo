@@ -10,7 +10,7 @@ const bootstrap = readFileSync('app/api/app/bootstrap/route.ts', 'utf8');
 assert.match(page, /<ProfileMemoryWorkspace/);
 assert.doesNotMatch(page, /tab === 'profile'[^\n]+<ProductionJourney route="profile"/);
 
-for (const surface of ['overview', 'health', 'character', 'social', 'passport', 'history', 'capture']) {
+for (const surface of ['overview', 'character', 'social', 'passport', 'history', 'capture']) {
   assert.match(component, new RegExp(`surface === '${surface}'`), `missing production profile surface: ${surface}`);
 }
 
@@ -26,7 +26,7 @@ assert.match(component, /Неподтверждённое не влияет на
 assert.match(component, /showModal\(\)/);
 assert.match(component, /identityTriggerRef\.current\?\.focus\(\)/);
 assert.match(component, /editorTriggerRef\.current\?\.focus\(\)/);
-assert.match(component, /openEditor\('health'/);
+assert.match(component, /onOpenHealth/);
 assert.match(component, /openEditor\('character'/);
 assert.match(component, /openEditor\('social'/);
 assert.match(component, /openEditor\('passport'/);

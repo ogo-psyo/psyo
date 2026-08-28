@@ -28,7 +28,9 @@ try {
   const metrics = [];
   for (const route of routes) {
     await page.locator(`.app-tabs button[data-route="${route}"]`).click({ force: true });
-    const screen = page.locator(`[data-production-journey="${route}"]`);
+    const screen = route === 'profile'
+      ? page.locator('[data-profile-memory]')
+      : page.locator(`[data-production-journey="${route}"]`);
     await screen.waitFor();
     if (route === 'map') await page.locator('.leaflet-container').waitFor();
     await page.waitForTimeout(route === 'map' ? 1200 : 240);
@@ -53,21 +55,22 @@ try {
     await page.screenshot({ path: `${outDir}/${route}.png`, fullPage: false });
   }
 
+  await page.locator('.app-tabs button[data-route="today"]').click({ force: true });
+  await page.locator('[data-production-journey="today"]').waitFor();
   await page.getByRole('button', { name: 'Спросить Псё', exact: true }).click({ force: true });
   await page.getByRole('dialog', { name: 'Спросить Псё' }).waitFor();
   await page.screenshot({ path: `${outDir}/assistant.png`, fullPage: false });
   await page.getByRole('button', { name: 'Закрыть', exact: true }).click({ force: true });
 
   await page.locator('.app-tabs button[data-route="profile"]').click({ force: true });
-  await page.locator('[data-profile-journey-action="add-document"]').click({ force: true });
+  await page.locator('[data-profile-memory-action="add-document"]').scrollIntoViewIfNeeded();
+  await page.locator('[data-profile-memory-action="add-document"]').click({ force: true });
   await page.locator('.profile-life-document-form').waitFor();
   await page.screenshot({ path: `${outDir}/profile-document.png`, fullPage: false });
   await page.getByRole('button', { name: 'Закрыть', exact: true }).click({ force: true });
-  await page.getByRole('button', { name: 'Изменить', exact: true }).click({ force: true });
-  await page.locator('.profile-ux-2025').waitFor();
   await page.locator('.app-tabs button[data-route="map"]').click({ force: true });
-  await page.getByRole('button', { name: 'Все', exact: true }).click({ force: true });
-  await page.locator('.places-composition').waitFor();
+  await page.locator('.production-map-sheet-toggle').click({ force: true });
+  await page.locator('[data-map-saved-content]').first().waitFor();
   await page.locator('.app-tabs button[data-route="nearby"]').click({ force: true });
   await page.getByRole('button', { name: /Гав/, exact: true }).last().click({ force: true });
   await page.locator('.production-woof-workspace').waitFor();

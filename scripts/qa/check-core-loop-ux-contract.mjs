@@ -12,6 +12,7 @@ const careNotice = read('components/care/CareActionNotice.tsx');
 const deleteDialog = read('components/care/DeleteCareDialog.tsx');
 const desktopContext = read('components/app/DesktopContextPanel.tsx');
 const nextCareCard = read('components/today/NextCareCard.tsx');
+const journey = read('components/journey/ProductionJourney.tsx');
 const observationDisclosure = read('components/today/ObservationDisclosure.tsx');
 const onboarding = read('components/onboarding/CoreOnboarding.tsx');
 const css = read('app/globals.css');
@@ -53,7 +54,7 @@ for (const token of ['today-first-viewport', 'ближайшее дело', 'О�
   if (!nextCareCard.includes(token)) failures.push(`focused Today missing: ${token}`);
 }
 
-if (!page.includes('formatTodayTitle(profile.dogName)')) {
+if (!journey.includes('title={`${props.dogName} сегодня`}')) {
   failures.push('focused Today missing its single dog-aware screen title');
 }
 
@@ -71,7 +72,7 @@ for (const token of ['шаг 1 из 2', 'шаг 2 из 2', 'Добавить д�
 
 if (page.includes('Имя, правило и первое дело')) failures.push('onboarding still overloads one step');
 const todayStart = page.indexOf("{hasDog && tab === 'today'");
-const todayEnd = page.indexOf("{hasDog && tab === 'assistant'", todayStart);
+const todayEnd = page.indexOf("{hasDog && tab === 'profile'", todayStart);
 const todayBlock = todayStart >= 0 && todayEnd > todayStart ? page.slice(todayStart, todayEnd) : '';
 if (todayBlock.includes('className="plus-gate-card"')) {
   failures.push('Today still contains a Plus promotion');

@@ -73,10 +73,16 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const requestedPetId = url.searchParams.get('petId');
 
-  const petsResult = await supabase.from('pets').select('*').eq('owner_id', ownerId).order('created_at', { ascending: true });
+  const [petsResult, preferenceResult] = await Promise.all([
+    supabase.from('pets').select('*').eq('owner_id', ownerId).order('created_at', { ascending: true }),
+    supabase.from('profiles').select('active_pet_id').eq('id', ownerId).maybeSingle(),
+  ]);
   if (petsResult.error) return NextResponse.json({ mode: 'user', connected: true, error: petsResult.error.message }, { status: 500 });
   const pets = petsResult.data ?? [];
-  const selectedPet = requestedPetId ? pets.find((pet) => pet.id === requestedPetId) : pets[0];
+  const preferredPetId = preferenceResult.data?.active_pet_id;
+  const selectedPet = requestedPetId
+    ? pets.find((pet) => pet.id === requestedPetId)
+    : pets.find((pet) => pet.id === preferredPetId) ?? pets[0];
   if (requestedPetId && !selectedPet) {
     return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', connected: true, error: 'PET_NOT_FOUND_OR_NOT_OWNED' }, { status: 404 });
   }
@@ -91,7 +97,7 @@ export async function GET(request: Request) {
     supabase.from('map_zones').select('*').eq('pet_id', petId).is('deleted_at', null).order('created_at', { ascending: false }),
     supabase.from('map_routes').select('*').eq('owner_id', ownerId).eq('pet_id', petId).order('created_at', { ascending: false }),
     supabase.from('wishlist_items').select('*').eq('pet_id', petId).is('deleted_at', null).order('created_at', { ascending: false }),
-    supabase.from('pet_observations').select('*').eq('pet_id', petId).order('observed_at', { ascending: false }).limit(20),
+    supabase.from('pet_observations').select('*').eq('pet_id', petId).is('deleted_at', null).order('observed_at', { ascending: false }).limit(20),
     supabase.from('pet_documents').select('id, pet_id, kind, title, clinic, document_date, original_name, mime_type, size_bytes, created_at').eq('pet_id', petId).order('created_at', { ascending: false }),
   ]);
 

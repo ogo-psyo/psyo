@@ -16,7 +16,8 @@ function weightToNumber(value: unknown) {
 function mapEnum(value: unknown, map: Record<string, string>, fallback: string | null = null) {
   const normalized = String(value || '').trim().toLowerCase();
   if (!normalized) return fallback;
-  return map[normalized] ?? normalized;
+  if (map[normalized]) return map[normalized];
+  return Object.values(map).includes(normalized) ? normalized : fallback;
 }
 
 const vaccineStatusMap: Record<string, string> = {

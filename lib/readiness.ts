@@ -44,7 +44,7 @@ export type ReadinessContract = {
 export function buildAppReadiness(input: AppReadinessInput): ReadinessContract {
   const hasLocalPet = Boolean(input.profile.backendPetId);
   const persistenceMode: PersistenceMode = input.isAuthenticated ? 'authenticated' : hasLocalPet ? 'local' : 'empty';
-  const localOnly = input.isAuthenticated ? [] : ['профиль', 'напоминания', 'места', 'вещи'];
+  const localOnly = input.isAuthenticated ? [] : ['профиль и черновики этого браузера'];
   const persisted = input.isAuthenticated
     ? ['профиль', 'напоминания', 'места', 'вещи']
     : hasLocalPet
@@ -55,8 +55,7 @@ export function buildAppReadiness(input: AppReadinessInput): ReadinessContract {
   if (!input.isAuthenticated) blockedPromises.push('синхронизация между устройствами', 'восстановление после очистки браузера');
   if (!input.profileReady) blockedPromises.push('точные подсказки по уходу');
   if (!input.profile.socialMode) blockedPromises.push('публичная карточка для знакомств');
-  if (!input.profile.isOnMap) blockedPromises.push('видимость на карте для других владельцев');
-  if (input.wishlistCount === 0) blockedPromises.push('персональный список вещей');
+  if (!input.isAuthenticated) blockedPromises.push('напоминания Telegram и совместные сценарии Гав');
 
   const stage: ReadinessLevel = input.demoMode ? 'demo' : input.profileReady && input.isAuthenticated ? 'ready' : hasLocalPet || input.profileReady ? 'partial' : 'blocked';
 
@@ -67,17 +66,17 @@ export function buildAppReadiness(input: AppReadinessInput): ReadinessContract {
     persisted,
     localOnly,
     blockedPromises,
-    privacyState: input.profile.isOnMap ? 'карта включена владельцем, точные адреса не публикуются' : 'карта приватна: собака не видна другим',
+    privacyState: 'точная геопозиция не публикуется; видимость в Гав управляется отдельно',
     safetyState: input.profileReady ? 'ассистент отвечает осторожно по профилю, без ветеринарных диагнозов' : 'ассистент ограничен: не хватает минимума профиля',
     qaState: 'локальный контракт проверяется smoke-тестом; production readiness требует отдельного smoke перед деплоем',
     nextUsefulAction: chooseNextUsefulAction(input),
     services: {
       profile: input.profileReady ? 'ready' : hasLocalPet ? 'partial' : 'blocked',
       today: input.profileReady || input.remindersCount > 0 ? 'partial' : 'blocked',
-      reminders: input.isAuthenticated ? 'ready' : input.remindersCount > 0 ? 'demo' : 'partial',
+      reminders: input.isAuthenticated ? 'partial' : input.remindersCount > 0 ? 'demo' : 'blocked',
       assistant: input.profileReady || input.hasAssistantAnswer ? 'partial' : 'blocked',
-      map: input.profile.isOnMap ? 'partial' : 'blocked',
-      wishlist: input.isAuthenticated && input.wishlistCount > 0 ? 'partial' : input.wishlistCount > 0 ? 'demo' : 'blocked',
+      map: input.isAuthenticated ? 'partial' : input.zonesCount > 0 ? 'demo' : 'blocked',
+      wishlist: input.isAuthenticated ? 'partial' : input.wishlistCount > 0 ? 'demo' : 'blocked',
       avatar: input.profile.avatarSource === 'generated' || input.profile.avatarSource === 'uploaded' ? 'partial' : input.demoMode ? 'demo' : 'blocked',
     },
   };
@@ -92,9 +91,6 @@ function chooseNextUsefulAction(input: AppReadinessInput): ReadinessContract['ne
   }
   if (input.remindersCount === 0) {
     return { title: 'создать первое напоминание', detail: 'обработка, вакцина, корм или груминг', target: 'today' };
-  }
-  if (!input.profile.isOnMap) {
-    return { title: 'решить приватность карты', detail: 'оставить приватно или включить видимость вручную', target: 'map' };
   }
   return { title: 'задать вопрос Псё', detail: 'профиль уже даёт достаточно контекста для осторожных подсказок', target: 'assistant' };
 }

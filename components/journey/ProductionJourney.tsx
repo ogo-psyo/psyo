@@ -76,7 +76,8 @@ type BaseProps = {
 type ProductionJourneyProps = BaseProps & {
   careTitle?: string;
   careDetail?: string;
-  careDone?: boolean;
+  careState?: 'empty' | 'active' | 'complete';
+  careActionLabel?: string;
   onCareAction?: () => void;
   voiceCapture?: ReactNode;
   nearbyTitle?: string;
@@ -198,6 +199,7 @@ function Header({ dogName, title, detail, avatar, onOpenProfile }: { dogName: st
 
 function TodayScreen(props: ProductionJourneyProps) {
   const careTitle = props.careTitle || 'Сегодня всё сделано';
+  const careState = props.careState || 'active';
   const recentEntries = (props.profileEntries || []).slice(0, 3);
   const entryIcon = (kind: JourneyProfileEntry['kind']) => kind === 'document'
     ? <FilePdf weight="duotone" />
@@ -206,19 +208,24 @@ function TodayScreen(props: ProductionJourneyProps) {
       : <ChatCircleDots weight="duotone" />;
   return <main className="v3-screen v3-all production-journey-screen" data-production-journey="today">
     <Header dogName={props.dogName} title={`${props.dogName} сегодня`} detail="ваш день вместе" avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
-    <section className={`production-today-summary${props.careDone ? ' is-complete' : ''}`} aria-labelledby="production-today-summary-title">
+    <section className={`production-today-summary is-${careState}`} aria-labelledby="production-today-summary-title">
       <div className="production-today-summary-copy">
-        <h2 id="production-today-summary-title">{props.careDone ? 'На сегодня всё сделано' : careTitle}</h2>
-        <p>{props.careDone ? 'Запланированных дел не осталось.' : props.careDetail || 'Ближайшее дело уже в плане.'}</p>
-        {props.careDone
-          ? <span className="production-today-complete"><Check weight="bold" /> День свободен от обязательных дел</span>
-          : <button type="button" onClick={props.onCareAction}><Check weight="bold" /> Отметить выполненным</button>}
+        <h2 id="production-today-summary-title">{careTitle}</h2>
+        <p>{props.careDetail || 'Ближайшее дело уже в плане.'}</p>
+        {careState === 'active' && <button type="button" onClick={props.onCareAction}><Check weight="bold" /> {props.careActionLabel || 'Отметить выполненным'}</button>}
+        {careState === 'empty' && <button type="button" onClick={props.onCareAction}><Plus weight="bold" /> {props.careActionLabel || 'Добавить первое дело'}</button>}
+        {careState === 'complete' && <button type="button" onClick={props.onCareAction}><CalendarCheck weight="bold" /> {props.careActionLabel || 'Открыть историю'}</button>}
       </div>
       {props.onOpenIdentity
         ? <button type="button" className="production-today-identity" aria-label={`Изменить фото или образ ${props.dogName}`} onClick={props.onOpenIdentity}><DogAvatar avatar={props.avatar} /><span>Изменить образ</span></button>
         : <DogAvatar avatar={props.avatar} />}
     </section>
     {props.voiceCapture}
+    {props.onAskAssistant && <button className="production-today-assistant" type="button" aria-label="Спросить Псё" onClick={props.onAskAssistant}>
+      <Sparkle weight="fill" aria-hidden="true" />
+      <span><b>Спросить Псё</b><small>Разобрать записи и план ухода</small></span>
+      <ArrowRight weight="bold" aria-hidden="true" />
+    </button>}
     <section className="production-today-history" aria-labelledby="production-today-history-title">
       <header><h2 id="production-today-history-title">Последнее в истории</h2></header>
       {recentEntries.length ? <div className="production-today-history-list">{recentEntries.map((entry) => {
@@ -332,6 +339,12 @@ function ThingsScreen(props: ProductionJourneyProps) {
 }
 
 export function ProductionJourney(props: ProductionJourneyProps) {
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>(`[data-production-journey="${props.route}"]`)?.scrollTo({ top: 0, left: 0 });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [props.route]);
   if (props.route === 'today') return <TodayScreen {...props} />;
   if (props.route === 'profile') return <ProfileScreen {...props} />;
   if (props.route === 'map') return <MapScreen {...props} />;
@@ -340,7 +353,7 @@ export function ProductionJourney(props: ProductionJourneyProps) {
 }
 
 export function ProductionAssistantSheet({
-  dogName, avatar, question, answer, messages, loading, actions, diagnostic, onQuestionChange, onAsk, onClose,
+  dogName, avatar, question, answer, messages, loading, error, actions, diagnostic, onQuestionChange, onAsk, onClose,
 }: {
   dogName: string;
   avatar: ReactNode;
@@ -348,6 +361,7 @@ export function ProductionAssistantSheet({
   answer: string;
   messages?: Array<{ role: 'user' | 'assistant'; content: string }>;
   loading: boolean;
+  error?: string;
   actions?: ReactNode;
   diagnostic?: { provider?: string; mode?: string };
   onQuestionChange: (value: string) => void;
@@ -373,6 +387,7 @@ export function ProductionAssistantSheet({
         <div className="v3-assistant-context"><DogAvatar avatar={avatar} small /><p id="production-assistant-description">Учту профиль {dogName}, дела, наблюдения, прогулки, документы и этот диалог. Не заменяю ветеринара.</p></div>
         <div className="v3-prompt-list"><button type="button" onClick={() => onAsk('Что важно проверить по последнему анализу?')}>Что важно проверить по анализу?</button><button type="button" onClick={() => onAsk('Подбери спокойный маршрут для прогулки сегодня')}>Подобрать спокойный маршрут</button><button type="button" onClick={() => onAsk('Что учесть перед знакомством собак?')}>Что учесть перед знакомством?</button></div>
         {messages?.length ? <div className="production-assistant-conversation" aria-live="polite">{messages.map((message, index) => <article className={message.role} key={`${message.role}-${index}`}><b>{message.role === 'assistant' ? 'Псё' : 'Вы'}</b><p>{message.content}</p></article>)}</div> : answer && <div className="production-assistant-answer" role="status">{answer}</div>}
+        {error && <div className="module-error" role="alert"><b>Псё не ответил</b><p>{error}</p></div>}
         {actions}
       </div>
       <form className="production-assistant-composer" onSubmit={(event) => { event.preventDefault(); onAsk(); }}>

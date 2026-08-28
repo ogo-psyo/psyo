@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const navigation = readFileSync('components/app/AppNavigation.tsx', 'utf8');
 const page = readFileSync('app/page.tsx', 'utf8');
+const woof = readFileSync('components/social/ProductionWoofWorkspace.tsx', 'utf8');
 
 const failures = [];
 const primaryRoutes = [
@@ -55,9 +56,10 @@ if (!page.includes('/api/social/candidates?petId=')) {
 if (page.includes('nearbyDogs.map')) {
   failures.push('nearby route still renders fixture dogs as real candidates');
 }
-for (const state of ["nearbyState === 'loading'", "nearbyState === 'error'", "nearbyState === 'idle'", "nearbyState === 'ready'"]) {
-  if (!page.includes(state)) failures.push(`nearby route missing honest state: ${state}`);
+for (const state of ["props.state === 'loading'", "props.state === 'error'"]) {
+  if (!woof.includes(state)) failures.push(`nearby route missing honest state: ${state}`);
 }
+if (!page.includes('state={nearbyState}')) failures.push('nearby route does not pass its state to the active workspace');
 
 if (failures.length) {
   console.error(failures.map((failure) => `- ${failure}`).join('\n'));

@@ -40,7 +40,8 @@ type SearchResult = {
 };
 
 type StoredRouteSession = {
-  version: 1 | 2;
+  version: 3;
+  petId: string;
   flow: Exclude<RouteFlow, 'idle' | 'gps-error'>;
   elapsedSeconds: number;
   points: number[][];
@@ -49,6 +50,7 @@ type StoredRouteSession = {
 };
 
 type ProductionMapWorkspaceProps = {
+  petId: string;
   dogName: string;
   avatar: ReactNode;
   zones: ZoneFeature[];
@@ -70,7 +72,7 @@ type ProductionMapWorkspaceProps = {
   onRouteMetaChange?: (meta: RouteDraftMeta | null) => void;
 };
 
-const ROUTE_SESSION_KEY = 'pso.map.active-route.v1';
+const routeSessionKey = (petId: string) => `pso.map.active-route.v3:${petId}`;
 const persistentFlows: RouteFlow[] = ['recording', 'paused', 'record-review', 'planning', 'plan-review'];
 
 function numberOrNull(value: unknown) {
@@ -117,6 +119,7 @@ function formatPointCount(count: number) {
 }
 
 export function ProductionMapWorkspace({
+  petId,
   dogName,
   avatar,
   zones,
@@ -185,10 +188,10 @@ export function ProductionMapWorkspace({
 
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(ROUTE_SESSION_KEY);
+      const raw = window.localStorage.getItem(routeSessionKey(petId));
       if (!raw) return;
       const stored = JSON.parse(raw) as StoredRouteSession;
-      if (![1, 2].includes(stored.version) || !persistentFlows.includes(stored.flow) || !Array.isArray(stored.points)) return;
+      if (stored.version !== 3 || stored.petId !== petId || !persistentFlows.includes(stored.flow) || !Array.isArray(stored.points)) return;
       onModeChange('route');
       onReplaceRoutePoints(stored.points);
       setElapsedSeconds(Math.max(0, Number(stored.elapsedSeconds) || 0));
@@ -199,30 +202,31 @@ export function ProductionMapWorkspace({
         ? 'Прогулка восстановлена и поставлена на паузу.'
         : stored.flow === 'planning' ? 'Черновик маршрута восстановлен.' : 'Незавершённый маршрут восстановлен.');
     } catch {
-      window.localStorage.removeItem(ROUTE_SESSION_KEY);
+      window.localStorage.removeItem(routeSessionKey(petId));
     } finally {
       setHydrated(true);
     }
   // Restore once. Parent callbacks intentionally follow the mounted app instance.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [petId]);
 
   useEffect(() => {
     if (!hydrated) return;
     if (persistentFlows.includes(routeFlow)) {
       const session: StoredRouteSession = {
-        version: 2,
+        version: 3,
+        petId,
         flow: routeFlow as StoredRouteSession['flow'],
         elapsedSeconds,
         points: routePoints,
         updatedAt: Date.now(),
         startedAt: startedAt ?? undefined,
       };
-      window.localStorage.setItem(ROUTE_SESSION_KEY, JSON.stringify(session));
+      window.localStorage.setItem(routeSessionKey(petId), JSON.stringify(session));
       return;
     }
-    if (routeFlow === 'idle') window.localStorage.removeItem(ROUTE_SESSION_KEY);
-  }, [elapsedSeconds, hydrated, routeFlow, routePoints, startedAt]);
+    if (routeFlow === 'idle') window.localStorage.removeItem(routeSessionKey(petId));
+  }, [elapsedSeconds, hydrated, petId, routeFlow, routePoints, startedAt]);
 
   useEffect(() => {
     if (!discardPrompt) return;
@@ -266,9 +270,9 @@ export function ProductionMapWorkspace({
       setElapsedSeconds(0);
       setStartedAt(null);
       setLocationStatus('Маршрут сохранён. Он появился на карте.');
-      window.localStorage.removeItem(ROUTE_SESSION_KEY);
+      window.localStorage.removeItem(routeSessionKey(petId));
     }
-  }, [mode, routeFlow]);
+  }, [mode, petId, routeFlow]);
 
   const counts = useMemo(() => ({
     routes: features.filter((feature) => feature.type === 'route').length,
@@ -451,7 +455,7 @@ export function ProductionMapWorkspace({
     lastRecordedPointRef.current = null;
     lastRecordedAtRef.current = null;
     setLocationStatus('Черновик маршрута удалён.');
-    window.localStorage.removeItem(ROUTE_SESSION_KEY);
+    window.localStorage.removeItem(routeSessionKey(petId));
   }
 
   function startRisk() {

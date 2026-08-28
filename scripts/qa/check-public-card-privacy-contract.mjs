@@ -26,7 +26,7 @@ for (const token of [
 
 for (const token of [
   "triggers: show('triggers') ?",
-  "area: show('area') ? safePublicArea(profile.neighborhood) : 'район скрыт'",
+  "area: show('area') ? safePublicArea(socialProfile?.district ?? undefined) : 'район скрыт'",
   "character: show('character') ?",
   "breed: show('breed') ?",
 ]) {

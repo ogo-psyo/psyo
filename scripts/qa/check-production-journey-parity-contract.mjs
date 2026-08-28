@@ -30,7 +30,8 @@ requireText(page, 'profileEntries={profileJourneyEntries}', 'Today real-event da
 rejectText(shell, 'v3-orbit-bubble', 'non-interactive Today badges');
 rejectText(shell, 'Открыть Гав', 'duplicate Today navigation');
 requireText(profileMemory, 'data-profile-memory', 'accepted profile memory composition');
-requireText(profileMemory, "surface === 'health'", 'profile health drill-down');
+requireText(profileMemory, 'onOpenHealth', 'profile health entry point');
+requireText(page, '<HealthTimelineScreen', 'single health drill-down');
 requireText(profileMemory, "surface === 'character'", 'profile character drill-down');
 requireText(profileMemory, "surface === 'social'", 'profile social drill-down');
 requireText(shell, 'production-journey-map', 'accepted live map composition');

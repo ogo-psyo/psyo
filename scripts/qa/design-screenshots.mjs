@@ -15,7 +15,12 @@ const sizes = [
 const results = [];
 for (const size of sizes) {
   const page = await browser.newPage({ viewport: { width: size.width, height: size.height }, deviceScaleFactor: 1 });
-  await page.goto(base, { waitUntil: 'networkidle' });
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => {
+    localStorage.setItem('pso.product.profile.v5', JSON.stringify({ dogName: '' }));
+    localStorage.removeItem('pso.topapp.onboarding.v1');
+  });
+  await page.reload({ waitUntil: 'networkidle' });
   await page.screenshot({ path: `${outDir}/${size.name}.png`, fullPage: true });
   const metrics = await page.evaluate(() => {
     const doc = document.documentElement;
@@ -32,13 +37,6 @@ for (const size of sizes) {
     return { innerWidth: window.innerWidth, scrollWidth: Math.max(doc.scrollWidth, body.scrollWidth), overflowEls: overflowEls.slice(0,20), tinyTapTargets: tinyTapTargets.slice(0,20) };
   });
   results.push({ size, metrics });
-  if (size.name === 'mobile-390') {
-    await page.getByRole('button', { name: 'Создать питомца', exact: true }).click();
-    await page.screenshot({ path: `${outDir}/${size.name}-pet.png`, fullPage: true });
-    await page.getByLabel('Имя', { exact: true }).fill('Мята');
-    await page.getByRole('button', { name: 'Продолжить', exact: true }).click();
-    await page.screenshot({ path: `${outDir}/${size.name}-care.png`, fullPage: true });
-  }
   await page.close();
 }
 await browser.close();

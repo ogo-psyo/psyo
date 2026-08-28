@@ -18,7 +18,9 @@ for (const token of [
 for (const token of [
   "supabase.from('pets').select('*').eq('owner_id', ownerId)",
   "const requestedPetId = url.searchParams.get('petId')",
-  'const selectedPet = requestedPetId ? pets.find',
+  "select('active_pet_id')",
+  'const selectedPet = requestedPetId',
+  'pets.find((pet) => pet.id === preferredPetId) ?? pets[0]',
   'PET_NOT_FOUND_OR_NOT_OWNED',
   'pets,',
   'activePetId: petId',

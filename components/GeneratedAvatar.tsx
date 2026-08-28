@@ -1,5 +1,5 @@
 import { getAvatarStyle, getBreed, type DogProfile } from '@/lib/data';
-import { PawPrint } from '@phosphor-icons/react';
+import { Dog } from '@phosphor-icons/react';
 
 export function GeneratedAvatar({
   profile,
@@ -19,6 +19,7 @@ export function GeneratedAvatar({
   const breed = getBreed(profile.breedId);
   const style = getAvatarStyle(profile.selectedStyle);
   const source = imageUrl || profile.avatarImageUrl || '';
+  const monogram = profile.dogName.trim().slice(0, 1).toLocaleUpperCase('ru-RU') || 'П';
 
   return (
     <div className={`generated-avatar ${size}${fill ? ' fill' : ''} style-${profile.selectedStyle} ${ready ? 'ready' : 'idle'}`} aria-label="Портрет собаки">
@@ -26,7 +27,7 @@ export function GeneratedAvatar({
       {source ? (
         <img className="avatar-image" src={source} alt={profile.avatarSource === 'uploaded' ? 'Фото собаки' : 'Портрет собаки'} />
       ) : (
-        <div className="avatar-placeholder"><PawPrint size={28} weight="duotone" aria-hidden="true" /><b>Добавить образ</b></div>
+        <div className="avatar-placeholder"><span className="avatar-monogram" aria-hidden="true">{monogram}</span><Dog size={44} weight="regular" aria-hidden="true" /><b>Добавить образ</b></div>
       )}
       {source && <span className="avatar-chip breed-chip">{breed.title}</span>}
       {source && profile.avatarSource === 'generated' && <span className="avatar-chip style-chip">{style.title}</span>}

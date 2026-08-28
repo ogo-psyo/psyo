@@ -95,8 +95,8 @@ for (const token of ['public-card-review', 'public-card-checklist', 'public-card
   if (!cardBlock.includes(token)) failures.push(`public card tab missing owner-safe surface: ${token}`);
 }
 
-if (!files.page.includes("profile.dogName.trim() && profile.socialMode && (profile.triggers || profile.bio) && profile.neighborhood")) {
-  failures.push('public card must require name, contact rule, bio/triggers, and safe neighborhood before sharing');
+if (!files.page.includes("profile.dogName.trim() && profile.socialMode && profile.triggers")) {
+  failures.push('public card must require persisted name, contact rule, and triggers before sharing');
 }
 
 const navStart = files.navigation.indexOf('<nav className="app-tabs"');
@@ -110,7 +110,8 @@ for (const token of ["id: 'calendar'", "id: 'card'", "id: 'assistant'"]) {
   if (files.navigation.includes(token)) failures.push(`secondary surface leaked into primary nav: ${token}`);
 }
 if (!files.page.includes("tab === 'things'")) failures.push('things/wishlist tab surface missing');
-if (!files.page.includes("tab === 'assistant'")) failures.push('assistant tab surface missing');
+if (!files.page.includes('<ProductionAssistantSheet')) failures.push('assistant sheet surface missing');
+if (files.page.includes("tab === 'assistant'")) failures.push('duplicate assistant tab surface present');
 if (!files.page.includes("tab === 'nearby'")) failures.push('socialization/nearby tab surface missing');
 
 for (const token of ["saveOnboardingCarePlan('today')", 'Добавить дело и открыть Сегодня']) {

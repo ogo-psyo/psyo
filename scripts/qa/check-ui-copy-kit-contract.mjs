@@ -7,6 +7,7 @@ const uiFiles = {
   dogCard: readFileSync('app/dog/[slug]/page.tsx', 'utf8'),
   dogCardActions: readFileSync('app/dog/[slug]/DogCardActions.tsx', 'utf8'),
   mapClient: readFileSync('components/LiveMapClient.tsx', 'utf8'),
+  profileMemory: readFileSync('components/profile/ProfileMemoryWorkspace.tsx', 'utf8'),
 };
 const designDirection = readFileSync('DESIGN_DIRECTION.md', 'utf8');
 const failures = [];
@@ -40,7 +41,7 @@ for (const [name, content] of Object.entries(uiFiles)) {
 
 const requiredDesignKitTokens = [
   'UX/UI design kit contract',
-  'Warm Companion OS',
+  'Living Field Guide',
   'Пиши, сокращай',
   'One primary action per surface',
   'Touch targets stay at least 44 px',

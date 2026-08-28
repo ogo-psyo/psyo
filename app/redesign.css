@@ -1,0 +1,566 @@
+/*
+ * THESIS: Псё is one editorial care desk, not a phone mockup beside utility cards.
+ * OWN-WORLD: mint paper fields, dense dark-green type, lime action blocks, quiet linework.
+ * STORY: identify the dog and next action, record what changed, then move into the shared history.
+ * FIRST VIEWPORT: a permanent contents rail, a wide two-column care spread, and a contextual margin.
+ * FORM: Ploof-aligned editorial application shell, pinned by the approved Псё mockups.
+ * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+ */
+
+:root {
+  --redesign-canvas: #eefbf2;
+  --redesign-paper: #f8fff9;
+  --redesign-ink: #073f2d;
+  --redesign-muted: #527466;
+  --redesign-mint: #cbfedb;
+  --redesign-green: #98df73;
+  --redesign-lime: #3df881;
+  --redesign-line: rgb(7 129 77 / 18%);
+  --redesign-coral: #dd617c;
+}
+
+body {
+  background: var(--redesign-canvas);
+}
+
+.app-canvas {
+  width: 100%;
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 82% 4%, rgb(61 248 129 / 16%), transparent 27rem),
+    var(--redesign-canvas);
+}
+
+.app-tabs-brand,
+.app-tabs-assistant {
+  display: none;
+}
+
+body main.app-canvas > nav.app-tabs {
+  position: fixed !important;
+  z-index: 730;
+  left: 10px !important;
+  right: 10px !important;
+  bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+  width: auto !important;
+  max-width: none !important;
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0;
+  transform: none !important;
+  padding: 7px;
+  border: 0;
+  border-radius: 22px;
+  background: rgb(248 255 249 / 96%) !important;
+  box-shadow: 0 14px 34px rgb(6 71 47 / 16%) !important;
+  backdrop-filter: blur(14px);
+}
+
+body main.app-canvas > nav.app-tabs .app-tabs-assistant {
+  display: none;
+}
+
+body main.app-canvas > nav.app-tabs button {
+  min-width: 0;
+  min-height: 52px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 3px;
+  padding: 4px;
+  border: 0;
+  border-radius: 15px;
+  color: var(--redesign-muted);
+  background: transparent !important;
+  box-shadow: none;
+}
+
+body main.app-canvas > nav.app-tabs button.active {
+  color: var(--redesign-ink);
+  background: var(--redesign-lime) !important;
+}
+
+body main.app-canvas > nav.app-tabs .ui-button-content {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  gap: 3px;
+}
+
+body main.app-canvas > nav.app-tabs .app-tab-icon {
+  width: 23px;
+  height: 23px;
+}
+
+body main.app-canvas > nav.app-tabs .ui-button-content > span:last-child {
+  font-size: 11px;
+  font-weight: 950;
+  line-height: 1;
+  text-transform: capitalize;
+}
+
+.production-floating-assistant {
+  display: none;
+}
+
+.production-today-assistant {
+  width: 100%;
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 20px;
+  color: #fff;
+  background: var(--redesign-ink);
+  text-align: left;
+  box-shadow: 0 12px 26px rgb(6 71 47 / 16%);
+}
+
+.production-today-assistant > svg:first-child {
+  width: 38px;
+  height: 38px;
+  padding: 9px;
+  border-radius: 12px;
+  color: var(--redesign-ink);
+  background: var(--redesign-lime);
+}
+
+.production-today-assistant span {
+  display: grid;
+  gap: 2px;
+}
+
+.production-today-assistant b {
+  font-size: 14px;
+}
+
+.production-today-assistant small {
+  color: var(--redesign-mint);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.generated-avatar .avatar-placeholder {
+  position: relative;
+  overflow: hidden;
+  color: var(--redesign-ink);
+  background: var(--redesign-mint);
+}
+
+.generated-avatar .avatar-placeholder .avatar-monogram {
+  font-family: var(--font-display-cyrillic), sans-serif;
+  font-size: clamp(36px, 58%, 86px);
+  font-weight: 400;
+  line-height: .8;
+  letter-spacing: -.08em;
+}
+
+.generated-avatar .avatar-placeholder > svg {
+  position: absolute;
+  right: 12%;
+  bottom: 12%;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.generated-avatar .avatar-placeholder > b {
+  position: absolute;
+  left: 10%;
+  bottom: 9%;
+  max-width: 54%;
+  color: var(--redesign-muted);
+  font-size: 9px;
+  line-height: 1.1;
+  text-align: left;
+}
+
+.production-journey-avatar.small .avatar-monogram {
+  font-size: 24px;
+}
+
+.production-journey-avatar.small .avatar-placeholder > svg,
+.production-journey-avatar.small .avatar-placeholder > b {
+  display: none;
+}
+
+@media (min-width: 760px) {
+  .app-canvas {
+    height: 100dvh;
+    min-height: 0;
+    display: grid;
+    grid-template-areas: "nav main context";
+    grid-template-columns: 184px minmax(0, 1fr) 270px;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  body main.app-canvas > .phone-shell,
+  body main.app-canvas > .phone-shell.journey-active {
+    grid-area: main;
+    width: 100%;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0 !important;
+    background: var(--redesign-paper);
+    box-shadow: none;
+  }
+
+  body main.app-canvas > nav.app-tabs {
+    position: relative !important;
+    grid-area: nav;
+    inset: auto !important;
+    width: 100% !important;
+    height: 100dvh;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 22px 14px 18px;
+    border-radius: 0;
+    background: var(--redesign-mint) !important;
+    box-shadow: none !important;
+    backdrop-filter: none;
+  }
+
+  .app-tabs-brand {
+    display: grid;
+    gap: 2px;
+    margin: 0 6px 28px;
+  }
+
+  .app-tabs-brand b {
+    color: var(--redesign-ink);
+    font-family: var(--font-display-cyrillic), sans-serif;
+    font-size: 35px;
+    font-weight: 400;
+    line-height: .9;
+    letter-spacing: -.04em;
+  }
+
+  .app-tabs-brand span {
+    color: var(--redesign-muted);
+    font-size: 10px;
+    font-weight: 850;
+  }
+
+  body main.app-canvas > nav.app-tabs button {
+    width: 100%;
+    min-height: 54px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 11px;
+    padding: 0 12px;
+    border-radius: 14px;
+    text-align: left;
+  }
+
+  body main.app-canvas > nav.app-tabs .ui-button-content {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 11px;
+  }
+
+  body main.app-canvas > nav.app-tabs .app-tab-icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  body main.app-canvas > nav.app-tabs .ui-button-content > span:last-child {
+    font-size: 14px;
+  }
+
+  body main.app-canvas > nav.app-tabs button.app-tabs-assistant {
+    display: grid !important;
+    grid-template-columns: 26px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 9px !important;
+    min-height: 72px !important;
+    margin-top: auto;
+    padding: 11px !important;
+    color: #fff !important;
+    background: var(--redesign-ink) !important;
+  }
+
+  .app-tabs-assistant > svg {
+    width: 24px;
+    height: 24px;
+    color: var(--redesign-lime);
+  }
+
+  .app-tabs-assistant > span {
+    display: grid;
+    gap: 2px;
+  }
+
+  .app-tabs-assistant b {
+    font-size: 12px;
+  }
+
+  .app-tabs-assistant small {
+    color: var(--redesign-mint);
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .desktop-context-panel {
+    grid-area: context;
+    height: 100dvh;
+    display: grid;
+    align-content: start;
+    gap: 0;
+    overflow: auto;
+    padding: 26px 22px;
+    border-left: 0;
+    background: var(--redesign-paper);
+  }
+
+  .desktop-context-heading {
+    gap: 2px;
+    padding: 0 0 24px;
+  }
+
+  .desktop-context-heading span,
+  .desktop-context-panel section > span {
+    color: var(--redesign-muted);
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .desktop-context-heading b {
+    color: var(--redesign-ink);
+    font-family: var(--font-display-cyrillic), sans-serif;
+    font-size: 31px;
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  body main.app-canvas > .desktop-context-panel section {
+    gap: 8px;
+    padding: 18px 0;
+    border: 0;
+    border-top: 1px solid var(--redesign-line);
+    border-radius: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .desktop-context-panel section b {
+    color: var(--redesign-ink);
+    font-size: 17px;
+  }
+
+  .desktop-context-panel section p {
+    color: var(--redesign-muted);
+  }
+
+  body main.app-canvas > .desktop-context-panel button {
+    border: 0;
+    border-radius: 12px;
+    background: var(--redesign-paper);
+  }
+
+  body main.app-canvas > .desktop-context-panel button.primary {
+    color: var(--redesign-ink);
+    background: var(--redesign-lime);
+  }
+
+  .production-journey-screen {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: 100dvh;
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(280px, .88fr);
+    grid-auto-rows: max-content;
+    align-content: start;
+    gap: 18px 22px;
+    overflow: auto;
+    padding: 28px 30px 52px;
+    background: var(--redesign-paper);
+  }
+
+  .production-journey-header {
+    grid-column: 1 / -1;
+    min-height: 112px;
+    margin: 0;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--redesign-line);
+  }
+
+  .production-journey-header h1 {
+    font-size: clamp(44px, 5vw, 68px);
+    line-height: .92;
+  }
+
+  .production-today-summary {
+    grid-column: 1;
+    grid-row: 2 / span 2;
+    min-height: 430px;
+    grid-template-columns: minmax(0, 1fr) minmax(126px, 34%);
+    padding: 30px;
+    border-radius: 30px;
+  }
+
+  .production-today-summary h2 {
+    max-width: 11ch;
+    font-size: clamp(38px, 4.4vw, 62px);
+    line-height: .94;
+  }
+
+  .production-today-summary p {
+    max-width: 34ch;
+    font-size: 15px;
+  }
+
+  .production-today-summary > .v3-dog-avatar,
+  .production-today-identity,
+  .production-today-identity .v3-dog-avatar {
+    width: 100%;
+    max-width: 180px;
+  }
+
+  .production-today-identity .v3-dog-avatar {
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .voice-observation-capture {
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+    border-radius: 22px;
+    box-shadow: none;
+    background: var(--redesign-mint);
+  }
+
+  .production-today-assistant {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: stretch;
+    margin: 0;
+    box-shadow: none;
+  }
+
+  .production-today-history {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    margin: 12px 0 0;
+    padding-top: 22px;
+    border-top: 1px solid var(--redesign-line);
+    min-height: 190px;
+  }
+
+  .production-today-history-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .production-today-history-list > * {
+    min-width: 0;
+  }
+
+  .production-journey-screen:not([data-production-journey="today"]) > *:not(.production-journey-header) {
+    grid-column: 1 / -1;
+  }
+
+  .production-journey-map {
+    padding-inline: 0;
+  }
+}
+
+@media (min-width: 1180px) {
+  .app-canvas {
+    grid-template-columns: 206px minmax(0, 1fr) 294px;
+  }
+
+  .production-journey-screen {
+    padding-inline: clamp(34px, 4vw, 62px);
+  }
+}
+
+@media (max-width: 759px) {
+  .phone-shell.journey-active {
+    padding: 0;
+  }
+
+  .production-journey-screen {
+    padding-bottom: calc(116px + env(safe-area-inset-bottom));
+  }
+
+  .production-journey-header {
+    min-height: 92px;
+  }
+
+  .phone-shell.journey-active .v3-things.production-journey-screen {
+    padding-top: calc(28px + env(safe-area-inset-top)) !important;
+  }
+
+  .production-today-summary {
+    min-height: 218px;
+    border-radius: 24px;
+  }
+
+  .voice-observation-capture {
+    padding: 15px;
+  }
+
+  .voice-capture-input textarea,
+  .voice-capture-review textarea {
+    min-height: 72px;
+  }
+
+  .production-today-assistant {
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 920px) and (min-width: 760px) {
+  .app-canvas {
+    grid-template-columns: 150px minmax(0, 1fr);
+    grid-template-areas: "nav main";
+  }
+
+  .desktop-context-panel {
+    display: none;
+  }
+
+  .production-journey-screen {
+    grid-template-columns: 1fr;
+  }
+
+  .production-today-summary,
+  .voice-observation-capture,
+  .production-today-assistant,
+  .production-today-history {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .production-today-summary {
+    min-height: 330px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-canvas > .app-tabs,
+  .production-today-assistant {
+    transition: none;
+  }
+}

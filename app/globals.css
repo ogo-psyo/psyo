@@ -4239,6 +4239,16 @@ body { background: linear-gradient(160deg, #cbfedb 0%, #f7fff9 48%, #98df73 140%
 .habit-list button { display: inline-flex; gap: 6px; align-items: center; min-height: 44px; border: 0; border-radius: 16px; padding: 0 13px; color: #fafffb; background: #07814d; font-weight: 900; }
 .habit-list button:disabled { color: #3e6657; background: #cbfedb; opacity: 1; }
 .habit-list button svg { width: 16px; height: 16px; }
+.habit-row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.habit-row-actions button { flex: 0 0 auto; }
+.profile-settings-links { display: grid; gap: 10px; }
+.profile-settings-links > :is(a, button) { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 72px; border: 1px solid rgba(7,129,77,.14); border-radius: 24px; padding: 14px 16px; color: #06472f; background: #fafffb; text-align: left; text-decoration: none; box-shadow: 0 10px 24px rgba(6,71,47,.08); }
+.profile-settings-links span, .profile-settings-links b, .profile-settings-links small { display: block; }
+.profile-settings-links small { margin-top: 4px; color: #3e6657; }
+.profile-settings-links svg { flex: 0 0 auto; width: 18px; height: 18px; }
+.health-facts { border: 1px solid rgba(7,129,77,.14); border-radius: 24px; padding: 14px 16px; background: #fafffb; }
+.health-facts > summary { min-height: 44px; display: flex; align-items: center; color: #06472f; font-weight: 900; cursor: pointer; }
+.health-facts[open] > summary { margin-bottom: 12px; }
 
 .module-primary-action { display: inline-flex; justify-content: center; gap: 8px; align-items: center; width: 100%; min-height: 48px; }
 .module-primary-action svg { width: 18px; height: 18px; }
@@ -4282,6 +4292,7 @@ body { background: linear-gradient(160deg, #cbfedb 0%, #f7fff9 48%, #98df73 140%
   .module-form-grid { grid-template-columns: 1fr; }
   .habit-list article { grid-template-columns: 1fr; }
   .habit-list button { justify-content: center; width: 100%; }
+  .habit-row-actions { display: grid; grid-template-columns: 1fr; }
   .health-timeline article { grid-template-columns: 1fr; }
 }
 

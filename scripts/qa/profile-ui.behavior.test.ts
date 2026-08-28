@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const page = readFileSync('app/page.tsx', 'utf8');
+const profileMemory = readFileSync('components/profile/ProfileMemoryWorkspace.tsx', 'utf8');
+const ui = `${page}\n${profileMemory}`;
 
 for (const token of [
   "fetch('/api/v1/pets'",
@@ -11,16 +13,15 @@ for (const token of [
   "fetch(`/api/dog-cards?petId=${encodeURIComponent(petId)}`",
   "confirmation: 'DELETE_DOG'",
   "confirmation: 'DELETE_ACCOUNT'",
-  'Сохранить личный профиль',
-  'primary mini-next-action',
-  'details.open = true',
+  'onSaveProfile',
+  'Сохранить',
   'Добавить собаку',
   'Удалить собаку',
   'Удалить аккаунт',
   'Введите имя собаки полностью',
   'УДАЛИТЬ АККАУНТ',
 ]) {
-  assert.ok(page.includes(token), `profile lifecycle UI missing ${token}`);
+  assert.ok(ui.includes(token), `profile lifecycle UI missing ${token}`);
 }
 
 assert.ok(

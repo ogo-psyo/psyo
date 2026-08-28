@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo } from 'react';
 import L from 'leaflet';
-import { AttributionControl, Circle, CircleMarker, MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
+import { AttributionControl, Circle, CircleMarker, MapContainer, Marker, useMap } from 'react-leaflet';
 import type { WoofLiveMapProps } from './WoofLiveMap';
+import { OpenFreeMapLayer } from '../OpenFreeMapLayer';
 import 'leaflet/dist/leaflet.css';
 
 const defaultCenter: [number, number] = [55.751244, 37.618423];
-const mapTiles = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char] || char);
@@ -46,7 +46,7 @@ export function WoofLiveMapClient({ signals, viewerLocation, viewerRadiusMeters,
 
   return <MapContainer center={defaultCenter} zoom={12} className="woof-live-map" zoomControl attributionControl={false} aria-label="Карта активных Гав-сигналов поблизости">
     <AttributionControl prefix={false} />
-    <TileLayer url={mapTiles} attribution="&copy; OpenStreetMap contributors &copy; CARTO" subdomains="abcd" maxZoom={20} />
+    <OpenFreeMapLayer />
     <Viewport signals={signals} viewerLocation={viewerLocation} />
     {viewerLocation && <>
       <Circle center={[viewerLocation.lat, viewerLocation.lng]} radius={viewerRadiusMeters} pathOptions={{ color: '#07814d', fillColor: '#98df73', fillOpacity: 0.055, weight: 1, dashArray: '6 8' }} interactive={false} />

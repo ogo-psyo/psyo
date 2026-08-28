@@ -40,7 +40,8 @@ for (const restoreSource of [wishlistRestore, zoneRestore]) {
   assert.match(restoreSource, /deleted_at:\s*null/, 'restore clears the removal timestamp');
   assert.match(restoreSource, /pets\.owner_id/, 'restore is owner-scoped');
 }
-assert.equal((bootstrap.match(/is\('deleted_at', null\)/g) ?? []).length >= 2, true, 'bootstrap excludes removed wishlist items and zones');
+assert.equal((bootstrap.match(/is\('deleted_at', null\)/g) ?? []).length >= 3, true, 'bootstrap excludes removed wishlist items, zones and observations');
+assert.match(bootstrap, /from\('pet_observations'\)[\s\S]*?is\('deleted_at', null\)/, 'removed observations do not return after bootstrap reload');
 assert.match(sharedZone, /from\('map_zones'\)[\s\S]*?is\('deleted_at', null\)/, 'removed shared places do not remain public');
 assert.match(migration, /alter table public\.wishlist_items[\s\S]*deleted_at timestamptz/);
 assert.match(migration, /alter table public\.map_zones[\s\S]*deleted_at timestamptz/);

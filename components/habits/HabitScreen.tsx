@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowLeft, Check, ListChecks, Plus } from '@phosphor-icons/react';
+import { Archive, ArrowLeft, Check, ListChecks, PencilSimple, Plus } from '@phosphor-icons/react';
 
 export type HabitView = {
   id: string;
@@ -43,6 +43,8 @@ export function HabitScreen({
   canPersist,
   onBack,
   onCreate,
+  onUpdate,
+  onArchive,
   onCheckIn,
   onRetry,
 }: {
@@ -54,10 +56,13 @@ export function HabitScreen({
   canPersist: boolean;
   onBack: () => void;
   onCreate: (draft: HabitDraft) => Promise<boolean>;
+  onUpdate: (habitId: string, draft: HabitDraft) => Promise<boolean>;
+  onArchive: (habitId: string) => Promise<void>;
   onCheckIn: (habitId: string) => Promise<void>;
   onRetry: () => Promise<void>;
 }) {
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<HabitDraft>({ title: '', kind: 'walk', cadence: 'daily', targetPerPeriod: 1 });
   const completed = useMemo(() => habits.reduce((total, habit) => total + completedInCurrentPeriod(habit), 0), [habits]);
 
@@ -66,7 +71,7 @@ export function HabitScreen({
       <button className="secondary-flow-back" type="button" onClick={onBack}><ArrowLeft weight="bold" aria-hidden="true" /> Назад во Всё</button>
       <header className="module-screen-heading">
         <span className="module-screen-icon"><ListChecks weight="duotone" aria-hidden="true" /></span>
-        <div><h2 id="habit-screen-title">Привычки {dogName}</h2><p>{habits.length ? `${completed} отмечено сегодня` : 'Регулярные дела появятся здесь'}</p></div>
+        <div><h2 id="habit-screen-title">Привычки {dogName}</h2><p>{habits.length ? `${completed} отметок в текущем периоде` : 'Регулярные дела появятся здесь'}</p></div>
       </header>
 
       {loading ? <div className="module-skeleton" aria-label="Загружаю привычки" /> : error ? (
@@ -79,10 +84,11 @@ export function HabitScreen({
             return (
               <article key={habit.id}>
                 <div><b>{habit.title}</b><small>{habit.cadence === 'daily' ? `каждый день · ${done}/${habit.targetPerPeriod}` : `каждую неделю · ${done}/${habit.targetPerPeriod} на этой неделе`}</small></div>
-                <button type="button" disabled={busyId === habit.id || targetReached} onClick={() => onCheckIn(habit.id)}>
-                  <Check weight="bold" aria-hidden="true" />
-                  {busyId === habit.id ? 'Отмечаю…' : targetReached ? 'Готово' : 'Отметить'}
-                </button>
+                <div className="habit-row-actions">
+                  <button type="button" disabled={busyId === habit.id || targetReached} onClick={() => onCheckIn(habit.id)}><Check weight="bold" aria-hidden="true" />{busyId === habit.id ? 'Отмечаю…' : targetReached ? 'Готово' : 'Отметить'}</button>
+                  <button type="button" disabled={Boolean(busyId)} onClick={() => { setEditingId(habit.id); setDraft({ title: habit.title, kind: habit.kind, cadence: habit.cadence, targetPerPeriod: habit.targetPerPeriod }); setAdding(true); }}><PencilSimple aria-hidden="true" />Изменить</button>
+                  <button type="button" disabled={Boolean(busyId)} onClick={() => onArchive(habit.id)}><Archive aria-hidden="true" />Убрать</button>
+                </div>
               </article>
             );
           })}
@@ -90,13 +96,15 @@ export function HabitScreen({
       ) : <div className="module-empty"><b>Пока без привычек</b><p>Добавь только то, что действительно повторяется: прогулку, кормление, лекарство или уход.</p></div>}
 
       {!adding ? (
-        <button className="primary module-primary-action" type="button" disabled={!canPersist} onClick={() => setAdding(true)}><Plus weight="bold" aria-hidden="true" /> Добавить привычку</button>
+        <button className="primary module-primary-action" type="button" disabled={!canPersist} onClick={() => { setEditingId(null); setAdding(true); }}><Plus weight="bold" aria-hidden="true" /> Добавить привычку</button>
       ) : (
         <form className="module-form" onSubmit={async (event) => {
           event.preventDefault();
-          const saved = await onCreate({ ...draft, title: draft.title.trim() });
+          const nextDraft = { ...draft, title: draft.title.trim() };
+          const saved = editingId ? await onUpdate(editingId, nextDraft) : await onCreate(nextDraft);
           if (saved) {
             setDraft({ title: '', kind: 'walk', cadence: 'daily', targetPerPeriod: 1 });
+            setEditingId(null);
             setAdding(false);
           }
         }}>
@@ -106,7 +114,7 @@ export function HabitScreen({
             <label>Ритм<select value={draft.cadence} onChange={(event) => setDraft((current) => ({ ...current, cadence: event.target.value as HabitDraft['cadence'] }))}><option value="daily">Каждый день</option><option value="weekly">Каждую неделю</option></select></label>
           </div>
           <label>Сколько раз<input type="number" min="1" max="12" value={draft.targetPerPeriod} onChange={(event) => setDraft((current) => ({ ...current, targetPerPeriod: Number(event.target.value) }))} /></label>
-          <div className="module-form-actions"><button className="primary" type="submit" disabled={!draft.title.trim() || busyId === 'create'}>{busyId === 'create' ? 'Сохраняю…' : 'Сохранить'}</button><button className="secondary" type="button" disabled={busyId === 'create'} onClick={() => setAdding(false)}>Отмена</button></div>
+          <div className="module-form-actions"><button className="primary" type="submit" disabled={!draft.title.trim() || Boolean(busyId)}>{busyId ? 'Сохраняю…' : editingId ? 'Сохранить изменения' : 'Сохранить'}</button><button className="secondary" type="button" disabled={Boolean(busyId)} onClick={() => { setAdding(false); setEditingId(null); setDraft({ title: '', kind: 'walk', cadence: 'daily', targetPerPeriod: 1 }); }}>Отмена</button></div>
         </form>
       )}
       {!canPersist && <p className="module-persistence-note">Привычки сохраняются для профиля, открытого через Telegram.</p>}

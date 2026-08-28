@@ -49,26 +49,26 @@
 
 Working direction:
 
-**Living Companion OS**
+**Living Field Guide**
 
-A warm iOS-native care companion with:
-- first useful care action instead of a dog identity/status card;
-- soft but structured surfaces;
-- expressive micro-states;
-- simple daily action card;
-- map/passport/assistant as supporting systems;
-- emotional warmth + practical clarity.
+A living working notebook about one dog, with:
+- editorial utility and oversized, decisive hierarchy;
+- an off-white paper base with black line and type;
+- one focal care action instead of a dashboard of equal cards;
+- semantic color fields: sage, lime, blue, lilac, coral, yellow and pink;
+- simple line illustrations and real dog identity as the emotional layer;
+- calm mobile composition and a true wide-screen workspace on desktop.
 
 ## Imported UI/UX kit alignment
 
-The 2026-06-24 UI/UX kit confirms the visual direction:
+The 2026-08-28 reference set defines the visual direction:
 
-- cream/mint botanical base;
-- soft glass surfaces;
-- tactile controls;
-- calm motion and Telegram haptics;
-- privacy-first public sharing;
-- friendly but not childish copy.
+- Ploof warmth and pet-first illustrations;
+- Auro air and restrained translucent utility where spatial context needs it;
+- Habitz semantic colors;
+- Hygge stacked information rows;
+- Woset/Apollo typography and black line work;
+- Bluf-scale bold gestures used only for focal states.
 
 Use this as design language, not as a dependency mandate. Current DB/domain
 contracts stay more important than reference-screen scenarios.
@@ -90,13 +90,13 @@ Verification goal:
 
 ## UX/UI design kit contract
 
-Art direction: **Warm Companion OS**. Псё говорит как спокойный помощник владельца, а не как админка, инженерный статус или витрина технологий.
+Art direction: **Living Field Guide**. Псё говорит как спокойный помощник владельца, а не как админка, инженерный статус или витрина технологий.
 
 Component rules:
 
 - One primary action per surface. Secondary actions stay visually quieter.
 - Bottom navigation keeps the full owner workspace visible: `Главная`, `План`, `Ассистент`, `Рядом`, `Карта`, `Памятка`, `Профиль`.
-- Cards use the same soft surface, 24 to 28 px radius, clear title, one supporting line, then action.
+- Surfaces are flat paper fields with 18 to 28 px radii; shadows never carry hierarchy.
 - Chips describe owner meaning: `уход`, `спокойно`, `примерное место`, not internal states or raw enums.
 - Touch targets stay at least 44 px. Visual QA must fail on overflow and small controls.
 - Public card copy never exposes exact address, raw status, database terms, debug labels or service names.

@@ -1,6 +1,7 @@
 'use client';
 
 export function DesktopContextPanel({
+  mode,
   dogName,
   nearestTitle,
   nearestCaption,
@@ -13,6 +14,7 @@ export function DesktopContextPanel({
   onOpenHistory,
   onOpenCard,
 }: {
+  mode: string;
   dogName: string;
   nearestTitle: string;
   nearestCaption: string;
@@ -25,6 +27,12 @@ export function DesktopContextPanel({
   onOpenHistory: () => void;
   onOpenCard: () => void;
 }) {
+  const quietContext = {
+    map: ['Карта прогулок', 'Маршруты, сохранённые места и предупреждения находятся на самой карте.'],
+    nearby: ['Гав и знакомства', 'Сигналы и приглашения относятся только к выбранной собаке.'],
+    things: ['Вещи', 'Личный список покупок и того, что заканчивается.'],
+  }[mode];
+
   return (
     <aside className="desktop-context-panel" aria-label={`Сводка ухода ${dogName}`}>
       <div className="desktop-context-heading">
@@ -32,6 +40,10 @@ export function DesktopContextPanel({
         <b>{dogName}</b>
       </div>
 
+      {quietContext ? <section className="desktop-context-quiet">
+        <b>{quietContext[0]}</b>
+        <p>{quietContext[1]}</p>
+      </section> : <>
       <section>
         <span>Ближайшее дело</span>
         <b>{nearestTitle}</b>
@@ -55,6 +67,7 @@ export function DesktopContextPanel({
         <p>{cardReady ? 'Короткая безопасная карточка готова для другого человека.' : 'Добавь недостающие данные перед передачей собаки.'}</p>
         <button type="button" onClick={onOpenCard}>{cardReady ? 'Проверить' : 'Дозаполнить'}</button>
       </section>
+      </>}
     </aside>
   );
 }

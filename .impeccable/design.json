@@ -1,79 +1,82 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-19T16:45:00+03:00",
-  "title": "Design System: PSYO Pouf Companion",
+  "generatedAt": "2026-08-28T15:40:00+03:00",
+  "title": "Design System: Псё Living Field Guide",
   "extensions": {
     "colorMeta": {
-      "primary-ink": { "role": "primary", "displayName": "Aubergine Ink", "canonical": "#3a2e5c", "tonalRamp": ["#181225", "#2a203f", "#3a2e5c", "#5a477f", "#806aa3", "#aa98c4", "#d4cbe2", "#f5f1fa"] },
-      "canvas-lilac": { "role": "neutral", "displayName": "Pouf Lilac", "canonical": "#f0e9ff", "tonalRamp": ["#241d31", "#44385b", "#665884", "#8c7cab", "#b3a6ce", "#d1c7e7", "#e5dcf7", "#f7f3ff"] },
-      "care-yellow": { "role": "tertiary", "displayName": "Care Yellow", "canonical": "#ffe58a", "tonalRamp": ["#302800", "#594900", "#806b10", "#aa9131", "#d2b959", "#ecd475", "#ffe58a", "#fff7d7"] },
-      "companion-pink": { "role": "secondary", "displayName": "Companion Pink", "canonical": "#ffcce9", "tonalRamp": ["#381625", "#642b45", "#8d4566", "#b9658a", "#df8db2", "#f3aecf", "#ffcce9", "#fff2f8"] },
-      "companion-mint": { "role": "secondary", "displayName": "Companion Mint", "canonical": "#aef2d4", "tonalRamp": ["#0a3022", "#155a41", "#2c8061", "#50a883", "#79cdaa", "#9ae5c5", "#c9f7e4", "#effdf7"] },
-      "companion-blue": { "role": "secondary", "displayName": "Companion Blue", "canonical": "#dcecff", "tonalRamp": ["#172634", "#2b465f", "#486a88", "#6f91b0", "#99bad8", "#bdd8ef", "#dcecff", "#f4f9ff"] }
+      "ink": { "role": "primary", "displayName": "Field Ink", "canonical": "#171814", "tonalRamp": ["#171814", "#30312c", "#4e5149", "#73766e", "#999c94", "#bec0b9", "#dedfd9", "#f4f4ef"] },
+      "signal-lime": { "role": "secondary", "displayName": "Care Signal", "canonical": "#D8FF72", "tonalRamp": ["#263400", "#425700", "#617b00", "#82a400", "#a8cf27", "#c4ec52", "#d8ff72", "#f0ffc3"] },
+      "sage": { "role": "secondary", "displayName": "Quiet Sage", "canonical": "#DDE3D2", "tonalRamp": ["#252b20", "#424a3b", "#626c58", "#849079", "#a8b49e", "#c6cebc", "#dde3d2", "#f2f5ed"] },
+      "spatial-blue": { "role": "tertiary", "displayName": "Spatial Blue", "canonical": "#A9C7C9", "tonalRamp": ["#183033", "#2d5054", "#467277", "#60959a", "#82aeb2", "#a9c7c9", "#c9ddde", "#edf5f5"] },
+      "social-lilac": { "role": "tertiary", "displayName": "Social Lilac", "canonical": "#C6A9E6", "tonalRamp": ["#2d1c3b", "#4e3264", "#70498d", "#9165b5", "#ad86d0", "#c6a9e6", "#ddcef0", "#f4edfa"] },
+      "danger-coral": { "role": "tertiary", "displayName": "Caution Coral", "canonical": "#F05A3D", "tonalRamp": ["#3d1009", "#6a1d10", "#982b1b", "#c43e27", "#f05a3d", "#f6836f", "#fbb0a1", "#fde3dd"] },
+      "utility-yellow": { "role": "tertiary", "displayName": "Utility Yellow", "canonical": "#F3DF64", "tonalRamp": ["#352e05", "#5d5009", "#87750e", "#b19a20", "#d7be3c", "#f3df64", "#f9ec9a", "#fff8d2"] },
+      "warm-pink": { "role": "tertiary", "displayName": "Warm Pink", "canonical": "#EBA4BF", "tonalRamp": ["#3b1d28", "#633244", "#8d4a62", "#b76582", "#d984a2", "#eba4bf", "#f3c6d6", "#fbeaf0"] },
+      "canvas": { "role": "neutral", "displayName": "Warm Paper", "canonical": "#F7F6F0", "tonalRamp": ["#252520", "#484741", "#6c6b64", "#929189", "#b8b7af", "#d8d7d0", "#f7f6f0", "#fffef9"] },
+      "paper": { "role": "neutral", "displayName": "Raised Paper", "canonical": "#FFFDF8", "tonalRamp": ["#292824", "#4d4b46", "#72706a", "#98968f", "#bebcb5", "#dedcd6", "#fffdf8", "#ffffff"] },
+      "line": { "role": "neutral", "displayName": "Pencil Line", "canonical": "#CBCBC2", "tonalRamp": ["#282824", "#494943", "#6b6b64", "#8e8e86", "#b1b1a8", "#cbcbc2", "#e2e2dc", "#f6f6f2"] }
     },
     "typographyMeta": {
-      "display": { "displayName": "Cyrillic Display", "purpose": "Russo One for short Russian screen titles and focal actions." },
-      "brand": { "displayName": "PSYO Signature", "purpose": "Tanker for the Latin PSYO mark only; the font has no Cyrillic." },
-      "body": { "displayName": "Resilient Body", "purpose": "Readable supporting copy on pastel surfaces." },
-      "label": { "displayName": "Control Label", "purpose": "Compact navigation and action labels." }
+      "display": { "displayName": "Editorial Display", "purpose": "Псё signature and selected focal headings." },
+      "title": { "displayName": "Dense Title", "purpose": "Route titles and decisive care actions." },
+      "body": { "displayName": "Working Copy", "purpose": "Controls, records and explanatory Russian text." },
+      "label": { "displayName": "Utility Label", "purpose": "Compact metadata and navigation labels." }
     },
     "shadows": [
-      { "name": "cushion-small", "value": "inset 0 3px 0 rgb(255 255 255 / .70), inset 0 -5px 0 rgb(58 46 92 / .10), 0 9px 18px rgb(73 52 119 / .12)", "purpose": "Secondary controls and ordinary actionable cards." },
-      { "name": "cushion", "value": "inset 0 4px 0 rgb(255 255 255 / .66), inset 0 -7px 0 rgb(58 46 92 / .10), 0 14px 26px rgb(73 52 119 / .14)", "purpose": "Navigation and major tactile surfaces." },
-      { "name": "primary-action", "value": "inset 0 3px 0 rgb(255 255 255 / .24), inset 0 -5px 0 rgb(0 0 0 / .12), 0 11px 22px rgb(58 46 92 / .24)", "purpose": "Deep aubergine primary actions." }
+      { "name": "mobile-dock", "value": "0 14px 34px rgb(23 24 20 / 12%)", "purpose": "Separate the fixed mobile dock from scrolling paper." },
+      { "name": "temporary-overlay", "value": "0 18px 44px rgb(23 24 20 / 18%)", "purpose": "Dialogs and temporary sheets only." }
     ],
     "motion": [
-      { "name": "state-ease", "value": "cubic-bezier(.2,.8,.2,1)", "purpose": "Hover, press and state transitions." },
-      { "name": "arrival-ease", "value": "cubic-bezier(.16,1,.3,1)", "purpose": "One restrained Today arrival sequence." }
+      { "name": "state-ease", "value": "160ms cubic-bezier(.16, 1, .3, 1)", "purpose": "Color, border and restrained press feedback." }
     ],
     "breakpoints": [
-      { "name": "mobile-compact", "value": "560px" },
-      { "name": "context-rail", "value": "768px" },
-      { "name": "wide-shell", "value": "1024px" }
+      { "name": "desk-start", "value": "760px" },
+      { "name": "wide-desk", "value": "1180px" }
     ]
   },
   "components": [
     {
-      "name": "Primary Button",
+      "name": "Primary Care Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The single dominant action on a task surface.",
-      "html": "<button class=\"ds-btn-primary\">Готово</button>",
-      "css": ".ds-btn-primary{min-height:48px;border:0;border-radius:16px;padding:12px 18px;color:#fbf8ff;background:#3a2e5c;box-shadow:inset 0 3px 0 rgb(255 255 255/.24),inset 0 -5px 0 rgb(0 0 0/.12),0 11px 22px rgb(58 46 92/.24);font:900 15px Nunito,ui-rounded,system-ui;transition:transform .2s cubic-bezier(.2,.8,.2,1)}.ds-btn-primary:hover{transform:translateY(-2px);background:#2f244f}.ds-btn-primary:focus-visible{outline:3px solid #8f70c9;outline-offset:3px}.ds-btn-primary:active{transform:translateY(1px) scale(.99)}"
+      "description": "The one decisive mutation or confirmation on a surface.",
+      "html": "<button class=\"ds-care-button\">Готово</button>",
+      "css": ".ds-care-button{min-height:48px;padding:0 16px;border:1px solid #171814;border-radius:14px;background:#171814;color:#fffdf8;font:800 14px Manrope,system-ui,sans-serif;transition:background-color 160ms cubic-bezier(.16,1,.3,1),transform 160ms cubic-bezier(.16,1,.3,1)}.ds-care-button:hover{background:#30312c}.ds-care-button:focus-visible{outline:3px solid #315ea8;outline-offset:3px}.ds-care-button:active{transform:translateY(1px)}"
     },
     {
-      "name": "Cushion Card",
+      "name": "Care Signal Field",
       "kind": "card",
-      "refersTo": "card",
-      "description": "Default actionable container.",
-      "html": "<article class=\"ds-card\"><strong>Следующий шаг</strong><p>Поставить дату обработки</p></article>",
-      "css": ".ds-card{border:0;border-radius:24px;padding:16px;color:#3a2e5c;background:#fbf8ff;box-shadow:inset 0 3px 0 rgb(255 255 255/.7),inset 0 -5px 0 rgb(58 46 92/.1),0 9px 18px rgb(73 52 119/.12);font-family:Nunito,ui-rounded,system-ui}.ds-card strong{font-weight:900}.ds-card p{margin:.4rem 0 0;color:#71609b;font-weight:650}"
+      "refersTo": "button-signal",
+      "description": "A large semantic lime field for the nearest useful action.",
+      "html": "<article class=\"ds-care-field\"><h2>Поставить дату обработки</h2><p>Запланировано на сегодня.</p><button>Готово</button></article>",
+      "css": ".ds-care-field{display:grid;gap:12px;min-height:240px;padding:28px;border:1px solid #171814;border-radius:28px;background:#d8ff72;color:#171814;font-family:Manrope,system-ui,sans-serif}.ds-care-field h2{max-width:10ch;margin:0;font-size:38px;line-height:.94;letter-spacing:-.04em}.ds-care-field p{margin:0;font-weight:700}.ds-care-field button{justify-self:start;min-height:46px;padding:0 16px;border:1px solid #171814;border-radius:14px;background:#171814;color:#fffdf8;font-weight:800}.ds-care-field button:focus-visible{outline:3px solid #315ea8;outline-offset:3px}"
     },
     {
-      "name": "Recessed Input",
+      "name": "Observation Field",
       "kind": "input",
-      "refersTo": "input",
-      "description": "Borderless data entry surface.",
-      "html": "<input class=\"ds-input\" placeholder=\"Что важно помнить\" />",
-      "css": ".ds-input{min-height:48px;border:0;border-radius:16px;padding:12px 14px;color:#3a2e5c;background:#f0e8ff;box-shadow:inset 0 4px 8px rgb(58 46 92/.12),inset 0 -2px 0 rgb(255 255 255/.78);font:650 16px Nunito,ui-rounded,system-ui}.ds-input::placeholder{color:#7868a2;opacity:1}.ds-input:focus-visible{outline:3px solid #8f70c9;outline-offset:3px}"
+      "refersTo": "field",
+      "description": "Owner-authored daily observation capture on raised paper.",
+      "html": "<textarea class=\"ds-observation\" placeholder=\"Мята сегодня…\"></textarea>",
+      "css": ".ds-observation{min-height:86px;padding:13px 14px;border:1px solid #171814;border-radius:14px;background:#fffdf8;color:#171814;font:700 16px/1.45 Manrope,system-ui,sans-serif}.ds-observation::placeholder{color:#4e5149}.ds-observation:focus-visible{outline:3px solid #315ea8;outline-offset:2px}"
     },
     {
-      "name": "Active Navigation Item",
+      "name": "Canonical Navigation",
       "kind": "nav",
-      "description": "Lavender active route with a Streamline Plump icon.",
-      "html": "<button class=\"ds-nav\"><svg viewBox=\"0 0 48 48\" aria-hidden=\"true\"><path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\" d=\"M24 20c-6.334 0-11.686 5.531-13.414 12.635-.76 3.124.386 6.44 3.199 7.998C16.015 41.868 19.332 43 24 43s7.986-1.132 10.216-2.367c2.813-1.558 3.958-4.874 3.198-7.998C35.686 25.53 30.334 20 24 20\"/></svg><span>псё</span></button>",
-      "css": ".ds-nav{min-height:58px;border:0;border-radius:18px;padding:6px 10px;color:#3a2e5c;background:#c9a8ff;box-shadow:inset 0 4px 0 rgb(255 255 255/.44),inset 0 -6px 0 rgb(58 46 92/.14),0 10px 19px rgb(73 52 119/.18);font:850 11px Nunito,ui-rounded,system-ui}.ds-nav svg{display:block;width:25px;height:25px;margin:auto}.ds-nav:focus-visible{outline:3px solid #7251b5;outline-offset:3px}"
+      "refersTo": "navigation-active",
+      "description": "Five stable routes: mobile dock and desktop contents rail.",
+      "html": "<nav class=\"ds-nav\"><button class=\"active\">Всё</button><button>Псё</button><button>Карта</button><button>Гав</button><button>Вещи</button></nav>",
+      "css": ".ds-nav{display:flex;gap:4px;padding:7px;border:1px solid #cbcbc2;border-radius:22px;background:#fffdf8}.ds-nav button{min-height:48px;border:0;border-radius:14px;padding:0 12px;background:transparent;color:#4e5149;font:800 13px Manrope,system-ui,sans-serif}.ds-nav button.active{background:#d8ff72;color:#171814}.ds-nav button:focus-visible{outline:3px solid #315ea8;outline-offset:2px}"
     }
   ],
   "narrative": {
-    "northStar": "The Care Cushion",
-    "overview": "PSYO feels like a reassuring physical object the owner can tap while distracted: soft, rounded and visibly responsive, but never vague. The 1st-Pouf material language supplies the cushion depth, rounded heavy lettering and pastel fields; the product's Operate mode keeps one next action dominant and privacy states explicit.",
-    "keyCharacteristics": ["Tactile cushion depth", "Tanker brand mark with Russo One Cyrillic display", "Aubergine ink on semantic pastel fields", "Asymmetric task-specific compositions", "Streamline Plump navigation icons"],
+    "northStar": "The Living Field Guide",
+    "overview": "Псё is one working notebook for life with a dog: identify the dog, see the nearest care action, record what changed, then move into history. It combines pet-first warmth, typographic confidence, spatial air and semantic color without copying any reference literally.",
+    "keyCharacteristics": ["Connected desktop field guide", "Large semantic color fields", "Black linework and warm paper", "Authored dog identity", "Stable five-route navigation"],
     "rules": [
-      { "name": "Action Contrast", "body": "Primary actions use deep aubergine with near-white text; care yellow belongs to the next care action.", "section": "colors" },
-      { "name": "Cushion", "body": "Use full cushion depth only for interactive controls, actionable cards and major containers.", "section": "elevation" }
+      { "name": "The Field Rule", "body": "Color owns a meaningful region rather than appearing as scattered decoration.", "section": "colors" },
+      { "name": "The Flat-By-Default Rule", "body": "Permanent surfaces use tone and line; shadows belong to the mobile dock and temporary overlays.", "section": "elevation" }
     ],
-    "dos": ["Do keep the next useful care action dominant.", "Do use pastel color as a semantic field.", "Do keep privacy copy beside the governed action."],
-    "donts": ["Don't mix navigation icon families.", "Don't stack borders and cushion shadows.", "Don't let decorative status compete with daily care."]
+    "dos": ["Use the whole desktop viewport as one working spread.", "Keep privacy and recovery copy beside its action.", "Use the dog's monogram and line mark when real imagery is absent."],
+    "donts": ["Do not frame the product as a phone mockup.", "Do not float the assistant over content.", "Do not use gradients or persistent shadows in place of authored structure."]
   }
 }

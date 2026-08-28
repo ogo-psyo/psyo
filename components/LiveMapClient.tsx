@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { AttributionControl, Circle, CircleMarker, MapContainer, Polyline, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { AttributionControl, Circle, CircleMarker, MapContainer, Polyline, Popup, useMap, useMapEvents } from 'react-leaflet';
 import type { LiveMapProps, MapFeature } from './LiveMap';
+import { OpenFreeMapLayer } from './OpenFreeMapLayer';
 import 'leaflet/dist/leaflet.css';
 
 const defaultCenter: [number, number] = [55.751244, 37.618423];
-const mapTiles = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-const mapAttribution = '&copy; OpenStreetMap contributors &copy; CARTO';
 
 function toNumber(value: unknown): number | null {
   const next = Number(value);
@@ -191,18 +190,7 @@ export function LiveMapClient({
       <MapContainer center={defaultCenter} zoom={12} className="live-map" zoomControl attributionControl={false} aria-label={accessibleLabel}>
         <MapAccessibility label={accessibleLabel} />
         <AttributionControl prefix={false} />
-        <TileLayer
-          url={mapTiles}
-          attribution={mapAttribution}
-          subdomains="abcd"
-          maxZoom={20}
-          keepBuffer={6}
-          updateWhenIdle={false}
-          eventHandlers={{
-            load: () => setTilesReady(true),
-            tileerror: () => setTilesFailed(true),
-          }}
-        />
+        <OpenFreeMapLayer onLoad={() => setTilesReady(true)} onError={() => setTilesFailed(true)} />
         <MapEvents onMapClick={onMapClick} onPick={onPick} onCenterChange={onCenterChange} />
         <MapViewport zones={zones} features={features} userLocation={userLocation} focusPoint={focusPoint} routePoints={routePoints} fitDraftRoute={fitDraftRoute} />
 

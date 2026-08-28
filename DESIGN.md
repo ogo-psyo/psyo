@@ -1,169 +1,257 @@
 ---
-name: Псё Pouf Companion
-description: Tactile, warm care UI that keeps the owner's next useful action unmistakable.
+name: Псё Living Field Guide
+description: A living field guide for one dog, built from warm paper, black linework, and semantic color fields.
 colors:
-  primary-ink: "#06472f"
-  muted-ink: "#3e6657"
-  canvas: "#f4fff7"
-  surface: "#fafffb"
-  mint-soft: "#cbfedb"
-  green-soft: "#98df73"
-  lime-signal: "#3df881"
-  accent-emerald: "#07814d"
-  danger-coral: "#dd617c"
+  ink: "#171814"
+  ink-soft: "#4e5149"
+  paper: "#f7f6f0"
+  paper-raised: "#fffdf8"
+  line: "#cbcbc2"
+  line-strong: "#22231f"
+  sage: "#dde3d2"
+  moss: "#5b6336"
+  lime: "#d8ff72"
+  blue: "#a9c7c9"
+  lilac: "#c6a9e6"
+  coral: "#f05a3d"
+  yellow: "#f3df64"
+  pink: "#eba4bf"
+  focus-blue: "#315ea8"
 typography:
   display:
-    fontFamily: "Russo One, Nunito, ui-rounded, system-ui, sans-serif"
-    fontSize: "clamp(2.4375rem, 11vw, 3.375rem)"
-    fontWeight: 400
-    lineHeight: 0.92
+    fontFamily: "Unbounded, Manrope, system-ui, sans-serif"
+    fontSize: "clamp(2.25rem, 11vw, 4rem)"
+    fontWeight: 700
+    lineHeight: 0.94
+    letterSpacing: "-0.04em"
+  headline:
+    fontFamily: "Unbounded, Manrope, system-ui, sans-serif"
+    fontSize: "1.75rem"
+    fontWeight: 700
+    lineHeight: 1.05
     letterSpacing: "-0.03em"
-  brand:
-    fontFamily: "Russo One, Nunito, ui-rounded, system-ui, sans-serif"
-    fontSize: "2.8125rem"
-    fontWeight: 400
-    lineHeight: 0.78
   title:
-    fontFamily: "Nunito, SF Pro Rounded, ui-rounded, system-ui, sans-serif"
-    fontSize: "1.125rem"
-    fontWeight: 900
+    fontFamily: "Manrope, system-ui, sans-serif"
+    fontSize: "1.375rem"
+    fontWeight: 700
     lineHeight: 1.15
   body:
-    fontFamily: "Nunito, SF Pro Rounded, ui-rounded, system-ui, sans-serif"
+    fontFamily: "Manrope, system-ui, sans-serif"
     fontSize: "0.9375rem"
-    fontWeight: 650
-    lineHeight: 1.5
+    fontWeight: 600
+    lineHeight: 1.48
   label:
-    fontFamily: "Nunito, SF Pro Rounded, ui-rounded, system-ui, sans-serif"
-    fontSize: "0.6875rem"
-    fontWeight: 850
-    lineHeight: 1.1
+    fontFamily: "Manrope, system-ui, sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 700
+    lineHeight: 1.2
 rounded:
-  control: "16px"
-  compact-card: "20px"
-  card: "24px"
-  focal-field: "30px"
-spacing:
-  xs: "6px"
-  sm: "8px"
-  md: "14px"
-  lg: "18px"
-  xl: "24px"
+  xs: "8px"
+  control: "14px"
+  surface: "20px"
+  focal: "28px"
+  pill: "999px"
 components:
   button-primary:
-    backgroundColor: "{colors.primary-ink}"
-    textColor: "{colors.surface}"
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.paper-raised}"
     rounded: "{rounded.control}"
     height: "48px"
-    padding: "12px 18px"
+  button-care:
+    backgroundColor: "{colors.lime}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    height: "48px"
   button-secondary:
-    backgroundColor: "{colors.mint-soft}"
-    textColor: "{colors.primary-ink}"
+    backgroundColor: "{colors.paper-raised}"
+    textColor: "{colors.ink}"
     rounded: "{rounded.control}"
     height: "44px"
-    padding: "10px 16px"
-  card:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.primary-ink}"
-    rounded: "{rounded.card}"
-    padding: "16px"
-  input:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.primary-ink}"
+  button-ghost:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+  button-danger:
+    backgroundColor: "transparent"
+    textColor: "{colors.coral}"
+    rounded: "{rounded.control}"
+  field:
+    backgroundColor: "{colors.paper-raised}"
+    textColor: "{colors.ink}"
     rounded: "{rounded.control}"
     height: "48px"
-    padding: "12px 14px"
+    padding: "11px 13px"
+  surface-outline:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.surface}"
+  surface-flat:
+    backgroundColor: "{colors.sage}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.surface}"
+  surface-raised:
+    backgroundColor: "{colors.paper-raised}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.surface}"
+  navigation-active-mobile:
+    backgroundColor: "{colors.lime}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    height: "54px"
 ---
 
-# Design System: Псё Pouf Companion
+# Design System: Псё Living Field Guide
 
 ## Overview
 
-**Creative North Star: "The Care Cushion"**
+**Creative North Star: “The Living Field Guide”**
 
-Псё feels like a reassuring physical object the owner can tap while distracted: soft, rounded and visibly responsive, but never vague. The 1st-Pouf material language supplies the cushion depth, rounded heavy lettering and pastel fields; the product's Operate mode keeps one next action dominant and privacy states explicit.
+Псё is a pocket field guide for life with a dog, not a dashboard made from soft cards. The dog, the next useful action, direct observation capture, and the deeper record form one continuous editorial surface.
+
+The visual world is warm, precise, and protective: flat paper, near-black ink, firm linework, concise oversized Cyrillic display type, and semantic color fields. Hierarchy comes from composition, typography, color ownership, and rules—not ornamental effects.
 
 **Key Characteristics:**
 
-- tactile cushion surfaces with inset light and a soft physical drop;
-- Russo One for the Cyrillic Псё signature and display, with Nunito for readable supporting copy;
-- deep aubergine ink over lilac, yellow, pink, mint and washed blue fields;
-- one dominant action per surface;
-- Streamline Plump navigation icons sourced through Iconify.
+- warm paper and paper-raised surfaces joined by black or quiet gray linework;
+- Unbounded display moments paired with Manrope for all working copy and controls;
+- semantic route and state colors applied to meaningful regions;
+- mobile bottom dock and a true three-region editorial workspace on wide screens;
+- flat surfaces at rest, with no gradients and no persistent shadows.
 
 ## Colors
 
-The owner-selected ColorKit palette is exact: `#CBFEDB`, `#98DF73`, `#3DF881`, `#07814D`, `#DD617C`. A darker derived emerald `#06472F` carries body text where the supplied emerald does not provide enough contrast. Lilac, yellow, blue and unrelated decorative hues are outside the product palette; lighter surfaces are tints of the five approved colors.
+The exact kit palette is warm paper, near-black ink, subdued botanical neutrals, and a small set of semantic fields.
 
-**The Green Range Rule.** Large regions use mint soft; selected states use green soft; primary actions use emerald with near-white text. Lime signal appears only at the nearest care action, and coral is reserved for destructive states.
+### Primary
+
+- **Near-black ink:** The default text, decisive action, strong outline, and active desktop-route color.
+- **Signal lime:** The nearest care action and active mobile route.
+
+### Secondary
+
+- **Spatial blue:** Maps, spatial context, completed-care states, and calm health cues.
+- **Social lilac:** Nearby and social route fields.
+- **Utility yellow:** Things and warning-like utility fields.
+
+### Tertiary
+
+- **Sage:** Dog identity, quiet care, neutral portrait fields, and flat supporting surfaces.
+- **Moss:** A restrained botanical support color; never a replacement for near-black action ink.
+- **Coral:** Danger, destructive actions, and emphatic item fields.
+- **Warm pink:** A reserved kit accent; use only when an implemented semantic state calls for it.
+
+### Neutral
+
+- **Warm paper:** The continuous application canvas.
+- **Raised paper:** Inputs, controls, context rail, and temporary contained surfaces.
+- **Soft ink:** Secondary copy and inactive navigation.
+- **Quiet line:** Dividers and low-emphasis borders.
+- **Strong line:** Firm structural separation when near-black would be too dominant.
+- **Focus blue:** The accessible keyboard focus outline; it is not decorative color.
+
+### Named Rules
+
+**The Field Rule.** Color owns a meaningful region rather than appearing as scattered decoration: lime for the current action, blue for spatial or completed context, lilac for social, yellow for things, and coral for danger.
+
+**The Exact Kit Rule.** Use the normative palette tokens; do not introduce near-duplicate greens, mints, or off-whites.
 
 ## Typography
 
-**Brand font:** Russo One for the Cyrillic `Псё` signature. The product name is never transliterated in user-facing UI.
+**Display Font:** Unbounded (with Manrope and system sans fallbacks)
+**Body Font:** Manrope (with system sans fallbacks)
 
-**Display font:** Russo One for major Russian screen titles and focal actions.
+**Character:** Unbounded gives the Псё signature and major route/day headings a compact, authored silhouette. Manrope keeps controls, records, labels, and longer Russian copy direct and highly legible.
 
-**Body font:** Nunito, with SF Pro Rounded, `ui-rounded` and system sans fallbacks.
+### Hierarchy
 
-Display headings use weight 400, short line lengths and `-0.03em` tracking. Body copy uses weight 650 for resilience on pastel fields. Avoid uppercase decorative labels; hierarchy comes from scale, topology and weight.
+- **Display:** Unbounded 700, tightly spaced and approximately 36–64px depending on viewport; only for short brand, route, day, and focal headings.
+- **Headline:** Unbounded 700 around 28px for page-level headings below the primary display moment.
+- **Title:** Manrope 700 around 22px for task and section headings.
+- **Body:** Manrope at 14–15px with roughly 1.4–1.5 line height; explanatory copy generally stays within 68 characters.
+- **Label:** Manrope 700 around 11–12px for compact factual metadata and field labels.
+
+### Named Rules
+
+**The Two-Typeface Rule.** Unbounded is reserved for selected display moments; Manrope carries the interface.
+
+**The No-Kicker Rule.** Do not add uppercase or tracked eyebrow labels above headings; headings carry hierarchy themselves.
 
 ## Layout
 
-Mobile is canonical. The working shell spans the viewport, uses 14–24px contrasting rhythms, and reserves safe-area space for the fixed five-item bottom navigation. Today is one asymmetric care-board; Profile is a two-part passport spread; Map starts with a full-height map under floating controls; Nearby overlaps a trust-flow with its action surface; Things is a horizontal shelf rather than a vertical list.
+Mobile is a full-width working surface with 14–20px horizontal insets. It reserves bottom safe-area space for a fixed five-route dock: a flat, near-opaque paper bar with a top ink rule, 54px route targets, and a lime active field. Primary actions remain clear of the dock.
 
-At 768px and above, the product becomes a centered working surface with a contextual rail. Controls remain at least 44px high. No horizontal overflow is allowed at 320px and above.
+At 760px the app stops behaving like a framed phone and becomes a viewport-height editorial desk. Its canonical wide grid is `200px minmax(0, 1fr) 292px`: permanent route rail, fluid scrollable workspace, and contextual rail. The left rail uses a right divider; the context rail uses a left divider and raised paper. At 760–920px, the grid becomes `156px minmax(0, 1fr)` and the context rail is hidden.
+
+The Today workspace uses a two-column internal composition on wider screens, with a large focal care field on the left, capture and assistant on the right, and history below. Deep flows prefer continuous sections and ruled rows over nested card stacks.
 
 ## Elevation & Depth
 
-Depth is structural and tactile. Cards use a top inset highlight, a low-opacity lower compression shade and a diffuse aubergine drop. The focal Today field and bottom navigation use a stronger version; ordinary text groups remain flat.
+The system is flat at rest. Depth comes from adjacent paper tones, semantic fields, one-pixel borders, two-pixel section rules, and spatial composition. Persistent navigation, cards, controls, and desktop rails have no shadow. A restrained shadow may appear only on a temporary modal sheet; overlays use a dark translucent backdrop. Gradients are not part of the system.
 
-**The Cushion Rule.** Apply the full cushion treatment only to an interactive control, an actionable card or a major container. Never stack a border beneath it, and never nest multiple equally elevated cards.
+### Shadow Vocabulary
+
+- **Temporary sheet:** (`0 12px 36px rgb(23 24 20 / 14%)`) Only for the dog-creation overlay sheet; it must not migrate to persistent surfaces.
+
+### Named Rules
+
+**The Flat-by-Default Rule.** Persistent surfaces use tone and line, never shadow, to establish hierarchy.
+
+**The No-Gradient Rule.** Use a single flat paper or semantic field; never blend colors to simulate richness.
 
 ## Shapes
 
-Controls use 16px corners; recurring cards use 20–24px; the focal Today field reaches 30px. Full pills are reserved for compact selectors. Icon containers use small rounded squares that echo the cushion material without becoming separate cards.
+The form language is softly practical, not pillowy. Compact icon wells use an 8px radius; controls use 14px; ordinary authored surfaces use 20px; focal care and onboarding fields use 28px. Pills are limited to true status pills, while circles are reserved for identity and map-marker geometry. Editorial rows and full-height rails remain square, separated by lines.
 
 ## Components
 
 ### Buttons
 
-Primary buttons are deep aubergine, 48px high, weight 900 and visibly compress by 1px on press. Secondary buttons use pale lilac with a smaller cushion. Focus uses a 3px purple ring with 3px offset.
+- **Primary:** Near-black fill, raised-paper text, 1px ink border, 14px corners, and a 48px minimum height.
+- **Care:** Signal-lime fill with near-black text and border; reserved for the nearest care action.
+- **Secondary:** Raised-paper fill, quiet-line border, near-black text, 14px corners, and a 44px minimum height.
+- **Ghost:** Transparent fill and border with near-black text.
+- **Danger:** Transparent fill with coral text and coral border.
+- **States:** All variants use the 160ms state easing, a 3px focus-blue outline with 3px offset, and a 1px downward active translation. Disabled controls use muted gray ink on a quiet gray field.
 
-### Cards and containers
+### Cards / Containers
 
-The default surface is near-white lilac with a 24px radius and cushion depth. Care cards use yellow. Wishlist and contextual cards may rotate through pink, washed blue and mint, while preserving aubergine text contrast.
+- **Outlined surface:** Transparent field with a quiet 1px border and 20px corners.
+- **Flat surface:** Sage field with 20px corners.
+- **Raised surface:** Raised paper with a quiet 1px border and 20px corners; “raised” is tonal, not shadowed.
+- **Focal care field:** Lime at rest, spatial blue when complete, near-black border, 28px corners, and generous responsive padding.
+- **Rows:** History, settings, and task lists use square transparent rows with bottom dividers instead of individual cards.
 
-### Inputs
+### Inputs / Fields
 
-Inputs are 48px high, borderless, pale lilac and recessed with an inner shadow. Placeholder text remains opaque and readable.
+Fields use raised paper, near-black text, a quiet 1px border, 14px corners, 11px × 13px padding, and a 48px minimum height. Observation textareas are taller but retain the same material and focus behavior. Labels sit directly above their field; hints and recovery copy use soft ink and remain adjacent.
 
 ### Navigation
 
-The mobile navigation is a near-white 25px cushion with five equal routes: Всё, Псё, Карта, Рядом, Вещи. The active item uses lavender fill and the same aubergine ink. All icons come from Streamline Plump; do not mix icon families inside navigation.
+The five canonical routes are Всё, Псё, Карта, Гав, and Вещи. Mobile uses the fixed bottom dock and a lime active field. Desktop uses the permanent left contents rail: active items remain transparent and are marked by a 2px near-black line at the rail edge. The assistant is an inline action on mobile content and a dedicated near-black final action in the desktop rail.
 
-## Composition references
+### Today Care Field
 
-Aceternity is used as a topology library, not as a marketing-template skin. The product-safe translations are: bento grid into Today's asymmetric care board, timeline into profile observations, expandable cards into progressive profile disclosure, carousel into the Things shelf, and floating dock into the five-route navigation. Aurora, beams, meteors, 3D cards and decorative scroll reveals are outside the Operate-mode contract.
+The recurring focal component combines the next action, supporting copy, completion control, and dog identity in one bordered semantic field. It is deliberately larger than supporting controls and changes from lime to spatial blue when complete.
 
-## Motion
+### Assistant Entry
 
-Animate UI supplies the interaction grammar, without adding a runtime dependency. A route change unfolds the next working surface from the bottom navigation; the active dock icon settles into its cushion; profile sections disclose from their summary; press states visibly compress. Routine feedback stays between 140–360ms, uses `cubic-bezier(.16, 1, .3, 1)`, and becomes effectively static under `prefers-reduced-motion`.
+The assistant entry is a near-black, bordered control with raised-paper text and a small lime icon well. It is part of the layout rather than a persistent floating capsule; the compact floating trigger is mobile-only and remains clear of the dock.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** keep the next useful care action visually dominant.
-- **Do** use pastel color as a large semantic field, not scattered accents.
-- **Do** keep privacy and recovery copy beside the action it governs.
-- **Do** respect reduced-motion and 44px minimum targets.
-- **Do** use motion to explain route continuity, disclosure or action feedback.
+- **Do** make the nearest useful action the largest semantic field.
+- **Do** use the exact kit palette and assign route colors by meaning.
+- **Do** use the whole desktop viewport as one connected 200px / fluid / 292px working spread.
+- **Do** keep privacy, recovery, labels, and hints beside the action or field they govern.
+- **Do** reset route scroll and respect mobile safe-area insets.
 
 ### Don't:
 
-- **Don't** turn the product into a maximalist marketing page; task clarity wins.
-- **Don't** mix Streamline Plump navigation icons with emoji or unrelated icon families.
-- **Don't** stack borders and cushion shadows on the same surface.
-- **Don't** use tracked uppercase kickers, gradient text, neon glows or generic SaaS cards.
-- **Don't** let commerce, AI or decorative status compete with daily care.
-- **Don't** import marketing-template effects that compete with an owner's next task.
+- **Don't** render the application as a phone mockup beside utility cards.
+- **Don't** use uppercase tracked kickers above headings.
+- **Don't** float the assistant over primary content or navigation.
+- **Don't** add gradients, glass effects, or persistent shadows.
+- **Don't** rebuild deep flows from nested, equally elevated cards.
+- **Don't** substitute near-duplicate mint or green values for the exact kit palette.

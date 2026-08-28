@@ -39,7 +39,7 @@ for (const token of [
 }
 
 if (!files.product.includes('# PRODUCT — Псё')) failures.push('PRODUCT.md must name the product Псё');
-if (!files.design.includes('name: Псё Pouf Companion')) failures.push('DESIGN.md must name the product Псё');
+if (!files.design.includes('name: Псё Living Field Guide')) failures.push('DESIGN.md must name the product Псё');
 
 if (failures.length) {
   console.error(failures.map((failure) => `- ${failure}`).join('\n'));

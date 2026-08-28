@@ -2295,6 +2295,12 @@
 .woof-topbar > button { position: relative; min-width: 48px; height: 48px; display: grid; place-items: center; border: 0; border-radius: 17px; background: rgba(247,255,249,.96); color: #06472f; box-shadow: 0 8px 24px rgba(6,71,47,.16); backdrop-filter: blur(16px); }
 .woof-topbar > button svg { width: 22px; height: 22px; }
 .woof-topbar > button span { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; display: grid; place-items: center; padding: 0 5px; border: 2px solid #f7fff9; border-radius: 999px; background: #dd617c; color: white; font-size: 10px; font-weight: 950; }
+.woof-incoming-invite { position: absolute; z-index: 660; top: calc(70px + env(safe-area-inset-top)); right: 12px; left: 12px; display: grid; gap: 10px; padding: 14px; border-radius: 20px; color: #06472f; background: #cbfedb; box-shadow: inset 0 1px rgb(255 255 255 / 82%), inset 0 -3px rgb(7 129 77 / 12%), 0 10px 24px rgb(6 71 47 / 18%); }
+.woof-incoming-invite > div { display: grid; gap: 4px; }
+.woof-incoming-invite b { font-size: 15px; line-height: 1.2; }
+.woof-incoming-invite p { margin: 0; color: #315e4d; font-size: 12px; font-weight: 750; line-height: 1.4; }
+.woof-incoming-invite > button:not(.woof-primary) { min-height: 44px; border: 0; border-radius: 16px; color: #06472f; background: #fafffb; font-weight: 900; }
+.woof-incoming-invite.state-error { background: #fff0f3; }
 .woof-mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 4px; border-radius: 18px; background: rgba(247,255,249,.94); box-shadow: 0 8px 24px rgba(6,71,47,.16); backdrop-filter: blur(16px); }
 .woof-mode-switch button { min-width: 0; min-height: 44px; padding: 0 8px; border: 0; border-radius: 14px; background: transparent; color: #446c5d; font-size: 12px; font-weight: 900; }
 .woof-mode-switch button[aria-pressed="true"] { background: #06472f; color: #f7fff9; box-shadow: 0 5px 12px rgba(6,71,47,.22); }

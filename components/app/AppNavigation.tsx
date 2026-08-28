@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/Button';
+import { Sparkle } from '@phosphor-icons/react';
 
 export type PrimaryRoute = 'today' | 'profile' | 'map' | 'nearby' | 'things';
 
@@ -32,12 +33,18 @@ function PetNavIcon({ name }: { name: PetIconName }) {
 export function AppNavigation({
   active,
   onNavigate,
+  onAskAssistant,
 }: {
   active: string;
   onNavigate: (route: PrimaryRoute) => void;
+  onAskAssistant?: () => void;
 }) {
   return (
     <nav className="app-tabs" aria-label="Основные разделы">
+      <div className="app-tabs-brand" aria-hidden="true">
+        <b>Псё</b>
+        <span>ваш день вместе</span>
+      </div>
       {routes.map((route) => {
         const isActive = active === route.id;
         return (
@@ -57,6 +64,10 @@ export function AppNavigation({
           </Button>
         );
       })}
+      {onAskAssistant && <button className="app-tabs-assistant" type="button" aria-label="Спросить Псё" onClick={onAskAssistant}>
+        <Sparkle weight="fill" aria-hidden="true" />
+        <span><b>Спросить Псё</b><small>Помощник по данным собаки</small></span>
+      </button>}
     </nav>
   );
 }

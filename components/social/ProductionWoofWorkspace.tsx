@@ -9,6 +9,7 @@ import { SocialProfileSheet } from './SocialProfileSheet';
 import { WoofLiveMap } from './WoofLiveMap';
 
 type SignalDraft = { startsAt: string; pace: WalkPace; note: string; location: CoarseLocation };
+type IncomingInvite = { petName: string | null; expiresAt: string };
 
 type Props = {
   dogName: string;
@@ -24,6 +25,10 @@ type Props = {
   busyId: string | null;
   locating: boolean;
   missingTelegramUsernameAction?: string | null;
+  invite: IncomingInvite | null;
+  inviteState: 'idle' | 'loading' | 'ready' | 'gone' | 'error';
+  onAcceptInvite: () => void | Promise<void>;
+  onDismissInvite: () => void;
   onSaveProfile: (draft: Omit<SocialProfile, 'petId'>) => void | Promise<void>;
   onHideProfile: () => void | Promise<void>;
   onLocateProfile: (ready: (location: CoarseLocation) => void) => void;
@@ -209,6 +214,15 @@ export function ProductionWoofWorkspace(props: Props) {
       </div>
       <button type="button" onClick={() => setRequestsOpen(true)} aria-label={`Отклики и связи: ${props.requests.length}`}><UsersThree />{props.requests.length > 0 && <span>{props.requests.length}</span>}</button>
     </header>
+
+    {props.inviteState !== 'idle' && <aside className={`woof-incoming-invite state-${props.inviteState}`} aria-live="polite" role={props.inviteState === 'error' ? 'alert' : 'status'}>
+      <div>
+        <b>{props.inviteState === 'loading' ? 'Открываю приглашение…' : props.inviteState === 'gone' ? 'Приглашение уже закрыто' : props.inviteState === 'error' ? 'Не получилось открыть приглашение' : props.invite?.petName ? `${props.invite.petName} зовёт познакомиться` : 'Вас зовут познакомить собак'}</b>
+        <p>{props.inviteState === 'ready' ? 'После принятия владельцу придёт запрос. Контакт откроется только после взаимного согласия.' : props.inviteState === 'gone' ? 'Попросите друга отправить новую ссылку.' : props.inviteState === 'error' ? 'Проверьте соединение или закройте приглашение.' : 'Проверяю срок и владельца ссылки.'}</p>
+      </div>
+      {props.inviteState === 'ready' && <button className="woof-primary" type="button" disabled={props.busyId === 'incoming-invite'} onClick={() => props.onAcceptInvite()}>{props.busyId === 'incoming-invite' ? 'Принимаю…' : 'Принять'}</button>}
+      {props.inviteState !== 'loading' && <button type="button" onClick={props.onDismissInvite}>{props.inviteState === 'ready' ? 'Отклонить' : 'Закрыть'}</button>}
+    </aside>}
 
     {mode === 'live' && <>
       <div className="woof-live-heading"><span className="woof-live-dot" />{props.locating || props.state === 'loading' ? 'Ищу ваш район…' : `${props.signals.filter((signal) => !signal.isMine).length} поблизости`}</div>

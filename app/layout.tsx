@@ -1,18 +1,19 @@
 import type { Metadata, Viewport } from 'next';
-import { Nunito, Russo_One } from 'next/font/google';
+import { Manrope, Unbounded } from 'next/font/google';
 import './globals.css';
 import './refinement.css';
 import './pouf.css';
+import './editorial.css';
 
-const nunito = Nunito({
+const manrope = Manrope({
   subsets: ['cyrillic', 'latin'],
   display: 'swap',
   variable: '--font-pouf',
 });
 
-const russo = Russo_One({
+const unbounded = Unbounded({
   subsets: ['cyrillic', 'latin'],
-  weight: '400',
+  weight: ['600', '700'],
   display: 'swap',
   variable: '--font-display-cyrillic',
 });
@@ -41,13 +42,14 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#f0e9ff',
+  themeColor: '#f7f6f0',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body className={`${nunito.variable} ${russo.variable}`}>
+      <body className={`${manrope.variable} ${unbounded.variable}`}>
+        <span hidden aria-hidden="true" data-psyo-design-contract="living-field-guide-2026-08" />
         <script src="https://telegram.org/js/telegram-web-app.js" async />
         {children}
       </body>
