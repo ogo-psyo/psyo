@@ -2267,6 +2267,14 @@ export default function Home() {
     try {
       const idempotencyKey = `avatar:${petId}:${crypto.randomUUID()}`;
       const mode = avatarReferenceAssetId ? 'image_to_image' : 'text_to_image';
+      const appearanceNote = [
+        avatarProfile.size && `размер: ${avatarProfile.size}`,
+        avatarProfile.coatType && `шерсть: ${avatarProfile.coatType}`,
+        avatarProfile.colorMarks && `окрас и приметы: ${avatarProfile.colorMarks}`,
+        avatarProfile.breedHint && `детали породы: ${avatarProfile.breedHint}`,
+        avatarProfile.avatarPrompt,
+        avatarOwnerPrompt,
+      ].filter(Boolean).join('; ').slice(0, 280);
       const response = await fetch(`/api/v1/pets/${petId}/avatar/jobs`, {
         method: 'POST',
         credentials: 'include',
@@ -2275,8 +2283,8 @@ export default function Home() {
           mode,
           referenceAssetId: avatarReferenceAssetId || undefined,
           styleId: avatarProfile.selectedStyle,
-          ownerPrompt: avatarOwnerPrompt,
-          consentVersion: 'avatar-provider-v1',
+          ownerPrompt: appearanceNote,
+          consentVersion: 'avatar-provider-v2',
         }),
       });
       const result = await response.json().catch(() => ({}));
@@ -2298,6 +2306,7 @@ export default function Home() {
         AVATAR_GENERATION_DISABLED: 'Создание образа пока выключено.',
         AVATAR_PROVIDER_DISABLED: 'Генератор пока не готов. Фото и профиль работают без него.',
         AVATAR_OWNER_QUOTA: 'Лимит генераций на этот час исчерпан. Попробуй позже.',
+        AVATAR_PROVIDER_QUOTA: 'Лимит сервиса исчерпан. Фото и профиль работают без генератора.',
         AVATAR_DAILY_BUDGET_REACHED: 'Дневной лимит генератора исчерпан. Списаний не будет.',
         AVATAR_MODERATION_REJECTED: 'Это описание нельзя использовать. Измени формулировку.',
         AVATAR_PROVIDER_TIMEOUT: 'Генератор не ответил. Черновик не применён — можно повторить.',

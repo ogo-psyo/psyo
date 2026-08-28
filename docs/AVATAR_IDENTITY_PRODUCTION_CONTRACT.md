@@ -30,7 +30,8 @@ Generation is always opt-in. A generated result is a draft until the owner activ
 - Originals and variants are private. The app renders them through an authenticated owner-scoped endpoint.
 - Public dog cards require a separate explicit publication step and never expose the original reference photo automatically.
 - There is no Pollinations fallback. Provider, purpose and retention consent is explicit and versioned.
-- Generation requires both `AVATAR_GENERATION_ENABLED=true` and `AVATAR_OPENAI_ENABLED=true`, plus a positive daily budget. Upload requires `UPLOADS_ENABLED=true`.
+- Generation requires both `AVATAR_GENERATION_ENABLED=true` and `AVATAR_DEAPI_ENABLED=true`, a server-only `DEAPI_API_KEY`, and a positive daily budget. Upload requires `UPLOADS_ENABLED=true`.
+- Text-only portraits use `Flux1schnell`; photo styling uses `Flux_2_Klein_4B_BF16`. Both return inline bytes through the OpenAI-compatible deAPI gateway; temporary provider URLs are never persisted or fetched by the app.
 - Job cost/idempotency and upload quotas are reserved atomically in service-role RPCs before provider or storage work.
 - Browser clients have no direct CRUD policies on the avatar lifecycle tables.
 

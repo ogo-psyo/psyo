@@ -21,9 +21,9 @@ for (const line of [
   'AI_QA_ENABLED=false',
   'ASSISTANT_GROQ_ENABLED=false',
   'AVATAR_GENERATION_ENABLED=false',
-  'AVATAR_OPENAI_ENABLED=false',
+  'AVATAR_DEAPI_ENABLED=false',
   'AVATAR_DAILY_BUDGET_CENTS=0',
-  'AVATAR_OPENAI_ESTIMATED_COST_CENTS=0',
+  'AVATAR_DEAPI_ESTIMATED_COST_CENTS=0',
   'UPLOADS_ENABLED=false',
 ]) {
   if (!files.env.includes(line)) failures.push(`.env.example must keep risky prod flag disabled by default: ${line}`);
@@ -48,7 +48,7 @@ const avatarAssets = readFileSync('app/api/v1/pets/[petId]/avatar/assets/route.t
 const telegramWebhook = readFileSync('app/api/telegram/webhook/route.ts', 'utf8');
 
 if (!avatarGenerate.includes('AVATAR_API_MOVED')) failures.push('legacy avatar generate route must stay retired');
-for (const token of ['rc1Config.flags.avatar_generation_enabled', 'AVATAR_OPENAI_ENABLED', 'AVATAR_DAILY_BUDGET_CENTS', 'getAvatarOwnerContext', 'requireOwnedPet']) {
+for (const token of ['rc1Config.flags.avatar_generation_enabled', 'AVATAR_DEAPI_ENABLED', 'AVATAR_DAILY_BUDGET_CENTS', 'getAvatarOwnerContext', 'requireOwnedPet']) {
   if (!avatarJobs.includes(token)) failures.push(`pet-bound avatar job route missing release/auth gate token: ${token}`);
 }
 

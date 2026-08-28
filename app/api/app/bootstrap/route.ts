@@ -4,14 +4,15 @@ import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
 import { ensureProfile, getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { rc1Config } from '@/lib/rc1';
+import { avatarConsentVersion } from '@/lib/server/avatarIdentity';
 
 export const runtime = 'nodejs';
 
 function avatarCapabilities() {
   const budget = Number(process.env.AVATAR_DAILY_BUDGET_CENTS || '0');
-  const estimate = Number(process.env.AVATAR_OPENAI_ESTIMATED_COST_CENTS || '0');
-  const providerReady = process.env.AVATAR_OPENAI_ENABLED === 'true'
-    && Boolean(process.env.OPENAI_API_KEY)
+  const estimate = Number(process.env.AVATAR_DEAPI_ESTIMATED_COST_CENTS || '0');
+  const providerReady = process.env.AVATAR_DEAPI_ENABLED === 'true'
+    && Boolean(process.env.DEAPI_API_KEY)
     && Number.isSafeInteger(budget) && budget > 0
     && Number.isSafeInteger(estimate) && estimate > 0;
   return {
@@ -19,7 +20,7 @@ function avatarCapabilities() {
     uploadsEnabled: rc1Config.flags.uploads_enabled,
     generationEnabled: rc1Config.flags.avatar_generation_enabled && providerReady,
     providerReady,
-    consentVersion: 'avatar-provider-v1',
+    consentVersion: avatarConsentVersion,
   };
 }
 

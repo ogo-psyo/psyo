@@ -7,7 +7,7 @@ import { getSupabaseAdmin } from '@/lib/server/supabase';
 import { principalsAgree } from '@/lib/socialCore';
 
 export const avatarBucket = 'pet-avatar-private';
-export const avatarConsentVersion = 'avatar-provider-v1';
+export const avatarConsentVersion = 'avatar-provider-v2';
 export const avatarPromptVersion = 'appearance-v1';
 export const avatarStyles = new Set<AvatarStyleId>(['city', 'neon', 'winter', 'space', 'sticker']);
 export const avatarModes = new Set(['text_to_image', 'image_to_image', 'variation'] as const);
@@ -74,6 +74,17 @@ export function boundedOwnerPrompt(value: unknown) {
   const normalized = String(value || '').replace(/\s+/g, ' ').trim();
   if (normalized.length > 280) throw new AvatarIdentityError('AVATAR_PROMPT_TOO_LONG', 400);
   return normalized;
+}
+
+export function assertAvatarPromptPolicy(value: string) {
+  const normalized = value.toLocaleLowerCase('ru-RU');
+  const disallowed = [
+    /\b(?:nude|nudity|porn|sexual|gore|dismember|weapon|kill|blood)\b/i,
+    /(?:обнаж|порн|сексуал|кров|расчлен|оруж|убий)/i,
+  ];
+  if (disallowed.some((pattern) => pattern.test(normalized))) {
+    throw new AvatarIdentityError('AVATAR_MODERATION_REJECTED', 422);
+  }
 }
 
 export async function sanitizeAvatarImage(file: File) {

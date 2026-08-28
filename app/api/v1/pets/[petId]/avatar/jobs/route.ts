@@ -7,6 +7,7 @@ import {
   avatarErrorResponse,
   avatarPromptVersion,
   AvatarIdentityError,
+  assertAvatarPromptPolicy,
   boundedOwnerPrompt,
   buildServerAvatarPrompt,
   getAvatarOwnerContext,
@@ -19,24 +20,29 @@ import {
 
 export const runtime = 'nodejs';
 
-const provider = 'openai';
-const model = 'gpt-image-1';
+const provider = 'deapi';
+const generationModel = 'Flux1schnell';
+const editModel = 'Flux_2_Klein_4B_BF16';
 const perOwnerHourlyLimit = 4;
 const providerTimeoutMs = 45_000;
 
 function enabledBudget() {
   const budget = Number(process.env.AVATAR_DAILY_BUDGET_CENTS || '0');
-  const estimate = Number(process.env.AVATAR_OPENAI_ESTIMATED_COST_CENTS || '0');
-  if (process.env.AVATAR_OPENAI_ENABLED !== 'true' || !Number.isSafeInteger(budget) || budget <= 0 || !Number.isSafeInteger(estimate) || estimate <= 0) {
+  const estimate = Number(process.env.AVATAR_DEAPI_ESTIMATED_COST_CENTS || '0');
+  if (process.env.AVATAR_DEAPI_ENABLED !== 'true' || !Number.isSafeInteger(budget) || budget <= 0 || !Number.isSafeInteger(estimate) || estimate <= 0) {
     throw new AvatarIdentityError('AVATAR_PROVIDER_DISABLED', 503);
   }
   return { budget, estimate };
 }
 
+function deapiGatewayToken(apiKey: string) {
+  return apiKey.startsWith('dpn-sk-') ? apiKey : `dpn-sk-${apiKey}`;
+}
+
 async function readProviderImage(response: Response) {
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    if (response.status === 429) throw new AvatarIdentityError('AVATAR_PROVIDER_QUOTA', 429);
+    if ([402, 429].includes(response.status)) throw new AvatarIdentityError('AVATAR_PROVIDER_QUOTA', 429);
     throw new AvatarIdentityError('AVATAR_PROVIDER_FAILED', 503);
   }
   const image = data?.data?.[0];
@@ -50,40 +56,13 @@ async function readProviderImage(response: Response) {
   throw new AvatarIdentityError('AVATAR_PROVIDER_EMPTY', 503);
 }
 
-async function moderatePrompt(apiKey: string, prompt: string) {
-  const response = await fetch('https://api.openai.com/v1/moderations', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'omni-moderation-latest', input: prompt }),
-    signal: AbortSignal.timeout(10_000),
-  });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw new AvatarIdentityError('AVATAR_MODERATION_UNAVAILABLE', 503);
-  if (data?.results?.[0]?.flagged === true) throw new AvatarIdentityError('AVATAR_MODERATION_REJECTED', 422);
-}
-
-async function moderateGeneratedImage(apiKey: string, image: Buffer) {
-  const response = await fetch('https://api.openai.com/v1/moderations', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'omni-moderation-latest',
-      input: [{ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${image.toString('base64')}` } }],
-    }),
-    signal: AbortSignal.timeout(15_000),
-  });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw new AvatarIdentityError('AVATAR_MODERATION_UNAVAILABLE', 503);
-  if (data?.results?.[0]?.flagged === true) throw new AvatarIdentityError('AVATAR_MODERATION_REJECTED', 422);
-}
-
 export async function POST(request: Request, { params }: { params: Promise<{ petId: string }> }) {
   let jobId: string | null = null;
   let context: Awaited<ReturnType<typeof getAvatarOwnerContext>> | null = null;
   try {
     if (!rc1Config.flags.avatar_generation_enabled) return NextResponse.json({ error: 'AVATAR_GENERATION_DISABLED' }, { status: 403 });
     const budget = enabledBudget();
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.DEAPI_API_KEY;
     if (!apiKey) throw new AvatarIdentityError('AVATAR_PROVIDER_DISABLED', 503);
     const { petId } = await params;
     context = await getAvatarOwnerContext(request);
@@ -93,12 +72,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ pet
     const mode = parseAvatarMode(body?.mode);
     const style = parseAvatarStyle(body?.styleId);
     const ownerPrompt = boundedOwnerPrompt(body?.ownerPrompt);
+    assertAvatarPromptPolicy(ownerPrompt);
     const consentVersion = String(body?.consentVersion || '');
     if (consentVersion !== avatarConsentVersion) throw new AvatarIdentityError('AVATAR_PROVIDER_CONSENT_REQUIRED', 409);
     const referenceAssetId = typeof body?.referenceAssetId === 'string' ? body.referenceAssetId : null;
     if (mode !== 'text_to_image' && !referenceAssetId) throw new AvatarIdentityError('REFERENCE_ASSET_REQUIRED', 400);
 
     const prompt = buildServerAvatarPrompt({ pet, style, ownerPrompt, mode });
+    const model = mode === 'text_to_image' ? generationModel : editModel;
     const promptHash = createHash('sha256').update(prompt).digest('hex');
     const fingerprint = createHash('sha256').update(JSON.stringify({ petId, mode, style, ownerPrompt, referenceAssetId, consentVersion })).digest('hex');
 
@@ -151,15 +132,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ pet
       }, { status: claimed.data.status === 'ready' ? 200 : 409 });
     }
 
-    await moderatePrompt(apiKey, prompt);
     await context.supabase.from('avatar_jobs').update({ status: 'generating' }).eq('id', jobId).eq('owner_id', context.ownerId);
 
     let providerResponse: Response;
     if (mode === 'text_to_image') {
-      providerResponse = await fetch('https://api.openai.com/v1/images/generations', {
+      providerResponse = await fetch('https://oai.deapi.ai/v1/images/generations', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, prompt, size: '1024x1024', response_format: 'b64_json' }),
+        headers: { Authorization: `Bearer ${deapiGatewayToken(apiKey)}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, prompt, size: '1024x1024', quality: 'medium', n: 1, response_format: 'b64_json' }),
         signal: AbortSignal.timeout(providerTimeoutMs),
       });
     } else {
@@ -171,9 +151,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ pet
       form.set('prompt', prompt);
       form.set('size', '1024x1024');
       form.set('response_format', 'b64_json');
-      providerResponse = await fetch('https://api.openai.com/v1/images/edits', {
+      form.set('quality', 'medium');
+      form.set('n', '1');
+      providerResponse = await fetch('https://oai.deapi.ai/v1/images/edits', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}` },
+        headers: { Authorization: `Bearer ${deapiGatewayToken(apiKey)}` },
         body: form,
         signal: AbortSignal.timeout(providerTimeoutMs),
       });
@@ -189,7 +171,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ pet
       throw new AvatarIdentityError('AVATAR_PROVIDER_INVALID_IMAGE', 503);
     }
     const metadata = await sharp(generated).metadata();
-    await moderateGeneratedImage(apiKey, generated);
     const asset = await storePrivateAvatar({
       context,
       petId,

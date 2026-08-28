@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import sharp from 'sharp';
 import {
+  assertAvatarPromptPolicy,
   AvatarIdentityError,
   boundedOwnerPrompt,
   buildServerAvatarPrompt,
@@ -47,6 +48,8 @@ test('mode, style, prompt and idempotency inputs are constrained', () => {
   assert.throws(() => parseAvatarMode('unsafe'), (error: unknown) => error instanceof AvatarIdentityError && error.code === 'INVALID_AVATAR_MODE');
   assert.throws(() => parseAvatarStyle('unsafe'), (error: unknown) => error instanceof AvatarIdentityError && error.code === 'INVALID_AVATAR_STYLE');
   assert.throws(() => boundedOwnerPrompt('x'.repeat(281)), (error: unknown) => error instanceof AvatarIdentityError && error.code === 'AVATAR_PROMPT_TOO_LONG');
+  assert.doesNotThrow(() => assertAvatarPromptPolicy('сохранить белое пятно на груди'));
+  assert.throws(() => assertAvatarPromptPolicy('добавить кровь и оружие'), (error: unknown) => error instanceof AvatarIdentityError && error.code === 'AVATAR_MODERATION_REJECTED');
   assert.throws(() => validateIdempotencyKey('short'), (error: unknown) => error instanceof AvatarIdentityError && error.code === 'IDEMPOTENCY_KEY_REQUIRED');
 });
 
