@@ -48,7 +48,7 @@ for (const token of ['профиль в Supabase', 'commerce/rebuy loop']) {
 const requiredOwnerLanguage = [
   'всё',
   'Памятка',
-  'Что увидит другой человек',
+  'Публичная карточка',
   'Карта прогулок',
   'План заботы',
 ];
@@ -95,8 +95,8 @@ for (const token of ['public-card-review', 'public-card-checklist', 'public-card
   if (!cardBlock.includes(token)) failures.push(`public card tab missing owner-safe surface: ${token}`);
 }
 
-if (!files.page.includes("profile.dogName.trim() && profile.socialMode && profile.triggers")) {
-  failures.push('public card must require persisted name, contact rule, and triggers before sharing');
+if (!files.page.includes("const publicCardReady = Boolean(profile.dogName.trim() && profile.socialMode)")) {
+  failures.push('public card must require persisted name and contact rule before sharing');
 }
 
 const navStart = files.navigation.indexOf('<nav className="app-tabs"');

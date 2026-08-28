@@ -48,12 +48,17 @@ for (const token of [
 
 for (const token of [
   'publishPublicDogCard',
+  'Создать публичную карточку',
+  'Опубликовать изменения',
+  'Скопировать ссылку',
+  'publicCardHasChanges',
+  'publishedPublicCardFingerprint',
   'regeneratePublicDogCard',
   'revokePublicDogCard',
   "fetch('/api/dog-cards'",
   "visibility: 'unlisted'",
   'setPublishedPublicCardPath(result.path)',
-  'Пересоздать ссылку',
+  'Создать новую ссылку',
   'Отозвать',
 ]) {
   if (!files.page.includes(token)) failures.push(`public card persisted share flow missing: ${token}`);
@@ -68,6 +73,7 @@ for (const token of [
   'export async function DELETE',
   'public_slug',
   'revoked_at',
+  "select('id, public_slug, visibility, fields, updated_at')",
 ]) {
   if (!files.dogCardsRoute.includes(token)) failures.push(`dog cards API missing owner/privacy token: ${token}`);
 }

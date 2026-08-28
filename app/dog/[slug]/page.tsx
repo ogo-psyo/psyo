@@ -83,9 +83,7 @@ export default async function DogCardPage({
   const demo = read('demo', '0') === '1';
   const rawImage = dbFields?.image || read('image', '');
   const image = /^(https?:\/\/|data:image\/(png|jpe?g|webp);base64,)/i.test(rawImage) ? rawImage : '';
-  const avoidText = triggers || (bio.toLowerCase() === social.toLowerCase()
-    ? 'резкие движения, шум, руки к морде'
-    : bio);
+  const avoidText = triggers || 'резкие движения и еда без разрешения';
 
   return (
     <main className="share-page">

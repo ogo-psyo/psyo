@@ -6321,6 +6321,105 @@ body::before,
   gap: 14px;
 }
 
+.public-card-lifecycle {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  border: 1px solid var(--line, #cbcbc2);
+  border-radius: 28px;
+  padding: 18px;
+  color: #171814;
+  background: #d8ff72;
+}
+
+.public-card-lifecycle.is-published {
+  background: #dde3d2;
+}
+
+.public-card-lifecycle.has-changes {
+  background: #f3df64;
+}
+
+.public-card-lifecycle-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid #22231f;
+  border-radius: 14px;
+  background: #fffdf8;
+}
+
+.public-card-lifecycle-icon svg {
+  width: 25px;
+  height: 25px;
+}
+
+.public-card-lifecycle-copy {
+  min-width: 0;
+}
+
+.public-card-lifecycle-copy h3 {
+  margin: 0;
+  color: #171814;
+  font-size: clamp(22px, 5.6vw, 28px);
+  line-height: 1.08;
+  font-weight: 900;
+  letter-spacing: -.03em;
+  text-wrap: balance;
+}
+
+.public-card-lifecycle-copy p {
+  max-width: 62ch;
+  margin: 8px 0 0;
+  color: #4e5149;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 680;
+}
+
+.public-card-lifecycle-copy code {
+  display: block;
+  overflow: hidden;
+  margin-top: 10px;
+  color: #4e5149;
+  font: 700 12px/1.4 Manrope, system-ui, sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-card-lifecycle > .primary,
+.public-card-published-actions {
+  grid-column: 1 / -1;
+}
+
+.public-card-lifecycle > .primary {
+  width: 100%;
+  min-height: 50px;
+}
+
+.public-card-published-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, .8fr);
+  gap: 8px;
+}
+
+.public-card-published-actions button,
+.public-card-actions-panel button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.public-card-published-actions svg,
+.public-card-actions-panel svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
 .public-card-review {
   display: grid;
   gap: 12px;
@@ -6330,10 +6429,10 @@ body::before,
 .public-card-checklist,
 .public-card-fields-panel,
 .public-card-privacy-note {
-  border: 1px solid #DDE7DD;
-  border-radius: 28px;
-  background: #FFFFFF;
-  box-shadow: var(--shadow-soft);
+  border: 1px solid #cbcbc2;
+  border-radius: 20px;
+  background: #fffdf8;
+  box-shadow: none;
 }
 
 .public-card-preview-panel {
@@ -6356,7 +6455,7 @@ body::before,
 .public-card-preview-head span,
 .public-card-rule span,
 .public-card-preview-grid span {
-  color: #5E9F74;
+  color: #5b6336;
   font-size: 11px;
   font-weight: 900;
   letter-spacing: .08em;
@@ -6366,8 +6465,8 @@ body::before,
 .public-card-preview-head b {
   border-radius: 999px;
   padding: 7px 10px;
-  color: #19231D;
-  background: #EAF5ED;
+  color: #171814;
+  background: #dde3d2;
   font-size: 11px;
   font-weight: 900;
 }
@@ -6385,7 +6484,7 @@ body::before,
 }
 
 .public-card-preview-dog h3 {
-  color: #19231D;
+  color: #171814;
   font-size: 32px;
   line-height: 1;
   font-weight: 950;
@@ -6395,7 +6494,7 @@ body::before,
 .public-card-rule p,
 .public-card-privacy-note p {
   margin-top: 7px;
-  color: #53615A;
+  color: #4e5149;
   font-size: 13px;
   line-height: 1.4;
   font-weight: 720;
@@ -6405,13 +6504,13 @@ body::before,
   margin-top: 14px;
   border-radius: 22px;
   padding: 14px;
-  background: #F5F7F2;
+  background: #f7f6f0;
 }
 
 .public-card-rule b {
   display: block;
   margin-top: 8px;
-  color: #19231D;
+  color: #171814;
   font-size: 22px;
   line-height: 1.1;
   font-weight: 930;
@@ -6426,13 +6525,13 @@ body::before,
   min-width: 0;
   border-radius: 20px;
   padding: 12px;
-  background: #EAF5ED;
+  background: #dde3d2;
 }
 
 .public-card-preview-grid b {
   display: block;
   margin-top: 6px;
-  color: #19231D;
+  color: #171814;
   font-size: 14px;
   line-height: 1.25;
   font-weight: 860;
@@ -6456,17 +6555,17 @@ body::before,
 
 .public-card-fields-panel button {
   min-height: 68px;
-  border: 1px solid #DDE7DD;
+  border: 1px solid #cbcbc2;
   border-radius: 18px;
   padding: 10px;
   text-align: left;
-  color: #19231D;
-  background: #F5F7F2;
+  color: #171814;
+  background: #f7f6f0;
 }
 
 .public-card-fields-panel button.active {
-  border-color: #82B68C;
-  background: #E8F5E8;
+  border-color: #5b6336;
+  background: #dde3d2;
 }
 
 .public-card-fields-panel b,
@@ -6476,7 +6575,7 @@ body::before,
 
 .public-card-fields-panel small,
 .public-card-fields-panel p {
-  color: #7A837C;
+  color: #4e5149;
   font-size: 12px;
   line-height: 1.35;
   font-weight: 650;
@@ -6487,7 +6586,7 @@ body::before,
   grid-template-columns: 24px 1fr;
   gap: 2px 8px;
   align-items: center;
-  border-top: 1px solid #E8EEE8;
+  border-top: 1px solid #cbcbc2;
   padding: 11px 0;
 }
 
@@ -6508,8 +6607,8 @@ body::before,
 }
 
 .public-card-checklist .done span {
-  color: #FFFFFF;
-  background: #5E9F74;
+  color: #fffdf8;
+  background: #5b6336;
 }
 
 .today-care-presets {
@@ -6587,33 +6686,47 @@ body::before,
 }
 
 .public-card-checklist b {
-  color: #19231D;
+  color: #171814;
   font-size: 14px;
   font-weight: 880;
 }
 
 .public-card-checklist small {
   grid-column: 2;
-  color: #7A837C;
+  color: #4e5149;
   font-size: 12px;
   font-weight: 760;
 }
 
 .public-card-actions-panel {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.public-card-actions-panel .primary {
+.public-card-revoke-confirm {
   grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  border-top: 1px solid #cbcbc2;
+  padding-top: 12px;
+}
+
+.public-card-revoke-confirm p {
+  margin: 0;
+  color: #4e5149;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 680;
 }
 
 .public-card-privacy-note {
   padding: 16px;
-  background: #EAF5ED;
+  background: #dde3d2;
 }
 
 .public-card-privacy-note b {
-  color: #19231D;
+  color: #171814;
   font-size: 16px;
   font-weight: 900;
 }
@@ -6749,7 +6862,9 @@ body::before,
 
   .kit-daily-status.action-first,
   .today-care-presets > div:last-child,
-  .public-card-actions-panel {
+  .public-card-published-actions,
+  .public-card-actions-panel,
+  .public-card-revoke-confirm {
     grid-template-columns: 1fr;
   }
 

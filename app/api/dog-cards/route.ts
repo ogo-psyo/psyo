@@ -38,7 +38,7 @@ export async function GET(request: Request) {
   const { supabase } = context;
   const active = await supabase
     .from('dog_cards')
-    .select('id, public_slug, visibility, updated_at')
+    .select('id, public_slug, visibility, fields, updated_at')
     .eq('pet_id', petId)
     .is('revoked_at', null)
     .maybeSingle();
@@ -89,8 +89,8 @@ export async function POST(request: Request) {
   };
 
   const query = existing.data?.id && !regenerate
-    ? supabase.from('dog_cards').update(payload).eq('id', existing.data.id).select('id, public_slug, visibility, updated_at').single()
-    : supabase.from('dog_cards').insert(payload).select('id, public_slug, visibility, updated_at').single();
+    ? supabase.from('dog_cards').update(payload).eq('id', existing.data.id).select('id, public_slug, visibility, fields, updated_at').single()
+    : supabase.from('dog_cards').insert(payload).select('id, public_slug, visibility, fields, updated_at').single();
   const { data: card, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
