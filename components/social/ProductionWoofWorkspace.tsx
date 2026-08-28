@@ -88,13 +88,13 @@ function CandidateProfile({ candidate, busy, onClose, onRequest }: {
 }
 
 export function ProductionWoofWorkspace(props: Props) {
-  const [mode, setMode] = useState<'live' | 'meet'>('live');
+  const [mode, setMode] = useState<'live' | 'meet'>('meet');
   const [selectedSignalId, setSelectedSignalId] = useState<string | null>(null);
   const [signalComposer, setSignalComposer] = useState(false);
   const [profileEditor, setProfileEditor] = useState(false);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [requestsOpen, setRequestsOpen] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(true);
   const [meetRadius, setMeetRadius] = useState<'5' | '10' | '15' | 'city'>('15');
   const [meetScenario, setMeetScenario] = useState<'all' | SocialScenario>('all');
   const [meetLifeStage, setMeetLifeStage] = useState<'all' | 'puppy' | 'adult' | 'senior'>('all');
@@ -284,7 +284,7 @@ export function ProductionWoofWorkspace(props: Props) {
     {mode === 'meet' && <main className="woof-meet-feed">
       <div className="woof-meet-intro"><p className="woof-kicker">найти своих</p><h1>Знакомства</h1><p>Спокойный поиск постоянной компании — без показа геопозиции.</p></div>
       <div className="woof-meet-tools">
-        <button type="button" aria-expanded={filtersOpen} aria-controls="woof-meet-filters" onClick={() => setFiltersOpen((value) => !value)}><Funnel />Фильтры</button>
+        <button type="button" aria-expanded={filtersOpen} aria-controls="woof-meet-filters" onClick={() => setFiltersOpen((value) => !value)}><Funnel />{filtersOpen ? 'Свернуть фильтры' : 'Показать фильтры'}</button>
         <button type="button" onClick={refreshMeetLocation} disabled={props.locating}><Crosshair />{props.locating ? 'Определяю…' : props.profile?.coarseLocation ? 'Обновить район' : 'Искать рядом'}</button>
         <button type="button" onClick={() => setProfileEditor(true)}>{props.profile?.discoverable ? 'Моя анкета' : 'Создать анкету'}</button>
       </div>
