@@ -41,7 +41,11 @@ try {
       return {
         documentWidth: document.documentElement.scrollWidth,
         viewportWidth: window.innerWidth,
-        sourceActions: [...node.querySelectorAll('label, button, summary')].filter((item) => /Использовать фото|Создать образ|Без изображения/.test(item.textContent || '')).length,
+        sourceActions: [...node.querySelectorAll('label, button, summary')].filter((item) => {
+          if (!/Использовать фото|Создать образ|Без изображения/.test(item.textContent || '')) return false;
+          const details = item.closest('details');
+          return !details || item.matches('summary');
+        }).length,
         hasUnexpectedImage: Boolean(node.querySelector('img[src*="demo-avatar"]')),
         undersized,
         fontSizes,
@@ -60,7 +64,7 @@ try {
 
     const generationSummary = page.locator('dialog summary').filter({ hasText: 'Создать образ' });
     await generationSummary.click();
-    const honestyCopy = await page.getByText(/художественный вариант|Генератор пока выключен/i).isVisible();
+    const honestyCopy = await page.getByText(/По описанию из профиля|Разрешаю передать описание сервису генерации|Генератор пока выключен/i).first().isVisible();
     if (!honestyCopy) throw new Error(`${width}: generation path is missing honest availability copy`);
 
     await page.screenshot({ path: `${output}/avatar-identity-${width}.png`, fullPage: true });
