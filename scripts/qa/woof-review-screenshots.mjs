@@ -39,6 +39,12 @@ try {
     await page.getByRole('button', { name: 'Закрыть', exact: true }).click();
     await page.getByRole('button', { name: 'Знакомства', exact: true }).click();
     await page.screenshot({ path: `${outDir}/meet-${viewport.width}.png` });
+    await page.getByRole('button', { name: 'Фильтры', exact: true }).click();
+    await page.getByRole('region', { name: 'Фильтры знакомств' }).waitFor();
+    await page.screenshot({ path: `${outDir}/meet-filters-${viewport.width}.png`, fullPage: true });
+    const geometry = await page.evaluate(() => ({ viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
+    if (geometry.scrollWidth > geometry.viewport) throw new Error(`${viewport.width}px: filters overflow horizontally`);
+    await page.getByRole('button', { name: 'Фильтры', exact: true }).click();
     const luna = page.getByRole('button', { name: /Луна/ }).first();
     if (await luna.count()) await luna.click();
     else await page.getByRole('button', { name: 'Создать анкету', exact: true }).first().click();

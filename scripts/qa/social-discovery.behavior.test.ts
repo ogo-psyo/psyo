@@ -69,3 +69,9 @@ test('zero and one-user cold starts are stable empty groups', () => {
   assert.deepEqual(groupSocialCandidates({ mine, candidates: [] }), { nearby: [], city: [] });
   assert.deepEqual(groupSocialCandidates({ mine: { ...mine, discoverable: false }, candidates: [candidate({ petId: 'only' })] }), { nearby: [], city: [] });
 });
+
+test('the same dog is projected once even when storage returns duplicate profile rows', () => {
+  const duplicate = candidate({ petId: 'babushka', name: 'Бабка' });
+  const result = groupSocialCandidates({ mine, candidates: [duplicate, { ...duplicate }] });
+  assert.equal([...result.nearby, ...result.city].filter((item) => item.petId === 'babushka').length, 1);
+});

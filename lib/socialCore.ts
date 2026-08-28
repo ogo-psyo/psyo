@@ -4,7 +4,7 @@ export const socialCities = ['moscow', 'saint_petersburg'] as const;
 export type SocialScenario = typeof socialScenarios[number];
 export type SocialCity = typeof socialCities[number];
 export type SocialRequestStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'blocked';
-export type SocialRequestAction = 'accept' | 'reject' | 'cancel' | 'block';
+export type SocialRequestAction = 'accept' | 'reject' | 'cancel' | 'close' | 'block';
 export type WalkPace = 'calm' | 'balanced' | 'active';
 
 export type CoarseLocation = { lat: number; lng: number };
@@ -354,7 +354,10 @@ export function groupSocialCandidates(input: {
 
   const nearby: Array<{ item: SocialCandidate; km: number }> = [];
   const city: SocialCandidate[] = [];
+  const seenPetIds = new Set<string>();
   for (const candidate of input.candidates) {
+    if (seenPetIds.has(candidate.petId)) continue;
+    seenPetIds.add(candidate.petId);
     const profile = candidate.profile;
     if (!profile.discoverable || profile.city !== input.mine.city || excluded.has(candidate.ownerId)) continue;
     if (!input.mine.scenarios.some((scenario) => profile.scenarios.includes(scenario))) continue;
@@ -376,6 +379,22 @@ export function groupSocialCandidates(input: {
     return Number(rightSameDistrict) - Number(leftSameDistrict) || left.name.localeCompare(right.name, 'ru');
   });
   return { nearby: nearby.map(({ item }) => item), city };
+}
+
+export function latestActiveRequestsByPetPair<T extends {
+  sender_pet_id: string;
+  recipient_pet_id: string;
+  status: string;
+  created_at: string;
+}>(rows: T[]): T[] {
+  const latest = new Map<string, T>();
+  for (const row of rows) {
+    if (row.status !== 'pending' && row.status !== 'accepted') continue;
+    const pairKey = [row.sender_pet_id, row.recipient_pet_id].sort().join(':');
+    const current = latest.get(pairKey);
+    if (!current || Date.parse(row.created_at) > Date.parse(current.created_at)) latest.set(pairKey, row);
+  }
+  return [...latest.values()].sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at));
 }
 
 export function canRevealTelegramContact(
@@ -406,9 +425,14 @@ export function transitionSocialRequest(input: {
   const { status, actor, action } = input;
   const intended = action === 'accept' ? 'accepted'
     : action === 'reject' ? 'rejected'
-      : action === 'cancel' ? 'cancelled'
+      : action === 'cancel' || action === 'close' ? 'cancelled'
         : 'blocked';
   if (status === intended) return { ok: true, status, replayed: true };
+  if (action === 'close') {
+    return status === 'accepted'
+      ? { ok: true, status: 'cancelled', replayed: false }
+      : { ok: false, code: 'ACCEPTED_REQUEST_REQUIRED' };
+  }
   if (status !== 'pending' && action !== 'block') return { ok: false, code: 'REQUEST_ALREADY_RESOLVED' };
   if ((action === 'accept' || action === 'reject') && actor !== 'recipient') {
     return { ok: false, code: 'RECIPIENT_ACTION_REQUIRED' };

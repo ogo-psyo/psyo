@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { socialScenarios, validateSocialContactBoundary, type SocialScenario } from '@/lib/socialCore';
+import { latestActiveRequestsByPetPair, socialScenarios, validateSocialContactBoundary, type SocialScenario } from '@/lib/socialCore';
 import { readIdempotencyKey, socialRequestContext, socialStorageError } from '@/lib/server/socialHttp';
 import {
   contactUrlForRequestRow,
@@ -89,6 +89,16 @@ export async function POST(request: Request) {
     if (!recipientPet || recipientPet.owner_id === context.ownerId) {
       return NextResponse.json({ error: 'RECIPIENT_NOT_AVAILABLE' }, { status: 404 });
     }
+    const { data: activePair, error: activePairError } = await context.supabase
+      .from('social_match_requests')
+      .select('*')
+      .in('status', ['pending', 'accepted'])
+      .or(`and(sender_pet_id.eq.${senderPetId},recipient_pet_id.eq.${recipientPetId}),and(sender_pet_id.eq.${recipientPetId},recipient_pet_id.eq.${senderPetId})`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (activePairError) return socialStorageError();
+    if (activePair) return NextResponse.json({ request: compactRequest(activePair), replayed: true });
     const [profiles, excluded, signalLookup] = await Promise.all([
       context.supabase.from('social_discovery_profiles')
         .select('pet_id, discoverable, city, scenarios')
@@ -162,6 +172,7 @@ export async function GET(request: Request) {
     const { data, error } = await context.supabase.from('social_match_requests')
       .select('*')
       .or(`sender_pet_id.eq.${petId},recipient_pet_id.eq.${petId}`)
+      .in('status', ['pending', 'accepted'])
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) return socialStorageError();
@@ -177,7 +188,7 @@ export async function GET(request: Request) {
     const petsById = new Map((otherPets ?? []).map((pet) => [pet.id, { name: pet.name, avatar_url: socialAvatarUrl(pet) }]));
     const discoverablePets = new Set((discoveryLookup.data ?? []).filter((item) => item.discoverable).map((item) => item.pet_id));
     const requests = [];
-    for (const row of data ?? []) {
+    for (const row of latestActiveRequestsByPetPair(data ?? [])) {
       const otherOwnerId = row.sender_owner_id === context.ownerId ? row.recipient_owner_id : row.sender_owner_id;
       if (excluded.has(otherOwnerId)) continue;
       const pairBlocked = false;

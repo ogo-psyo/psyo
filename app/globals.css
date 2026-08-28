@@ -5549,6 +5549,22 @@ body {
 .social-candidate-card > small { grid-column: 1 / -1; color: #69746c; font-size: 10px; font-weight: 720; }
 .social-safety-note { background: #fbfaf4; }
 
+.woof-meet-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.woof-meet-tools button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid #cfd9d1; border-radius: 14px; padding: 0 12px; color: #173f31; background: #fff; font-size: 12px; font-weight: 820; }
+.woof-meet-tools svg { width: 17px; height: 17px; }
+.woof-meet-filters { min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; border-radius: 16px; padding: 14px; color: #173f31; background: #eef4ef; }
+.woof-meet-filters label { min-width: 0; display: grid; gap: 6px; }
+.woof-meet-filters label > span { color: #536057; font-size: 11px; font-weight: 820; }
+.woof-meet-filters select { min-width: 0; min-height: 46px; border: 1px solid #c7d3ca; border-radius: 12px; padding-inline: 10px; color: #13221b; background: #fff; font-size: 16px; }
+.woof-meet-filters > p { grid-column: 1 / -1; margin: 2px 0 0; color: #536057; font-size: 12px; line-height: 1.45; font-weight: 650; }
+
+@media (max-width: 390px) {
+  .woof-meet-tools button { flex: 1 1 calc(50% - 4px); }
+  .woof-meet-tools button:last-child { flex-basis: 100%; }
+  .woof-meet-filters { grid-template-columns: 1fr; }
+  .woof-meet-filters > p { grid-column: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .social-loading-state > span { animation: none; }
 }

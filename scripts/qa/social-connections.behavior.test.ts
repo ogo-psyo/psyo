@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   canRevealTelegramContact,
   inviteAvailability,
+  latestActiveRequestsByPetPair,
   principalsAgree,
   transitionSocialRequest,
   validateSocialContactBoundary,
@@ -43,6 +44,17 @@ test('request lifecycle is actor-scoped, deterministic and retry-safe', () => {
   assert.deepEqual(transitionSocialRequest({ status: 'pending', actor: 'sender', action: 'accept' }), { ok: false, code: 'RECIPIENT_ACTION_REQUIRED' });
   assert.deepEqual(transitionSocialRequest({ status: 'pending', actor: 'recipient', action: 'cancel' }), { ok: false, code: 'SENDER_ACTION_REQUIRED' });
   assert.deepEqual(transitionSocialRequest({ status: 'accepted', actor: 'sender', action: 'block' }), { ok: true, status: 'blocked', replayed: false });
+  assert.deepEqual(transitionSocialRequest({ status: 'accepted', actor: 'sender', action: 'close' }), { ok: true, status: 'cancelled', replayed: false });
+  assert.deepEqual(transitionSocialRequest({ status: 'accepted', actor: 'recipient', action: 'close' }), { ok: true, status: 'cancelled', replayed: false });
+});
+
+test('request list keeps one latest active lifecycle per unordered dog pair', () => {
+  const rows = [
+    { id: 'old', sender_pet_id: 'a', recipient_pet_id: 'b', status: 'pending', created_at: '2026-08-20T10:00:00Z' },
+    { id: 'latest', sender_pet_id: 'b', recipient_pet_id: 'a', status: 'accepted', created_at: '2026-08-21T10:00:00Z' },
+    { id: 'resolved', sender_pet_id: 'c', recipient_pet_id: 'd', status: 'cancelled', created_at: '2026-08-22T10:00:00Z' },
+  ];
+  assert.deepEqual(latestActiveRequestsByPetPair(rows).map((row) => row.id), ['latest']);
 });
 
 test('contact remains hidden before consent and comes only from verified session data', () => {
@@ -129,4 +141,17 @@ test('same request payload has one fingerprint and changed payload does not', ()
   const base = { senderPetId: 'pet-a', recipientPetId: 'pet-b', scenario: 'walk' as const, source: 'organic' as const, message: null };
   assert.equal(socialRequestFingerprint(base), socialRequestFingerprint({ ...base }));
   assert.notEqual(socialRequestFingerprint(base), socialRequestFingerprint({ ...base, recipientPetId: 'pet-c' }));
+});
+
+test('storage enforces one active lifecycle for an unordered dog pair', () => {
+  const migration = readFileSync(
+    new URL('../../supabase/migrations/20260828172000_social_pair_single_lifecycle.sql', import.meta.url),
+    'utf8',
+  );
+  const route = readFileSync(new URL('../../app/api/social/requests/route.ts', import.meta.url), 'utf8');
+  assert.match(migration, /least\(sender_pet_id, recipient_pet_id\)/);
+  assert.match(migration, /greatest\(sender_pet_id, recipient_pet_id\)/);
+  assert.match(migration, /where status in \('pending', 'accepted'\)/);
+  assert.match(route, /activePair/);
+  assert.match(route, /sender_pet_id\.eq\.\$\{recipientPetId\}/);
 });

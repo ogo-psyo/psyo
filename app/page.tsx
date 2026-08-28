@@ -1005,7 +1005,7 @@ export default function Home() {
     } finally { setSocialBusyId(null); }
   }
 
-  async function updateSocialRequest(id: string, action: 'accept' | 'reject' | 'cancel' | 'block') {
+  async function updateSocialRequest(id: string, action: 'accept' | 'reject' | 'cancel' | 'close' | 'block') {
     if (socialBusyId) return;
     setSocialBusyId(id);
     try {

@@ -19,6 +19,10 @@ assert.match(page, /signalParams\.set\('lng'/);
 assert.match(page, /signalId/);
 assert.match(workspace, /Сейчас рядом/);
 assert.match(workspace, /Знакомства/);
+assert.match(workspace, /Область поиска/);
+assert.match(workspace, /Весь город/);
+assert.match(workspace, /Обновить район|Искать рядом/);
+assert.match(workspace, /Под эти фильтры никого нет/);
 assert.match(workspace, /Дать Гав/);
 assert.match(workspace, /примерная зона|точное место скрыто/i);
 assert.match(workspace, /Хочу познакомиться/);
@@ -28,6 +32,7 @@ assert.doesNotMatch(profile, /случк/i, 'рискованный сценар
 assert.doesNotMatch(profile, /telegramUsername|telegram_username/);
 assert.match(requests, /Заблокировать/);
 assert.match(requests, /Пожаловаться/);
+assert.match(requests, /Завершить знакомство/);
 assert.match(map, /privacyRadiusMeters/);
 assert.match(map, /approximateLocation/);
 assert.doesNotMatch(map, /userLocation|exactLocation|coordinates/);

@@ -5,7 +5,7 @@ import { areRequestPetsDiscoverable, contactUrlForRequestRow, enforceSocialRateL
 
 export const runtime = 'nodejs';
 
-const requestActions = new Set<SocialRequestAction>(['accept', 'reject', 'cancel', 'block']);
+const requestActions = new Set<SocialRequestAction>(['accept', 'reject', 'cancel', 'close', 'block']);
 
 export async function PATCH(request: Request, routeContext: { params: Promise<{ id: string }> }) {
   const context = await socialRequestContext(request);

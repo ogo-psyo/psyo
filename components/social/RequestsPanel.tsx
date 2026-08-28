@@ -41,7 +41,7 @@ export function RequestsPanel({
   requests: SocialRequestView[];
   busyId: string | null;
   missingTelegramUsernameAction: string | null;
-  onAction: (id: string, action: 'accept' | 'reject' | 'cancel' | 'block') => void;
+  onAction: (id: string, action: 'accept' | 'reject' | 'cancel' | 'close' | 'block') => void;
   onReport: (id: string, reason: string) => void;
   onOpenChat: (url: string) => void;
 }) {
@@ -81,9 +81,10 @@ export function RequestsPanel({
               {request.status === 'pending' && !incoming && (
                 <button type="button" disabled={busy} onClick={() => onAction(request.id, 'cancel')}>Отменить запрос</button>
               )}
-              {request.status === 'accepted' && request.telegramContactUrl && (
-                <button className="primary" type="button" onClick={() => onOpenChat(request.telegramContactUrl!)}>Открыть чат</button>
-              )}
+              {request.status === 'accepted' && <div className="social-request-actions">
+                {request.telegramContactUrl && <button className="primary" type="button" onClick={() => onOpenChat(request.telegramContactUrl!)}>Открыть чат</button>}
+                <button type="button" disabled={busy} onClick={() => onAction(request.id, 'close')}>Завершить знакомство</button>
+              </div>}
               {request.status === 'accepted' && !request.telegramContactUrl && missingTelegramUsernameAction && (
                 <p className="social-inline-hint">{missingTelegramUsernameAction}</p>
               )}

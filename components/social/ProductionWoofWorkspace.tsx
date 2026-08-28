@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Check, ClockCountdown, Crosshair, PawPrint, ShieldCheck, UsersThree, X } from '@phosphor-icons/react';
+import { Check, ClockCountdown, Crosshair, Funnel, PawPrint, ShieldCheck, UsersThree, X } from '@phosphor-icons/react';
 import type { CandidateGroup, CoarseLocation, SocialCandidate, SocialProfile, SocialScenario, WalkPace, WalkSignal } from '@/lib/socialCore';
 import type { SocialRequestView } from './RequestsPanel';
 import { RequestsPanel } from './RequestsPanel';
@@ -36,7 +36,7 @@ type Props = {
   onSaveSignal: (draft: SignalDraft) => void | Promise<void>;
   onCloseSignal: (status: 'completed' | 'cancelled') => void | Promise<void>;
   onRequest: (petId: string, scenario: SocialScenario, signalId?: string) => void | Promise<void>;
-  onUpdateRequest: (id: string, action: 'accept' | 'reject' | 'cancel' | 'block') => void | Promise<void>;
+  onUpdateRequest: (id: string, action: 'accept' | 'reject' | 'cancel' | 'close' | 'block') => void | Promise<void>;
   onReport: (id: string, reason: string) => void | Promise<void>;
   onOpenContact: (url: string) => void;
   onRefresh: () => void | Promise<void>;
@@ -94,6 +94,11 @@ export function ProductionWoofWorkspace(props: Props) {
   const [profileEditor, setProfileEditor] = useState(false);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [requestsOpen, setRequestsOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [meetRadius, setMeetRadius] = useState<'5' | '10' | '15' | 'city'>('15');
+  const [meetScenario, setMeetScenario] = useState<'all' | SocialScenario>('all');
+  const [meetLifeStage, setMeetLifeStage] = useState<'all' | 'puppy' | 'adult' | 'senior'>('all');
+  const [meetEnergy, setMeetEnergy] = useState<'all' | 'calm' | 'balanced' | 'active'>('all');
   const [pace, setPace] = useState<WalkPace>('balanced');
   const [when, setWhen] = useState<'now' | 'later'>('now');
   const [laterTime, setLaterTime] = useState('19:00');
@@ -108,7 +113,28 @@ export function ProductionWoofWorkspace(props: Props) {
   const requestsOverlayRef = useRef<HTMLDivElement | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const refreshRef = useRef(props.onRefresh);
-  const allCandidates = useMemo(() => [...props.candidates.nearby, ...props.candidates.city], [props.candidates]);
+  const activePartnerIds = useMemo(() => new Set(props.requests.flatMap((request) => {
+    if (request.status !== 'pending' && request.status !== 'accepted') return [];
+    const mine = props.profile?.petId;
+    return request.senderPetId === mine ? [request.recipientPetId] : request.recipientPetId === mine ? [request.senderPetId] : [];
+  })), [props.profile?.petId, props.requests]);
+  const allCandidates = useMemo(() => {
+    const unique = new Map<string, SocialCandidate>();
+    for (const candidate of [...props.candidates.nearby, ...props.candidates.city]) {
+      if (!unique.has(candidate.petId) && !activePartnerIds.has(candidate.petId)) unique.set(candidate.petId, candidate);
+    }
+    return [...unique.values()];
+  }, [activePartnerIds, props.candidates]);
+  const filteredCandidates = useMemo(() => allCandidates.filter((candidate) => {
+    const insideRadius = meetRadius === 'city'
+      || (meetRadius === '15' && candidate.distance !== null)
+      || (meetRadius === '10' && (candidate.distance === 'до 5 км' || candidate.distance === '5–10 км'))
+      || (meetRadius === '5' && candidate.distance === 'до 5 км');
+    const matchesScenario = meetScenario === 'all' || candidate.sharedScenarios.includes(meetScenario);
+    const matchesLifeStage = meetLifeStage === 'all' || candidate.lifeStage === meetLifeStage;
+    const matchesEnergy = meetEnergy === 'all' || candidate.energyLevel === meetEnergy;
+    return insideRadius && matchesScenario && matchesLifeStage && matchesEnergy;
+  }), [allCandidates, meetEnergy, meetLifeStage, meetRadius, meetScenario]);
   const selectedSignal = props.signals.find((signal) => signal.id === selectedSignalId)
     || props.signals.find((signal) => !signal.isMine)
     || props.signals.find((signal) => signal.isMine)
@@ -200,6 +226,16 @@ export function ProductionWoofWorkspace(props: Props) {
     setSignalComposer(false);
   }
 
+  function refreshMeetLocation() {
+    if (!props.profile) {
+      setProfileEditor(true);
+      return;
+    }
+    props.onLocateProfile((nextLocation) => {
+      Promise.resolve(props.onSaveProfile({ ...props.profile!, coarseLocation: nextLocation })).catch(() => undefined);
+    });
+  }
+
   return <section ref={rootRef} className="production-woof-workspace" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
     <div className="woof-map-layer" aria-hidden={mode !== 'live'}>
       {props.viewerLocation ? <WoofLiveMap signals={props.signals} viewerLocation={props.viewerLocation} viewerRadiusMeters={props.viewerRadiusMeters} selectedId={selectedSignal?.id ?? null} onSelect={(id) => setSelectedSignalId(id)} />
@@ -247,14 +283,23 @@ export function ProductionWoofWorkspace(props: Props) {
 
     {mode === 'meet' && <main className="woof-meet-feed">
       <div className="woof-meet-intro"><p className="woof-kicker">найти своих</p><h1>Знакомства</h1><p>Спокойный поиск постоянной компании — без показа геопозиции.</p></div>
-      {props.profile?.discoverable && <div className="woof-meet-tools">
+      <div className="woof-meet-tools">
+        <button type="button" aria-expanded={filtersOpen} aria-controls="woof-meet-filters" onClick={() => setFiltersOpen((value) => !value)}><Funnel />Фильтры</button>
+        <button type="button" onClick={refreshMeetLocation} disabled={props.locating}><Crosshair />{props.locating ? 'Определяю…' : props.profile?.coarseLocation ? 'Обновить район' : 'Искать рядом'}</button>
         <button type="button" onClick={() => setProfileEditor(true)}>{props.profile?.discoverable ? 'Моя анкета' : 'Создать анкету'}</button>
-      </div>}
+      </div>
+      {filtersOpen && <section id="woof-meet-filters" className="woof-meet-filters" aria-label="Фильтры знакомств">
+        <label><span>Область поиска</span><select value={meetRadius} onChange={(event) => setMeetRadius(event.target.value as typeof meetRadius)}><option value="5">До 5 км</option><option value="10">До 10 км</option><option value="15">До 15 км</option><option value="city">Весь город</option></select></label>
+        <label><span>Цель</span><select value={meetScenario} onChange={(event) => setMeetScenario(event.target.value as typeof meetScenario)}><option value="all">Любая</option><option value="meet">Знакомство</option><option value="walk">Прогулка</option><option value="socialize">Социализация</option><option value="mating">Случка</option></select></label>
+        <label><span>Возраст</span><select value={meetLifeStage} onChange={(event) => setMeetLifeStage(event.target.value as typeof meetLifeStage)}><option value="all">Любой</option><option value="puppy">Щенок</option><option value="adult">Взрослая</option><option value="senior">Старшая</option></select></label>
+        <label><span>Ритм</span><select value={meetEnergy} onChange={(event) => setMeetEnergy(event.target.value as typeof meetEnergy)}><option value="all">Любой</option><option value="calm">Спокойный</option><option value="balanced">Уравновешенный</option><option value="active">Активный</option></select></label>
+        <p>{props.profile?.coarseLocation ? `Поиск считается от вашего примерного района. Точная точка не показывается.` : 'Разрешите геолокацию или укажите район в анкете — точная точка не сохраняется.'}</p>
+      </section>}
       {props.state === 'error' ? <article className="woof-empty-meet" role="alert"><PawPrint /><h2>Анкеты не загрузились</h2><p>Это сбой соединения, а не пустой поиск.</p><button className="woof-primary" type="button" onClick={() => props.onRetry()}>Повторить</button></article>
-      : allCandidates.length > 0 ? <div className="woof-candidate-grid">{allCandidates.map((candidate) => <button className="woof-candidate-card" type="button" key={candidate.petId} onClick={() => setSelectedCandidateId(candidate.petId)}>
+      : filteredCandidates.length > 0 ? <div className="woof-candidate-grid">{filteredCandidates.map((candidate) => <button className="woof-candidate-card" type="button" key={candidate.petId} onClick={() => setSelectedCandidateId(candidate.petId)}>
         <DogPortrait candidate={candidate} />
         <span><b>{candidate.name}</b><small>{[readable(candidate.lifeStage), readable(candidate.temperament), candidate.distance || candidate.district].filter(Boolean).join(' · ')}</small><em>{candidate.reasons.slice(0, 2).join(' · ')}</em></span>
-      </button>)}</div> : <article className="woof-empty-meet"><PawPrint /><h2>{props.profile?.discoverable ? 'Новые анкеты появятся здесь' : 'Сначала расскажите о собаке'}</h2><p>{props.profile?.discoverable ? 'Псё покажет только реальные анкеты вашего города.' : 'Характер и привычный ритм помогут найти подходящую компанию.'}</p><button className="woof-primary" type="button" onClick={() => setProfileEditor(true)}>{props.profile?.discoverable ? 'Проверить мою анкету' : 'Создать анкету'}</button></article>}
+      </button>)}</div> : <article className="woof-empty-meet"><PawPrint /><h2>{allCandidates.length ? 'Под эти фильтры никого нет' : props.profile?.discoverable ? 'Новые анкеты появятся здесь' : 'Сначала расскажите о собаке'}</h2><p>{allCandidates.length ? 'Расширьте радиус или уберите один из фильтров.' : props.profile?.discoverable ? 'Псё покажет только реальные анкеты вашего города.' : 'Характер и привычный ритм помогут найти подходящую компанию.'}</p>{allCandidates.length ? <button className="woof-primary" type="button" onClick={() => { setMeetRadius('city'); setMeetScenario('all'); setMeetLifeStage('all'); setMeetEnergy('all'); }}>Сбросить фильтры</button> : <button className="woof-primary" type="button" onClick={() => setProfileEditor(true)}>{props.profile?.discoverable ? 'Проверить мою анкету' : 'Создать анкету'}</button>}</article>}
     </main>}
 
     {signalComposer && <section ref={composerRef} className="woof-composer" role="dialog" aria-modal="true" aria-labelledby="woof-composer-title">
