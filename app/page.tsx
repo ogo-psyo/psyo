@@ -507,6 +507,7 @@ export default function Home() {
   const [walkSignals, setWalkSignals] = useState<WalkSignal[]>([]);
   const [walkSignalReason, setWalkSignalReason] = useState('');
   const [socialViewerLocation, setSocialViewerLocation] = useState<CoarseLocation | null>(null);
+  const [socialViewerRadiusKm, setSocialViewerRadiusKm] = useState(3);
   const [socialViewerRadiusMeters, setSocialViewerRadiusMeters] = useState(3000);
   const [nearbyState, setNearbyState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [nearbyReason, setNearbyReason] = useState('');
@@ -771,7 +772,7 @@ export default function Home() {
     return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
   }
 
-  async function loadSocialSurface(signal?: AbortSignal, viewerLocationOverride?: CoarseLocation | null) {
+  async function loadSocialSurface(signal?: AbortSignal, viewerLocationOverride?: CoarseLocation | null, radiusKmOverride?: number) {
     const petId = profile.backendPetId;
     if (!petId) return;
     setNearbyState('loading');
@@ -779,7 +780,9 @@ export default function Home() {
     setWalkSignalReason('');
     const requestOptions = { headers: authHeaders(), credentials: 'include' as const, signal };
     const viewerLocation = viewerLocationOverride ?? socialViewerLocation;
+    const radiusKm = radiusKmOverride ?? socialViewerRadiusKm;
     const signalParams = new URLSearchParams({ petId });
+    signalParams.set('radiusKm', String(radiusKm));
     if (viewerLocation) {
       signalParams.set('lat', String(viewerLocation.lat));
       signalParams.set('lng', String(viewerLocation.lng));
@@ -803,7 +806,11 @@ export default function Home() {
     if (signalsResponse.ok) {
       setWalkSignals(Array.isArray(signalsPayload.signals) ? signalsPayload.signals : []);
       if (signalsPayload.viewer?.approximateLocation) setSocialViewerLocation(signalsPayload.viewer.approximateLocation);
-      if (Number.isFinite(Number(signalsPayload.viewer?.radiusMeters))) setSocialViewerRadiusMeters(Number(signalsPayload.viewer.radiusMeters));
+      if (Number.isFinite(Number(signalsPayload.viewer?.radiusMeters))) {
+        const radiusMeters = Number(signalsPayload.viewer.radiusMeters);
+        setSocialViewerRadiusMeters(radiusMeters);
+        setSocialViewerRadiusKm(radiusMeters / 1000);
+      }
     } else if (signalsResponse.status === 409 && ['VIEWER_LOCATION_REQUIRED', 'CITY_NOT_SUPPORTED'].includes(signalsPayload.error)) {
       setWalkSignals([]);
       setWalkSignalReason(signalsPayload.error);
@@ -824,10 +831,11 @@ export default function Home() {
     setNearbyState('ready');
   }
 
-  async function refreshLiveSocial(signal?: AbortSignal) {
+  async function refreshLiveSocial(signal?: AbortSignal, radiusKmOverride?: number) {
     const petId = profile.backendPetId;
     if (!petId) return;
     const signalParams = new URLSearchParams({ petId });
+    signalParams.set('radiusKm', String(radiusKmOverride ?? socialViewerRadiusKm));
     if (socialViewerLocation) {
       signalParams.set('lat', String(socialViewerLocation.lat));
       signalParams.set('lng', String(socialViewerLocation.lng));
@@ -845,6 +853,11 @@ export default function Home() {
       setWalkSignals(Array.isArray(signalsPayload.signals) ? signalsPayload.signals : []);
       setWalkSignalReason('');
       if (signalsPayload.viewer?.approximateLocation) setSocialViewerLocation(signalsPayload.viewer.approximateLocation);
+      if (Number.isFinite(Number(signalsPayload.viewer?.radiusMeters))) {
+        const radiusMeters = Number(signalsPayload.viewer.radiusMeters);
+        setSocialViewerRadiusMeters(radiusMeters);
+        setSocialViewerRadiusKm(radiusMeters / 1000);
+      }
     }
     if (requestsResponse.ok) {
       setSocialRequests(Array.isArray(requestsPayload.requests) ? requestsPayload.requests : []);
@@ -930,6 +943,12 @@ export default function Home() {
       },
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 },
     );
+  }
+
+  function changeWalkSignalRadius(radiusKm: number) {
+    setSocialViewerRadiusKm(radiusKm);
+    setSocialViewerRadiusMeters(radiusKm * 1000);
+    refreshLiveSocial(undefined, radiusKm).catch(() => setNearbyState('error'));
   }
 
   async function sendSocialRequest(candidatePetId: string, scenario: SocialScenario, signalId?: string) {
@@ -3851,6 +3870,7 @@ export default function Home() {
           profile={socialProfile}
           signals={walkSignals}
           viewerLocation={socialViewerLocation}
+          viewerRadiusKm={socialViewerRadiusKm}
           viewerRadiusMeters={socialViewerRadiusMeters}
           signalReason={walkSignalReason}
           candidates={socialCandidates}
@@ -3867,6 +3887,7 @@ export default function Home() {
           onHideProfile={hideSocialProfile}
           onLocateProfile={locateForSocial}
           onLocateViewer={locateForWalkSignals}
+          onChangeViewerRadius={changeWalkSignalRadius}
           onSaveSignal={saveWalkSignal}
           onCloseSignal={closeWalkSignal}
           onRequest={sendSocialRequest}

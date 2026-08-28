@@ -285,6 +285,13 @@ export function parseWalkSignalViewerSearch(searchParams: Pick<URLSearchParams, 
   return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
 }
 
+export const walkSignalRadiusOptions = [3, 5, 10, 15] as const;
+
+export function parseWalkSignalRadiusSearch(searchParams: Pick<URLSearchParams, 'get'>): number {
+  const radiusKm = Number(searchParams.get('radiusKm'));
+  return walkSignalRadiusOptions.includes(radiusKm as (typeof walkSignalRadiusOptions)[number]) ? radiusKm : 3;
+}
+
 export function normalizeWalkSignalViewerInput(input: unknown):
   | { ok: true; value: { city: SocialCity; location: CoarseLocation; radiusKm: number } }
   | { ok: false; code: 'VIEWER_LOCATION_REQUIRED' | 'CITY_NOT_SUPPORTED' } {
@@ -293,7 +300,9 @@ export function normalizeWalkSignalViewerInput(input: unknown):
   if (!location) return { ok: false, code: 'VIEWER_LOCATION_REQUIRED' };
   const city = socialCityForLocation(location);
   if (!city) return { ok: false, code: 'CITY_NOT_SUPPORTED' };
-  return { ok: true, value: { city, location, radiusKm: 3 } };
+  const requestedRadius = Number(source.radiusKm);
+  const radiusKm = walkSignalRadiusOptions.includes(requestedRadius as (typeof walkSignalRadiusOptions)[number]) ? requestedRadius : 3;
+  return { ok: true, value: { city, location, radiusKm } };
 }
 
 export function filterWalkSignalsForViewer<T extends { ownerId: string; location: CoarseLocation; expiresAt: string }>(input: {

@@ -1079,6 +1079,11 @@ select {
 .profile-settings-screen a { box-shadow: none !important; }
 
 @media (max-width: 359px) {
+  .journey-active .app-tabs .ui-button-content { gap: 2px !important; }
+  .journey-active .app-tabs .ui-button-content > span:last-child {
+    font-size: 9px !important;
+    white-space: nowrap !important;
+  }
   .production-journey-screen { padding-inline: 14px !important; }
   .production-today-summary {
     grid-template-columns: minmax(0, 1fr) 92px !important;

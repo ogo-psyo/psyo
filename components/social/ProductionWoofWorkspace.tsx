@@ -17,6 +17,7 @@ type Props = {
   profile: SocialProfile | null;
   signals: WalkSignal[];
   viewerLocation: CoarseLocation | null;
+  viewerRadiusKm: number;
   viewerRadiusMeters: number;
   signalReason: string;
   candidates: CandidateGroup;
@@ -33,6 +34,7 @@ type Props = {
   onHideProfile: () => void | Promise<void>;
   onLocateProfile: (ready: (location: CoarseLocation) => void) => void;
   onLocateViewer: () => void;
+  onChangeViewerRadius: (radiusKm: number) => void;
   onSaveSignal: (draft: SignalDraft) => void | Promise<void>;
   onCloseSignal: (status: 'completed' | 'cancelled') => void | Promise<void>;
   onRequest: (petId: string, scenario: SocialScenario, signalId?: string) => void | Promise<void>;
@@ -88,13 +90,15 @@ function CandidateProfile({ candidate, busy, onClose, onRequest }: {
 }
 
 export function ProductionWoofWorkspace(props: Props) {
-  const [mode, setMode] = useState<'live' | 'meet'>('meet');
+  const [mode, setMode] = useState<'live' | 'meet'>('live');
   const [selectedSignalId, setSelectedSignalId] = useState<string | null>(null);
   const [signalComposer, setSignalComposer] = useState(false);
   const [profileEditor, setProfileEditor] = useState(false);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [requestsOpen, setRequestsOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(true);
+  const [liveWhen, setLiveWhen] = useState<'all' | 'now' | 'later'>('all');
+  const [livePace, setLivePace] = useState<'all' | WalkPace>('all');
   const [meetRadius, setMeetRadius] = useState<'5' | '10' | '15' | 'city'>('15');
   const [meetScenario, setMeetScenario] = useState<'all' | SocialScenario>('all');
   const [meetLifeStage, setMeetLifeStage] = useState<'all' | 'puppy' | 'adult' | 'senior'>('all');
@@ -135,9 +139,14 @@ export function ProductionWoofWorkspace(props: Props) {
     const matchesEnergy = meetEnergy === 'all' || candidate.energyLevel === meetEnergy;
     return insideRadius && matchesScenario && matchesLifeStage && matchesEnergy;
   }), [allCandidates, meetEnergy, meetLifeStage, meetRadius, meetScenario]);
-  const selectedSignal = props.signals.find((signal) => signal.id === selectedSignalId)
-    || props.signals.find((signal) => !signal.isMine)
-    || props.signals.find((signal) => signal.isMine)
+  const filteredLiveSignals = useMemo(() => {
+    const nowBoundary = Date.now() + 30 * 60_000;
+    return props.signals.filter((signal) => signal.isMine || ((livePace === 'all' || signal.pace === livePace)
+      && (liveWhen === 'all' || (liveWhen === 'now' ? Date.parse(signal.startsAt) <= nowBoundary : Date.parse(signal.startsAt) > nowBoundary))));
+  }, [livePace, liveWhen, props.signals]);
+  const selectedSignal = filteredLiveSignals.find((signal) => signal.id === selectedSignalId)
+    || filteredLiveSignals.find((signal) => !signal.isMine)
+    || filteredLiveSignals.find((signal) => signal.isMine)
     || null;
   const ownSignal = props.signals.find((signal) => signal.isMine) || null;
   const selectedCandidate = allCandidates.find((candidate) => candidate.petId === selectedCandidateId) || null;
@@ -238,12 +247,11 @@ export function ProductionWoofWorkspace(props: Props) {
 
   return <section ref={rootRef} className="production-woof-workspace" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
     <div className="woof-map-layer" aria-hidden={mode !== 'live'}>
-      {props.viewerLocation ? <WoofLiveMap signals={props.signals} viewerLocation={props.viewerLocation} viewerRadiusMeters={props.viewerRadiusMeters} selectedId={selectedSignal?.id ?? null} onSelect={(id) => setSelectedSignalId(id)} />
+      {props.viewerLocation ? <WoofLiveMap signals={filteredLiveSignals} viewerLocation={props.viewerLocation} viewerRadiusMeters={props.viewerRadiusMeters} selectedId={selectedSignal?.id ?? null} onSelect={(id) => setSelectedSignalId(id)} />
         : <div className="woof-map-await" aria-hidden="true" />}
     </div>
 
     <header className="woof-topbar">
-      <button type="button" onClick={props.onLocateViewer} aria-label="Показать мой район" disabled={props.locating}><Crosshair /></button>
       <div className="woof-mode-switch" aria-label="Режим Гав">
         <button type="button" aria-pressed={mode === 'live'} onClick={() => setMode('live')}>Сейчас рядом</button>
         <button type="button" aria-pressed={mode === 'meet'} onClick={() => setMode('meet')}>Знакомства</button>
@@ -261,7 +269,13 @@ export function ProductionWoofWorkspace(props: Props) {
     </aside>}
 
     {mode === 'live' && <>
-      <div className="woof-live-heading"><span className="woof-live-dot" />{props.locating || props.state === 'loading' ? 'Ищу ваш район…' : `${props.signals.filter((signal) => !signal.isMine).length} поблизости`}</div>
+      <section className="woof-live-filters" aria-label="Фильтры поиска на карте">
+        <label><span>Радиус</span><select value={String(props.viewerRadiusKm)} onChange={(event) => props.onChangeViewerRadius(Number(event.target.value))}><option value="3">3 км</option><option value="5">5 км</option><option value="10">10 км</option><option value="15">15 км</option></select></label>
+        <label><span>Когда</span><select value={liveWhen} onChange={(event) => setLiveWhen(event.target.value as typeof liveWhen)}><option value="all">Любое</option><option value="now">Сейчас</option><option value="later">Позже</option></select></label>
+        <label><span>Темп</span><select value={livePace} onChange={(event) => setLivePace(event.target.value as typeof livePace)}><option value="all">Любой</option><option value="calm">Спокойно</option><option value="balanced">Обычный</option><option value="active">Активно</option></select></label>
+        <button type="button" onClick={props.onLocateViewer} disabled={props.locating}><Crosshair />{props.locating ? 'Определяю район…' : 'Обновить гео'}</button>
+      </section>
+      <div className="woof-live-heading"><span className="woof-live-dot" />{props.locating || props.state === 'loading' ? 'Ищу ваш район…' : `${filteredLiveSignals.filter((signal) => !signal.isMine).length} поблизости`}</div>
       {selectedSignal && <article className="woof-signal-card" aria-live="polite">
         <div className="woof-signal-main">
           <DogPortrait candidate={{ name: selectedSignal.name, avatarUrl: selectedSignal.avatarUrl }} />
@@ -277,7 +291,7 @@ export function ProductionWoofWorkspace(props: Props) {
       {props.state === 'error' ? <article className="woof-empty-live woof-error-state" role="alert"><PawPrint /><b>Район не загрузился</b><p>Проверьте соединение — Псё не будет выдавать ошибку за отсутствие собак.</p><button type="button" onClick={() => props.onRetry()}>Повторить</button></article>
         : props.signalReason === 'CITY_NOT_SUPPORTED' ? <article className="woof-empty-live"><PawPrint /><b>Здесь Гав ещё не работает</b><p>Сейчас живые сигналы доступны в Москве и Санкт-Петербурге.</p></article>
           : props.signalReason === 'VIEWER_LOCATION_REQUIRED' ? <article className="woof-empty-live woof-location-state"><Crosshair /><b>Покажите район рядом</b><p>Точная точка не сохраняется — для поиска используется округлённая зона.</p><button type="button" onClick={props.onLocateViewer} disabled={props.locating}>{props.locating ? 'Определяю…' : 'Показать рядом'}</button></article>
-            : !selectedSignal && props.state !== 'loading' && <article className="woof-empty-live"><PawPrint /><b>В радиусе 3 км пока тихо</b><p>Ваш Гав станет первой живой точкой района.</p></article>}
+            : !selectedSignal && props.state !== 'loading' && <article className="woof-empty-live"><PawPrint /><b>{props.signals.some((signal) => !signal.isMine) ? 'Под эти фильтры пока тихо' : `В радиусе ${props.viewerRadiusKm} км пока тихо`}</b><p>{props.signals.some((signal) => !signal.isMine) ? 'Выберите любое время и темп или расширьте радиус.' : 'Ваш Гав станет первой живой точкой района.'}</p>{props.signals.some((signal) => !signal.isMine) && <button type="button" onClick={() => { setLiveWhen('all'); setLivePace('all'); props.onChangeViewerRadius(15); }}>Показать всех</button>}</article>}
       {props.signalReason !== 'CITY_NOT_SUPPORTED' && <button ref={composerTriggerRef} className="woof-give-button" type="button" onClick={() => setSignalComposer(true)}>{ownSignal ? 'Изменить Гав' : 'Дать Гав'}<PawPrint weight="fill" /></button>}
     </>}
 

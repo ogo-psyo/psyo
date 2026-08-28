@@ -22,13 +22,12 @@ try {
     await page.locator('.app-tabs button[data-route="nearby"]').click({ force: true });
     await page.getByRole('button', { name: /Гав/, exact: true }).last().click({ force: true });
     await page.locator('.production-woof-workspace').waitFor();
-    await page.getByRole('heading', { name: 'Знакомства', exact: true }).waitFor();
-    await page.getByRole('region', { name: 'Фильтры знакомств' }).waitFor();
-    await page.getByRole('button', { name: 'Свернуть фильтры', exact: true }).waitFor();
-
-    await page.getByRole('button', { name: 'Сейчас рядом', exact: true }).click();
-    await page.getByRole('button', { name: 'Сейчас рядом', exact: true }).waitFor();
+    await page.getByRole('region', { name: 'Фильтры поиска на карте' }).waitFor();
     if (await page.getByRole('button', { name: 'Сейчас рядом', exact: true }).getAttribute('aria-pressed') !== 'true') throw new Error(`${viewport.width}px: live mode did not activate`);
+    await page.getByLabel('Радиус').selectOption('10');
+    await page.getByLabel('Когда').selectOption('now');
+    await page.getByLabel('Темп').selectOption('balanced');
+    await page.getByRole('button', { name: 'Обновить гео', exact: true }).waitFor();
     await page.getByRole('button', { name: 'Дать Гав', exact: true }).waitFor();
 
     await page.getByRole('button', { name: 'Дать Гав', exact: true }).click();

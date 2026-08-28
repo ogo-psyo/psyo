@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   filterWalkSignalsForViewer,
   normalizeWalkSignalViewerInput,
+  parseWalkSignalRadiusSearch,
   parseWalkSignalViewerSearch,
   socialCityForLocation,
 } from '../../lib/socialCore.ts';
@@ -15,6 +16,15 @@ test('a viewer without a discovery profile can resolve the live city from a coar
   assert.deepEqual(normalizeWalkSignalViewerInput({ location: viewer }), {
     ok: true,
     value: { city: 'moscow', location: { lat: 55.76, lng: 37.62 }, radiusKm: 3 },
+  });
+});
+
+test('live-map search accepts only the supported wider radii', () => {
+  assert.equal(parseWalkSignalRadiusSearch(new URLSearchParams({ radiusKm: '10' })), 10);
+  assert.equal(parseWalkSignalRadiusSearch(new URLSearchParams({ radiusKm: '100' })), 3);
+  assert.deepEqual(normalizeWalkSignalViewerInput({ location: viewer, radiusKm: 15 }), {
+    ok: true,
+    value: { city: 'moscow', location: { lat: 55.76, lng: 37.62 }, radiusKm: 15 },
   });
 });
 

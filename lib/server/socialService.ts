@@ -274,7 +274,7 @@ export async function closeWalkSignal(input: { supabase: SupabaseClient; ownerId
   return { ok: true as const };
 }
 
-export async function listWalkSignals(supabase: SupabaseClient, ownerId: string, petId: string, viewerLocation?: { lat: number; lng: number } | null) {
+export async function listWalkSignals(supabase: SupabaseClient, ownerId: string, petId: string, viewerLocation?: { lat: number; lng: number } | null, requestedRadiusKm = 3) {
   const pet = await requireOwnedPet(supabase, ownerId, petId);
   if (!pet) return { code: 'PET_NOT_FOUND' as const };
   const { data: discovery, error: discoveryError } = await supabase.from('social_discovery_profiles')
@@ -283,7 +283,7 @@ export async function listWalkSignals(supabase: SupabaseClient, ownerId: string,
   const profileLocation = discovery && Number.isFinite(Number(discovery.coarse_lat)) && Number.isFinite(Number(discovery.coarse_lng))
     ? { lat: Number(discovery.coarse_lat), lng: Number(discovery.coarse_lng) }
     : null;
-  const requestedViewer = normalizeWalkSignalViewerInput({ location: viewerLocation ?? profileLocation });
+  const requestedViewer = normalizeWalkSignalViewerInput({ location: viewerLocation ?? profileLocation, radiusKm: requestedRadiusKm });
   const { data: ownSignal, error: ownSignalError } = requestedViewer.ok
     ? { data: null, error: null }
     : await supabase.from('social_walk_signals').select('city, coarse_lat, coarse_lng').eq('owner_id', ownerId).eq('pet_id', petId).eq('status', 'active').maybeSingle();
@@ -291,7 +291,7 @@ export async function listWalkSignals(supabase: SupabaseClient, ownerId: string,
   const ownLocation = ownSignal && Number.isFinite(Number(ownSignal.coarse_lat)) && Number.isFinite(Number(ownSignal.coarse_lng))
     ? { lat: Number(ownSignal.coarse_lat), lng: Number(ownSignal.coarse_lng) }
     : null;
-  const viewer = requestedViewer.ok ? requestedViewer : normalizeWalkSignalViewerInput({ location: ownLocation });
+  const viewer = requestedViewer.ok ? requestedViewer : normalizeWalkSignalViewerInput({ location: ownLocation, radiusKm: requestedRadiusKm });
   if (!viewer.ok) return { code: viewer.code };
   const { city, location, radiusKm } = viewer.value;
   const excluded = await excludedOwnerIds(supabase, ownerId);

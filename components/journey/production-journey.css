@@ -2291,7 +2291,7 @@
 .woof-avatar-marker.is-mine i { background: #07814d; }
 .woof-avatar-marker.is-selected > div { transform: translateY(-5px) scale(1.08); box-shadow: 0 16px 34px rgba(6,71,47,.34); }
 
-.woof-topbar { position: absolute; z-index: 650; top: calc(10px + env(safe-area-inset-top)); right: 10px; left: 10px; display: grid; grid-template-columns: 48px minmax(0,1fr) 48px; gap: 8px; }
+.woof-topbar { position: absolute; z-index: 650; top: calc(10px + env(safe-area-inset-top)); right: 10px; left: 10px; display: grid; grid-template-columns: minmax(0,1fr) 48px; gap: 8px; }
 .woof-topbar > button { position: relative; min-width: 48px; height: 48px; display: grid; place-items: center; border: 0; border-radius: 17px; background: rgba(247,255,249,.96); color: #06472f; box-shadow: 0 8px 24px rgba(6,71,47,.16); backdrop-filter: blur(16px); }
 .woof-topbar > button svg { width: 22px; height: 22px; }
 .woof-topbar > button span { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; display: grid; place-items: center; padding: 0 5px; border: 2px solid #f7fff9; border-radius: 999px; background: #dd617c; color: white; font-size: 10px; font-weight: 950; }
@@ -2304,7 +2304,12 @@
 .woof-mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 4px; border-radius: 18px; background: rgba(247,255,249,.94); box-shadow: 0 8px 24px rgba(6,71,47,.16); backdrop-filter: blur(16px); }
 .woof-mode-switch button { min-width: 0; min-height: 44px; padding: 0 8px; border: 0; border-radius: 14px; background: transparent; color: #446c5d; font-size: 12px; font-weight: 900; }
 .woof-mode-switch button[aria-pressed="true"] { background: #06472f; color: #f7fff9; box-shadow: 0 5px 12px rgba(6,71,47,.22); }
-.woof-live-heading { position: absolute; z-index: 620; top: calc(70px + env(safe-area-inset-top)); left: 50%; min-height: 34px; display: flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; background: rgba(247,255,249,.93); box-shadow: 0 7px 18px rgba(6,71,47,.12); color: #315e4d; font-size: 12px; font-weight: 900; transform: translateX(-50%); white-space: nowrap; }
+.woof-live-filters { position: absolute; z-index: 640; top: calc(70px + env(safe-area-inset-top)); right: 10px; left: 10px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; padding: 10px; border: 1px solid rgba(6,71,47,.1); border-radius: 20px; background: rgba(247,255,249,.96); box-shadow: 0 10px 26px rgba(6,71,47,.16); backdrop-filter: blur(16px); }
+.woof-live-filters label { min-width: 0; display: grid; gap: 4px; color: #446c5d; font-size: 12px; font-weight: 900; }
+.woof-live-filters select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid rgba(6,71,47,.16); border-radius: 14px; padding: 0 8px; background: #fff; color: #06472f; font: 850 16px/1 inherit; }
+.woof-live-filters > button { grid-column: 1/-1; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 14px; background: #cbfedb; color: #06472f; font-size: 12px; font-weight: 900; }
+.woof-live-filters > button svg { width: 18px; height: 18px; }
+.woof-live-heading { position: absolute; z-index: 620; top: calc(196px + env(safe-area-inset-top)); left: 50%; min-height: 34px; display: flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; background: rgba(247,255,249,.93); box-shadow: 0 7px 18px rgba(6,71,47,.12); color: #315e4d; font-size: 12px; font-weight: 900; transform: translateX(-50%); white-space: nowrap; }
 .woof-live-dot { width: 9px; height: 9px; border: 2px solid rgba(221,97,124,.28); border-radius: 50%; background: #dd617c; box-shadow: 0 0 0 5px rgba(221,97,124,.12); }
 
 .woof-signal-card { position: absolute; z-index: 650; right: 10px; bottom: calc(144px + env(safe-area-inset-bottom)); left: 10px; display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(6,71,47,.08); border-radius: 26px; background: rgba(247,255,249,.97); box-shadow: 0 18px 46px rgba(6,71,47,.24); backdrop-filter: blur(18px); }
