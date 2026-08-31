@@ -35,6 +35,34 @@ function fakeSupabase() {
   };
 }
 
+function ownerRequest(question: string) {
+  const session = createAppSessionToken({ psyoUserId: 'telegram-user', ownerId: 'owner-1' });
+  return new Request('http://localhost/api/assistant', {
+    method: 'POST',
+    headers: {
+      origin: 'http://localhost',
+      cookie: `psyo_session=${encodeURIComponent(session.token)}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ petId: 'pet-1', question }),
+  });
+}
+
+function assistantHandler() {
+  return createAssistantPostHandler({
+    admin: () => fakeSupabase() as never,
+    generate: async (input: any) => ({
+      answer: input.rulesAnswer,
+      provider: 'rules',
+      mode: 'rules_fallback_test',
+      reason: 'TEST',
+      safetyLevel: 'bounded_rules',
+      confidence: 'rules_based',
+      sourceBasis: 'owner_context',
+    }) as never,
+  });
+}
+
 test('accepts a signed Telegram Mini App owner and returns guarded Groq metadata', async () => {
   const calls: any[] = [];
   const POST = createAssistantPostHandler({
@@ -88,4 +116,46 @@ test('does not accept client-supplied pet context without an authenticated owner
   assert.equal(response.status, 401);
   assert.equal((await response.json()).error, 'AUTH_REQUIRED');
   assert.equal(generated, false);
+});
+
+test('walk planning returns a plan intent without inventing a place or coordinates', async () => {
+  const body = await (await assistantHandler()(ownerRequest('Подбери спокойный маршрут для прогулки'))).json();
+
+  assert.deepEqual(body.actionSuggestions, [{
+    intent: 'plan_walk',
+    humanLabel: 'Запланировать прогулку',
+    destination: { screen: 'map', mode: 'plan_walk' },
+    payload: { title: 'Спокойная прогулка' },
+  }]);
+  assert.doesNotMatch(JSON.stringify(body.actionSuggestions), /latitude|longitude|coordinates|location/i);
+});
+
+test('health questions open known records or offer a bounded follow-up reminder', async () => {
+  const openBody = await (await assistantHandler()(ownerRequest('Покажи здоровье и мои анализы'))).json();
+  const symptomBody = await (await assistantHandler()(ownerRequest('Сегодня вялость, как проверить динамику?'))).json();
+
+  assert.equal(openBody.actionSuggestions[0].intent, 'open_health');
+  assert.deepEqual(openBody.actionSuggestions[0].destination, { screen: 'health' });
+  assert.equal(symptomBody.actionSuggestions[0].intent, 'create_reminder');
+  assert.deepEqual(symptomBody.actionSuggestions[0].destination, { screen: 'calendar', mode: 'create' });
+  assert.equal(symptomBody.actionSuggestions[0].safetyFlag, 'vet_boundary');
+});
+
+test('shopping advice can continue in wishlist', async () => {
+  const body = await (await assistantHandler()(ownerRequest('Какую шлейку купить?'))).json();
+
+  assert.equal(body.actionSuggestions[0].intent, 'add_wishlist');
+  assert.deepEqual(body.actionSuggestions[0].destination, { screen: 'things', mode: 'create' });
+});
+
+test('unsupported general advice does not receive a fake call to action', async () => {
+  const body = await (await assistantHandler()(ownerRequest('Почему собаки видят сны?'))).json();
+  assert.deepEqual(body.actionSuggestions, []);
+});
+
+test('contextual questions never mention a last analysis when no document exists', async () => {
+  const body = await (await assistantHandler()(ownerRequest('Что можно спросить?'))).json();
+  assert.ok(Array.isArray(body.suggestedQuestions));
+  assert.equal(body.suggestedQuestions.length, 3);
+  assert.doesNotMatch(body.suggestedQuestions.join(' '), /последн\S* анализ/i);
 });

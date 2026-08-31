@@ -20,6 +20,15 @@ const results = [];
 try {
   for (const viewport of [{ width: 320, height: 720 }, { width: 390, height: 844 }]) {
     const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
+    let transcriptionMode = 'success';
+    await page.route('**/api/stt/transcribe', async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 180));
+      if (transcriptionMode === 'error') {
+        await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'STT_PROVIDER_UNAVAILABLE' }) });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ transcript: 'Мята сегодня больше спит со вчера, но ест как обычно.', durationSeconds: 4 }) });
+    });
     await page.route('**/api/observations/extract', async (route) => {
       const body = route.request().postDataJSON();
       const candidates = String(body.transcript).includes('большого дерева') ? [] : [
@@ -39,20 +48,51 @@ try {
     await page.reload({ waitUntil: 'networkidle' });
 
     const capture = page.locator('.voice-observation-capture');
+    async function assertActivePhase(phase) {
+      await capture.locator(`.voice-capture-${phase}`).waitFor();
+      await page.waitForFunction(() => document.querySelector('.phone-shell')?.classList.contains('voice-capture-active'));
+      const geometry = await page.evaluate(() => {
+        const shell = document.querySelector('.phone-shell');
+        const nav = document.querySelector('.app-tabs');
+        const captureElement = document.querySelector('.voice-observation-capture');
+        const rect = captureElement?.getBoundingClientRect();
+        return {
+          activeClass: shell?.classList.contains('voice-capture-active'),
+          navigationHidden: nav ? getComputedStyle(nav).display === 'none' : true,
+          captureBottom: rect?.bottom ?? 0,
+          viewportHeight: innerHeight,
+        };
+      });
+      if (!geometry.activeClass || !geometry.navigationHidden) throw new Error(`${viewport.width}: ${phase} phase does not suppress bottom navigation`);
+      if (geometry.captureBottom > geometry.viewportHeight + 1) throw new Error(`${viewport.width}: ${phase} phase is clipped below the viewport`);
+    }
     await capture.waitFor();
     await capture.getByText('Аудио отправится сервису распознавания и не сохранится в Псё.', { exact: true }).waitFor();
     await capture.getByRole('button', { name: 'Записать голосом' }).click();
-    await capture.locator('.voice-capture-recording').waitFor();
+    await assertActivePhase('recording');
     await capture.getByRole('button', { name: 'Закрыть голосовой ввод' }).click();
     await capture.locator('.voice-capture-input').waitFor();
     await page.waitForTimeout(400);
     if (transcriptionRequests !== 0) throw new Error(`${viewport.width}: cancelling a recording sent audio`);
-    await capture.getByLabel('Что изменилось у Мята').fill('Мята сегодня больше спит со вчера, но ест как обычно.');
-    await capture.getByRole('button', { name: 'Продолжить с введённым текстом' }).click();
+    await capture.getByRole('button', { name: 'Записать голосом' }).click();
+    await capture.getByRole('button', { name: 'Остановить' }).click();
+    await assertActivePhase('progress');
+    await capture.getByLabel('Проверь расшифровку').waitFor();
+    const reviewNavigation = await page.evaluate(() => ({
+      activeClass: document.querySelector('.phone-shell')?.classList.contains('voice-capture-active'),
+      navigationHidden: getComputedStyle(document.querySelector('.app-tabs')).display === 'none',
+    }));
+    if (!reviewNavigation.activeClass || !reviewNavigation.navigationHidden) throw new Error(`${viewport.width}: review phase does not suppress bottom navigation`);
     await capture.getByRole('button', { name: 'Разобрать на показатели' }).click();
     await capture.getByText('Энергия', { exact: true }).waitFor();
     await capture.getByText('Аппетит', { exact: true }).waitFor();
-    await capture.getByText('0 заметок', { exact: true }).waitFor();
+    await capture.getByText('Без заметки', { exact: true }).waitFor();
+    const noteChoice = capture.getByRole('checkbox', { name: /Сохранить ещё и приватную заметку/ });
+    await noteChoice.waitFor();
+    if (await noteChoice.isChecked()) throw new Error(`${viewport.width}: private note must be opt-in`);
+    await noteChoice.check();
+    await capture.getByText('1 приватная заметка', { exact: true }).waitFor();
+    await capture.getByText('Будет сохранено:', { exact: false }).waitFor();
     await capture.getByText('Новая запись', { exact: false }).first().waitFor();
     await capture.locator('.voice-capture-facts input').first().fill('спит заметно больше обычного');
 
@@ -81,6 +121,16 @@ try {
     await capture.getByRole('button', { name: 'Разобрать на показатели' }).click();
     await capture.getByText('Показатели не найдены', { exact: true }).waitFor();
     await capture.getByText('Ничего не сохранено.', { exact: false }).waitFor();
+    await capture.getByRole('button', { name: 'Закрыть голосовой ввод' }).click();
+    transcriptionMode = 'error';
+    await capture.getByRole('button', { name: 'Записать голосом' }).click();
+    await capture.getByRole('button', { name: 'Остановить' }).click();
+    await capture.locator('.voice-capture-error').waitFor();
+    const errorNavigation = await page.evaluate(() => ({
+      activeClass: document.querySelector('.phone-shell')?.classList.contains('voice-capture-active'),
+      navigationHidden: getComputedStyle(document.querySelector('.app-tabs')).display === 'none',
+    }));
+    if (!errorNavigation.activeClass || !errorNavigation.navigationHidden) throw new Error(`${viewport.width}: error phase does not suppress bottom navigation`);
     await page.close();
   }
   console.log(JSON.stringify({ ok: true, results }, null, 2));

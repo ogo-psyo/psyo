@@ -14,6 +14,14 @@ import {
 
 type TranscriptionResult = { transcript: string; durationSeconds: number };
 
+export type PrivateVoiceNoteInput = {
+  petId: string;
+  authorId: string;
+  text: string;
+  capturedAt: string;
+  source: 'voice' | 'text';
+};
+
 function recorderMimeType() {
   if (typeof MediaRecorder === 'undefined') return '';
   return ['audio/webm;codecs=opus', 'audio/mp4', 'audio/ogg;codecs=opus']
@@ -43,6 +51,7 @@ export function VoiceObservationCapture({
   onTranscribe,
   onExtract,
   onSave,
+  onSavePrivateNote,
 }: {
   petId: string;
   petName: string;
@@ -50,6 +59,7 @@ export function VoiceObservationCapture({
   onTranscribe: (audio: Blob) => Promise<TranscriptionResult>;
   onExtract: (input: { transcript: string; captureId: string; observedAt: string; source: 'voice' | 'text' }) => Promise<{ candidates: ObservationCandidate[]; decisions: IngestionDecision[] }>;
   onSave: (candidates: ObservationCandidate[]) => Promise<{ decisions?: IngestionDecision[]; summary?: Record<string, number> }>;
+  onSavePrivateNote?: (input: PrivateVoiceNoteInput) => Promise<void>;
 }) {
   const [state, dispatch] = useReducer(voiceCaptureReducer, initialVoiceCaptureState);
   const [typedText, setTypedText] = useState('');
@@ -58,6 +68,9 @@ export function VoiceObservationCapture({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [keepPrivateNote, setKeepPrivateNote] = useState(false);
+  const [privateNoteSaved, setPrivateNoteSaved] = useState(false);
+  const [structuredSaved, setStructuredSaved] = useState(false);
   const [parseStatus, setParseStatus] = useState<'idle' | 'loading' | 'empty' | 'ready'>('idle');
   const [decisions, setDecisions] = useState<IngestionDecision[]>([]);
   const [savedDecisions, setSavedDecisions] = useState<IngestionDecision[]>([]);
@@ -67,6 +80,8 @@ export function VoiceObservationCapture({
   const audioRef = useRef<Blob | null>(null);
   const timerRef = useRef<number | null>(null);
   const discardRecordingRef = useRef(false);
+  const captureRef = useRef<HTMLElement | null>(null);
+  const capturedAtRef = useRef('');
 
   function clearTimer() {
     if (timerRef.current !== null) window.clearInterval(timerRef.current);
@@ -85,6 +100,7 @@ export function VoiceObservationCapture({
     closeStream();
     recorderRef.current = null;
     audioRef.current = null;
+    capturedAtRef.current = '';
     chunksRef.current = [];
     setCandidates([]);
     setDecisions([]);
@@ -92,6 +108,9 @@ export function VoiceObservationCapture({
     setParseStatus('idle');
     setSeconds(0);
     setSaved(false);
+    setKeepPrivateNote(false);
+    setPrivateNoteSaved(false);
+    setStructuredSaved(false);
     setSaveError('');
     dispatch({ type: 'cancelled' });
   }
@@ -163,10 +182,12 @@ export function VoiceObservationCapture({
 
   async function parseTranscript() {
     const captureId = crypto.randomUUID();
+    const capturedAt = new Date().toISOString();
+    capturedAtRef.current = capturedAt;
     setParseStatus('loading');
     setSaveError('');
     try {
-      const extracted = await onExtract({ transcript: state.transcript, captureId, observedAt: new Date().toISOString(), source: (state.durationSeconds ?? 0) > 0 ? 'voice' : 'text' });
+      const extracted = await onExtract({ transcript: state.transcript, captureId, observedAt: capturedAt, source: (state.durationSeconds ?? 0) > 0 ? 'voice' : 'text' });
       setCandidates(extracted.candidates);
       setDecisions(extracted.decisions || []);
       setParseStatus(extracted.candidates.length ? 'ready' : 'empty');
@@ -178,13 +199,33 @@ export function VoiceObservationCapture({
     }
   }
 
-  async function saveCandidates() {
-    if (!candidates.length || saving) return;
+  async function saveReviewedCapture() {
+    if ((!candidates.length && !keepPrivateNote) || saving) return;
     setSaving(true);
     setSaveError('');
     try {
-      const result = await onSave(candidates.map((candidate) => ({ ...candidate, confirmed: true })));
-      setSavedDecisions(result.decisions || []);
+      if (candidates.length && !structuredSaved) {
+        const result = await onSave(candidates.map((candidate) => ({ ...candidate, confirmed: true })));
+        setSavedDecisions(result.decisions || []);
+        setStructuredSaved(true);
+      }
+      if (keepPrivateNote && onSavePrivateNote && !privateNoteSaved) {
+        try {
+          await onSavePrivateNote({
+            petId,
+            authorId,
+            text: state.transcript.trim(),
+            capturedAt: capturedAtRef.current || new Date().toISOString(),
+            source: (state.durationSeconds ?? 0) > 0 ? 'voice' : 'text',
+          });
+          setPrivateNoteSaved(true);
+        } catch {
+          setSaveError(candidates.length
+            ? 'Показатели сохранены, но приватная заметка — нет. Расшифровка останется здесь: повтори сохранение заметки.'
+            : 'Приватная заметка не сохранилась. Расшифровка останется здесь — проверь связь и повтори.');
+          return;
+        }
+      }
       setSaved(true);
       audioRef.current = null;
     } catch {
@@ -201,14 +242,21 @@ export function VoiceObservationCapture({
     closeStream();
   }, []);
 
+  useEffect(() => {
+    const shell = captureRef.current?.closest('.phone-shell');
+    const active = state.phase !== 'idle' && !saved;
+    shell?.classList.toggle('voice-capture-active', active);
+    return () => shell?.classList.remove('voice-capture-active');
+  }, [saved, state.phase]);
+
   if (saved) {
-    return <section className="voice-observation-capture is-saved" aria-live="polite">
-      <div><h2>Контекст обновлён</h2><p>{savedDecisions.length ? savedDecisions.map((item) => operationLabels[item.operation]).join(' · ') : 'Сохранены подтверждённые показатели'}. Отдельная заметка не создана.</p></div>
+    return <section ref={captureRef} className="voice-observation-capture is-saved" aria-live="polite">
+      <div><h2>{privateNoteSaved && !candidates.length ? 'Заметка сохранена' : 'Контекст обновлён'}</h2><p>{candidates.length ? `${savedDecisions.length ? savedDecisions.map((item) => operationLabels[item.operation]).join(' · ') : 'Сохранены подтверждённые показатели'}.` : ''}{privateNoteSaved ? `${candidates.length ? ' ' : ''}Исходный текст сохранён как приватная заметка.` : `${candidates.length ? ' ' : ''}Отдельная заметка не создана.`}</p></div>
       <button type="button" onClick={reset}>Добавить ещё</button>
     </section>;
   }
 
-  return <section className={`voice-observation-capture is-${state.phase}`} aria-labelledby="voice-observation-title">
+  return <section ref={captureRef} className={`voice-observation-capture is-${state.phase}`} aria-labelledby="voice-observation-title">
     <header>
       <div><h2 id="voice-observation-title">Что изменилось у {petName}?</h2><p>Скажи свободно. Псё выделит показатели и ничего не сохранит без проверки.</p></div>
       {state.phase !== 'idle' && <button className="voice-capture-close" type="button" onClick={reset} aria-label="Закрыть голосовой ввод"><X weight="bold" /></button>}
@@ -236,18 +284,25 @@ export function VoiceObservationCapture({
     </div>}
 
     {state.phase === 'review' && <div className="voice-capture-review">
-      <label>Проверь расшифровку<textarea value={state.transcript} onChange={(event) => { setCandidates([]); setDecisions([]); setParseStatus('idle'); dispatch({ type: 'transcript_changed', transcript: event.target.value }); }} maxLength={600} /></label>
-      <div className="voice-capture-trust"><span>{state.durationSeconds ? 'Аудио не сохраняется в Псё' : 'Введено текстом'}</span><b>Не заметка</b></div>
+      <label>Проверь расшифровку<textarea value={state.transcript} onChange={(event) => { setCandidates([]); setDecisions([]); setParseStatus('idle'); setKeepPrivateNote(false); setStructuredSaved(false); setPrivateNoteSaved(false); dispatch({ type: 'transcript_changed', transcript: event.target.value }); }} maxLength={600} disabled={structuredSaved} /></label>
+      <div className="voice-capture-trust"><span>{state.durationSeconds ? 'Аудио не сохраняется в Псё' : 'Введено текстом'}</span><b>Сохранение только после подтверждения</b></div>
       {!candidates.length && <button className="voice-capture-primary" type="button" disabled={!state.transcript.trim() || parseStatus === 'loading'} onClick={() => void parseTranscript()}>{parseStatus === 'loading' ? 'Разбираю…' : parseStatus === 'empty' ? 'Разобрать ещё раз' : 'Разобрать на показатели'}</button>}
       {parseStatus === 'empty' && <div className="voice-capture-empty" role="status"><b>Показатели не найдены</b><p>Уточни, что изменилось: например, аппетит, энергия, настроение, сон или самочувствие. Ничего не сохранено.</p></div>}
       {candidates.length > 0 && <div className="voice-capture-facts">
-        <div className="voice-capture-facts-head"><b>Псё выделило {candidates.length === 1 ? 'один показатель' : `${candidates.length} показателя`}</b><span>0 заметок</span></div>
+        <div className="voice-capture-facts-head"><b>Псё выделило {candidates.length === 1 ? 'один показатель' : `${candidates.length} показателя`}</b><span>{keepPrivateNote ? '1 приватная заметка' : 'Без заметки'}</span></div>
         {candidates.map((candidate) => <article key={candidate.id}>
-          <div><b>{metricLabel(candidate.metric)}</b><label><span className="sr-only">Значение показателя {metricLabel(candidate.metric)}</span><input value={candidate.value} maxLength={120} onChange={(event) => setCandidates((current) => current.map((item) => item.id === candidate.id ? { ...item, value: event.target.value } : item))} /></label><small>{operationLabels[decisions.find((item) => item.candidateId === candidate.id)?.operation || 'create']} · {candidate.source === 'voice' ? 'из голосовой записи' : 'введено текстом'} · «{candidate.transcriptSpan}»</small></div>
-          <button type="button" onClick={() => setCandidates((current) => current.filter((item) => item.id !== candidate.id))}>Убрать</button>
+          <div><b>{metricLabel(candidate.metric)}</b><label><span className="sr-only">Значение показателя {metricLabel(candidate.metric)}</span><input value={candidate.value} maxLength={120} disabled={structuredSaved} onChange={(event) => setCandidates((current) => current.map((item) => item.id === candidate.id ? { ...item, value: event.target.value } : item))} /></label><small>{operationLabels[decisions.find((item) => item.candidateId === candidate.id)?.operation || 'create']} · {candidate.source === 'voice' ? 'из голосовой записи' : 'введено текстом'} · «{candidate.transcriptSpan}»</small></div>
+          <button type="button" disabled={structuredSaved} onClick={() => setCandidates((current) => current.filter((item) => item.id !== candidate.id))}>Убрать</button>
         </article>)}
+      </div>}
+      {(parseStatus === 'ready' || parseStatus === 'empty') && onSavePrivateNote && <label className="voice-capture-note-choice">
+        <input type="checkbox" checked={keepPrivateNote} disabled={structuredSaved} onChange={(event) => setKeepPrivateNote(event.target.checked)} />
+        <span><b>Сохранить ещё и приватную заметку</b><small>Псё сохранит проверенный текст целиком. Заметка будет видна только владельцу.</small></span>
+      </label>}
+      {(parseStatus === 'ready' || parseStatus === 'empty') && (candidates.length > 0 || keepPrivateNote) && <div className="voice-capture-save-review">
+        <p><b>Будет сохранено:</b> {candidates.length ? `${candidates.length} ${candidates.length === 1 ? 'показатель' : 'показателя'}` : 'без показателей'}{keepPrivateNote ? ' и 1 приватная заметка с исходным текстом' : ', без отдельной заметки'}.</p>
         {saveError && <p className="voice-capture-save-error" role="alert">{saveError}</p>}
-        <button className="voice-capture-primary" type="button" disabled={saving} onClick={saveCandidates}>{saving ? 'Сохраняю…' : `Сохранить ${candidates.length === 1 ? 'показатель' : `${candidates.length} показателя`}`}</button>
+        <button className="voice-capture-primary" type="button" disabled={saving} onClick={saveReviewedCapture}>{saving ? 'Сохраняю…' : structuredSaved && keepPrivateNote ? 'Повторить сохранение заметки' : 'Подтвердить и сохранить'}</button>
       </div>}
       {parseStatus === 'idle' && candidates.length === 0 && state.transcript.trim() && <p className="voice-capture-footnote">Сначала проверь текст. Псё сохранит только выбранные показатели.</p>}
     </div>}

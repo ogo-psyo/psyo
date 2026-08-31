@@ -20,7 +20,7 @@ function hasMedicalSafetyTerm(question: string) {
 }
 
 function classifyQuestion(question: string): AssistantKind {
-  if (hasMedicalSafetyTerm(question) || /вакцин|привив|рвот|понос|кров|температ|болит|хром|вет|здоров|лекар/i.test(question)) return 'health_triage';
+  if (hasMedicalSafetyTerm(question) || /вакцин|привив|рвот|понос|кров|температ|болит|хром|вял|кашл|симптом|анализ|вет|здоров|лекар/i.test(question)) return 'health_triage';
   if (/повод|(?:^|\s)лай(?:\s|$)|лает|лаять|тян|один|команд|подзыв|тренир|поведен/i.test(question)) return 'training';
   if (/корм|еда|режим|грум|уход|обработ/i.test(question)) return 'care';
   if (/куп|товар|игруш|амуниц|ошейн|шлейк/i.test(question)) return 'shopping';
@@ -52,10 +52,20 @@ function buildActionSuggestions(question: string, context: any): ActionSuggestio
   const kind = classifyQuestion(question);
   const name = context?.pet?.name || 'собаки';
 
+  if (/маршрут|гуля|прогул/i.test(question)) {
+    return [{
+      intent: 'plan_walk',
+      humanLabel: 'Запланировать прогулку',
+      destination: { screen: 'map', mode: 'plan_walk' },
+      payload: { title: 'Спокойная прогулка' },
+    }];
+  }
+
   if (kind === 'shopping') {
     return [{
-      type: 'add_wishlist',
+      intent: 'add_wishlist',
       humanLabel: 'Добавить в список вещей',
+      destination: { screen: 'things', mode: 'create' },
       payload: {
         title: 'Подобрать вещь под задачу',
         category: 'other',
@@ -66,8 +76,9 @@ function buildActionSuggestions(question: string, context: any): ActionSuggestio
 
   if (kind === 'training') {
     return [{
-      type: 'create_reminder',
+      intent: 'create_reminder',
       humanLabel: 'Поставить короткую тренировку',
+      destination: { screen: 'calendar', mode: 'create' },
       payload: {
         title: '10 минут спокойной тренировки',
         dueDate: tomorrowDate(),
@@ -77,9 +88,18 @@ function buildActionSuggestions(question: string, context: any): ActionSuggestio
   }
 
   if (kind === 'health_triage') {
+    if (/(?:покаж|откр|где|последн|истори|результ).*(?:здоров|анализ|документ|привив)|(?:здоров|анализ|документ|привив).*(?:покаж|откр|где|последн|истори|результ)/i.test(question)) {
+      return [{
+        intent: 'open_health',
+        humanLabel: 'Открыть здоровье',
+        destination: { screen: 'health' },
+        payload: {},
+      }];
+    }
     return [{
-      type: 'create_reminder',
+      intent: 'create_reminder',
       humanLabel: 'Проверить самочувствие завтра',
+      destination: { screen: 'calendar', mode: 'create' },
       payload: {
         title: 'Проверить самочувствие и записать динамику',
         dueDate: tomorrowDate(),
@@ -89,25 +109,42 @@ function buildActionSuggestions(question: string, context: any): ActionSuggestio
     }];
   }
 
-  if (/маршрут|гуля|прогул|парк|мест|самокат|шум/i.test(question)) {
+  if (/(?:добав|сохран|отмет).*(?:парк|мест)|(?:парк|мест).*(?:добав|сохран|отмет)/i.test(question)) {
     return [{
-      type: 'add_map_note',
-      humanLabel: 'Сохранить заметку на карте',
+      intent: 'add_map_place',
+      humanLabel: 'Добавить место на карту',
+      destination: { screen: 'map', mode: 'add_place' },
       payload: {
-        title: 'Место для спокойной прогулки',
-        note: 'Уточнить район и триггеры после прогулки.',
+        title: 'Новое место',
       },
     }];
   }
 
-  return [{
-    type: 'create_reminder',
-    humanLabel: 'Запланировать следующий шаг',
-    payload: {
-      title: 'Вернуться к вопросу по уходу',
-      dueDate: tomorrowDate(),
-    },
-  }];
+  if (kind === 'care') {
+    return [{
+      intent: 'create_reminder',
+      humanLabel: 'Добавить дело в план',
+      destination: { screen: 'calendar', mode: 'create' },
+      payload: { title: `Дело по уходу за ${name}`, dueDate: tomorrowDate() },
+    }];
+  }
+
+  return [];
+}
+
+function buildSuggestedQuestions(context: any, reminders: any[]): string[] {
+  const questions = reminders.length
+    ? ['Что важно сделать сегодня?']
+    : ['Что добавить в план ухода?'];
+
+  if (context?.documents?.length) questions.push('Что было в последнем анализе?');
+  else if (context?.observations?.length) questions.push('Как менялось самочувствие?');
+  else questions.push('Что полезно отметить о самочувствии?');
+
+  if (context?.routes?.length) questions.push('Как скорректировать прогулки?');
+  else questions.push('Как спланировать спокойную прогулку?');
+
+  return questions.slice(0, 3);
 }
 
 function buildAssistantPrompt(question: string, context: any, reminders: any[], rulesAnswer: string, history: any[] = []) {
@@ -201,6 +238,7 @@ async function assistantPost(request: Request, dependencies: AssistantRouteDepen
   const answer = generated.answer;
   const usage = 'usage' in generated ? generated.usage : undefined;
   const actionSuggestions = buildActionSuggestions(question, context);
+  const suggestedQuestions = buildSuggestedQuestions(context, reminders);
   if (supabase && ownerId && body?.petId) {
     if (!threadId) {
       const { data: thread } = await supabase.from('assistant_threads').insert({ pet_id: body.petId, kind, title: question.slice(0, 80) }).select('id').single();
@@ -248,6 +286,7 @@ async function assistantPost(request: Request, dependencies: AssistantRouteDepen
     answer,
     threadId,
     actionSuggestions,
+    suggestedQuestions,
     provider: generated.provider,
     mode: generated.mode,
     safetyLevel: generated.safetyLevel,

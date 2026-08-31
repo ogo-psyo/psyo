@@ -42,24 +42,52 @@ export type TelegramSessionResponse = {
   readiness: ServiceReadiness;
 };
 
-export type ActionType = 'create_reminder' | 'add_wishlist' | 'add_map_note';
+export type AssistantIntent = 'plan_walk' | 'open_health' | 'create_reminder' | 'add_wishlist' | 'add_map_place';
 
-export interface ActionSuggestion {
-  type: ActionType;
+export type AssistantDestination =
+  | { screen: 'map'; mode: 'plan_walk' | 'add_place' }
+  | { screen: 'health' }
+  | { screen: 'calendar'; mode: 'create' }
+  | { screen: 'things'; mode: 'create' };
+
+type AssistantActionBase = {
   humanLabel: string;
-  payload: {
-    title?: string;
-    category?: string;
-    dueDate?: string;
-    note?: string;
-  };
   safetyFlag?: 'vet_boundary' | null;
-}
+};
+
+export type ActionSuggestion = AssistantActionBase & (
+  | {
+    intent: 'plan_walk';
+    destination: { screen: 'map'; mode: 'plan_walk' };
+    payload: { title?: string; note?: string };
+  }
+  | {
+    intent: 'open_health';
+    destination: { screen: 'health' };
+    payload: Record<string, never>;
+  }
+  | {
+    intent: 'create_reminder';
+    destination: { screen: 'calendar'; mode: 'create' };
+    payload: { title: string; dueDate?: string; note?: string };
+  }
+  | {
+    intent: 'add_wishlist';
+    destination: { screen: 'things'; mode: 'create' };
+    payload: { title: string; category?: string; note?: string };
+  }
+  | {
+    intent: 'add_map_place';
+    destination: { screen: 'map'; mode: 'add_place' };
+    payload: { title?: string; note?: string };
+  }
+);
 
 export interface AssistantResponse {
   answer: string;
   threadId?: string;
   actionSuggestions?: ActionSuggestion[];
+  suggestedQuestions?: string[];
 }
 
 export type PlanTier = 'free' | 'plus';

@@ -6,7 +6,7 @@ import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { PaperSheet, WatercolorScreen } from '@/components/watercolor';
 import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
 import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
-import { VoiceObservationCapture } from '@/components/journey/VoiceObservationCapture';
+import { VoiceObservationCapture, type PrivateVoiceNoteInput } from '@/components/journey/VoiceObservationCapture';
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
 import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';
 import { RouteDeleteDialog } from '@/components/journey/RouteDeleteDialog';
@@ -237,15 +237,30 @@ function SecondaryFlowHeader({ label, onBack }: { label: string; onBack: () => v
   );
 }
 
-function AssistantActionButtons({ actions, onApply }: { actions: ActionSuggestion[]; onApply: (action: ActionSuggestion) => void }) {
+type AssistantActionStatus = { state: 'idle' | 'loading' | 'success' | 'error'; message?: string };
+
+function assistantActionKey(action: ActionSuggestion, index: number) {
+  return `${action.intent}:${action.humanLabel}:${index}`;
+}
+
+function AssistantActionButtons({ actions, statuses, onApply, onOpen }: {
+  actions: ActionSuggestion[];
+  statuses: Record<string, AssistantActionStatus>;
+  onApply: (action: ActionSuggestion, key: string) => void;
+  onOpen: (action: ActionSuggestion) => void;
+}) {
   if (!actions.length) return null;
   return (
     <div className="assistant-action-buttons" aria-label="Предложенные действия ассистента">
-      {actions.map((action, index) => (
-        <button key={`${action.type}-${index}`} type="button" onClick={() => onApply(action)}>
-          {action.humanLabel}
-        </button>
-      ))}
+      {actions.map((action, index) => {
+        const key = assistantActionKey(action, index);
+        const status = statuses[key] || { state: 'idle' as const };
+        if (status.state === 'success') return <div key={key} role="status"><span>Готово</span><button type="button" onClick={() => onOpen(action)}>Открыть</button></div>;
+        if (status.state === 'error') return <div key={key} role="alert"><span>{status.message || 'Не удалось выполнить действие.'}</span><button type="button" onClick={() => onApply(action, key)}>Повторить</button></div>;
+        return <button key={key} type="button" disabled={status.state === 'loading'} aria-busy={status.state === 'loading'} onClick={() => onApply(action, key)}>
+          {status.state === 'loading' ? `${action.humanLabel}…` : action.humanLabel}
+        </button>;
+      })}
     </div>
   );
 }
@@ -570,6 +585,8 @@ export default function Home() {
   const [assistantQuestion, setAssistantQuestion] = useState('');
   const [assistantAnswer, setAssistantAnswer] = useState('');
   const [assistantActions, setAssistantActions] = useState<ActionSuggestion[]>([]);
+  const [assistantActionStatuses, setAssistantActionStatuses] = useState<Record<string, AssistantActionStatus>>({});
+  const [assistantSuggestedQuestions, setAssistantSuggestedQuestions] = useState<string[]>([]);
   const [assistantThreadId, setAssistantThreadId] = useState('');
   const [assistantDiagnostic, setAssistantDiagnostic] = useState<{ provider?: string; mode?: string }>({});
   const [assistantMessages, setAssistantMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
@@ -585,12 +602,15 @@ export default function Home() {
   const [dogDeleteName, setDogDeleteName] = useState('');
   const [accountDeleteConfirmation, setAccountDeleteConfirmation] = useState('');
   const [telegramSession, setTelegramSession] = useState<TelegramSessionView>({ mode: 'loading' });
+  const assistantActionBusyRef = useRef(new Set<string>());
 
   useEffect(() => {
     setAssistantThreadId('');
     setAssistantMessages([]);
     setAssistantAnswer('');
     setAssistantActions([]);
+    setAssistantActionStatuses({});
+    setAssistantSuggestedQuestions([]);
     setAssistantDiagnostic({});
   }, [profile.backendPetId]);
   const [billing, setBilling] = useState<BillingView | null>(null);
@@ -1609,6 +1629,17 @@ export default function Home() {
   const observationNextStepLine = latestObservation
     ? `Последняя запись: ${observationSummary(latestObservation)}. Следующий шаг: ${nextBestAction.title.toLowerCase()}.`
     : `Запиши короткое наблюдение перед шагом «${nextBestAction.title}», чтобы видеть, что меняется день за днём.`;
+  const contextualAssistantSuggestions = useMemo(() => {
+    const suggestions: string[] = [];
+    if (tab === 'map' || ownerRoutes.length || zones.length) suggestions.push('Как спланировать спокойную прогулку?');
+    if (tab === 'health' || observations.length) suggestions.push(`Что важно по последним наблюдениям ${petNameGent}?`);
+    if (documents.some((item) => item.kind === 'analysis')) suggestions.push('Что важно проверить по последнему анализу?');
+    if (activeReminders.length) suggestions.push('Что из дел сейчас важнее?');
+    else suggestions.push('Какое дело по уходу стоит запланировать?');
+    if (tab === 'nearby' || socialCandidates.nearby.length || socialCandidates.city.length) suggestions.push('Что учесть перед знакомством собак?');
+    suggestions.push('Что полезно записать сегодня?');
+    return [...new Set(suggestions)].slice(0, 3);
+  }, [activeReminders.length, documents, observations.length, ownerRoutes.length, petNameGent, socialCandidates.city.length, socialCandidates.nearby.length, tab, zones.length]);
   const appReadiness = useMemo(() => buildAppReadiness({
     profile,
     isAuthenticated: Boolean(session?.access_token || telegramSession.ownerId),
@@ -1646,6 +1677,8 @@ export default function Home() {
     setAssistantQuestion('');
     setAssistantAnswer('');
     setAssistantActions([]);
+    setAssistantActionStatuses({});
+    setAssistantSuggestedQuestions([]);
     setObservationDraft(defaultObservationDraft);
     setEditingObservationId(null);
     setRecentlyDeletedObservation(null);
@@ -2090,6 +2123,36 @@ export default function Home() {
     finishCareMutation(scope);
     await loadRealModules(profile.backendPetId);
     return { decisions: Array.isArray(payload.decisions) ? payload.decisions as IngestionDecision[] : [], summary: payload.summary || {} };
+  }
+
+  async function saveVoicePrivateNote(input: PrivateVoiceNoteInput) {
+    const text = input.text.trim();
+    const petId = input.petId || profile.backendPetId || activePetId;
+    if (!text || !petId) throw new Error('PRIVATE_NOTE_REQUIRED');
+    const createdAt = input.capturedAt || new Date().toISOString();
+    if (isGuestMode()) {
+      const draft: ObservationView = {
+        id: guestId('observation'), petId, note: text, createdAt, syncStatus: 'local',
+      };
+      setObservations((current) => [draft, ...current].slice(0, 12));
+      return;
+    }
+    const scope = `observation:voice-note:${petId}:${createdAt}:${text}`;
+    const response = await fetch('/api/observations', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+      body: JSON.stringify({
+        petId, type: 'note', value: text, note: text, observedAt: createdAt, source: 'assistant',
+        metadata: { voiceCapture: { inputSource: input.source, originalTextPreserved: true } },
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(String(payload.error || 'PRIVATE_NOTE_SAVE_FAILED'));
+    const saved = normalizeObservation(payload.observation || payload);
+    if (!saved) throw new Error('PRIVATE_NOTE_SAVE_FAILED');
+    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
+    finishCareMutation(scope);
   }
 
   function startObservationEdit(observation: ObservationView) {
@@ -3029,7 +3092,7 @@ export default function Home() {
       if (!isGuestMode()) return setError('Сначала сохрани профиль собаки — ассистенту нужен контекст.');
       ensureGuestPetId();
     }
-    setAssistantLoading(true); setAssistantActions([]); setError('');
+    setAssistantLoading(true); setAssistantActions([]); setAssistantActionStatuses({}); setError('');
     setAssistantMessages((current) => [...current, { role: 'user', content: question }]);
     let response: Response;
     try {
@@ -3090,32 +3153,72 @@ export default function Home() {
     setAssistantAnswer(result.answer || 'Не получилось составить ответ. Уточни вопрос.');
     setAssistantMessages((current) => [...current, { role: 'assistant', content: result.answer || 'Не получилось составить ответ. Уточни вопрос.' }]);
     setAssistantActions(Array.isArray(result.actionSuggestions) ? result.actionSuggestions : []);
+    setAssistantSuggestedQuestions(Array.isArray(result.suggestedQuestions) ? result.suggestedQuestions.filter((item: unknown): item is string => typeof item === 'string' && Boolean(item.trim())).slice(0, 3) : []);
     setAssistantThreadId(typeof result.threadId === 'string' ? result.threadId : assistantThreadId);
     setAssistantDiagnostic({ provider: result.provider, mode: result.mode });
   }
 
-  async function handleApplyAction(action: ActionSuggestion) {
+  function navigateFromAssistant(destination: ActionSuggestion['destination'], prepare?: () => void) {
+    prepare?.();
+    setAssistantOpen(false);
+    setJourneyDetail(null);
+    const nextTab: Tab = destination.screen;
+    setTabState(nextTab);
+    const nextUrl = new URL(window.location.href);
+    nextUrl.hash = nextTab;
+    window.history.replaceState({ tab: nextTab }, '', nextUrl);
+  }
+
+  function openAssistantAction(action: ActionSuggestion) {
+    navigateFromAssistant(action.destination, () => {
+      if (action.destination.screen === 'calendar') setCareView('active');
+      if (action.destination.screen === 'things') setThingCaptureOpen(false);
+      if (action.destination.screen === 'map') setProductionMapMode('view');
+    });
+  }
+
+  async function handleApplyAction(action: ActionSuggestion, key: string) {
+    if (assistantActionBusyRef.current.has(key)) return;
+    if (action.intent === 'plan_walk') {
+      navigateFromAssistant(action.destination, () => {
+        setProductionMapMode('route');
+        setNewZoneTitle(action.payload.title?.trim() || '');
+        setNewZoneNote(action.payload.note?.trim() || '');
+      });
+      return;
+    }
+    if (action.intent === 'open_health') {
+      navigateFromAssistant(action.destination);
+      return;
+    }
+    if (action.intent === 'add_map_place') {
+      navigateFromAssistant(action.destination, () => {
+        setProductionMapMode('risk');
+        setNewZoneTitle(action.payload.title?.trim() || '');
+        setNewZoneNote(action.payload.note?.trim() || '');
+      });
+      return;
+    }
+    assistantActionBusyRef.current.add(key);
+    setAssistantActionStatuses((current) => ({ ...current, [key]: { state: 'loading' } }));
     const title = action.payload.title?.trim();
     let applied = false;
-    if (action.type === 'create_reminder') {
+    if (action.intent === 'create_reminder') {
       applied = await createReminder(title, 'custom', 0, action.payload.dueDate);
-    } else if (action.type === 'add_wishlist') {
+    } else if (action.intent === 'add_wishlist') {
       applied = await createWishlistItem({
         title: title || 'Позиция для собаки',
         category: action.payload.category || 'other',
         reason: action.payload.note,
         priority: action.safetyFlag === 'vet_boundary' ? 'high' : 'medium',
       });
-    } else if (action.type === 'add_map_note') {
-      applied = await createZone({
-        title: title || 'Заметка на карте',
-        type: 'safe_place',
-        note: action.payload.note,
-      });
     }
-    if (!applied) return;
-    setNotice('applied');
-    window.setTimeout(() => setNotice('idle'), 1400);
+    assistantActionBusyRef.current.delete(key);
+    if (!applied) {
+      setAssistantActionStatuses((current) => ({ ...current, [key]: { state: 'error', message: 'Не удалось сохранить. Проверь связь и повтори.' } }));
+      return;
+    }
+    setAssistantActionStatuses((current) => ({ ...current, [key]: { state: 'success' } }));
   }
 
   async function startPlusCheckout() {
@@ -3710,6 +3813,7 @@ export default function Home() {
             onTranscribe={transcribeVoiceObservation}
             onExtract={extractVoiceObservationCandidates}
             onSave={saveVoiceObservationCandidates}
+            onSavePrivateNote={saveVoicePrivateNote}
           />}
           onAskAssistant={openAssistantSheet}
           onCareAction={() => todayCare.reminderId
@@ -3741,6 +3845,7 @@ export default function Home() {
             onTranscribe={transcribeVoiceObservation}
             onExtract={extractVoiceObservationCandidates}
             onSave={saveVoiceObservationCandidates}
+            onSavePrivateNote={saveVoicePrivateNote}
           />}
           identityOpen={avatarComposerOpen}
           avatarCapabilities={avatarCapabilities}
@@ -3858,7 +3963,8 @@ export default function Home() {
           messages={assistantMessages}
           loading={assistantLoading}
           error={error}
-          actions={<AssistantActionButtons actions={assistantActions} onApply={handleApplyAction} />}
+          suggestions={assistantSuggestedQuestions.length ? assistantSuggestedQuestions : contextualAssistantSuggestions}
+          actions={<AssistantActionButtons actions={assistantActions} statuses={assistantActionStatuses} onApply={(action, key) => { void handleApplyAction(action, key); }} onOpen={openAssistantAction} />}
           diagnostic={assistantDiagnostic}
           onQuestionChange={setAssistantQuestion}
           onAsk={(question) => { void askAssistant(question); }}

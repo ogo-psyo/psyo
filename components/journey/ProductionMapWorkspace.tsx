@@ -274,6 +274,16 @@ export function ProductionMapWorkspace({
     }
   }, [mode, petId, routeFlow]);
 
+  useEffect(() => {
+    if (mode !== 'route' || routeFlow !== 'idle') return;
+    onClearDraft();
+    setElapsedSeconds(0);
+    setStartedAt(null);
+    setDiscardPrompt(false);
+    setRouteFlow('planning');
+    setLocationStatus('Передвиньте карту и добавьте точку из центра.');
+  }, [mode, onClearDraft, routeFlow]);
+
   const counts = useMemo(() => ({
     routes: features.filter((feature) => feature.type === 'route').length,
     risks: zones.filter((zone) => zone.type === 'risk_zone' || zone.type === 'risk').length

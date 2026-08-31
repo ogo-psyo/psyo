@@ -353,7 +353,7 @@ export function ProductionJourney(props: ProductionJourneyProps) {
 }
 
 export function ProductionAssistantSheet({
-  dogName, avatar, question, answer, messages, loading, error, actions, diagnostic, onQuestionChange, onAsk, onClose,
+  dogName, avatar, question, answer, messages, loading, error, suggestions, actions, diagnostic, onQuestionChange, onAsk, onClose,
 }: {
   dogName: string;
   avatar: ReactNode;
@@ -362,6 +362,7 @@ export function ProductionAssistantSheet({
   messages?: Array<{ role: 'user' | 'assistant'; content: string }>;
   loading: boolean;
   error?: string;
+  suggestions: string[];
   actions?: ReactNode;
   diagnostic?: { provider?: string; mode?: string };
   onQuestionChange: (value: string) => void;
@@ -385,7 +386,7 @@ export function ProductionAssistantSheet({
       <header><div className="v3-assistant-mark"><Sparkle weight="fill" /></div><div><span>контекст: {dogName}</span><h2 id="production-assistant-title">Спросить Псё</h2></div><button type="button" onClick={closeSheet} aria-label="Закрыть"><X weight="bold" /></button></header>
       <div className="production-assistant-scroll">
         <div className="v3-assistant-context"><DogAvatar avatar={avatar} small /><p id="production-assistant-description">Учту профиль {dogName}, дела, наблюдения, прогулки, документы и этот диалог. Не заменяю ветеринара.</p></div>
-        <div className="v3-prompt-list"><button type="button" onClick={() => onAsk('Что важно проверить по последнему анализу?')}>Что важно проверить по анализу?</button><button type="button" onClick={() => onAsk('Подбери спокойный маршрут для прогулки сегодня')}>Подобрать спокойный маршрут</button><button type="button" onClick={() => onAsk('Что учесть перед знакомством собак?')}>Что учесть перед знакомством?</button></div>
+        {suggestions.length > 0 && <div className="v3-prompt-list" aria-label="Подсказки для вопроса">{suggestions.slice(0, 3).map((suggestion) => <button key={suggestion} type="button" onClick={() => onAsk(suggestion)}>{suggestion}</button>)}</div>}
         {messages?.length ? <div className="production-assistant-conversation" aria-live="polite">{messages.map((message, index) => <article className={message.role} key={`${message.role}-${index}`}><b>{message.role === 'assistant' ? 'Псё' : 'Вы'}</b><p>{message.content}</p></article>)}</div> : answer && <div className="production-assistant-answer" role="status">{answer}</div>}
         {error && <div className="module-error" role="alert"><b>Псё не ответил</b><p>{error}</p></div>}
         {actions}

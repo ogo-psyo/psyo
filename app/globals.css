@@ -440,6 +440,9 @@ input::placeholder, textarea::placeholder { color: var(--soft); }
 .assistant-action-buttons { display: grid; gap: 8px; }
 .assistant-action-buttons button { min-height: 44px; border: 1px solid oklch(0.70 0.105 170 / .30); border-radius: 16px; padding: 10px 14px; color: var(--ink); background: oklch(0.92 0.045 170 / .76); font-size: 13px; font-weight: 850; text-align: left; box-shadow: none; }
 .assistant-action-buttons button:hover { opacity: .9; }
+.assistant-action-buttons > div { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 6px 6px 14px; border: 1px solid oklch(0.70 0.105 170 / .30); border-radius: 16px; background: oklch(0.94 0.04 170 / .82); color: var(--ink); font-size: 13px; font-weight: 850; }
+.assistant-action-buttons > div[role="alert"] { border-color: oklch(0.68 0.13 26 / .38); background: oklch(0.96 0.03 26 / .86); }
+.assistant-action-buttons > div > button { min-height: 34px; flex: 0 0 auto; padding: 7px 12px; border-radius: 12px; background: var(--ink); color: var(--paper); text-align: center; }
 
 .app-map, .live-map { min-height: 320px; overflow: hidden; border: 1px solid var(--line); border-radius: 28px; background: oklch(0.965 0.016 205); }
 .app-map { position: relative; background: radial-gradient(circle at 50% 50%, oklch(0.78 0.085 205 / .18), transparent 28%), linear-gradient(135deg, oklch(0.97 0.018 220), oklch(0.975 0.022 165)); }
