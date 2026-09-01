@@ -11,6 +11,7 @@ const baseUrl = 'http://127.0.0.1:3101';
 const outputRoot = resolve(root, 'scripts/qa/visual-baselines', baselineSha);
 const tempRoot = await mkdtemp(join(tmpdir(), 'psyo-visual-baseline-'));
 const appWorktree = join(tempRoot, 'app');
+const fixedDatePreload = join(tempRoot, 'fixed-date.cjs');
 let server;
 
 function run(command, args, options = {}) {
@@ -78,13 +79,26 @@ const status = run('git', ['status', '--porcelain']);
 if (status) throw new Error('Visual baseline capture requires a clean worktree.');
 
 try {
+  await writeFile(fixedDatePreload, `
+const fixedNow = new global.Date('2026-09-01T12:00:00.000Z').valueOf();
+const RealDate = global.Date;
+class FixedDate extends RealDate {
+  constructor(...args) { super(...(args.length ? args : [fixedNow])); }
+  static now() { return fixedNow; }
+}
+global.Date = FixedDate;
+`);
   run('git', ['worktree', 'add', '--detach', appWorktree, baselineSha]);
   run('npm', ['ci'], { cwd: appWorktree });
   run('npm', ['run', 'build'], { cwd: appWorktree });
 
   server = spawn('npm', ['start', '--', '-p', '3101', '-H', '127.0.0.1'], {
     cwd: appWorktree,
-    env: { ...process.env, PORT: '3101' },
+    env: {
+      ...process.env,
+      NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --require=${fixedDatePreload}`.trim(),
+      PORT: '3101',
+    },
     detached: process.platform !== 'win32',
     stdio: ['ignore', 'pipe', 'pipe'],
   });
