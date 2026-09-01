@@ -51,7 +51,7 @@ for (const size of sizes) {
     }, profile);
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.locator('.app-tabs').waitFor({ state: 'visible' });
-    await page.getByRole('heading', { name: 'Мята', exact: true }).first().waitFor({ state: 'visible' });
+    await page.locator('.dog-main-info h2', { hasText: 'Мята' }).waitFor({ state: 'visible' });
     await page.addStyleTag({ content: '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}' });
     await page.evaluate(() => document.fonts.ready);
     await page.evaluate((buttonLabel) => {
