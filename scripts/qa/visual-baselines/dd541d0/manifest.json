@@ -1,0 +1,315 @@
+{
+  "baselineSha": "dd541d0",
+  "harnessCommit": "58581ee6c2814624f28549c70e1776c6fe38896f",
+  "capturedAt": "2026-09-01T18:43:05.751Z",
+  "nodeVersion": "v26.5.0",
+  "playwrightVersion": "^1.61.1",
+  "browser": "chromium",
+  "deviceScaleFactor": 1,
+  "baseUrl": "http://127.0.0.1:3101",
+  "fixtureSource": "scripts/qa/design-screenshots.mjs + scripts/qa/design-state-screenshots.mjs",
+  "fixtureVersion": "c53f991538110ed5fd711f878dd3f98912ffd93320b915369f750b3aaa423f64",
+  "designMetrics": "design/metrics.json",
+  "stateMetrics": "states/metrics.json",
+  "repeatedCaptureStable": true,
+  "exactHashesStable": false,
+  "pixelThreshold": {
+    "channelDelta": 10,
+    "changedPixelRatio": 0.001
+  },
+  "designPixelComparison": {
+    "desktop-1280.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 1280000,
+      "changedRatio": 0
+    },
+    "mobile-360.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 288000,
+      "changedRatio": 0
+    },
+    "mobile-390.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 329160,
+      "changedRatio": 0
+    },
+    "mobile-430.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 430000,
+      "changedRatio": 0
+    },
+    "tablet-768.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 844800,
+      "changedRatio": 0
+    }
+  },
+  "statePixelComparison": {
+    "d1280-map.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 1024000,
+      "changedRatio": 0
+    },
+    "d1280-nearby.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 1024000,
+      "changedRatio": 0
+    },
+    "d1280-profile.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 1024000,
+      "changedRatio": 0
+    },
+    "d1280-things.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 1024000,
+      "changedRatio": 0
+    },
+    "d1280-today.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 1024000,
+      "changedRatio": 0
+    },
+    "d1440-map.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 1296000,
+      "changedRatio": 0
+    },
+    "d1440-nearby.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 1296000,
+      "changedRatio": 0
+    },
+    "d1440-profile.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 1296000,
+      "changedRatio": 0
+    },
+    "d1440-things.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 1296000,
+      "changedRatio": 0
+    },
+    "d1440-today.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 1296000,
+      "changedRatio": 0
+    },
+    "d1920-map.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 2073600,
+      "changedRatio": 0
+    },
+    "d1920-nearby.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 2073600,
+      "changedRatio": 0
+    },
+    "d1920-profile.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 2073600,
+      "changedRatio": 0
+    },
+    "d1920-things.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 2073600,
+      "changedRatio": 0
+    },
+    "d1920-today.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 2073600,
+      "changedRatio": 0
+    },
+    "m360-map.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 288000,
+      "changedRatio": 0
+    },
+    "m360-nearby.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 288000,
+      "changedRatio": 0
+    },
+    "m360-profile.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 288000,
+      "changedRatio": 0
+    },
+    "m360-things.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 288000,
+      "changedRatio": 0
+    },
+    "m360-today.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 288000,
+      "changedRatio": 0
+    },
+    "m390-map.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 329160,
+      "changedRatio": 0
+    },
+    "m390-nearby.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 329160,
+      "changedRatio": 0
+    },
+    "m390-profile.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 329160,
+      "changedRatio": 0
+    },
+    "m390-things.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 329160,
+      "changedRatio": 0
+    },
+    "m390-today-with-care.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 329160,
+      "changedRatio": 0
+    },
+    "m390-today.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 329160,
+      "changedRatio": 0
+    },
+    "t1024l-map.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 786432,
+      "changedRatio": 0
+    },
+    "t1024l-nearby.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 786432,
+      "changedRatio": 0
+    },
+    "t1024l-profile.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 786432,
+      "changedRatio": 0
+    },
+    "t1024l-things.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 786432,
+      "changedRatio": 0
+    },
+    "t1024l-today.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 786432,
+      "changedRatio": 0
+    },
+    "t768p-map.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 786432,
+      "changedRatio": 0
+    },
+    "t768p-nearby.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 786432,
+      "changedRatio": 0
+    },
+    "t768p-profile.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 786432,
+      "changedRatio": 0
+    },
+    "t768p-things.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 786432,
+      "changedRatio": 0
+    },
+    "t768p-today.png": {
+      "stable": true,
+      "changedPixels": 0,
+      "totalPixels": 786432,
+      "changedRatio": 0
+    }
+  },
+  "designPngSha256": {
+    "desktop-1280.png": "2ee7e094a8077150e9ed71cb04ff15fde47a9823469628ab3301231f247e7be5",
+    "mobile-360.png": "33c3b221e2504265034b554f646ece73d3629c0d146efdad8c1f8f78e4bbfc21",
+    "mobile-390.png": "0a83ffd2642249d5e79e946dc22ba267dcfc8489801e77116e1576d05189f15f",
+    "mobile-430.png": "6d398d7afe256939ec31428589a8ccbb82c2d077a4a0cecaa01c6af05ffe7f27",
+    "tablet-768.png": "4bf08e95e905b0721d8f9bdb0a5fcbdd913506ed8764c16354ab90b5e492e4bc"
+  },
+  "statePngSha256": {
+    "d1280-map.png": "10e40d0211b1e04f7ed14af7666a3d252a526d8398c9319157284c0f1e0a8d9f",
+    "d1280-nearby.png": "5c14034191f1370bbc8699e5c3781b8eec4fe3eb599466a5a3dda7acb5049b5f",
+    "d1280-profile.png": "659d82b8737b0dc9b0f6439f36a68c72a29daa430e42c22809bbd5a4f9282392",
+    "d1280-things.png": "512c71c326094b088f33af6b16598d1005587baf63c6548bc7b17d17fea2fda3",
+    "d1280-today.png": "4e72c296d08bee961edcce7d06a36c5b651cc8ff5e0b189506a1c9e1fab6ba58",
+    "d1440-map.png": "fd529e6f851f6339daaa4dd61d90836003031cc4f9c92bba42a75837d082d96d",
+    "d1440-nearby.png": "74d4e0d40eb134f59e2350114eccdd3b113dc05c57e505a2b6f3f975dfb989b4",
+    "d1440-profile.png": "48724fcf3a0bc37a9b3640c5f5d61345c93b004cc1ecfe74e5f93fbb7dc8b0cd",
+    "d1440-things.png": "2155cf0fad619aab987cd4c3c0b291734d95fca87dd957df943b07e0750af275",
+    "d1440-today.png": "0bf2c844ba009e090e851c2049d9b943a18c3410bc8003153dc9f58652b428b4",
+    "d1920-map.png": "cdc53bb3eab865c917ca71955a7fb71b3532fa3d289ab4906779a11a03105b79",
+    "d1920-nearby.png": "efe5d3a579fc432cffc0805f98380f4ebfc9f14fff61db0691aa8271954ac8c9",
+    "d1920-profile.png": "3e81278eff30d24a491225a8287e3f2ca8db1108e37abcd04c4943c0d9b2de99",
+    "d1920-things.png": "d6b7fcbf6b57b74b942aeceb693332f1fe411a391014d07e2746828979cf279a",
+    "d1920-today.png": "73abcdfe58a8700245ba4fbac104e582ade7da26fe0e4817b9b66f2fdc55c4e1",
+    "m360-map.png": "73c19962dada8d5fcf4c3b56024441b363d8720defe2d696f9cb21d36c77d7a0",
+    "m360-nearby.png": "91991d5a11711c8cd178ba5caac39b4a7560f04bb1d20dd29be283a80d457b69",
+    "m360-profile.png": "58bbbe02a38efe56c66ad85856d3fef1d4067f6a5802177d5623ca26818307a1",
+    "m360-things.png": "1ac6fa1c60c0341f642c7eb384674c83f51aee9da88372bf0416ebb321c4d2f5",
+    "m360-today.png": "01060cacad8603b9ae9ae74052a38c69ce3919f5f68ded9e650b3d83d3505e00",
+    "m390-map.png": "0a34591abdfc858455a4fdb3555033102e1b1087f39eb67f19a38051fe868396",
+    "m390-nearby.png": "ed39ad75ab1389933cb8cb5a230ca5016b69bb319f403f32421a872be72eeb20",
+    "m390-profile.png": "c17e8fa76cc808e8d5c94628564015a5eece9bb3e311e72963faae80e52b5c84",
+    "m390-things.png": "edcd42909244d77991fc8c06caf149bb1e8b92d40136bbccf58d5e00191aa7d5",
+    "m390-today-with-care.png": "c130cc42fadc2a04bafb4ac54511ac90014349bef5b0e3b9e5f414b080f9938d",
+    "m390-today.png": "cad81ab7a14a275a3e26716b5826c641e81a2dd219c1ff17a4280c907d11ceff",
+    "t1024l-map.png": "742d8926b153ca029b040a1fe64c96e2c251f96fe3c84a08b13ec8d6179782c6",
+    "t1024l-nearby.png": "33e72f19b8519ff4f06f143641509eb81a4ee7b224c6955ddd20a069f00f13a1",
+    "t1024l-profile.png": "be0b37f4c1841d32df5da18206dee2be391ba07cc9409114f6016153fe8a0680",
+    "t1024l-things.png": "0eafef0a7b801bdff03ca3581c70ef0c56eaf132c87dc9345aa5aff250463f6c",
+    "t1024l-today.png": "700c2b94fa086c0b1796f264d0ca0314aec8c7df6155931ef9c645e0c1da8cbe",
+    "t768p-map.png": "a239f6d01f5f9bdab21de7528e1838d9f15d522ef32d2312e3be0f1a2e39b979",
+    "t768p-nearby.png": "1f4e6829cbd9301fbe4d55c17ac1087d7342a475be5aaceb68e4710587d6ff4a",
+    "t768p-profile.png": "533a69e018f3d81a63350a484204816fa7ae39fc628a7b7e820ec8378063959b",
+    "t768p-things.png": "a19071599e5c63dc27f9c4a1106e3b2459b15c3cf240548b0234a03141ea3079",
+    "t768p-today.png": "f5b8c5ff178b55f68c343d27e8311571d0ba65bf229632ae0e5359b636a49409"
+  }
+}
