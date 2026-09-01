@@ -1,0 +1,632 @@
+[
+  {
+    "size": {
+      "name": "mobile-360",
+      "width": 360,
+      "height": 800
+    },
+    "metrics": {
+      "innerWidth": 360,
+      "scrollWidth": 360,
+      "overflowEls": [],
+      "tinyTapTargets": [
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "спокойное",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "радостное",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "тревожное",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "вялое",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычный",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "ниже обычного",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "выше обычного",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "не ела",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычный",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "мягкий",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "жидкий",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "не было",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычная",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "много",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "мало",
+          "w": 78.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "сонная",
+          "w": 78.5,
+          "h": 38
+        }
+      ]
+    }
+  },
+  {
+    "size": {
+      "name": "mobile-390",
+      "width": 390,
+      "height": 844
+    },
+    "metrics": {
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "overflowEls": [],
+      "tinyTapTargets": [
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "спокойное",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "радостное",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "тревожное",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "вялое",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычный",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "ниже обычного",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "выше обычного",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "не ела",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычный",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "мягкий",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "жидкий",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "не было",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычная",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "много",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "мало",
+          "w": 86,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "сонная",
+          "w": 86,
+          "h": 38
+        }
+      ]
+    }
+  },
+  {
+    "size": {
+      "name": "mobile-430",
+      "width": 430,
+      "height": 1000
+    },
+    "metrics": {
+      "innerWidth": 430,
+      "scrollWidth": 430,
+      "overflowEls": [],
+      "tinyTapTargets": [
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "спокойное",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "радостное",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "тревожное",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "вялое",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычный",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "ниже обычного",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "выше обычного",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "не ела",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычный",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "мягкий",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "жидкий",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "не было",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычная",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "много",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "мало",
+          "w": 94,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "сонная",
+          "w": 94,
+          "h": 38
+        }
+      ]
+    }
+  },
+  {
+    "size": {
+      "name": "tablet-768",
+      "width": 768,
+      "height": 1100
+    },
+    "metrics": {
+      "innerWidth": 768,
+      "scrollWidth": 768,
+      "overflowEls": [],
+      "tinyTapTargets": [
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "спокойное",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "радостное",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "тревожное",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "вялое",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычный",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "ниже обычного",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "выше обычного",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "не ела",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычный",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "мягкий",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "жидкий",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "не было",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычная",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "много",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "мало",
+          "w": 98,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "сонная",
+          "w": 98,
+          "h": 38
+        }
+      ]
+    }
+  },
+  {
+    "size": {
+      "name": "desktop-1280",
+      "width": 1280,
+      "height": 1000
+    },
+    "metrics": {
+      "innerWidth": 1280,
+      "scrollWidth": 1280,
+      "overflowEls": [],
+      "tinyTapTargets": [
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "спокойное",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "радостное",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "тревожное",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "вялое",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычный",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "ниже обычного",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "выше обычного",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "не ела",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычный",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "мягкий",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "жидкий",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "не было",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "active",
+          "text": "обычная",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "много",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "мало",
+          "w": 161.5,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "",
+          "text": "сонная",
+          "w": 161.5,
+          "h": 38
+        }
+      ]
+    }
+  }
+]
