@@ -165,6 +165,7 @@ export function LiveMapClient({
   filter = 'all',
   userLocation,
   focusPoint,
+  searchPoint,
   fitDraftRoute = false,
   accessibleLabel = 'Интерактивная карта прогулок и сохранённых мест',
 }: LiveMapProps) {
@@ -198,6 +199,12 @@ export function LiveMapClient({
           <Circle center={[userLocation.lat, userLocation.lng]} radius={Math.max(40, Math.min(userLocation.accuracy || 80, 600))} pathOptions={{ color: '#07814d', fillColor: '#3df881', fillOpacity: 0.12, weight: 1 }} interactive={false} />
           <CircleMarker center={[userLocation.lat, userLocation.lng]} radius={8} pathOptions={{ color: '#fafffb', fillColor: '#07814d', fillOpacity: 1, weight: 3 }}><Popup>Вы здесь</Popup></CircleMarker>
         </>}
+
+        {searchPoint && (
+          <CircleMarker center={[searchPoint.lat, searchPoint.lng]} radius={10} pathOptions={{ color: '#f7f6f0', fillColor: '#07814d', fillOpacity: 1, weight: 4 }}>
+            <Popup><b>{searchPoint.title}</b>{searchPoint.detail ? <><br />{searchPoint.detail}</> : null}</Popup>
+          </CircleMarker>
+        )}
 
         {mappedZones.map((zone) => {
         const color = zoneColor(zone.type);

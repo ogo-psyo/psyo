@@ -52,7 +52,7 @@ try {
     if (geometry.attribution.scrollWidth > geometry.attribution.clientWidth + 2) throw new Error(`${width}: attribution is clipped`);
 
     await page.getByRole('button', { name: /Начать прогулку/ }).waitFor();
-    await page.getByRole('button', { name: /Построить заранее/ }).waitFor();
+    await page.getByRole('button', { name: 'Маршрут', exact: true }).waitFor();
     await page.locator('.leaflet-tile-loaded').first().waitFor({ timeout: 8000 }).catch(() => {});
     if (outDir) await page.screenshot({ path: `${outDir}/map-home-${width}.png`, fullPage: false });
 

@@ -27,6 +27,7 @@ export type MapFeature = {
 export type MapLayerFilter = 'all' | 'routes' | 'places' | 'risks';
 export type MapUserLocation = { lat: number; lng: number; accuracy?: number };
 export type MapFocusPoint = { lat: number; lng: number; token: number };
+export type MapSearchPoint = { lat: number; lng: number; title: string; detail?: string };
 
 export type LiveMapProps = {
   zones?: ZoneFeature[];
@@ -41,6 +42,7 @@ export type LiveMapProps = {
   filter?: MapLayerFilter;
   userLocation?: MapUserLocation | null;
   focusPoint?: MapFocusPoint | null;
+  searchPoint?: MapSearchPoint | null;
   fitDraftRoute?: boolean;
   accessibleLabel?: string;
 };

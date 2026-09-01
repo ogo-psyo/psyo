@@ -35,7 +35,9 @@ export type RouteDraftMeta = {
 type SearchResult = {
   id: string;
   title: string;
-  kind: 'route' | 'risk' | 'place';
+  detail?: string;
+  category?: string;
+  kind: 'route' | 'risk' | 'place' | 'organization';
   point: { lat: number; lng: number } | null;
 };
 
@@ -143,6 +145,9 @@ export function ProductionMapWorkspace({
   const [filter, setFilter] = useState<MapLayerFilter>('all');
   const [savedExpanded, setSavedExpanded] = useState(false);
   const [query, setQuery] = useState('');
+  const [remoteSearchResults, setRemoteSearchResults] = useState<SearchResult[]>([]);
+  const [searchState, setSearchState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [selectedSearchPoint, setSelectedSearchPoint] = useState<SearchResult | null>(null);
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
   const [locating, setLocating] = useState(false);
   const [locationStatus, setLocationStatus] = useState('');
@@ -292,7 +297,7 @@ export function ProductionMapWorkspace({
       + features.filter((feature) => feature.type === 'point' && feature.zone_type !== 'risk_zone' && feature.zone_type !== 'risk').length,
   }), [features, zones]);
 
-  const searchResults = useMemo<SearchResult[]>(() => {
+  const localSearchResults = useMemo<SearchResult[]>(() => {
     const normalized = query.trim().toLocaleLowerCase('ru-RU');
     if (!normalized) return [];
     const zoneResults = zones.map((zone): SearchResult => {
@@ -312,8 +317,43 @@ export function ProductionMapWorkspace({
         point: feature.type === 'route' ? routeStart(feature) : lat === null || lng === null ? null : { lat, lng },
       };
     });
-    return [...zoneResults, ...featureResults].filter((item) => item.title.toLocaleLowerCase('ru-RU').includes(normalized)).slice(0, 5);
+    return [...zoneResults, ...featureResults].filter((item) => item.title.toLocaleLowerCase('ru-RU').includes(normalized)).slice(0, 4);
   }, [features, query, zones]);
+
+  const searchResults = useMemo(() => [...localSearchResults, ...remoteSearchResults].slice(0, 8), [localSearchResults, remoteSearchResults]);
+
+  useEffect(() => {
+    const normalized = query.trim();
+    if (normalized.length < 2) {
+      setRemoteSearchResults([]);
+      setSearchState('idle');
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setSearchState('loading');
+      const params = new URLSearchParams({
+        q: normalized,
+        lat: mapCenter.lat.toFixed(3),
+        lng: mapCenter.lng.toFixed(3),
+      });
+      try {
+        const response = await fetch(`/api/map/search?${params}`, { signal: controller.signal });
+        if (!response.ok) throw new Error('search failed');
+        const payload = await response.json() as { results?: SearchResult[] };
+        setRemoteSearchResults(Array.isArray(payload.results) ? payload.results : []);
+        setSearchState('ready');
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setRemoteSearchResults([]);
+        setSearchState('error');
+      }
+    }, 850);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [mapCenter.lat, mapCenter.lng, query]);
 
   useEffect(() => setActiveSearchIndex(searchResults.length ? 0 : -1), [searchResults]);
 
@@ -337,8 +377,9 @@ export function ProductionMapWorkspace({
   }
 
   function chooseSearchResult(result: SearchResult) {
-    setFilter(result.kind === 'route' ? 'routes' : result.kind === 'risk' ? 'risks' : 'places');
+    setFilter(result.kind === 'route' ? 'routes' : result.kind === 'risk' ? 'risks' : result.kind === 'place' ? 'places' : 'all');
     if (result.point) setFocusPoint({ ...result.point, token: Date.now() });
+    setSelectedSearchPoint(result.kind === 'organization' ? result : null);
     setQuery('');
     setLocationStatus(result.point ? `Показываю «${result.title}».` : `«${result.title}» сохранено без точки на карте.`);
   }
@@ -493,6 +534,7 @@ export function ProductionMapWorkspace({
         filter={filter}
         userLocation={routeFlow === 'record-review' || routeFlow === 'plan-review' ? null : userLocation}
         focusPoint={focusPoint}
+        searchPoint={selectedSearchPoint?.point ? { ...selectedSearchPoint.point, title: selectedSearchPoint.title, detail: selectedSearchPoint.detail } : null}
         fitDraftRoute={routeFlow === 'record-review' || routeFlow === 'plan-review'}
         accessibleLabel={routeFlow === 'planning' ? 'Карта для построения маршрута. Перемещайте карту стрелками или коснитесь нужного места.' : routeFlow === 'recording' || routeFlow === 'paused' ? 'Карта записываемой прогулки' : routeFlow === 'record-review' || routeFlow === 'plan-review' ? 'Обзор всего маршрута перед сохранением' : `Карта прогулок ${dogName}`}
       />
@@ -512,17 +554,17 @@ export function ProductionMapWorkspace({
 
         {mode === 'view' && <div className="production-map-search">
           <MagnifyingGlass weight="regular" aria-hidden="true" />
-          <label htmlFor="production-map-search-input">Найти сохранённое место или маршрут</label>
+          <label htmlFor="production-map-search-input">Найти организацию, место или маршрут</label>
           <input id="production-map-search-input" role="combobox" aria-autocomplete="list" aria-expanded={Boolean(query)} aria-controls="production-map-search-results" aria-activedescendant={activeSearchIndex >= 0 ? `production-map-result-${activeSearchIndex}` : undefined} aria-describedby="production-map-search-status" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => {
             if (event.key === 'ArrowDown' && searchResults.length) { event.preventDefault(); setActiveSearchIndex((index) => (index + 1) % searchResults.length); }
             if (event.key === 'ArrowUp' && searchResults.length) { event.preventDefault(); setActiveSearchIndex((index) => (index <= 0 ? searchResults.length - 1 : index - 1)); }
             if (event.key === 'Enter' && activeSearchIndex >= 0 && searchResults[activeSearchIndex]) { event.preventDefault(); chooseSearchResult(searchResults[activeSearchIndex]); }
             if (event.key === 'Escape') { setQuery(''); setActiveSearchIndex(-1); }
-          }} placeholder="Парк, клиника, маршрут" autoComplete="off" />
+          }} placeholder="Клиника, парк или маршрут" autoComplete="off" />
           {query && <button type="button" onClick={() => setQuery('')} aria-label="Очистить поиск"><X weight="bold" aria-hidden="true" /></button>}
-          <span id="production-map-search-status" className="sr-only" role="status" aria-live="polite">{query ? searchResults.length ? `Найдено: ${searchResults.length}` : 'Ничего не найдено' : ''}</span>
+          <span id="production-map-search-status" className="sr-only" role="status" aria-live="polite">{query ? searchState === 'loading' ? 'Ищу организации и места' : searchResults.length ? `Найдено: ${searchResults.length}` : 'Ничего не найдено' : ''}</span>
           {query && <div id="production-map-search-results" className="production-map-search-results" role="listbox" aria-label="Результаты поиска">
-            {searchResults.length ? searchResults.map((result, index) => <button id={`production-map-result-${index}`} key={`${result.kind}-${result.id}`} type="button" role="option" aria-selected={index === activeSearchIndex} onMouseEnter={() => setActiveSearchIndex(index)} onClick={() => chooseSearchResult(result)}><span>{result.kind === 'route' ? <MapTrifold aria-hidden="true" /> : result.kind === 'risk' ? <ShieldWarning aria-hidden="true" /> : <MapPin aria-hidden="true" />}</span><b>{result.title}</b><small>{result.kind === 'route' ? 'маршрут' : result.kind === 'risk' ? 'опасность' : 'место'}</small></button>) : <p>Ничего сохранённого не найдено</p>}
+            {searchResults.length ? searchResults.map((result, index) => <button id={`production-map-result-${index}`} key={`${result.kind}-${result.id}`} type="button" role="option" aria-selected={index === activeSearchIndex} onMouseEnter={() => setActiveSearchIndex(index)} onClick={() => chooseSearchResult(result)}><span>{result.kind === 'route' ? <MapTrifold aria-hidden="true" /> : result.kind === 'risk' ? <ShieldWarning aria-hidden="true" /> : result.kind === 'organization' ? <MagnifyingGlass aria-hidden="true" /> : <MapPin aria-hidden="true" />}</span><span className="production-map-result-copy"><b>{result.title}</b>{result.detail && <em>{result.detail}</em>}</span><small>{result.kind === 'route' ? 'маршрут' : result.kind === 'risk' ? 'опасность' : result.category || 'место'}</small></button>) : searchState === 'loading' ? <p>Ищу организации и места…</p> : searchState === 'error' ? <p>Поиск мест временно недоступен. Сохранённые точки всё ещё можно найти.</p> : <p>Ничего не найдено. Попробуйте название или тип места.</p>}
           </div>}
         </div>}
       </>}
@@ -582,8 +624,8 @@ export function ProductionMapWorkspace({
       <div className="production-map-sheet-body">{composer}</div>
     </section> : <section className={`production-map-snap-sheet home-sheet${savedExpanded ? ' expanded' : ''}`} data-map-snap-sheet>
       <section className="production-route-launch" aria-label="Прогулки и маршруты">
-        <button type="button" className="production-route-start" data-route-action="start" onClick={startWalk}><span><NavigationArrow weight="fill" aria-hidden="true" /></span><div><b>Начать прогулку</b><p>Путь запишется по GPS</p></div></button>
-        <button type="button" className="production-route-plan" data-route-action="plan" onClick={startPlanning}><PencilSimple weight="regular" aria-hidden="true" /><span>Построить заранее</span></button>
+        <button type="button" className="production-route-start" data-route-action="start" onClick={startWalk}><NavigationArrow weight="fill" aria-hidden="true" /><span>Начать прогулку</span></button>
+        <button type="button" className="production-route-plan" data-route-action="plan" onClick={startPlanning}><PencilSimple weight="regular" aria-hidden="true" /><span>Маршрут</span></button>
         <button type="button" className="production-route-risk" data-route-action="risk" onClick={startRisk}><ShieldWarning weight="regular" aria-hidden="true" /><span>Опасность</span></button>
       </section>
       <button className="production-map-sheet-toggle" type="button" aria-expanded={savedExpanded} aria-controls="production-map-saved-body" onClick={() => setSavedExpanded((expanded) => !expanded)}>

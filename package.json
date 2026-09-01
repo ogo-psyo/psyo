@@ -41,6 +41,7 @@
     "qa:profile-layout": "node scripts/qa/profile-layout-smoke.mjs",
     "qa:map-workspace:contract": "node scripts/qa/check-map-workspace-contract.mjs",
     "qa:map-workspace:smoke": "node scripts/qa/map-workspace-smoke.mjs",
+    "qa:map-search:smoke": "node scripts/qa/map-search-ui.smoke.mjs",
     "qa:identity:isolation": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/qa/check-telegram-initdata-contract.mjs && node scripts/qa/check-owner-isolation-foundation.mjs && node scripts/qa/smoke-owner-isolation-fixtures.mjs",
     "qa:profile-ui": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/qa/profile-ui.behavior.test.ts"
   },
