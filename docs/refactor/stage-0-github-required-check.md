@@ -15,8 +15,9 @@ Do not mark this gate complete until a test pull request has produced `CI / qual
 
 ## Evidence
 
-- Status: awaiting owner configuration
-- Date: pending
-- Configured by: pending
-- Test pull request: pending
-- Screenshot or ruleset URL: pending
+- Status: configured
+- Date: 2026-09-01
+- Configured by: `uglanovrm`
+- Test pull request: https://github.com/ogo-psyo/psyo/pull/1
+- Protection API: https://api.github.com/repos/ogo-psyo/psyo/branches/main/protection
+- Required check evidence: https://github.com/ogo-psyo/psyo/actions/runs/33545582984/job/99982128089
