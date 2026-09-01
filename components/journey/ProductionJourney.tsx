@@ -7,7 +7,6 @@ import {
   CalendarCheck,
   CaretRight,
   ChatCircleDots,
-  Check,
   FileArrowUp,
   FirstAid,
   Heart,
@@ -75,7 +74,6 @@ type BaseProps = {
 type ProductionJourneyProps = BaseProps & {
   careTitle?: string;
   careDetail?: string;
-  careState?: 'empty' | 'active' | 'complete';
   careActionLabel?: string;
   onCareAction?: () => void;
   voiceCapture?: ReactNode;
@@ -189,54 +187,94 @@ function DogAvatar({ avatar, small = false }: { avatar: ReactNode; small?: boole
   return <div className={`v3-dog-avatar production-journey-avatar${small ? ' small' : ''}`}>{avatar}</div>;
 }
 
-function MetricTrend({ metric, points }: { metric: WellbeingMetric; points: JourneyObservationPoint[] }) {
+type ScenarioId = 'health' | 'care' | 'handoff';
+
+function metricQuality(metric: WellbeingMetric, score: number) {
+  return metric === 'mood' ? (score - 1) / 3 : 1 - Math.abs(3 - score) / 2;
+}
+
+function comparableObservationChange(current: JourneyObservationPoint, previous: JourneyObservationPoint) {
+  const deltas = (Object.keys(wellbeingMetricLabels) as WellbeingMetric[]).flatMap((metric) => {
+    const currentScore = wellbeingValue(metric, current[metric]);
+    const previousScore = wellbeingValue(metric, previous[metric]);
+    return currentScore === null || previousScore === null ? [] : [metricQuality(metric, currentScore) - metricQuality(metric, previousScore)];
+  });
+  return deltas.length ? deltas.reduce((sum, value) => sum + value, 0) / deltas.length : null;
+}
+
+function observationTimelineCopy(points: JourneyObservationPoint[]) {
+  if (!points.length) return { title: 'Пока нет записей', detail: 'Первая запись станет точкой отсчёта.' };
+  if (points.length === 1) return { title: 'Есть первая точка отсчёта', detail: 'Добавьте ещё две записи, чтобы сравнение не зависело от одного дня.' };
+  if (points.length === 2) return { title: 'Нужна ещё одна запись', detail: 'Сейчас видны две точки — этого мало для уверенного вывода.' };
+  const delta = comparableObservationChange(points.at(-1)!, points.at(-2)!);
+  if (delta === null) return { title: 'Записи сохранены', detail: 'Для сравнения отметьте хотя бы один общий показатель в соседних записях.' };
+  if (delta >= .25) return { title: 'В последней записи меньше отклонений', detail: 'Это сравнение двух соседних записей, а не долгосрочный тренд.' };
+  if (delta <= -.25) return { title: 'В последней записи больше отклонений', detail: 'Посмотрите, какие показатели изменились, и продолжайте наблюдать.' };
+  return { title: 'Последние две записи похожи', detail: 'Заметной разницы между соседними записями нет.' };
+}
+
+function metricChangeCopy(metric: WellbeingMetric, points: JourneyObservationPoint[]) {
+  const values = points.flatMap((point) => {
+    const score = wellbeingValue(metric, point[metric]);
+    return score === null ? [] : [{ point, score }];
+  });
+  const latest = values.at(-1);
+  const previous = values.at(-2);
+  if (!latest) return 'Нет данных';
+  if (!previous) return 'Первая отметка';
+  const delta = metricQuality(metric, latest.score) - metricQuality(metric, previous.score);
+  if (delta > .2) return 'Ближе к обычному';
+  if (delta < -.2) return 'Дальше от обычного';
+  if (Math.abs(latest.score - previous.score) > .35) return 'Состояние изменилось';
+  return 'Без заметных изменений';
+}
+
+function ObservationTimelineRow({ metric, points }: { metric: WellbeingMetric; points: JourneyObservationPoint[] }) {
   const label = wellbeingMetricLabels[metric];
   const values = points.flatMap((point) => {
     const score = wellbeingValue(metric, point[metric]);
     return score === null ? [] : [{ point, score }];
   });
+  const startedAt = points[0] ? new Date(points[0].createdAt).getTime() : 0;
+  const endedAt = points.at(-1) ? new Date(points.at(-1)!.createdAt).getTime() : startedAt;
+  const duration = Math.max(0, endedAt - startedAt);
   const plot = values.map((item, index) => ({
-    x: values.length === 1 ? 90 : 8 + (index * 164) / (values.length - 1),
-    y: 48 - ((item.score - 1) / 3) * 38,
+    x: duration > 0 ? 10 + ((new Date(item.point.createdAt).getTime() - startedAt) * 240) / duration : values.length === 1 ? 130 : 10 + (index * 240) / (values.length - 1),
+    y: 56 - ((item.score - 1) / 3) * 48,
     item,
   }));
   const path = plot.map((point, index) => `${index ? 'L' : 'M'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' ');
   const latest = values.at(-1);
-  const previous = values.at(-2);
-  const direction = !latest
-    ? 'Нет данных'
-    : !previous
-      ? 'Первая отметка'
-      : latest.score > previous.score + .35
-        ? 'Выше прошлой'
-        : latest.score < previous.score - .35
-          ? 'Ниже прошлой'
-          : 'Без изменений';
-  const aria = latest ? `${label}: ${latest.point[metric]}, ${direction.toLowerCase()}` : `${label}: данных пока нет`;
+  const direction = metricChangeCopy(metric, points);
+  const aria = latest ? `${label}: ${latest.point[metric]}. ${direction}.` : `${label}: данных пока нет`;
 
-  return <article className="all-observation-metric">
-    <header><h3>{label}</h3><span>{direction}</span></header>
-    <div className={`all-observation-chart${plot.length < 2 ? ' sparse' : ''}`} role="img" aria-label={aria}>
-      {plot.length ? <svg viewBox="0 0 180 56" preserveAspectRatio="none" aria-hidden="true">
-        <line x1="8" y1="29" x2="172" y2="29" />
+  return <article className="all-observation-row">
+    <header><h3>{label}</h3><b>{latest?.point[metric] || 'Нет отметок'}</b><span>{direction}</span></header>
+    <div className={`all-observation-track${plot.length < 2 ? ' sparse' : ''}`} role="img" aria-label={aria}>
+      {plot.length ? <svg viewBox="0 0 260 64" preserveAspectRatio="none" aria-hidden="true">
+        <line x1="10" y1="24" x2="250" y2="24" />
         {path && <path d={path} />}
-        {plot.map(({ x, y, item }) => <circle key={item.point.id} cx={x} cy={y} r="3.5" />)}
+        {plot.map(({ x, y, item }) => <circle key={item.point.id} cx={x} cy={y} r="4" />)}
       </svg> : <span>Добавьте наблюдение</span>}
     </div>
-    <p>{latest?.point[metric] || 'Пока без отметок'}</p>
   </article>;
 }
 
 function AllObservationTrends({ dogName, points, onAddObservation }: { dogName: string; points: JourneyObservationPoint[]; onAddObservation?: () => void }) {
   const ordered = [...points].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).slice(-7);
-  const copy = trendCopy(ordered);
+  const copy = observationTimelineCopy(ordered);
+  const firstDate = ordered[0] ? new Date(ordered[0].createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : null;
+  const lastDate = ordered.at(-1) ? new Date(ordered.at(-1)!.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : null;
+  const recordsLabel = ordered.length === 1 ? '1 запись' : ordered.length > 1 && ordered.length < 5 ? `${ordered.length} записи` : `${ordered.length} записей`;
   return <section className="all-observation-trends" data-all-observation-trends data-parity="production-today-history" aria-labelledby="all-observation-title">
-    <header><div><h2 id="all-observation-title">Динамика наблюдений</h2><p>{ordered.length ? `${ordered.length} последних отметок о ${dogName}` : `Начните с первой отметки о ${dogName}`}</p></div><button type="button" onClick={onAddObservation}>Добавить</button></header>
-    <div className="all-observation-verdict"><b>{copy.title}</b><p>{copy.detail}</p></div>
-    <div className="all-observation-grid">
-      {(Object.keys(wellbeingMetricLabels) as WellbeingMetric[]).map((metric) => <MetricTrend key={metric} metric={metric} points={ordered} />)}
+    <header><div><h2 id="all-observation-title">Наблюдения</h2><p>{ordered.length ? `${recordsLabel} · ${firstDate}${firstDate !== lastDate ? ` — ${lastDate}` : ''}` : `Начните с первой записи о ${dogName}`}</p></div><button type="button" onClick={onAddObservation}>Записать</button></header>
+    <div className="all-observation-summary"><b>{copy.title}</b><p>{copy.detail}</p></div>
+    <div className="all-observation-timeline" data-observation-timeline>
+      <div className="all-observation-scale" aria-hidden="true"><span>показатель</span><span>обычное состояние</span></div>
+      {(Object.keys(wellbeingMetricLabels) as WellbeingMetric[]).map((metric) => <ObservationTimelineRow key={metric} metric={metric} points={ordered} />)}
+      {ordered.length > 0 && <div className="all-observation-dates" aria-hidden="true"><span>{firstDate}</span>{firstDate !== lastDate && <span>{lastDate}</span>}</div>}
     </div>
-    <small>Графики отражают записи владельца и не являются медицинским заключением.</small>
+    <small>Псё сравнивает только ваши записи. Это не медицинское заключение.</small>
   </section>;
 }
 
@@ -250,8 +288,12 @@ function Header({ dogName, title, detail, avatar, onOpenProfile }: { dogName: st
 
 function TodayScreen(props: ProductionJourneyProps) {
   const careTitle = props.careTitle || 'Сегодня всё сделано';
-  const careState = props.careState || 'active';
+  const [activeScenario, setActiveScenario] = useState<ScenarioId | null>(null);
   const [observationCaptureOpen, setObservationCaptureOpen] = useState(false);
+  const selectScenario = (scenario: ScenarioId) => {
+    setActiveScenario(scenario);
+    if (scenario !== 'health') setObservationCaptureOpen(false);
+  };
   return <main className="v3-screen v3-all production-journey-screen" data-production-journey="today" title={`${props.dogName} сегодня`}>
     <section className="all-profile" data-all-profile data-parity="production-today-identity" aria-labelledby="all-profile-title">
       <h1 className="all-profile-wordmark">Псё</h1>
@@ -263,17 +305,28 @@ function TodayScreen(props: ProductionJourneyProps) {
     </section>
 
     <section className="all-scenarios" data-all-scenarios data-parity="production-today-summary" aria-labelledby="all-scenarios-title">
-      <header><h2 id="all-scenarios-title">Что происходит?</h2><p>Выберите ситуацию — Псё откроет нужный инструмент без поиска по разделам.</p></header>
-      <article className={`all-scenario-current is-${careState}`}>
-        <div><span>Ближайшее действие</span><h3>{careTitle}</h3><p>{props.careDetail || 'Ближайшее дело уже в плане.'}</p></div>
-        <button type="button" onClick={props.onCareAction}>{careState === 'active' ? <Check weight="bold" /> : careState === 'empty' ? <Plus weight="bold" /> : <CalendarCheck weight="bold" />}{props.careActionLabel || (careState === 'empty' ? 'Добавить первое дело' : 'Открыть план')}</button>
-      </article>
-      <div className="all-scenario-list">
-        <button type="button" aria-expanded={observationCaptureOpen} onClick={() => setObservationCaptureOpen((open) => !open)}><FirstAid weight="duotone" /><span><b>Изменилось самочувствие</b><small>Записать признаки и контекст</small></span><CaretRight weight="bold" /></button>
-        <button type="button" onClick={props.onOpenCare}><CalendarCheck weight="duotone" /><span><b>Организовать уход</b><small>Дела, повторения и история</small></span><CaretRight weight="bold" /></button>
-        <button type="button" onClick={props.onOpenCard}><ShieldCheck weight="duotone" /><span><b>Передать собаку другому</b><small>Подготовить безопасную памятку</small></span><CaretRight weight="bold" /></button>
-        <button type="button" onClick={props.onAskAssistant}><ChatCircleDots weight="duotone" /><span><b>Разобрать ситуацию</b><small>Собрать следующий шаг по данным Псё</small></span><CaretRight weight="bold" /></button>
+      <header><h2 id="all-scenarios-title">Что нужно решить?</h2><p>Выберите ситуацию — Псё проведёт по шагам и откроет нужное действие.</p></header>
+      <button type="button" className="all-scenario-freeform" onClick={props.onAskAssistant}><ChatCircleDots weight="duotone" /><span><b>Опишите своими словами</b><small>Псё учтёт профиль и последние записи</small></span><ArrowRight weight="bold" /></button>
+      <div className="all-scenario-choices" role="group" aria-label="Быстрые сценарии">
+        <button type="button" aria-pressed={activeScenario === 'health'} onClick={() => selectScenario('health')}><FirstAid weight="duotone" /><span>Изменилось самочувствие</span></button>
+        <button type="button" aria-pressed={activeScenario === 'care'} onClick={() => selectScenario('care')}><CalendarCheck weight="duotone" /><span>Организовать уход</span></button>
+        <button type="button" aria-pressed={activeScenario === 'handoff'} onClick={() => selectScenario('handoff')}><ShieldCheck weight="duotone" /><span>Передать собаку другому</span></button>
       </div>
+      {activeScenario === 'health' && <article className="all-scenario-workspace is-health" data-scenario-workspace="health">
+        <div><h3>Понять, что изменилось</h3><p>Зафиксируйте признаки один раз — Псё сохранит контекст и покажет, с чем сравнить.</p></div>
+        <ol><li>Опишите изменение</li><li>Уточните аппетит, пищеварение и энергию</li><li>Проверьте сводку перед следующим шагом</li></ol>
+        <div className="all-scenario-actions"><button type="button" onClick={() => setObservationCaptureOpen((open) => !open)} aria-expanded={observationCaptureOpen}>Записать наблюдение</button><button type="button" onClick={() => props.onNavigate('health')}>Открыть историю</button></div>
+      </article>}
+      {activeScenario === 'care' && <article className="all-scenario-workspace is-care" data-scenario-workspace="care">
+        <div><h3>Собрать уход в один план</h3><p>{props.careDetail || 'Проверьте ближайшие дела, добавьте повторения и назначьте понятный следующий шаг.'}</p></div>
+        <ol><li>Проверьте ближайшее дело</li><li>Добавьте срок или повторение</li><li>Отметьте выполнение в истории</li></ol>
+        <div className="all-scenario-actions"><button type="button" onClick={props.onOpenCare}>Открыть план ухода</button>{props.onCareAction && <button type="button" onClick={props.onCareAction}>{props.careActionLabel || careTitle}</button>}</div>
+      </article>}
+      {activeScenario === 'handoff' && <article className="all-scenario-workspace is-handoff" data-scenario-workspace="handoff">
+        <div><h3>Подготовить понятную памятку</h3><p>Соберите режим, важные ограничения и контакты, не открывая всю историю {props.dogName}.</p></div>
+        <ol><li>Проверьте публичные данные</li><li>Добавьте правила ухода</li><li>Отправьте отдельную безопасную ссылку</li></ol>
+        <div className="all-scenario-actions"><button type="button" onClick={props.onOpenCard}>Подготовить памятку</button></div>
+      </article>}
       {observationCaptureOpen && <div className="all-scenario-capture">{props.voiceCapture}</div>}
     </section>
 

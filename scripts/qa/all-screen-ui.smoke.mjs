@@ -18,7 +18,7 @@ const observations = [
 
 const browser = await chromium.launch({ headless: true });
 try {
-  for (const viewport of [{ width: 390, height: 844, name: 'mobile' }, { width: 1280, height: 900, name: 'desktop' }]) {
+  for (const viewport of [{ width: 320, height: 720, name: 'narrow' }, { width: 390, height: 844, name: 'mobile' }, { width: 1280, height: 900, name: 'desktop' }]) {
     const page = await browser.newPage({ viewport });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.evaluate(({ storedProfile, storedObservations }) => {
@@ -41,14 +41,19 @@ try {
     await screen.waitFor();
     const ordered = await screen.locator('[data-all-profile], [data-all-scenarios], [data-all-observation-trends]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-all-profile') !== null ? 'profile' : node.getAttribute('data-all-scenarios') !== null ? 'scenarios' : 'trends'));
     if (ordered.join(',') !== 'profile,scenarios,trends') throw new Error(`wrong block order: ${ordered.join(',')}`);
-    if (await page.locator('.all-observation-metric').count() !== 4) throw new Error('expected four observation charts');
-    if (await page.locator('.all-observation-chart path').count() !== 4) throw new Error(`real observation data was not rendered; persisted keys: ${persisted.observationKeys.join(',')}`);
+    if (await page.locator('[data-observation-timeline] .all-observation-row').count() !== 4) throw new Error('expected four observation rows on one timeline');
+    if (await page.locator('[data-observation-timeline] .all-observation-track path').count() !== 4) throw new Error(`real observation data was not rendered; persisted keys: ${persisted.observationKeys.join(',')}`);
+    if (!await page.locator('.all-observation-summary').getByText('В последней записи меньше отклонений').isVisible()) throw new Error('observation summary does not explain the latest comparison');
+    if (!await page.locator('.all-observation-row').first().getByText('Ближе к обычному').isVisible()) throw new Error('metric comparison does not use the shared ordinary-state baseline');
     const layout = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
     if (layout.scrollWidth > layout.width) throw new Error(`horizontal overflow ${layout.scrollWidth}/${layout.width}`);
 
     await page.getByRole('button', { name: /Изменилось самочувствие/ }).click();
+    await page.locator('[data-scenario-workspace="health"]').waitFor();
+    await page.locator('[data-all-scenarios]').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${outDir}/${viewport.name}-scenario.png`, fullPage: false });
+    await page.getByRole('button', { name: /Записать наблюдение/ }).click();
     await page.locator('.all-scenario-capture .voice-observation-capture').waitFor();
-    await page.getByRole('button', { name: /Изменилось самочувствие/ }).click();
     await page.getByRole('button', { name: /Открыть профиль Мята в Псё/ }).click();
     await page.locator('[data-profile-memory]').waitFor();
     await page.locator('.app-tabs button[data-route="today"]').click({ force: true });
@@ -61,7 +66,7 @@ try {
     }
     await page.close();
   }
-  console.log(JSON.stringify({ ok: true, blocks: ['profile', 'scenarios', 'trends'], charts: 4, scenarioCapture: true, profileNavigation: true }, null, 2));
+  console.log(JSON.stringify({ ok: true, blocks: ['profile', 'scenarios', 'trends'], timelineRows: 4, scenarioWorkspace: true, scenarioCapture: true, profileNavigation: true }, null, 2));
 } finally {
   await browser.close();
 }

@@ -3905,7 +3905,6 @@ export default function Home() {
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
           careTitle={todayCare.title}
           careDetail={todayCare.detail}
-          careState={todayCare.state === 'empty' ? 'empty' : todayCare.state === 'complete' ? 'complete' : 'active'}
           careActionLabel={todayCare.state === 'empty' ? 'Добавить первое дело' : todayCare.actionLabel}
           profileEntries={profileJourneyEntries}
           profileFacts={[profile.lifeStage || profile.age, profile.sex, profile.energyLevel].filter(Boolean) as string[]}

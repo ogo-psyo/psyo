@@ -9,12 +9,14 @@ for (const marker of [
   'data-all-scenarios',
   'data-all-observation-trends',
   'Открыть Псё',
-  'Что происходит?',
+  'Что нужно решить?',
+  'Опишите своими словами',
+  'data-scenario-workspace',
   'Изменилось самочувствие',
   'Организовать уход',
   'Передать собаку другому',
-  'Разобрать ситуацию',
-  'Динамика наблюдений',
+  'Наблюдения',
+  'data-observation-timeline',
 ]) assert.ok(journey.includes(marker), `screen «Всё» must expose: ${marker}`);
 
 for (const marker of [
@@ -27,5 +29,8 @@ for (const marker of [
 assert.ok(page.includes("const preserveLocalGuest = payload.mode === 'demo'"), 'anonymous demo bootstrap must preserve local observations used by charts');
 
 assert.ok(!journey.includes('<Header dogName={props.dogName} title={`${props.dogName} сегодня`}'), 'old day-summary header must not remain the All-screen hierarchy');
+assert.ok(!journey.includes('all-scenario-current'), 'scenario service must not duplicate the nearest-care card');
+assert.ok(!journey.includes('all-scenario-list'), 'scenario service must not degrade into a navigation list');
+assert.ok(!journey.includes('all-observation-grid'), 'observations must use one shared timeline instead of a grid of sparklines');
 
 console.log('all screen information architecture behavior ok');
