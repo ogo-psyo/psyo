@@ -43,6 +43,7 @@ for (const size of sizes) {
         static now() { return fixedNow; }
       }
       globalThis.Date = FixedDate;
+      globalThis.Telegram = { WebApp: { initData: '', ready() {}, expand() {}, enableClosingConfirmation() {} } };
     });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.evaluate((profile) => {

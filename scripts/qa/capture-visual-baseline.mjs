@@ -42,9 +42,15 @@ async function pngHashes(directory) {
 }
 
 async function comparePngDirectories(firstDirectory, secondDirectory) {
-  const names = (await readdir(firstDirectory)).filter((name) => name.endsWith('.png')).sort();
+  const firstNames = (await readdir(firstDirectory)).filter((name) => name.endsWith('.png'));
+  const secondNames = (await readdir(secondDirectory)).filter((name) => name.endsWith('.png'));
+  const names = [...new Set([...firstNames, ...secondNames])].sort();
   const comparisons = {};
   for (const name of names) {
+    if (!firstNames.includes(name) || !secondNames.includes(name)) {
+      comparisons[name] = { stable: false, reason: 'file missing from one capture' };
+      continue;
+    }
     const first = await sharp(join(firstDirectory, name)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     const second = await sharp(join(secondDirectory, name)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     if (first.info.width !== second.info.width || first.info.height !== second.info.height || first.info.channels !== second.info.channels) {

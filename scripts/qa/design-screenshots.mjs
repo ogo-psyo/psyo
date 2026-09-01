@@ -25,6 +25,7 @@ for (const size of sizes) {
       static now() { return fixedNow; }
     }
     globalThis.Date = FixedDate;
+    globalThis.Telegram = { WebApp: { initData: '', ready() {}, expand() {}, enableClosingConfirmation() {} } };
   });
   await page.goto(base, { waitUntil: 'networkidle' });
   await page.addStyleTag({ content: '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}' });
