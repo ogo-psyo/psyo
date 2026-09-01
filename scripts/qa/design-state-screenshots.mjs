@@ -45,12 +45,11 @@ for (const size of sizes) {
       globalThis.Date = FixedDate;
       globalThis.Telegram = { WebApp: { initData: '', ready() {}, expand() {}, enableClosingConfirmation() {} } };
     });
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.evaluate((profile) => {
+    await page.addInitScript((profile) => {
       localStorage.setItem('pso.topapp.onboarding.v1','done');
       localStorage.setItem('pso.product.profile.v5', JSON.stringify(profile));
     }, profile);
-    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.locator('.app-tabs').waitFor({ state: 'visible' });
     await page.getByRole('heading', { name: 'Мята', exact: true }).first().waitFor({ state: 'visible' });
     await page.addStyleTag({ content: '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}' });
