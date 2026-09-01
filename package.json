@@ -29,6 +29,7 @@
     "qa:prod:smoke": "node scripts/qa/smoke-prod-release.mjs",
     "qa:journey:parity": "node scripts/qa/check-production-journey-parity-contract.mjs",
     "qa:journey:visual": "node scripts/qa/production-journey-visual.mjs",
+    "qa:all-screen:visual": "node scripts/qa/all-screen-ui.smoke.mjs",
     "qa:voice:visual": "node scripts/qa/voice-observation-ui.smoke.mjs",
     "qa:assistant:visual": "node scripts/qa/assistant-sheet-ui.smoke.mjs",
     "qa:avatar:visual": "node scripts/qa/avatar-identity-ui.smoke.mjs",

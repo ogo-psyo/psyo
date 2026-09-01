@@ -21,6 +21,7 @@ const cases = [
   ['tsx', 'scripts/qa/recoverable-delete.behavior.test.ts'],
   ['tsx', 'scripts/qa/guest-crud.behavior.test.ts'],
   ['tsx', 'scripts/qa/crud-matrix.behavior.test.ts'],
+  ['tsx', 'scripts/qa/all-screen.behavior.test.ts'],
   ['tsx', 'scripts/qa/assistant-route.behavior.test.ts'],
   ['tsx', 'scripts/qa/assistant-context.behavior.test.ts'],
   ['tsx', 'scripts/qa/assistant-answer-service.behavior.test.ts'],

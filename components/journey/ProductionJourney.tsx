@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { wellbeingValue, type WellbeingMetric } from '@/lib/wellbeingScoring';
 import {
   ArrowRight,
@@ -9,7 +9,6 @@ import {
   ChatCircleDots,
   Check,
   FileArrowUp,
-  FilePdf,
   FirstAid,
   Heart,
   MapTrifold,
@@ -93,6 +92,7 @@ type ProductionJourneyProps = BaseProps & {
   onEditProfile?: () => void;
   onAddObservation?: () => void;
   onOpenCare?: () => void;
+  onOpenCard?: () => void;
   onAskAssistant?: () => void;
   map?: ReactNode;
   mapWorkspace?: ReactNode;
@@ -189,6 +189,57 @@ function DogAvatar({ avatar, small = false }: { avatar: ReactNode; small?: boole
   return <div className={`v3-dog-avatar production-journey-avatar${small ? ' small' : ''}`}>{avatar}</div>;
 }
 
+function MetricTrend({ metric, points }: { metric: WellbeingMetric; points: JourneyObservationPoint[] }) {
+  const label = wellbeingMetricLabels[metric];
+  const values = points.flatMap((point) => {
+    const score = wellbeingValue(metric, point[metric]);
+    return score === null ? [] : [{ point, score }];
+  });
+  const plot = values.map((item, index) => ({
+    x: values.length === 1 ? 90 : 8 + (index * 164) / (values.length - 1),
+    y: 48 - ((item.score - 1) / 3) * 38,
+    item,
+  }));
+  const path = plot.map((point, index) => `${index ? 'L' : 'M'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' ');
+  const latest = values.at(-1);
+  const previous = values.at(-2);
+  const direction = !latest
+    ? 'Нет данных'
+    : !previous
+      ? 'Первая отметка'
+      : latest.score > previous.score + .35
+        ? 'Выше прошлой'
+        : latest.score < previous.score - .35
+          ? 'Ниже прошлой'
+          : 'Без изменений';
+  const aria = latest ? `${label}: ${latest.point[metric]}, ${direction.toLowerCase()}` : `${label}: данных пока нет`;
+
+  return <article className="all-observation-metric">
+    <header><h3>{label}</h3><span>{direction}</span></header>
+    <div className={`all-observation-chart${plot.length < 2 ? ' sparse' : ''}`} role="img" aria-label={aria}>
+      {plot.length ? <svg viewBox="0 0 180 56" preserveAspectRatio="none" aria-hidden="true">
+        <line x1="8" y1="29" x2="172" y2="29" />
+        {path && <path d={path} />}
+        {plot.map(({ x, y, item }) => <circle key={item.point.id} cx={x} cy={y} r="3.5" />)}
+      </svg> : <span>Добавьте наблюдение</span>}
+    </div>
+    <p>{latest?.point[metric] || 'Пока без отметок'}</p>
+  </article>;
+}
+
+function AllObservationTrends({ dogName, points, onAddObservation }: { dogName: string; points: JourneyObservationPoint[]; onAddObservation?: () => void }) {
+  const ordered = [...points].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).slice(-7);
+  const copy = trendCopy(ordered);
+  return <section className="all-observation-trends" data-all-observation-trends data-parity="production-today-history" aria-labelledby="all-observation-title">
+    <header><div><h2 id="all-observation-title">Динамика наблюдений</h2><p>{ordered.length ? `${ordered.length} последних отметок о ${dogName}` : `Начните с первой отметки о ${dogName}`}</p></div><button type="button" onClick={onAddObservation}>Добавить</button></header>
+    <div className="all-observation-verdict"><b>{copy.title}</b><p>{copy.detail}</p></div>
+    <div className="all-observation-grid">
+      {(Object.keys(wellbeingMetricLabels) as WellbeingMetric[]).map((metric) => <MetricTrend key={metric} metric={metric} points={ordered} />)}
+    </div>
+    <small>Графики отражают записи владельца и не являются медицинским заключением.</small>
+  </section>;
+}
+
 function Header({ dogName, title, detail, avatar, onOpenProfile }: { dogName: string; title: string; detail: string; avatar: ReactNode; onOpenProfile?: () => void }) {
   return <header className="v3-header production-journey-header">
     <div><span className="v3-wordmark">Псё</span><small>{detail}</small></div>
@@ -200,41 +251,33 @@ function Header({ dogName, title, detail, avatar, onOpenProfile }: { dogName: st
 function TodayScreen(props: ProductionJourneyProps) {
   const careTitle = props.careTitle || 'Сегодня всё сделано';
   const careState = props.careState || 'active';
-  const recentEntries = (props.profileEntries || []).slice(0, 3);
-  const entryIcon = (kind: JourneyProfileEntry['kind']) => kind === 'document'
-    ? <FilePdf weight="duotone" />
-    : kind === 'care'
-      ? <Check weight="bold" />
-      : <ChatCircleDots weight="duotone" />;
-  return <main className="v3-screen v3-all production-journey-screen" data-production-journey="today">
-    <Header dogName={props.dogName} title={`${props.dogName} сегодня`} detail="ваш день вместе" avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
-    <section className={`production-today-summary is-${careState}`} aria-labelledby="production-today-summary-title">
-      <div className="production-today-summary-copy">
-        <h2 id="production-today-summary-title">{careTitle}</h2>
-        <p>{props.careDetail || 'Ближайшее дело уже в плане.'}</p>
-        {careState === 'active' && <button type="button" onClick={props.onCareAction}><Check weight="bold" /> {props.careActionLabel || 'Отметить выполненным'}</button>}
-        {careState === 'empty' && <button type="button" onClick={props.onCareAction}><Plus weight="bold" /> {props.careActionLabel || 'Добавить первое дело'}</button>}
-        {careState === 'complete' && <button type="button" onClick={props.onCareAction}><CalendarCheck weight="bold" /> {props.careActionLabel || 'Открыть историю'}</button>}
+  const [observationCaptureOpen, setObservationCaptureOpen] = useState(false);
+  return <main className="v3-screen v3-all production-journey-screen" data-production-journey="today" title={`${props.dogName} сегодня`}>
+    <section className="all-profile" data-all-profile data-parity="production-today-identity" aria-labelledby="all-profile-title">
+      <h1 className="all-profile-wordmark">Псё</h1>
+      <button type="button" onClick={() => props.onNavigate('profile')} aria-label={`Открыть профиль ${props.dogName} в Псё`}>
+        <DogAvatar avatar={props.avatar} />
+        <span className="all-profile-copy"><span className="all-profile-name" id="all-profile-title">{props.dogName}</span><b>{props.breedLabel}</b><small>{(props.profileFacts || []).filter(Boolean).slice(0, 2).join(' · ') || 'Профиль, история и документы'}</small></span>
+        <span className="all-profile-action">Открыть Псё <ArrowRight weight="bold" /></span>
+      </button>
+    </section>
+
+    <section className="all-scenarios" data-all-scenarios data-parity="production-today-summary" aria-labelledby="all-scenarios-title">
+      <header><h2 id="all-scenarios-title">Что происходит?</h2><p>Выберите ситуацию — Псё откроет нужный инструмент без поиска по разделам.</p></header>
+      <article className={`all-scenario-current is-${careState}`}>
+        <div><span>Ближайшее действие</span><h3>{careTitle}</h3><p>{props.careDetail || 'Ближайшее дело уже в плане.'}</p></div>
+        <button type="button" onClick={props.onCareAction}>{careState === 'active' ? <Check weight="bold" /> : careState === 'empty' ? <Plus weight="bold" /> : <CalendarCheck weight="bold" />}{props.careActionLabel || (careState === 'empty' ? 'Добавить первое дело' : 'Открыть план')}</button>
+      </article>
+      <div className="all-scenario-list">
+        <button type="button" aria-expanded={observationCaptureOpen} onClick={() => setObservationCaptureOpen((open) => !open)}><FirstAid weight="duotone" /><span><b>Изменилось самочувствие</b><small>Записать признаки и контекст</small></span><CaretRight weight="bold" /></button>
+        <button type="button" onClick={props.onOpenCare}><CalendarCheck weight="duotone" /><span><b>Организовать уход</b><small>Дела, повторения и история</small></span><CaretRight weight="bold" /></button>
+        <button type="button" onClick={props.onOpenCard}><ShieldCheck weight="duotone" /><span><b>Передать собаку другому</b><small>Подготовить безопасную памятку</small></span><CaretRight weight="bold" /></button>
+        <button type="button" onClick={props.onAskAssistant}><ChatCircleDots weight="duotone" /><span><b>Разобрать ситуацию</b><small>Собрать следующий шаг по данным Псё</small></span><CaretRight weight="bold" /></button>
       </div>
-      {props.onOpenIdentity
-        ? <button type="button" className="production-today-identity" aria-label={`Изменить фото или образ ${props.dogName}`} onClick={props.onOpenIdentity}><DogAvatar avatar={props.avatar} /><span>Изменить образ</span></button>
-        : <DogAvatar avatar={props.avatar} />}
+      {observationCaptureOpen && <div className="all-scenario-capture">{props.voiceCapture}</div>}
     </section>
-    {props.voiceCapture}
-    {props.onAskAssistant && <button className="production-today-assistant" type="button" aria-label="Спросить Псё" onClick={props.onAskAssistant}>
-      <Sparkle weight="fill" aria-hidden="true" />
-      <span><b>Спросить Псё</b><small>Разобрать записи и план ухода</small></span>
-      <ArrowRight weight="bold" aria-hidden="true" />
-    </button>}
-    <section className="production-today-history" aria-labelledby="production-today-history-title">
-      <header><h2 id="production-today-history-title">Последнее в истории</h2></header>
-      {recentEntries.length ? <div className="production-today-history-list">{recentEntries.map((entry) => {
-        const content = <><span className={`production-today-history-icon ${entry.kind}`}>{entryIcon(entry.kind)}</span><span className="production-today-history-copy"><b>{entry.title}</b><small>{entry.detail}</small></span><time>{entry.when}</time></>;
-        if (entry.href) return <a key={entry.id} href={entry.href}>{content}</a>;
-        if (entry.onOpen) return <button key={entry.id} type="button" onClick={entry.onOpen}>{content}</button>;
-        return <div key={entry.id}>{content}</div>;
-      })}</div> : <p className="production-today-history-empty">Пока без новых записей. Здесь появятся только реальные события — выполненные дела, наблюдения и документы.</p>}
-    </section>
+
+    <AllObservationTrends dogName={props.dogName} points={props.observationPoints || []} onAddObservation={props.onAddObservation} />
     {props.children}
   </main>;
 }

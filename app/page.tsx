@@ -1271,8 +1271,9 @@ export default function Home() {
       const itemPetId = String(item?.petId || item?.pet_id || '');
       return !selectedPetId || !itemPetId || itemPetId === selectedPetId;
     };
+    const preserveLocalGuest = payload.mode === 'demo' && Boolean(loadProfile().dogName.trim());
     setDemoMode(payload.mode === 'demo');
-    if (Array.isArray(payload.pets)) setPets(payload.pets.map((pet: any) => {
+    if (!preserveLocalGuest && Array.isArray(payload.pets)) setPets(payload.pets.map((pet: any) => {
       const petAvatarSource = pet.avatar_source || pet.avatarSource || (pet.avatar_url || pet.avatarUrl ? 'uploaded' : 'none');
       const petActiveAssetId = pet.active_avatar_asset_id || pet.activeAvatarAssetId;
       return {
@@ -1288,7 +1289,7 @@ export default function Home() {
       photo_urls: petAvatarSource === 'none' ? [] : Array.isArray(pet.photo_urls || pet.photoUrls) ? pet.photo_urls || pet.photoUrls : [],
     };
     }));
-    if (dbProfile) {
+    if (dbProfile && !preserveLocalGuest) {
       setActivePetId(selectedPetId);
       setProfile((current) => {
         const samePet = !petId || current.backendPetId === dbProfile.backendPetId;
@@ -1308,7 +1309,7 @@ export default function Home() {
         setObservations(bootObservations.slice(0, 12));
       }
       setDocuments(Array.isArray(payload.documents) ? payload.documents.filter(belongsToSelectedPet) : []);
-    } else if (payload.empty && payload.user?.id) {
+    } else if (!preserveLocalGuest && payload.empty && payload.user?.id) {
       setPets([]);
       setActivePetId('');
       setProfile((current) => ({ ...current, backendPetId: undefined }));
@@ -3907,6 +3908,16 @@ export default function Home() {
           careState={todayCare.state === 'empty' ? 'empty' : todayCare.state === 'complete' ? 'complete' : 'active'}
           careActionLabel={todayCare.state === 'empty' ? 'Добавить первое дело' : todayCare.actionLabel}
           profileEntries={profileJourneyEntries}
+          profileFacts={[profile.lifeStage || profile.age, profile.sex, profile.energyLevel].filter(Boolean) as string[]}
+          observationPoints={observations.map((item) => ({
+            id: item.id,
+            createdAt: item.createdAt,
+            mood: item.mood,
+            appetite: item.appetite,
+            stool: item.stool,
+            energy: item.energy,
+            note: item.note,
+          }))}
           voiceCapture={<VoiceObservationCapture
             petId={profile.backendPetId || activePetId}
             petName={profile.dogName}
@@ -3916,6 +3927,12 @@ export default function Home() {
             onSave={saveVoiceObservationCandidates}
             onSavePrivateNote={saveVoicePrivateNote}
           />}
+          onAddObservation={() => setTab('health')}
+          onOpenCare={() => {
+            setCareView('active');
+            setTab('calendar');
+          }}
+          onOpenCard={() => setTab('card')}
           onAskAssistant={openAssistantSheet}
           onCareAction={() => todayCare.reminderId
             ? completeReminder(todayCare.reminderId)

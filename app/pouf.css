@@ -589,13 +589,13 @@ body {
     border-radius: 15px !important;
     color: var(--pouf-ink) !important;
     background: #e3f8e9 !important;
-    box-shadow: var(--pouf-cushion-small) !important;
+    box-shadow: none !important;
   }
 
   .desktop-context-panel button.primary {
     color: var(--pouf-surface) !important;
     background: var(--pouf-ink) !important;
-    box-shadow: var(--pso-inset), 0 11px 22px rgb(58 46 92 / .22) !important;
+    box-shadow: none !important;
   }
 }
 
