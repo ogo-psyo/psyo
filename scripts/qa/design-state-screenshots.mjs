@@ -49,7 +49,8 @@ for (const size of sizes) {
       localStorage.setItem('pso.topapp.onboarding.v1','done');
       localStorage.setItem('pso.product.profile.v5', JSON.stringify(profile));
     }, profile);
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.locator('.app-tabs').waitFor({ state: 'visible' });
     await page.addStyleTag({ content: '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}' });
     await page.evaluate(() => document.fonts.ready);
     await page.evaluate((buttonLabel) => {
