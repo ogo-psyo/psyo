@@ -64,9 +64,14 @@ for (const size of sizes) {
     ), tab.button);
     await page.screenshot({ path: `${outDir}/${size.name}-${tab.id}.png`, fullPage: true });
     if (size.name === 'm390' && tab.id === 'today') {
-      await page.locator('.today-care-presets').getByRole('button', { name: /Обработка/ }).click();
-      await page.getByRole('status').filter({ hasText: 'Добавлено: Обработка от клещей и паразитов' }).waitFor();
-      await page.screenshot({ path: `${outDir}/${size.name}-${tab.id}-with-care.png`, fullPage: true });
+      const carePreset = page.locator('.today-care-presets').getByRole('button', { name: /Обработка/ });
+      if (await carePreset.count()) {
+        await carePreset.click();
+        await page.getByRole('status').filter({ hasText: 'Добавлено: Обработка от клещей и паразитов' }).waitFor();
+        await page.screenshot({ path: `${outDir}/${size.name}-${tab.id}-with-care.png`, fullPage: true });
+      } else if (!captureOnly) {
+        throw new Error('Expected care preset: Обработка');
+      }
     }
     const m = await page.evaluate(() => ({
       scrollWidth: document.documentElement.scrollWidth,
