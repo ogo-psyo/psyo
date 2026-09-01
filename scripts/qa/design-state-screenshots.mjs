@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 
 const base = process.env.BASE_URL || 'http://localhost:3101';
 const outDir = process.env.OUT_DIR || 'test-results/design-state-audit';
+const captureOnly = process.env.CAPTURE_ONLY === '1';
 await fs.mkdir(outDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const profile = {
@@ -33,12 +34,24 @@ const results=[];
 for (const size of sizes) {
   for (const tab of tabs) {
     const page = await browser.newPage({ viewport: { width: size.width, height: size.height }, deviceScaleFactor: 1 });
+    await page.route(/(?:tile\.openstreetmap|basemaps|leaflet)/i, (route) => route.abort());
+    await page.addInitScript(() => {
+      const fixedNow = new Date('2026-09-01T12:00:00.000Z').valueOf();
+      const RealDate = Date;
+      class FixedDate extends RealDate {
+        constructor(...args) { super(...(args.length ? args : [fixedNow])); }
+        static now() { return fixedNow; }
+      }
+      globalThis.Date = FixedDate;
+    });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.evaluate((profile) => {
       localStorage.setItem('pso.topapp.onboarding.v1','done');
       localStorage.setItem('pso.product.profile.v5', JSON.stringify(profile));
     }, profile);
     await page.reload({ waitUntil: 'networkidle' });
+    await page.addStyleTag({ content: '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}' });
+    await page.evaluate(() => document.fonts.ready);
     await page.evaluate((buttonLabel) => {
       const button = [...document.querySelectorAll('.app-tabs button')].find(
         (candidate) => candidate.textContent?.trim() === buttonLabel,
@@ -46,7 +59,9 @@ for (const size of sizes) {
       if (!(button instanceof HTMLButtonElement)) throw new Error(`missing tab button: ${buttonLabel}`);
       button.click();
     }, tab.button);
-    await page.waitForTimeout(300);
+    await page.waitForFunction((buttonLabel) => (
+      document.querySelector('.app-tabs [aria-current="page"]')?.textContent?.trim() === buttonLabel
+    ), tab.button);
     await page.screenshot({ path: `${outDir}/${size.name}-${tab.id}.png`, fullPage: true });
     if (size.name === 'm390' && tab.id === 'today') {
       await page.locator('.today-care-presets').getByRole('button', { name: /Обработка/ }).click();
@@ -71,7 +86,7 @@ await fs.writeFile(`${outDir}/metrics.json`, JSON.stringify(results,null,2));
 const overflowing = results.filter((result) => result.m.overflow.length > 0);
 const undersized = results.filter((result) => result.m.primaryTargetHeights.some((height) => height < 44));
 const wrongRoutes = results.filter((result) => result.m.activeRoute !== tabs.find((tab) => tab.id === result.tab)?.button);
-if (overflowing.length || undersized.length || wrongRoutes.length) {
+if ((overflowing.length || undersized.length || wrongRoutes.length) && !captureOnly) {
   console.error(JSON.stringify({ ok: false, overflowing, undersized, wrongRoutes }, null, 2));
   process.exit(1);
 }
