@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 
 const base = process.env.BASE_URL || 'http://localhost:3101';
 const outDir = process.env.OUT_DIR || 'test-results/design-audit';
+const captureOnly = process.env.CAPTURE_ONLY === '1';
 await fs.mkdir(outDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const sizes = [
@@ -15,7 +16,20 @@ const sizes = [
 const results = [];
 for (const size of sizes) {
   const page = await browser.newPage({ viewport: { width: size.width, height: size.height }, deviceScaleFactor: 1 });
+  await page.route(/(?:tile\.openstreetmap|basemaps|leaflet)/i, (route) => route.abort());
+  await page.addInitScript(() => {
+    const fixedNow = new Date('2026-09-01T12:00:00.000Z').valueOf();
+    const RealDate = Date;
+    class FixedDate extends RealDate {
+      constructor(...args) { super(...(args.length ? args : [fixedNow])); }
+      static now() { return fixedNow; }
+    }
+    globalThis.Date = FixedDate;
+    globalThis.Telegram = { WebApp: { initData: '', ready() {}, expand() {}, enableClosingConfirmation() {} } };
+  });
   await page.goto(base, { waitUntil: 'networkidle' });
+  await page.addStyleTag({ content: '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}' });
+  await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: `${outDir}/${size.name}.png`, fullPage: true });
   const metrics = await page.evaluate(() => {
     const doc = document.documentElement;
@@ -33,11 +47,16 @@ for (const size of sizes) {
   });
   results.push({ size, metrics });
   if (size.name === 'mobile-390') {
-    await page.getByRole('button', { name: 'Создать питомца', exact: true }).click();
-    await page.screenshot({ path: `${outDir}/${size.name}-pet.png`, fullPage: true });
-    await page.getByLabel('Имя', { exact: true }).fill('Мята');
-    await page.getByRole('button', { name: 'Продолжить', exact: true }).click();
-    await page.screenshot({ path: `${outDir}/${size.name}-care.png`, fullPage: true });
+    const createPet = page.getByRole('button', { name: 'Создать питомца', exact: true });
+    if (await createPet.count()) {
+      await createPet.click();
+      await page.screenshot({ path: `${outDir}/${size.name}-pet.png`, fullPage: true });
+      await page.getByLabel('Имя', { exact: true }).fill('Мята');
+      await page.getByRole('button', { name: 'Продолжить', exact: true }).click();
+      await page.screenshot({ path: `${outDir}/${size.name}-care.png`, fullPage: true });
+    } else if (!captureOnly) {
+      throw new Error('Expected onboarding entry button: Создать питомца');
+    }
   }
   await page.close();
 }
@@ -56,7 +75,7 @@ const failures = results.flatMap((result) => {
   }
   return items;
 });
-if (failures.length) {
+if (failures.length && !captureOnly) {
   console.error(JSON.stringify({ ok: false, failures }, null, 2));
   process.exit(1);
 }

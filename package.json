@@ -7,9 +7,17 @@
     "build": "next build",
     "start": "next start",
     "check": "next build",
-    "qa:local": "npm run check && node scripts/qa/check-env-contract.mjs && node scripts/qa/check-auth-redirect-source.mjs && node scripts/qa/check-readiness-contract.mjs && node scripts/qa/check-v1-bff-contract.mjs && node scripts/qa/check-onboarding-activation-contract.mjs && node scripts/qa/check-rc1-foundation.mjs && node scripts/qa/check-design-concept-contract.mjs && node scripts/qa/check-canonical-navigation-contract.mjs && node scripts/qa/check-prod-risk-gates.mjs && node scripts/qa/check-billing-subscription-contract.mjs && node scripts/qa/check-ux-surface-contract.mjs && npm run qa:core-loop:contract && npm run qa:care:atomic && node scripts/qa/check-observations-contract.mjs && node scripts/qa/check-multidog-contract.mjs && node scripts/qa/check-public-card-privacy-contract.mjs && npm run qa:profile-ui && node scripts/qa/check-map-privacy-contract.mjs && node scripts/qa/check-human-copy-contract.mjs && node scripts/qa/check-ui-copy-kit-contract.mjs && node scripts/qa/check-ai-safety-contract.mjs && npm run qa:behavior && npm run qa:identity:isolation && node scripts/qa/check-agentic-orchestration-contract.mjs",
+    "lint": "node scripts/qa/check-eslint-warning-budget.mjs",
+    "lint:raw": "eslint app components lib packages scripts",
+    "test": "vitest run",
+    "knip": "node scripts/qa/check-knip-baseline.mjs",
+    "knip:raw": "knip --reporter json",
+    "metrics": "node scripts/qa/metrics-baseline.mjs",
+    "qa:visual:baseline": "node scripts/qa/capture-visual-baseline.mjs",
+    "qa:local": "npm run lint && npm test && npm run check && npm run qa:contracts",
+    "qa:contracts": "node scripts/qa/check-env-contract.mjs && node scripts/qa/check-auth-redirect-source.mjs && node scripts/qa/check-readiness-contract.mjs && node scripts/qa/check-v1-bff-contract.mjs && node scripts/qa/check-onboarding-activation-contract.mjs && node scripts/qa/check-rc1-foundation.mjs && node scripts/qa/check-design-concept-contract.mjs && node scripts/qa/check-canonical-navigation-contract.mjs && node scripts/qa/check-prod-risk-gates.mjs && node scripts/qa/check-billing-subscription-contract.mjs && node scripts/qa/check-ux-surface-contract.mjs && npm run qa:core-loop:contract && npm run qa:care:atomic && node scripts/qa/check-observations-contract.mjs && node scripts/qa/check-multidog-contract.mjs && node scripts/qa/check-public-card-privacy-contract.mjs && npm run qa:profile-ui && node scripts/qa/check-map-privacy-contract.mjs && node scripts/qa/check-human-copy-contract.mjs && node scripts/qa/check-ui-copy-kit-contract.mjs && node scripts/qa/check-ai-safety-contract.mjs && npm run qa:identity:isolation && node scripts/qa/check-agentic-orchestration-contract.mjs",
     "qa:care:atomic": "node scripts/qa/check-care-atomicity-contract.mjs",
-    "qa:behavior": "tsx scripts/qa/map-privacy.behavior.test.ts && tsx scripts/qa/map-routes-ui.behavior.test.ts && tsx scripts/qa/verified-contact.behavior.test.ts && tsx scripts/qa/social-profile.behavior.test.ts && tsx scripts/qa/social-discovery.behavior.test.ts && tsx scripts/qa/social-connections.behavior.test.ts && tsx scripts/qa/care-crud.behavior.test.ts && tsx scripts/qa/profile-lifecycle.behavior.test.ts && tsx scripts/qa/recoverable-delete.behavior.test.ts && node scripts/qa/smoke-free-shell.mjs && node scripts/qa/smoke-nearby-ui.mjs && node components/care/care-ui.behavior.test.mjs",
+    "qa:behavior": "npm test",
     "qa:core-loop:contract": "node scripts/qa/check-core-loop-ux-contract.mjs",
     "qa:ux-rc1:smoke": "node scripts/qa/smoke-core-loop.mjs",
     "qa:core-loop": "node scripts/qa/smoke-core-loop.mjs",
@@ -40,8 +48,14 @@
   },
   "devDependencies": {
     "@types/pg": "^8.20.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.0",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "knip": "^5.88.1",
     "playwright": "^1.61.1",
-    "tsx": "^4.23.12"
+    "tsx": "^4.23.12",
+    "typescript-eslint": "^8.69.0",
+    "vitest": "^3.2.7"
   },
   "overrides": {
     "postcss": "^8.5.23"
