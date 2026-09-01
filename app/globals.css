@@ -6018,7 +6018,9 @@ body::before,
 }
 
 .profile-danger-zone summary {
-  min-height: 44px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
   cursor: pointer;
   font-weight: 850;
 }
@@ -8423,3 +8425,8 @@ body { background:linear-gradient(160deg,#cbfedb 0%,#f7fff9 48%,#98df73 140%); c
 @media (prefers-reduced-motion: reduce) {
   .identity-source-action { transition: none; }
 }
+
+.wishlist-edit-form { display: grid; gap: 10px; width: 100%; }
+.wishlist-edit-form label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 750; }
+.wishlist-edit-form input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; }
+.wishlist-edit-form input:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent); outline-offset: 2px; }

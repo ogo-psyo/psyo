@@ -19,6 +19,8 @@ const cases = [
   ['tsx', 'scripts/qa/care-crud.behavior.test.ts'],
   ['tsx', 'scripts/qa/profile-lifecycle.behavior.test.ts'],
   ['tsx', 'scripts/qa/recoverable-delete.behavior.test.ts'],
+  ['tsx', 'scripts/qa/guest-crud.behavior.test.ts'],
+  ['tsx', 'scripts/qa/crud-matrix.behavior.test.ts'],
   ['tsx', 'scripts/qa/assistant-route.behavior.test.ts'],
   ['tsx', 'scripts/qa/assistant-context.behavior.test.ts'],
   ['tsx', 'scripts/qa/assistant-answer-service.behavior.test.ts'],

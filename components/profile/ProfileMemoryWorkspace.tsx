@@ -75,6 +75,9 @@ type Props = {
   onRollbackAvatar: () => void;
   onSaveProfile: (profile: DogProfile) => Promise<string | null>;
   onAddDocument: (trigger: HTMLButtonElement) => void;
+  onOpenDocument: (id: string) => void;
+  onDeleteDocument: (id: string) => void;
+  documentBusyId?: string | null;
   onAskAssistant: () => void;
   onOpenPlan: () => void;
   onOpenHealth: () => void;
@@ -158,6 +161,8 @@ export function ProfileMemoryWorkspace(props: Props) {
   const history = useMemo(() => {
     const observations = props.observations.map((item) => ({
       id: `observation-${item.id}`,
+      entityId: item.id,
+      entityKind: 'observation' as const,
       kind: 'health',
       date: item.createdAt,
       title: observationTitle(item),
@@ -165,6 +170,8 @@ export function ProfileMemoryWorkspace(props: Props) {
     }));
     const documents = props.documents.map((item) => ({
       id: `document-${item.id}`,
+      entityId: item.id,
+      entityKind: 'document' as const,
       kind: 'care',
       date: item.createdAt,
       title: item.title,
@@ -172,6 +179,8 @@ export function ProfileMemoryWorkspace(props: Props) {
     }));
     const reminders = props.reminders.filter((item) => item.completedAt).map((item) => ({
       id: `reminder-${item.id}`,
+      entityId: item.id,
+      entityKind: 'reminder' as const,
       kind: 'care',
       date: item.completedAt || item.dueAt,
       title: item.title,
@@ -321,7 +330,7 @@ export function ProfileMemoryWorkspace(props: Props) {
 
           {surface === 'history' && <section className={styles.domainSurface}>
             {header('История')}
-            {history.length ? <div className={styles.timeline}>{history.map((item) => <article key={item.id}><i className={item.kind === 'health' ? styles.timeline_health : styles.timeline_care} /><time>{readableDate(item.date)}</time><h2>{item.title}</h2><p>{item.detail}</p></article>)}</div> : <article className={styles.emptyHistory}><ClockCounterClockwise /><h2>История пока пустая</h2><p>Наблюдения, документы и выполненные дела появятся здесь автоматически.</p></article>}
+            {history.length ? <div className={styles.timeline}>{history.map((item) => <article key={item.id}><i className={item.kind === 'health' ? styles.timeline_health : styles.timeline_care} /><time>{readableDate(item.date)}</time><h2>{item.title}</h2><p>{item.detail}</p>{item.entityKind === 'document' && <div className={styles.timelineActions}><button type="button" onClick={() => props.onOpenDocument(item.entityId)}>Открыть</button><button type="button" className={styles.timelineDanger} disabled={props.documentBusyId === item.entityId} onClick={() => props.onDeleteDocument(item.entityId)}>{props.documentBusyId === item.entityId ? 'Удаляю…' : 'Удалить'}</button></div>}</article>)}</div> : <article className={styles.emptyHistory}><ClockCounterClockwise /><h2>История пока пустая</h2><p>Наблюдения, документы и выполненные дела появятся здесь автоматически.</p></article>}
             <button className={styles.primaryAction} type="button" onClick={() => setSurface('capture')}><Microphone /> Рассказать Псё</button>
           </section>}
 

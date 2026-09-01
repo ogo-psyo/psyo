@@ -56,6 +56,7 @@ import {
 import { getSupabaseBrowser } from '@/lib/clientSupabase';
 import { formatCount, formatReadinessLabel, formatReminderGroupLine, formatTodayTitle, formatWishlistMeta, formatZoneMeta, inflectPetName } from '@/lib/copy';
 import { fileToLocalAvatarDataUrl, filesToPhotos, loadProfile, resetProfileStorage, saveProfile } from '@/lib/profileStorage';
+import { loadGuestEntityState, resetAllLocalPsoData, resetGuestEntityStorage, saveGuestEntityState } from '@/lib/guestEntityStorage';
 import { buildAppReadiness, type ReadinessLevel } from '@/lib/readiness';
 import { buildTodayCareView } from '@/lib/today';
 import { normalizeOwnerRoutes, removeOwnerRoute, upsertOwnerRoute, type OwnerRouteView } from '@/lib/mapUi';
@@ -507,6 +508,12 @@ export default function Home() {
   const [zones, setZones] = useState<ZoneView[]>([]);
   const [removedWishlistItem, setRemovedWishlistItem] = useState<WishlistView | null>(null);
   const [removedZone, setRemovedZone] = useState<ZoneView | null>(null);
+  const [editingWishlistId, setEditingWishlistId] = useState<string | null>(null);
+  const [wishlistTitleDraft, setWishlistTitleDraft] = useState('');
+  const [wishlistReasonDraft, setWishlistReasonDraft] = useState('');
+  const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
+  const [zoneTitleDraft, setZoneTitleDraft] = useState('');
+  const [zoneNoteDraft, setZoneNoteDraft] = useState('');
   const [pets, setPets] = useState<PetSwitchOption[]>([]);
   const [activePetId, setActivePetId] = useState('');
   const [observations, setObservations] = useState<ObservationView[]>([]);
@@ -601,6 +608,7 @@ export default function Home() {
   const [petMutationBusy, setPetMutationBusy] = useState(false);
   const [dogDeleteName, setDogDeleteName] = useState('');
   const [accountDeleteConfirmation, setAccountDeleteConfirmation] = useState('');
+  const [localDeleteConfirmation, setLocalDeleteConfirmation] = useState('');
   const [telegramSession, setTelegramSession] = useState<TelegramSessionView>({ mode: 'loading' });
   const assistantActionBusyRef = useRef(new Set<string>());
 
@@ -1300,7 +1308,7 @@ export default function Home() {
         setObservations(bootObservations.slice(0, 12));
       }
       setDocuments(Array.isArray(payload.documents) ? payload.documents.filter(belongsToSelectedPet) : []);
-    } else if (payload.empty) {
+    } else if (payload.empty && payload.user?.id) {
       setPets([]);
       setActivePetId('');
       setProfile((current) => ({ ...current, backendPetId: undefined }));
@@ -1318,11 +1326,24 @@ export default function Home() {
 
   useEffect(() => {
     const local = loadProfile();
-    setProfile(local);
+    const hydratedLocal = local.dogName.trim() && !local.backendPetId
+      ? { ...local, backendPetId: `guest-pet-${crypto.randomUUID()}` }
+      : local;
+    guestPetIdRef.current = hydratedLocal.backendPetId || null;
+    setProfile(hydratedLocal);
+    if (hydratedLocal.dogName.trim() && hydratedLocal.backendPetId) {
+      setPets([{ id: hydratedLocal.backendPetId, name: hydratedLocal.dogName }]);
+      setActivePetId(hydratedLocal.backendPetId);
+      const guestState = loadGuestEntityState(window.localStorage, hydratedLocal.backendPetId);
+      setReminders(guestState.reminders as ReminderView[]);
+      setWishlist(guestState.wishlist as WishlistView[]);
+      setZones(guestState.zones as ZoneView[]);
+      setOwnerRoutes(guestState.routes as OwnerRouteView[]);
+    }
     setProfileHydrated(true);
-    setHeroNameDraft(local.dogName || '');
+    setHeroNameDraft(hydratedLocal.dogName || '');
     try {
-      const savedObservations = JSON.parse(window.localStorage.getItem(observationsStorageKey(local.backendPetId)) || '[]');
+      const savedObservations = JSON.parse(window.localStorage.getItem(observationsStorageKey(hydratedLocal.backendPetId)) || '[]');
       if (Array.isArray(savedObservations)) setObservations(savedObservations.map(normalizeObservation).filter(Boolean).slice(0, 12) as ObservationView[]);
     } catch {}
     observationsLoadedRef.current = true;
@@ -1405,6 +1426,20 @@ export default function Home() {
     const result = saveProfile(profile);
     if (!result.ok) setError(result.message);
   }, [profile, profileHydrated]);
+  useEffect(() => {
+    const explicitGuestMode = !session?.access_token && (telegramSession.mode === 'browser' || telegramSession.mode === 'error');
+    if (!profileHydrated || !explicitGuestMode || !profile.backendPetId) return;
+    try {
+      saveGuestEntityState(window.localStorage, profile.backendPetId, {
+        reminders,
+        wishlist,
+        zones,
+        routes: ownerRoutes,
+      });
+    } catch {
+      setError('Не удалось сохранить изменения на устройстве. Освободи место в браузере и попробуй снова.');
+    }
+  }, [ownerRoutes, profile.backendPetId, profileHydrated, reminders, session?.access_token, telegramSession.mode, wishlist, zones]);
   useEffect(() => {
     if (!observationsLoadedRef.current) return;
     try { window.localStorage.setItem(observationsStorageKey(profile.backendPetId), JSON.stringify(observations.slice(0, 24))); } catch {}
@@ -2789,6 +2824,12 @@ export default function Home() {
     setRouteMutationBusy(id);
     setError('');
     try {
+      if (isGuestMode()) {
+        const nextRoute = { ...currentRoute, ...patch };
+        setOwnerRoutes((routes) => upsertOwnerRoute(routes, nextRoute));
+        setEditingRouteId(null);
+        return { feature: nextRoute, shareUrl: null };
+      }
       const response = await fetch(`/api/map/features/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -2811,6 +2852,10 @@ export default function Home() {
   }
 
   async function shareOwnerRoute(route: OwnerRouteView) {
+    if (isGuestMode()) {
+      setError('Ссылку можно открыть после входа через Telegram. Личный маршрут уже сохранён на устройстве.');
+      return;
+    }
     const result = await updateOwnerRoute(route.id, { visibility: 'shared' });
     if (result?.shareUrl) {
       await navigator.clipboard?.writeText(result.shareUrl).catch(() => undefined);
@@ -2827,6 +2872,11 @@ export default function Home() {
     setRouteMutationBusy(route.id);
     setError('');
     try {
+      if (isGuestMode()) {
+        setOwnerRoutes((routes) => removeOwnerRoute(routes, route.id));
+        setPendingRouteDeletion(null);
+        return;
+      }
       const response = await fetch(`/api/map/features/${route.id}`, { method: 'DELETE', headers: authHeaders() });
       if (!response.ok) return setError('Не удалось удалить маршрут. Попробуй ещё раз.');
       setOwnerRoutes((routes) => removeOwnerRoute(routes, route.id));
@@ -2839,16 +2889,27 @@ export default function Home() {
   async function updateZone(id: string, patch: Partial<ZoneView> & { radiusMeters?: number; approximateLat?: number; approximateLng?: number }) {
     if (isGuestMode()) {
       setZones((current) => current.map((zone) => zone.id === id ? { ...zone, ...patch, radius_meters: patch.radiusMeters ?? patch.radius_meters ?? zone.radius_meters, approximate_lat: patch.approximateLat ?? patch.approximate_lat ?? zone.approximate_lat, approximate_lng: patch.approximateLng ?? patch.approximate_lng ?? zone.approximate_lng } : zone));
-      return;
+      setEditingZoneId(null);
+      return true;
     }
-    const response = await fetch(`/api/zones/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify(patch),
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) return setError('Не удалось обновить место');
-    await loadBootstrap();
+    try {
+      const response = await fetch(`/api/zones/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify(patch),
+      });
+      await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setError('Не удалось обновить место. Изменения остались в форме.');
+        return false;
+      }
+      await loadBootstrap();
+      setEditingZoneId(null);
+      return true;
+    } catch {
+      setError('Не удалось обновить место. Проверь соединение и попробуй снова.');
+      return false;
+    }
   }
 
   async function deleteZone(id: string) {
@@ -2880,15 +2941,29 @@ export default function Home() {
   }
 
   async function updateWishlistItem(id: string, patch: Partial<WishlistView>) {
-    if (isGuestMode()) { setWishlist((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item)); return; }
-    const response = await fetch(`/api/wishlist/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify(patch),
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) return setError('Не удалось обновить вещь');
-    await loadBootstrap();
+    if (isGuestMode()) {
+      setWishlist((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
+      setEditingWishlistId(null);
+      return true;
+    }
+    try {
+      const response = await fetch(`/api/wishlist/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify(patch),
+      });
+      await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setError('Не удалось обновить вещь. Изменения остались в форме.');
+        return false;
+      }
+      await loadBootstrap();
+      setEditingWishlistId(null);
+      return true;
+    } catch {
+      setError('Не удалось обновить вещь. Проверь соединение и попробуй снова.');
+      return false;
+    }
   }
 
   async function deleteWishlistItem(id: string) {
@@ -3389,7 +3464,8 @@ export default function Home() {
 
   async function deleteCurrentDog() {
     const expectedName = profile.dogName.trim();
-    if (!profile.backendPetId || dogDeleteName.trim() !== expectedName || petMutationBusy) return;
+    const petId = profile.backendPetId || activePetId;
+    if (!expectedName || dogDeleteName.trim() !== expectedName || petMutationBusy || (!isGuestMode() && !petId)) return;
     setPetMutationBusy(true);
     setError('');
     try {
@@ -3398,11 +3474,15 @@ export default function Home() {
           method: 'DELETE',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json', ...authHeaders() },
-          body: JSON.stringify({ petId: profile.backendPetId, confirmation: 'DELETE_DOG' }),
+          body: JSON.stringify({ petId, confirmation: 'DELETE_DOG' }),
         });
         if (!response.ok) throw new Error('PET_DELETE_FAILED');
       }
-      const remainingPets = pets.filter((pet) => pet.id !== profile.backendPetId);
+      if (isGuestMode()) {
+        resetGuestEntityStorage(window.localStorage, petId);
+        window.localStorage.removeItem(observationsStorageKey(petId));
+      }
+      const remainingPets = pets.filter((pet) => pet.id !== petId);
       setPets(remainingPets);
       setDogDeleteName('');
       setPublishedPublicCardPath('');
@@ -3426,6 +3506,7 @@ export default function Home() {
         setReminders([]);
         setWishlist([]);
         setZones([]);
+        setOwnerRoutes([]);
         setObservations([]);
         setDocuments([]);
         setTab('today');
@@ -3452,7 +3533,7 @@ export default function Home() {
       });
       if (!response.ok) throw new Error('ACCOUNT_DELETE_FAILED');
       await getSupabaseBrowser()?.auth.signOut().catch(() => null);
-      resetProfileStorage();
+      resetAllLocalPsoData(window.localStorage);
       setSession(null);
       setTelegramSession({ mode: 'browser', message: 'Аккаунт удалён.' });
       setProfile(defaultProfile);
@@ -3471,6 +3552,27 @@ export default function Home() {
     } finally {
       setPetMutationBusy(false);
     }
+  }
+
+  function deleteLocalData() {
+    if (localDeleteConfirmation.trim() !== 'ОЧИСТИТЬ ДАННЫЕ' || petMutationBusy || !isGuestMode()) return;
+    resetAllLocalPsoData(window.localStorage);
+    guestPetIdRef.current = null;
+    setProfile(defaultProfile);
+    setPets([]);
+    setActivePetId('');
+    setReminders([]);
+    setWishlist([]);
+    setZones([]);
+    setOwnerRoutes([]);
+    setObservations([]);
+    setDocuments([]);
+    setPublishedPublicCardPath('');
+    setLocalDeleteConfirmation('');
+    setJourneyDetail(null);
+    setTab('today');
+    setNotice('saved');
+    window.setTimeout(() => setNotice('idle'), 1400);
   }
 
   async function shareDogCard() {
@@ -3727,8 +3829,7 @@ export default function Home() {
     {zones.length === 0 && ownerRoutes.length === 0 && <article className="production-map-empty"><MapPin weight="regular" aria-hidden="true" /><div><b>Карта пока чистая</b><p>Сохраните маршрут или предупредите об опасном месте.</p></div></article>}
     {zones.map((zone) => <article key={zone.id} className={`production-map-saved-row ${zone.type === 'risk_zone' ? 'risk' : 'place'}`}>
       <span className="production-map-saved-mark" aria-hidden="true"><MapTrifold weight="regular" /></span>
-      <div><b>{zone.title}</b><p>{formatZoneMeta(zone)} · {zone.visibility === 'shared' ? 'по ссылке' : 'только вам'}</p></div>
-      <button type="button" className="danger-action" onClick={() => deleteZone(zone.id)}>Убрать</button>
+      {editingZoneId === zone.id ? <div className="production-map-route-edit"><input value={zoneTitleDraft} onChange={(event) => setZoneTitleDraft(event.target.value)} aria-label="Название места" /><input value={zoneNoteDraft} onChange={(event) => setZoneNoteDraft(event.target.value)} aria-label="Заметка о месте" /><span><button type="button" disabled={!zoneTitleDraft.trim()} onClick={() => void updateZone(zone.id, { title: zoneTitleDraft.trim(), note: zoneNoteDraft.trim() })}>Сохранить</button><button type="button" onClick={() => setEditingZoneId(null)}>Отмена</button></span></div> : <><div><b>{zone.title}</b><p>{formatZoneMeta(zone)} · {zone.visibility === 'shared' ? 'по ссылке' : 'только вам'}</p></div><div className="production-map-row-actions"><button type="button" onClick={() => { setEditingZoneId(zone.id); setZoneTitleDraft(zone.title); setZoneNoteDraft(zone.note || ''); }}>Изменить</button><button type="button" className="danger-action" onClick={() => deleteZone(zone.id)}>Убрать</button></div></>}
     </article>)}
     {ownerRoutes.map((route) => <article key={route.id} className="production-map-saved-row route">
       <span className="production-map-saved-mark" aria-hidden="true"><MapPin weight="fill" /></span>
@@ -3867,7 +3968,18 @@ export default function Home() {
           onUseNoAvatar={useNoAvatar}
           onRollbackAvatar={rollbackAvatar}
           onSaveProfile={savePrivateProfile}
-          onAddDocument={(trigger) => { documentUploadTriggerRef.current = trigger; setDocumentFileName(''); setDocumentUploadOpen(true); }}
+          onAddDocument={(trigger) => {
+            if (isGuestMode()) {
+              setError('Документы сохраняются только в приватном профиле Telegram. Остальные данные можно вести на этом устройстве.');
+              return;
+            }
+            documentUploadTriggerRef.current = trigger;
+            setDocumentFileName('');
+            setDocumentUploadOpen(true);
+          }}
+          onOpenDocument={(id) => window.open(`/api/documents/${id}`, '_blank', 'noopener,noreferrer')}
+          onDeleteDocument={(id) => void deletePetDocument(id)}
+          documentBusyId={documentBusyId}
           onAskAssistant={openAssistantSheet}
           onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
           onOpenHealth={() => setTab('health')}
@@ -4235,8 +4347,9 @@ export default function Home() {
 
           <section className="profile-danger-zone" aria-label="Удаление данных">
             <div><span className="eyebrow">управление данными</span><h3>Удаление</h3><p>Перед отправкой Псё попросит точное подтверждение. Действия необратимы.</p></div>
-            {profile.backendPetId && <details><summary>Удалить собаку</summary><div className="profile-delete-form"><p>Будут удалены профиль {profile.dogName}, дела, записи, вещи и места.</p><label>Введите имя собаки полностью<input value={dogDeleteName} onChange={(event) => setDogDeleteName(event.target.value)} placeholder={profile.dogName} /></label><button type="button" className="danger-action" disabled={dogDeleteName.trim() !== profile.dogName.trim() || petMutationBusy} onClick={deleteCurrentDog}>Удалить собаку</button></div></details>}
+            {profile.dogName.trim() && <details><summary>Удалить собаку</summary><div className="profile-delete-form"><p>Будут удалены профиль {profile.dogName}, дела, записи, вещи и места.</p><label>Введите имя собаки полностью<input value={dogDeleteName} onChange={(event) => setDogDeleteName(event.target.value)} placeholder={profile.dogName} /></label><button type="button" className="danger-action" disabled={dogDeleteName.trim() !== profile.dogName.trim() || petMutationBusy} onClick={deleteCurrentDog}>Удалить собаку</button></div></details>}
             {!isGuestMode() && <details><summary>Удалить аккаунт</summary><div className="profile-delete-form"><p>Будут удалены аккаунт и данные всех собак без возможности восстановления.</p><label>Для подтверждения введи УДАЛИТЬ АККАУНТ<input value={accountDeleteConfirmation} onChange={(event) => setAccountDeleteConfirmation(event.target.value)} placeholder="УДАЛИТЬ АККАУНТ" /></label><button type="button" className="danger-action" disabled={accountDeleteConfirmation.trim() !== 'УДАЛИТЬ АККАУНТ' || petMutationBusy} onClick={deleteAccount}>Удалить аккаунт</button></div></details>}
+            {isGuestMode() && <details><summary>Очистить данные на этом устройстве</summary><div className="profile-delete-form"><p>Псё удалит локальный профиль, дела, записи, вещи, места и черновики. Данные других сайтов не затрагиваются.</p><label>Для подтверждения введи ОЧИСТИТЬ ДАННЫЕ<input value={localDeleteConfirmation} onChange={(event) => setLocalDeleteConfirmation(event.target.value)} placeholder="ОЧИСТИТЬ ДАННЫЕ" /></label><button type="button" className="danger-action" disabled={localDeleteConfirmation.trim() !== 'ОЧИСТИТЬ ДАННЫЕ' || petMutationBusy} onClick={deleteLocalData}>Очистить данные на устройстве</button></div></details>}
           </section>
         </WatercolorScreen>}
 
@@ -4271,12 +4384,12 @@ export default function Home() {
 
           {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Вещи собаки">
             {wantedWishlist.map((item) => <article key={item.id} className={`wishlist-item priority-${item.priority}`}>
-              <div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div>
-              <div className="wishlist-actions">
+              {editingWishlistId === item.id ? <form className="wishlist-edit-form" onSubmit={async (event) => { event.preventDefault(); await updateWishlistItem(item.id, { title: wishlistTitleDraft.trim(), reason: wishlistReasonDraft.trim() || undefined }); }}><label>Название<input value={wishlistTitleDraft} maxLength={160} onChange={(event) => setWishlistTitleDraft(event.target.value)} /></label><label>Зачем <span className="field-optional">необязательно</span><input value={wishlistReasonDraft} maxLength={500} onChange={(event) => setWishlistReasonDraft(event.target.value)} /></label><div className="wishlist-actions"><button type="submit" disabled={!wishlistTitleDraft.trim()}>Сохранить</button><button type="button" onClick={() => setEditingWishlistId(null)}>Отмена</button></div></form> : <><div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div><div className="wishlist-actions">
                 {item.url && <a href={item.url} target="_blank" rel="noreferrer">Открыть</a>}
+                <button onClick={() => { setEditingWishlistId(item.id); setWishlistTitleDraft(item.title); setWishlistReasonDraft(item.reason || ''); }}>Изменить</button>
                 <button onClick={() => updateWishlistItem(item.id, { status: 'bought' })}>Куплено</button>
                 <button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button>
-              </div>
+              </div></>}
             </article>)}
           </section>}
 

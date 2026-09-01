@@ -392,6 +392,10 @@
 .timeline time { color: var(--muted); font-size: 11px; font-weight: 700; }
 .timeline h2 { margin: 6px 0 0; font-size: 14px; }
 .timeline p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; font-weight: 650; }
+.timelineActions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.timelineActions button { min-height: 40px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); font: inherit; font-size: 12px; font-weight: 800; }
+.timelineActions .timelineDanger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 28%, var(--line)); }
+.timelineActions button:disabled { cursor: wait; opacity: .58; }
 
 .storyComposer { position: relative; display: block; }
 .storyComposer > span { display: block; margin: 0 3px 9px; font-size: 13px; font-weight: 800; }
