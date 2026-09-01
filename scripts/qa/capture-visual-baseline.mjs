@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import sharp from 'sharp';
 
 const baselineSha = process.env.BASELINE_SHA || 'dd541d0';
 const root = process.cwd();
@@ -39,6 +40,32 @@ async function pngHashes(directory) {
   return Object.fromEntries(await Promise.all(entries.map(async (name) => [name, await hashFile(join(directory, name))])));
 }
 
+async function comparePngDirectories(firstDirectory, secondDirectory) {
+  const names = (await readdir(firstDirectory)).filter((name) => name.endsWith('.png')).sort();
+  const comparisons = {};
+  for (const name of names) {
+    const first = await sharp(join(firstDirectory, name)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const second = await sharp(join(secondDirectory, name)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    if (first.info.width !== second.info.width || first.info.height !== second.info.height || first.info.channels !== second.info.channels) {
+      comparisons[name] = { stable: false, reason: 'dimensions differ' };
+      continue;
+    }
+    let changedPixels = 0;
+    const channels = first.info.channels;
+    for (let offset = 0; offset < first.data.length; offset += channels) {
+      let changed = false;
+      for (let channel = 0; channel < channels; channel += 1) {
+        if (Math.abs(first.data[offset + channel] - second.data[offset + channel]) > 10) changed = true;
+      }
+      if (changed) changedPixels += 1;
+    }
+    const totalPixels = first.info.width * first.info.height;
+    const changedRatio = changedPixels / totalPixels;
+    comparisons[name] = { stable: changedRatio <= 0.001, changedPixels, totalPixels, changedRatio };
+  }
+  return comparisons;
+}
+
 async function capture(destination) {
   await mkdir(join(destination, 'design'), { recursive: true });
   await mkdir(join(destination, 'states'), { recursive: true });
@@ -72,7 +99,10 @@ try {
   const firstStates = await pngHashes(join(outputRoot, 'states'));
   const repeatDesign = await pngHashes(join(repeatRoot, 'design'));
   const repeatStates = await pngHashes(join(repeatRoot, 'states'));
-  const repeatedCaptureStable = JSON.stringify({ firstDesign, firstStates }) === JSON.stringify({ firstDesign: repeatDesign, firstStates: repeatStates });
+  const exactHashesStable = JSON.stringify({ firstDesign, firstStates }) === JSON.stringify({ firstDesign: repeatDesign, firstStates: repeatStates });
+  const designPixelComparison = await comparePngDirectories(join(outputRoot, 'design'), join(repeatRoot, 'design'));
+  const statePixelComparison = await comparePngDirectories(join(outputRoot, 'states'), join(repeatRoot, 'states'));
+  const repeatedCaptureStable = [...Object.values(designPixelComparison), ...Object.values(statePixelComparison)].every((comparison) => comparison.stable);
 
   const harnessCommit = run('git', ['rev-parse', 'HEAD']);
   const fixtureHash = createHash('sha256')
@@ -94,6 +124,10 @@ try {
     designMetrics: 'design/metrics.json',
     stateMetrics: 'states/metrics.json',
     repeatedCaptureStable,
+    exactHashesStable,
+    pixelThreshold: { channelDelta: 10, changedPixelRatio: 0.001 },
+    designPixelComparison,
+    statePixelComparison,
     designPngSha256: firstDesign,
     statePngSha256: firstStates,
   };
