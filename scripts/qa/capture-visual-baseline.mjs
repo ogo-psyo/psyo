@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import sharp from 'sharp';
@@ -146,7 +146,10 @@ global.Date = FixedDate;
     statePngSha256: firstStates,
   };
   await writeFile(join(outputRoot, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
-  if (!repeatedCaptureStable) throw new Error('Repeated visual capture produced different PNG hashes.');
+  if (!repeatedCaptureStable) {
+    await cp(repeatRoot, join(outputRoot, 'repeat'), { recursive: true });
+    throw new Error('Repeated visual capture exceeded the pixel-difference threshold; repeat artifacts were preserved.');
+  }
   console.log(JSON.stringify({ ok: true, outputRoot, images: Object.keys(firstDesign).length + Object.keys(firstStates).length }, null, 2));
 } finally {
   if (server?.pid) {
