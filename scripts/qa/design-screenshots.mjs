@@ -46,11 +46,16 @@ for (const size of sizes) {
   });
   results.push({ size, metrics });
   if (size.name === 'mobile-390') {
-    await page.getByRole('button', { name: 'Создать питомца', exact: true }).click();
-    await page.screenshot({ path: `${outDir}/${size.name}-pet.png`, fullPage: true });
-    await page.getByLabel('Имя', { exact: true }).fill('Мята');
-    await page.getByRole('button', { name: 'Продолжить', exact: true }).click();
-    await page.screenshot({ path: `${outDir}/${size.name}-care.png`, fullPage: true });
+    const createPet = page.getByRole('button', { name: 'Создать питомца', exact: true });
+    if (await createPet.count()) {
+      await createPet.click();
+      await page.screenshot({ path: `${outDir}/${size.name}-pet.png`, fullPage: true });
+      await page.getByLabel('Имя', { exact: true }).fill('Мята');
+      await page.getByRole('button', { name: 'Продолжить', exact: true }).click();
+      await page.screenshot({ path: `${outDir}/${size.name}-care.png`, fullPage: true });
+    } else if (!captureOnly) {
+      throw new Error('Expected onboarding entry button: Создать питомца');
+    }
   }
   await page.close();
 }
