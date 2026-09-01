@@ -15,7 +15,10 @@ const sizes = [
 const results = [];
 for (const size of sizes) {
   const page = await browser.newPage({ viewport: { width: size.width, height: size.height }, deviceScaleFactor: 1 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(base, { waitUntil: 'networkidle' });
+  await page.addStyleTag({ content: '*, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }' });
+  await page.evaluate(() => document.fonts?.ready);
   await page.screenshot({ path: `${outDir}/${size.name}.png`, fullPage: true });
   const metrics = await page.evaluate(() => {
     const doc = document.documentElement;

@@ -33,12 +33,15 @@ const results=[];
 for (const size of sizes) {
   for (const tab of tabs) {
     const page = await browser.newPage({ viewport: { width: size.width, height: size.height }, deviceScaleFactor: 1 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.evaluate((profile) => {
       localStorage.setItem('pso.topapp.onboarding.v1','done');
       localStorage.setItem('pso.product.profile.v5', JSON.stringify(profile));
     }, profile);
     await page.reload({ waitUntil: 'networkidle' });
+    await page.addStyleTag({ content: '*, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }' });
+    await page.evaluate(() => document.fonts?.ready);
     await page.evaluate((buttonLabel) => {
       const button = [...document.querySelectorAll('.app-tabs button')].find(
         (candidate) => candidate.textContent?.trim() === buttonLabel,
@@ -46,7 +49,7 @@ for (const size of sizes) {
       if (!(button instanceof HTMLButtonElement)) throw new Error(`missing tab button: ${buttonLabel}`);
       button.click();
     }, tab.button);
-    await page.waitForTimeout(300);
+    await page.waitForFunction((buttonLabel) => document.querySelector('.app-tabs [aria-current="page"]')?.textContent?.trim() === buttonLabel, tab.button);
     await page.screenshot({ path: `${outDir}/${size.name}-${tab.id}.png`, fullPage: true });
     if (size.name === 'm390' && tab.id === 'today') {
       await page.locator('.today-care-presets').getByRole('button', { name: /Обработка/ }).click();

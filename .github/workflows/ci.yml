@@ -32,5 +32,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run local quality gate
-        run: npm run qa:local
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build/check
+        run: npm run check
+
+      - name: Run contracts
+        run: npm run qa:contracts
