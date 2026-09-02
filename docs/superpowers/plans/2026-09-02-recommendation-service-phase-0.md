@@ -248,27 +248,27 @@ Commit: `git commit -m "feat(recommendations): add owner scoped lifecycle storag
 - Produces: `loadRecommendationContext(input: { supabase; ownerId: string; petId: string; now: Date }): Promise<RecommendationContextSnapshot>`.
 - Consumes existing tables: pets, pet_passports, social_profiles, reminders, pet_observations, pet_habits, map_zones, wishlist_items.
 
-- [ ] **Step 1: Write failing privacy/ownership tests**
+- [x] **Step 1: Write failing privacy/ownership tests**
 
 Fixture must contain contacts, microchip, exact coordinates, photos and document content. Assert serialized snapshot does not contain those values and an unowned `petId` throws `PET_NOT_FOUND`.
 
-- [ ] **Step 2: Run and verify RED**
+- [x] **Step 2: Run and verify RED**
 
-Run: `npx vitest run scripts/qa/recommendation-engine.behavior.test.ts -t "context snapshot"`
+Run: `node_modules/.bin/tsx scripts/qa/recommendation-engine.behavior.test.ts`
 Expected: FAIL because loader does not exist.
 
-- [ ] **Step 3: Implement one owner check and bounded parallel reads**
+- [x] **Step 3: Implement one owner check and bounded parallel reads**
 
 First query: `pets.select('id,owner_id,life_stage,weight_kg,breed_id,breed_group_id').eq('id',petId).eq('owner_id',ownerId).maybeSingle()`. Only after success run domain reads. Observations: active only, newest 20; reminders: non-done; habits: active; zones: owner-authored risk/place metadata without geometry; wishlist: active plus `bought/not_suitable` identities needed for suppression.
 
-- [ ] **Step 4: Map every fact to provenance**
+- [x] **Step 4: Map every fact to provenance**
 
 Each fact returns `{ sourceType, sourceId, capturedAt, observedAt?, dueAt?, updatedAt?, ownerConfirmed, inputConfidence?, excerpt? }`. For voice observations, accept only `metadata.ownerConfirmed === true`, numeric `metadata.inputConfidence >= 0.8` and an excerpt; otherwise mark insufficient and never copy raw note.
 
-- [ ] **Step 5: Verify GREEN and commit**
+- [x] **Step 5: Verify GREEN and commit**
 
-Run: `npx vitest run scripts/qa/recommendation-engine.behavior.test.ts -t "context snapshot"`
-Expected: PASS, including privacy denylist.
+Run: `node_modules/.bin/tsx scripts/qa/recommendation-engine.behavior.test.ts && npm test`
+Expected: focused snapshot tests and full suite PASS, including privacy denylist.
 Commit: `git commit -m "feat(recommendations): build privacy scoped context snapshot"`
 
 ---
