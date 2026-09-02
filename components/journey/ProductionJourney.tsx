@@ -188,7 +188,7 @@ function DogAvatar({ avatar, small = false }: { avatar: ReactNode; small?: boole
   return <div className={`v3-dog-avatar production-journey-avatar${small ? ' small' : ''}`}>{avatar}</div>;
 }
 
-type ScenarioId = 'health' | 'care' | 'handoff';
+type ScenarioId = 'health' | 'care' | 'social' | 'handoff';
 
 function metricQuality(metric: WellbeingMetric, score: number) {
   return metric === 'mood' ? (score - 1) / 3 : 1 - Math.abs(3 - score) / 2;
@@ -313,6 +313,7 @@ function TodayScreen(props: ProductionJourneyProps) {
       <div className="all-scenario-choices" role="group" aria-label="Быстрые сценарии">
         <button type="button" aria-pressed={activeScenario === 'health'} onClick={() => selectScenario('health')}><FirstAid weight="duotone" /><span>Изменилось самочувствие</span></button>
         <button type="button" aria-pressed={activeScenario === 'care'} onClick={() => selectScenario('care')}><CalendarCheck weight="duotone" /><span>Организовать уход</span></button>
+        <button type="button" aria-pressed={activeScenario === 'social'} onClick={() => selectScenario('social')}><UsersThree weight="duotone" /><span>Найти компанию на прогулку</span></button>
         <button type="button" aria-pressed={activeScenario === 'handoff'} onClick={() => selectScenario('handoff')}><ShieldCheck weight="duotone" /><span>Передать собаку другому</span></button>
       </div>
       {activeScenario === 'health' && <article className="all-scenario-workspace is-health" data-scenario-workspace="health">
@@ -324,6 +325,11 @@ function TodayScreen(props: ProductionJourneyProps) {
         <div><h3>Собрать уход в один план</h3><p>{props.careDetail || 'Проверьте ближайшие дела, добавьте повторения и назначьте понятный следующий шаг.'}</p></div>
         <ol><li>Проверьте ближайшее дело</li><li>Добавьте срок или повторение</li><li>Отметьте выполнение в истории</li></ol>
         <div className="all-scenario-actions"><button type="button" onClick={props.onOpenCare}>Открыть план ухода</button>{props.onCareAction && <button type="button" onClick={props.onCareAction}>{props.careActionLabel || careTitle}</button>}</div>
+      </article>}
+      {activeScenario === 'social' && <article className="all-scenario-workspace is-social" data-scenario-workspace="social">
+        <div><h3>Найти компанию для прогулки</h3><p>Откройте «Гав»: посмотрите активные сигналы рядом или позовите на прогулку сами.</p></div>
+        <ol><li>Проверьте Гав-сигналы поблизости</li><li>Выберите подходящие время и темп</li><li>Откликнитесь или дайте свой Гав</li></ol>
+        <div className="all-scenario-actions"><button type="button" onClick={() => props.onNavigate('nearby')}>Открыть Гав</button></div>
       </article>}
       {activeScenario === 'handoff' && <article className="all-scenario-workspace is-handoff" data-scenario-workspace="handoff">
         <div><h3>Подготовить понятную памятку</h3><p>Соберите режим, важные ограничения и контакты, не открывая всю историю {props.dogName}.</p></div>
