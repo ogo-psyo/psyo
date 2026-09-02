@@ -9,6 +9,8 @@ const state = vi.hoisted(() => ({
   recalculate: vi.fn(),
   transition: vi.fn(),
   outcome: vi.fn(),
+  link: vi.fn(),
+  habitCheckin: vi.fn(),
 }));
 
 vi.mock('@/lib/server/auth', () => ({
@@ -25,23 +27,44 @@ vi.mock('@/lib/server/appSession', () => ({
 
 vi.mock('@/lib/server/supabase', () => ({ getSupabaseAdmin: vi.fn(() => state.admin) }));
 
-vi.mock('@/lib/server/recommendations/repository', () => ({
-  createRecommendationService: vi.fn(() => ({
-    listForPet: state.list,
-    recalculateForPet: state.recalculate,
-    store: { kind: 'test-store' },
-  })),
+vi.mock('@/lib/server/recommendations/repository', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/server/recommendations/repository')>();
+  return {
+    ...actual,
+    createRecommendationService: vi.fn(() => ({
+      listForPet: state.list,
+      recalculateForPet: state.recalculate,
+      store: { kind: 'test-store' },
+    })),
+  };
+});
+
+vi.mock('@/lib/server/recommendations/lifecycle', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/server/recommendations/lifecycle')>();
+  return {
+    ...actual,
+    createSupabaseRecommendationDomainAdapter: vi.fn(() => ({ kind: 'test-domain' })),
+    transitionForOwner: state.transition,
+    recordOutcomeForOwner: state.outcome,
+  };
+});
+
+vi.mock('@/lib/server/recommendations/domainOutcomeLink', () => ({
+  linkRecommendationOutcome: state.link,
 }));
 
-vi.mock('@/lib/server/recommendations/lifecycle', () => ({
-  createSupabaseRecommendationDomainAdapter: vi.fn(() => ({ kind: 'test-domain' })),
-  transitionForOwner: state.transition,
-  recordOutcomeForOwner: state.outcome,
-}));
+vi.mock('@/lib/server/habitService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/server/habitService')>();
+  return { ...actual, checkInHabitForOwner: state.habitCheckin };
+});
 
 import { GET, POST } from '@/app/api/recommendations/route';
 import { PATCH } from '@/app/api/recommendations/[id]/route';
 import { POST as POST_OUTCOME } from '@/app/api/recommendations/[id]/outcome/route';
+import { POST as COMPLETE_REMINDER } from '@/app/api/reminders/[id]/complete/route';
+import { POST as CHECK_IN_HABIT } from '@/app/api/habits/[id]/checkins/route';
+import { POST as CREATE_WISHLIST } from '@/app/api/wishlist/route';
+import { GET as GET_MAP, POST as CREATE_MAP_FEATURE } from '@/app/api/map/features/route';
 
 const recommendation = {
   id: 'recommendation-1', petId: 'pet-1', subjectId: 'private-subject', scenarioKey: 'care_due', policyVersion: 'care_due@1',
@@ -72,6 +95,38 @@ async function body(response: Response) {
   return response.json() as Promise<Record<string, unknown>>;
 }
 
+type DbResult = { data: unknown; error: { message: string } | null };
+
+function fakeDatabase(results: Record<string, DbResult>) {
+  const calls: Array<{ target: string; method: string; args: unknown[] }> = [];
+  function query(table: string) {
+    const result = results[table] ?? { data: null, error: null };
+    const chain = {
+      then(resolve: (value: DbResult) => unknown, reject?: (reason: unknown) => unknown) {
+        return Promise.resolve(result).then(resolve, reject);
+      },
+    } as Record<string, unknown>;
+    for (const method of ['eq', 'insert', 'is', 'limit', 'maybeSingle', 'order', 'select', 'single', 'upsert'] as const) {
+      chain[method] = (...args: unknown[]) => {
+        calls.push({ target: table, method, args });
+        return chain;
+      };
+    }
+    return chain;
+  }
+  const client = {
+    from(table: string) {
+      calls.push({ target: table, method: 'from', args: [] });
+      return query(table);
+    },
+    rpc(name: string, args: unknown) {
+      calls.push({ target: 'rpc', method: name, args: [args] });
+      return Promise.resolve(results[`rpc:${name}`] ?? { data: null, error: null });
+    },
+  } as unknown as SupabaseClient;
+  return { client, calls };
+}
+
 beforeEach(() => {
   process.env.RECOMMENDATIONS_FOUNDATION_ENABLED = 'true';
   state.authUserId = 'owner-auth';
@@ -81,6 +136,8 @@ beforeEach(() => {
   state.recalculate.mockReset().mockResolvedValue({ main: recommendation, secondary: [], evaluatedAt: '2026-09-02T12:00:00.000Z' });
   state.transition.mockReset().mockResolvedValue({ recommendation });
   state.outcome.mockReset().mockResolvedValue({ ...recommendation, status: 'completed' });
+  state.link.mockReset().mockResolvedValue('linked');
+  state.habitCheckin.mockReset().mockResolvedValue({ id: 'checkin-1', completedAt: '2026-09-02T12:00:00.000Z', replayed: false });
 });
 
 describe('hidden recommendation collection route', () => {
@@ -174,5 +231,108 @@ describe('recommendation lifecycle routes', () => {
     expect(state.outcome).toHaveBeenCalledWith(expect.objectContaining({
       ownerId: 'owner-auth', outcome: expect.objectContaining({ recommendationId: 'recommendation-1' }),
     }));
+  });
+});
+
+describe('domain outcome post-success linking', () => {
+  test('reminder success links after its domain RPC and link failure stays a successful pending response', async () => {
+    const db = fakeDatabase({ 'rpc:care_complete_reminder_atomic': { data: { id: 'reminder-1', replayed: false }, error: null } });
+    state.admin = db.client;
+    state.link.mockResolvedValueOnce('pending');
+    const response = await COMPLETE_REMINDER(request('/api/reminders/reminder-1/complete', {
+      method: 'POST', headers: { 'Idempotency-Key': 'reminder-key-1' },
+      json: { recommendationId: 'recommendation-1', completedAt: '2026-09-02T12:00:00.000Z' },
+    }), { params: Promise.resolve({ id: 'reminder-1' }) });
+    expect(response.status).toBe(200);
+    expect(await body(response)).toMatchObject({ id: 'reminder-1', recommendationOutcome: 'pending' });
+    expect(state.link).toHaveBeenCalledWith(expect.objectContaining({
+      ownerId: 'owner-auth', recommendationId: 'recommendation-1', domainType: 'reminder', domainId: 'reminder-1',
+    }));
+  });
+
+  test('failed reminder mutation emits no recommendation outcome', async () => {
+    const db = fakeDatabase({ 'rpc:care_complete_reminder_atomic': { data: null, error: { message: 'domain-failed' } } });
+    state.admin = db.client;
+    const response = await COMPLETE_REMINDER(request('/api/reminders/reminder-1/complete', {
+      method: 'POST', headers: { 'Idempotency-Key': 'reminder-key-2' }, json: { recommendationId: 'recommendation-1' },
+    }), { params: Promise.resolve({ id: 'reminder-1' }) });
+    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(state.link).not.toHaveBeenCalled();
+  });
+
+  test('habit and wishlist successes link their persisted domain ids', async () => {
+    state.admin = fakeDatabase({
+      pets: { data: { id: 'pet-1' }, error: null },
+      wishlist_items: { data: { id: 'wishlist-1', pet_id: 'pet-1', title: 'Шлейка' }, error: null },
+    }).client;
+    const habit = await CHECK_IN_HABIT(request('/api/habits/habit-1/checkins', {
+      method: 'POST', headers: { 'Idempotency-Key': 'habit-key-1' }, json: { recommendationId: 'recommendation-1' },
+    }), { params: Promise.resolve({ id: 'habit-1' }) });
+    const wishlist = await CREATE_WISHLIST(request('/api/wishlist', {
+      method: 'POST', headers: { 'Idempotency-Key': 'wishlist-key-1' },
+      json: { petId: 'pet-1', title: 'Шлейка', category: 'gear', recommendationId: 'recommendation-2' },
+    }));
+    expect(habit.status).toBe(201);
+    expect(wishlist.status).toBe(201);
+    expect(state.link).toHaveBeenCalledWith(expect.objectContaining({ domainType: 'habit', domainId: 'habit-1' }));
+    expect(state.link).toHaveBeenCalledWith(expect.objectContaining({ domainType: 'wishlist', domainId: 'wishlist-1' }));
+  });
+
+  test('opening the map is not completion, while saving a route is', async () => {
+    const db = fakeDatabase({
+      'rpc:get_map_features_in_bounds': { data: [], error: null },
+      pets: { data: { id: 'pet-1' }, error: null },
+      map_routes: { data: { id: 'route-1', share_token: null }, error: null },
+    });
+    state.admin = db.client;
+    const opened = await GET_MAP(request('/api/map/features?bounds=55,37,56,38'));
+    expect(opened.status).toBe(200);
+    expect(state.link).not.toHaveBeenCalled();
+    const saved = await CREATE_MAP_FEATURE(request('/api/map/features', {
+      method: 'POST', headers: { 'Idempotency-Key': 'route-key-1' },
+      json: {
+        type: 'route', petId: 'pet-1', title: 'Маршрут', path: [[37.61, 55.75], [37.62, 55.76]],
+        recommendationId: 'recommendation-1', routeSource: 'recorded', startedAt: '2026-09-02T11:00:00.000Z',
+      },
+    }));
+    expect(saved.status).toBe(201);
+    expect(state.link).toHaveBeenCalledWith(expect.objectContaining({ domainType: 'route', domainId: 'route-1' }));
+  });
+
+  test('domain replay reuses the same derived outcome key', async () => {
+    const db = fakeDatabase({ 'rpc:care_complete_reminder_atomic': { data: { id: 'reminder-1', replayed: true }, error: null } });
+    state.admin = db.client;
+    const make = () => COMPLETE_REMINDER(request('/api/reminders/reminder-1/complete', {
+      method: 'POST', headers: { 'Idempotency-Key': 'replay-key-1' }, json: { recommendationId: 'recommendation-1' },
+    }), { params: Promise.resolve({ id: 'reminder-1' }) });
+    await make();
+    await make();
+    const keys = state.link.mock.calls.map(([input]) => (input as { idempotencyKey: string }).idempotencyKey);
+    expect(keys).toEqual(['replay-key-1', 'replay-key-1']);
+  });
+
+  test('foreign recommendation is queued as a retryable failure and never reported linked', async () => {
+    const actual = await vi.importActual<typeof import('@/lib/server/recommendations/domainOutcomeLink')>(
+      '@/lib/server/recommendations/domainOutcomeLink',
+    );
+    const db = fakeDatabase({ recommendation_outcome_failures: { data: null, error: null } });
+    const result = await actual.linkRecommendationOutcome({
+      supabase: db.client,
+      ownerId: 'owner-auth',
+      recommendationId: 'foreign-recommendation',
+      domainType: 'reminder',
+      domainId: 'reminder-1',
+      result: 'completed',
+      idempotencyKey: 'foreign-key-1',
+      occurredAt: '2026-09-02T12:00:00.000Z',
+    }, {
+      store: () => ({}) as never,
+      domain: () => ({}) as never,
+      record: async () => { throw new Error('RECOMMENDATION_NOT_FOUND'); },
+    });
+    expect(result).toBe('pending');
+    expect(db.calls).toContainEqual(expect.objectContaining({ target: 'recommendation_outcome_failures', method: 'upsert' }));
+    const upsert = db.calls.find((call) => call.target === 'recommendation_outcome_failures' && call.method === 'upsert');
+    expect(upsert?.args[0]).toMatchObject({ owner_id: 'owner-auth', error_code: 'RECOMMENDATION_NOT_FOUND' });
   });
 });

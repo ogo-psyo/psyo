@@ -465,17 +465,17 @@ Commit: `git commit -m "feat(recommendations): expose flagged owner scoped api"`
 - Consumes optional `recommendationId` plus existing idempotency key.
 - Produces an outcome event only after the existing domain mutation succeeds.
 
-- [ ] **Step 1: Add failing coupling tests**
+- [x] **Step 1: Add failing coupling tests**
 
 Assert: domain success then outcome event; domain failure creates none; foreign recommendation cannot be linked; replay creates one outcome; opening map is not completion; route start/save is completion.
 
-- [ ] **Step 2: Add optional post-success hook**
+- [x] **Step 2: Add optional post-success hook**
 
 Extract `linkRecommendationOutcome({ supabase, ownerId, recommendationId, domainType, domainId, result, idempotencyKey })`. Domain mutation remains source of truth. If linking fails after domain success, return domain success with `recommendationOutcome: 'pending'` and record retryable failure; never roll back or lie about the domain result.
 
-- [ ] **Step 3: Verify integration behavior**
+- [x] **Step 3: Verify integration behavior**
 
-Run: `npx vitest run scripts/qa/recommendation-routes.behavior.test.ts -t "domain outcome"`
+Run: `npx vitest run scripts/qa/vitest/recommendation-routes.test.ts -t "domain outcome"`
 Expected: PASS.
 Commit: `git commit -m "feat(recommendations): connect verified domain outcomes"`
 

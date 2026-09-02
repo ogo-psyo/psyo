@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
 import { getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
+import { linkRecommendationOutcome } from '@/lib/server/recommendations/domainOutcomeLink';
 
 export const runtime = 'nodejs';
 
@@ -61,5 +62,13 @@ export async function POST(request: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ item: data, mode: 'supabase' }, { status: 201 });
+  const recommendationId = typeof body.recommendationId === 'string' ? body.recommendationId.trim() : '';
+  const recommendationOutcome = recommendationId && process.env.RECOMMENDATIONS_FOUNDATION_ENABLED === 'true'
+    ? await linkRecommendationOutcome({
+      supabase, ownerId, recommendationId, domainType: 'wishlist', domainId: data.id, result: 'completed',
+      idempotencyKey: request.headers.get('idempotency-key')?.trim() || `wishlist:${data.id}`,
+      occurredAt: data.created_at,
+    })
+    : undefined;
+  return NextResponse.json({ item: data, mode: 'supabase', ...(recommendationOutcome ? { recommendationOutcome } : {}) }, { status: 201 });
 }

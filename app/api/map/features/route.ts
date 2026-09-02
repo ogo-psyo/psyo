@@ -3,6 +3,7 @@ import { blurPublicZoneInput, isValidGeoPoint } from '@/lib/geo';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { getRequestAuth } from '@/lib/server/auth';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
+import { linkRecommendationOutcome } from '@/lib/server/recommendations/domainOutcomeLink';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -147,7 +148,19 @@ export async function POST(request: Request) {
     }).select('*').single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ feature: data, shareUrl: visibility === 'shared' ? shareUrl(request, data.share_token) : null }, { status: 201 });
+    const recommendationId = typeof body.recommendationId === 'string' ? body.recommendationId.trim() : '';
+    const recommendationOutcome = recommendationId && process.env.RECOMMENDATIONS_FOUNDATION_ENABLED === 'true'
+      ? await linkRecommendationOutcome({
+        supabase, ownerId: ownerId!, recommendationId, domainType: 'route', domainId: data.id, result: 'completed',
+        idempotencyKey: request.headers.get('idempotency-key')?.trim() || `route:${data.id}`,
+        occurredAt: data.created_at,
+      })
+      : undefined;
+    return NextResponse.json({
+      feature: data,
+      shareUrl: visibility === 'shared' ? shareUrl(request, data.share_token) : null,
+      ...(recommendationOutcome ? { recommendationOutcome } : {}),
+    }, { status: 201 });
   }
 
   return NextResponse.json({ error: 'type must be point or route' }, { status: 400 });

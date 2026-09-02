@@ -1,7 +1,9 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(4);
+select plan(5);
+
+select has_table('public', 'recommendation_outcome_failures', 'retryable outcome failures have durable storage');
 
 do $$
 declare
@@ -53,8 +55,15 @@ begin
     v_owner, 'outside-card-fail', repeat('4', 64), v_id, 'fail',
     jsonb_build_object('domainType', 'reminder', 'domainId', '3ddddddd-dddd-4ddd-8ddd-dddddddddddd', 'occurredAt', now())
   );
+  perform public.recommendation_outcome_atomic(
+    v_owner, 'outside-card-fail', repeat('4', 64), v_id, 'fail',
+    jsonb_build_object('domainType', 'reminder', 'domainId', '3ddddddd-dddd-4ddd-8ddd-dddddddddddd', 'occurredAt', now())
+  );
   if (select status from public.recommendations where id = v_id) <> 'failed' then
     raise exception 'failed outcome became another status';
+  end if;
+  if (select count(*) from public.recommendation_events where recommendation_id = v_id and event_type = 'fail') <> 1 then
+    raise exception 'outcome replay duplicated its event';
   end if;
 end
 $$;

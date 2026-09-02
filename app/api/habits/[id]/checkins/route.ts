@@ -5,6 +5,7 @@ import { checkInHabitForOwner } from '@/lib/server/habitService';
 import { readCareIdempotencyKey } from '@/lib/server/careHttp';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
 import { problem } from '@/packages/contracts';
+import { linkRecommendationOutcome } from '@/lib/server/recommendations/domainOutcomeLink';
 
 export const runtime = 'nodejs';
 type Ctx = { params: Promise<{ id: string }> };
@@ -29,7 +30,16 @@ export async function POST(request: Request, ctx: Ctx) {
       completedAt: typeof body.completedAt === 'string' ? body.completedAt : undefined,
       note: typeof body.note === 'string' ? body.note : undefined,
     });
-    return NextResponse.json({ checkin }, { status: checkin.replayed ? 200 : 201 });
+    const recommendationId = typeof body.recommendationId === 'string' ? body.recommendationId.trim() : '';
+    const recommendationOutcome = recommendationId && process.env.RECOMMENDATIONS_FOUNDATION_ENABLED === 'true'
+      ? await linkRecommendationOutcome({
+        supabase, ownerId, recommendationId, domainType: 'habit', domainId: id, result: 'completed', idempotencyKey,
+        occurredAt: checkin.completedAt,
+      })
+      : undefined;
+    return NextResponse.json({ checkin, ...(recommendationOutcome ? { recommendationOutcome } : {}) }, {
+      status: checkin.replayed ? 200 : 201,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
     const status = message.includes('HABIT_NOT_FOUND') ? 404 : message.includes('IDEMPOTENCY_KEY_REUSED') ? 409 : 500;

@@ -131,7 +131,11 @@ export async function recordOutcomeForOwner(input: {
 }) {
   const recommendation = await input.store.getForOwner(input.ownerId, input.outcome.recommendationId);
   if (!recommendation) throw new Error('RECOMMENDATION_NOT_FOUND');
-  if (!['shown', 'accepted'].includes(recommendation.status)) throw new Error('INVALID_RECOMMENDATION_OUTCOME_STATE');
+  const matchingTerminal = recommendation.status === (input.outcome.result === 'completed' ? 'completed' : 'failed')
+    && Boolean(input.idempotencyKey);
+  if (!['shown', 'accepted'].includes(recommendation.status) && !matchingTerminal) {
+    throw new Error('INVALID_RECOMMENDATION_OUTCOME_STATE');
+  }
   if (!input.outcome.domainId.trim() || !Number.isFinite(Date.parse(input.outcome.occurredAt))) {
     throw new Error('INVALID_RECOMMENDATION_OUTCOME');
   }
