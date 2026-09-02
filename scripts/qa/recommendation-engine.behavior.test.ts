@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { loadRecommendationContext } from '../../lib/server/recommendations/contextSnapshot';
+import type { RecommendationContextSnapshot } from '../../lib/server/recommendations/contextSnapshot';
+import { buildCandidates, getPolicy, listActivePolicies } from '../../lib/server/recommendations/policyRegistry';
 
 type Fixture = { data: unknown; error: unknown };
 
@@ -143,4 +145,141 @@ test('context snapshot stops after the owner check for an unowned pet', async ()
   );
 
   assert.deepEqual(calls.filter((call) => call.startsWith('from:')), ['from:pets']);
+});
+
+function policySnapshot(overrides: Partial<RecommendationContextSnapshot> = {}): RecommendationContextSnapshot {
+  const capturedAt = '2026-09-02T12:00:00.000Z';
+  const profileEvidence = {
+    sourceType: 'profile' as const, sourceId: 'pet-1', capturedAt, ownerConfirmed: true,
+  };
+  return {
+    petId: 'pet-1', capturedAt,
+    pet: { id: 'pet-1', lifeStage: 'adult', evidence: profileEvidence },
+    passport: null,
+    social: null,
+    reminders: [],
+    observations: [],
+    habits: [],
+    zones: [],
+    wishlist: [],
+    facts: [profileEvidence],
+    ...overrides,
+  };
+}
+
+test('policy registry exposes exactly five immutable versioned policies', () => {
+  assert.deepEqual(listActivePolicies().map(({ key, version }) => [key, version]), [
+    ['care_due', 'care_due@1'],
+    ['wellbeing_change', 'wellbeing_change@1'],
+    ['habit_explicit_goal', 'habit_explicit_goal@1'],
+    ['walk_with_constraints', 'walk_with_constraints@1'],
+    ['thing_for_task', 'thing_for_task@1'],
+  ]);
+  assert.equal(getPolicy('care_due')?.version, 'care_due@1');
+  assert.equal(getPolicy('care_due', 'care_due@1')?.key, 'care_due');
+  assert.equal(getPolicy('care_due', 'care_due@99'), undefined);
+  assert.equal(getPolicy('red_flag'), undefined);
+  assert.equal(listActivePolicies().every((policy) => Object.isFrozen(policy)), true);
+  assert.equal(Object.isFrozen(listActivePolicies()), true);
+});
+
+test('policy care_due creates candidates only for overdue or upcoming active reminders', () => {
+  const capturedAt = '2026-09-02T12:00:00.000Z';
+  const reminder = (id: string, dueAt: string, status = 'active') => ({
+    id, type: 'grooming', title: `Дело ${id}`, dueAt, status,
+    evidence: { sourceType: 'reminder' as const, sourceId: id, capturedAt, dueAt, ownerConfirmed: true },
+  });
+  const candidates = buildCandidates(policySnapshot({
+    reminders: [
+      reminder('overdue', '2026-09-01T12:00:00.000Z'),
+      reminder('upcoming', '2026-09-05T12:00:00.000Z'),
+      reminder('far', '2026-10-01T12:00:00.000Z'),
+      reminder('done', '2026-09-01T12:00:00.000Z', 'done'),
+    ],
+  }), { now: new Date(capturedAt) });
+  const care = candidates.filter((candidate) => candidate.scenarioKey === 'care_due');
+  assert.deepEqual(care.map((candidate) => candidate.subjectId), ['overdue', 'upcoming']);
+  assert.deepEqual(care.map((candidate) => candidate.primaryAction.intent), ['open_reminder', 'open_reminder']);
+});
+
+test('policy wellbeing_change needs two comparable owner-confirmed observations and never diagnoses', () => {
+  const capturedAt = '2026-09-02T12:00:00.000Z';
+  const observation = (id: string, type: string, observedAt: string, sufficient = true, value = 'ест меньше') => ({
+    id, type, observedAt, source: 'assistant', sufficient, value: sufficient ? value : undefined,
+    evidence: {
+      sourceType: 'observation' as const, sourceId: id, capturedAt, observedAt,
+      ownerConfirmed: sufficient, inputConfidence: 0.91, excerpt: sufficient ? 'ест меньше' : undefined,
+    },
+  });
+  const positive = buildCandidates(policySnapshot({ observations: [
+    observation('new', 'appetite', '2026-09-02T10:00:00.000Z'),
+    observation('old', 'appetite', '2026-09-01T10:00:00.000Z', true, 'как обычно'),
+  ] }), { now: new Date(capturedAt) }).filter((candidate) => candidate.scenarioKey === 'wellbeing_change');
+  assert.equal(positive.length, 1);
+  assert.equal(positive[0]?.risk, 'caution');
+  assert.equal(positive[0]?.primaryAction.intent, 'open_health');
+  assert.equal(positive[0]?.limitation, 'Это наблюдение, а не диагноз.');
+  assert.equal(JSON.stringify(positive).includes('заболевание'), false);
+
+  const unconfirmed = buildCandidates(policySnapshot({ observations: [
+    observation('new', 'appetite', '2026-09-02T10:00:00.000Z', false),
+    observation('old', 'appetite', '2026-09-01T10:00:00.000Z'),
+  ] }), { now: new Date(capturedAt) });
+  assert.equal(unconfirmed.some((candidate) => candidate.scenarioKey === 'wellbeing_change'), false);
+});
+
+test('policy habit_explicit_goal requires an explicit goal and respects habit and wellbeing conflicts', () => {
+  const now = new Date('2026-09-02T12:00:00.000Z');
+  const explicitGoal = { requestId: 'request-habit-1', kind: 'training', title: 'Выдержка', cadence: 'daily' as const, targetPerPeriod: 1 };
+  const positive = buildCandidates(policySnapshot(), { now, explicitGoal });
+  assert.equal(positive.filter((candidate) => candidate.scenarioKey === 'habit_explicit_goal').length, 1);
+  assert.equal(buildCandidates(policySnapshot(), { now }).some((candidate) => candidate.scenarioKey === 'habit_explicit_goal'), false);
+  assert.equal(buildCandidates(policySnapshot({ pet: {
+    id: 'pet-1', lifeStage: 'adult', breedId: 'border-collie', evidence: policySnapshot().pet.evidence,
+  } }), { now }).some((candidate) => candidate.scenarioKey === 'habit_explicit_goal'), false);
+
+  const existingHabit = {
+    id: 'habit-1', kind: 'training', title: 'выдержка', cadence: 'daily', targetPerPeriod: 1, status: 'active',
+    evidence: { sourceType: 'habit' as const, sourceId: 'habit-1', capturedAt: now.toISOString(), ownerConfirmed: true },
+  };
+  assert.equal(buildCandidates(policySnapshot({ habits: [existingHabit] }), { now, explicitGoal })
+    .some((candidate) => candidate.scenarioKey === 'habit_explicit_goal'), false);
+});
+
+test('policy walk_with_constraints is explicit and exposes zone IDs without coordinates', () => {
+  const capturedAt = '2026-09-02T12:00:00.000Z';
+  const zone = {
+    id: 'zone-1', type: 'risk_zone', title: 'Самокаты', areaLabel: 'у парка',
+    evidence: { sourceType: 'map_zone' as const, sourceId: 'zone-1', capturedAt, ownerConfirmed: true },
+  };
+  const passive = buildCandidates(policySnapshot({ zones: [zone] }), { now: new Date(capturedAt) });
+  assert.equal(passive.some((candidate) => candidate.scenarioKey === 'walk_with_constraints'), false);
+  const active = buildCandidates(policySnapshot({ zones: [zone] }), {
+    now: new Date(capturedAt), walk: { requestId: 'request-walk-1', mode: 'explicit' },
+  }).filter((candidate) => candidate.scenarioKey === 'walk_with_constraints');
+  assert.equal(active.length, 1);
+  assert.deepEqual(active[0]?.primaryAction, {
+    intent: 'plan_walk', zoneIds: ['zone-1'], limitation: 'route_not_verified_safe',
+  });
+  assert.equal(active[0]?.limitation, 'Псё не подтверждает безопасность маршрута.');
+});
+
+test('policy thing_for_task needs a reason and suppresses bought or unsuitable matches', () => {
+  const now = new Date('2026-09-02T12:00:00.000Z');
+  const request = { requestId: 'request-thing-1', title: 'Шлейка', category: 'gear', reason: 'для прогулки' };
+  const positive = buildCandidates(policySnapshot(), { now, thing: request })
+    .filter((candidate) => candidate.scenarioKey === 'thing_for_task');
+  assert.equal(positive.length, 1);
+  assert.deepEqual(positive[0]?.primaryAction, {
+    intent: 'add_wishlist', draft: { title: 'Шлейка', category: 'gear', reason: 'для прогулки' },
+  });
+  assert.equal(buildCandidates(policySnapshot(), {
+    now, thing: { ...request, reason: '' },
+  }).some((candidate) => candidate.scenarioKey === 'thing_for_task'), false);
+  const prior = {
+    id: 'thing-1', title: 'шлейка', category: 'gear', reason: 'для прогулки', priority: 'medium', status: 'not_suitable',
+    evidence: { sourceType: 'wishlist' as const, sourceId: 'thing-1', capturedAt: now.toISOString(), ownerConfirmed: true },
+  };
+  assert.equal(buildCandidates(policySnapshot({ wishlist: [prior] }), { now, thing: request })
+    .some((candidate) => candidate.scenarioKey === 'thing_for_task'), false);
 });

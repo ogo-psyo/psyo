@@ -284,7 +284,7 @@ Commit: `git commit -m "feat(recommendations): build privacy scoped context snap
 - Produces: `getPolicy(key, version?)`, `listActivePolicies()`, `buildCandidates(snapshot, requestContext)`.
 - Policy signature: `(snapshot: RecommendationContextSnapshot, context: EvaluationContext) => RecommendationCandidate[]`.
 
-- [ ] **Step 1: Add failing registry immutability/version tests**
+- [x] **Step 1: Add failing registry immutability/version tests**
 
 Assert exact active keys and versions:
 
@@ -298,11 +298,11 @@ assert.deepEqual(listActivePolicies().map(({ key, version }) => [key, version]),
 ]);
 ```
 
-- [ ] **Step 2: Implement readonly registry**
+- [x] **Step 2: Implement readonly registry**
 
 Each entry defines `category`, `tier`, required evidence, freshness, expiry, default cooldown, allowed action intents, template copy and generator. `Object.freeze` registry and entries. Do not add a red-flag policy.
 
-- [ ] **Step 3: Implement candidate rules**
+- [x] **Step 3: Implement candidate rules**
 
 - `care_due@1`: overdue/upcoming active reminder; primary action `open_reminder`.
 - `wellbeing_change@1`: owner-confirmed comparable observation; never diagnoses; `risk='caution'`; expiry 24h; action `open_health`.
@@ -310,9 +310,9 @@ Each entry defines `category`, `tier`, required evidence, freshness, expiry, def
 - `walk_with_constraints@1`: only explicit request/open walk flow; risk-zone IDs without coordinates; limitation is mandatory.
 - `thing_for_task@1`: explicit reason/reminder; category-level draft only; suppress matching `bought/not_suitable`.
 
-- [ ] **Step 4: Verify all scenario fixtures**
+- [x] **Step 4: Verify all scenario fixtures**
 
-Run: `npx vitest run scripts/qa/recommendation-engine.behavior.test.ts -t "policy"`
+Run: `node_modules/.bin/tsx scripts/qa/recommendation-engine.behavior.test.ts`
 Expected: each positive fixture creates one candidate; breed-only habit, unconfirmed health, no-reason thing and passive walk create none.
 Commit: `git commit -m "feat(recommendations): add versioned phase zero policies"`
 
