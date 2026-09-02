@@ -9,9 +9,22 @@ import {
   socialRequestFingerprint,
   socialAvatarUrl,
 } from '@/lib/server/socialService';
+import { linkRecommendationOutcome } from '@/lib/server/recommendations/domainOutcomeLink';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+async function linkSignalRecommendation(input: {
+  supabase: Parameters<typeof linkRecommendationOutcome>[0]['supabase']; ownerId: string;
+  recommendationId: string; requestId: string; idempotencyKey: string; occurredAt?: string;
+}) {
+  if (!input.recommendationId || process.env.RECOMMENDATIONS_FOUNDATION_ENABLED !== 'true') return undefined;
+  return linkRecommendationOutcome({
+    supabase: input.supabase, ownerId: input.ownerId, recommendationId: input.recommendationId,
+    domainType: 'social_request', domainId: input.requestId, result: 'completed',
+    idempotencyKey: input.idempotencyKey, occurredAt: input.occurredAt,
+  });
+}
 
 function compactRequest(
   row: any,
@@ -50,6 +63,7 @@ export async function POST(request: Request) {
   const source = signalId ? 'signal' : 'organic';
   const message = typeof body?.message === 'string' ? body.message.trim().slice(0, 500) || null : null;
   const idempotencyKey = readIdempotencyKey(request, body);
+  const recommendationId = typeof body?.recommendationId === 'string' ? body.recommendationId.trim() : '';
   if (!senderPetId || !recipientPetId || !socialScenarios.includes(scenario as SocialScenario) || !idempotencyKey) {
     return NextResponse.json({ error: !idempotencyKey ? 'IDEMPOTENCY_KEY_REQUIRED' : 'INVALID_MATCH_REQUEST' }, { status: 400 });
   }
@@ -76,7 +90,11 @@ export async function POST(request: Request) {
       if (replay.request_fingerprint !== fingerprint) {
         return NextResponse.json({ error: 'IDEMPOTENCY_KEY_REUSED' }, { status: 409 });
       }
-      return NextResponse.json({ request: compactRequest(replay), replayed: true });
+      const recommendationOutcome = signalId ? await linkSignalRecommendation({
+        supabase: context.supabase, ownerId: context.ownerId, recommendationId,
+        requestId: replay.id, idempotencyKey, occurredAt: replay.created_at,
+      }) : undefined;
+      return NextResponse.json({ request: compactRequest(replay), replayed: true, ...(recommendationOutcome ? { recommendationOutcome } : {}) });
     }
     await enforceSocialRateLimit({
       supabase: context.supabase, table: 'social_match_requests', ownerColumn: 'sender_owner_id',
@@ -142,7 +160,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'REQUEST_ALREADY_PENDING' }, { status: 409 });
     }
     if (error) return socialStorageError();
-    return NextResponse.json({ request: compactRequest(data) }, { status: 201 });
+    const recommendationOutcome = signalId ? await linkSignalRecommendation({
+      supabase: context.supabase, ownerId: context.ownerId, recommendationId,
+      requestId: data.id, idempotencyKey, occurredAt: data.created_at,
+    }) : undefined;
+    return NextResponse.json({ request: compactRequest(data), ...(recommendationOutcome ? { recommendationOutcome } : {}) }, { status: 201 });
   } catch (error) {
     return socialStorageError(error);
   }

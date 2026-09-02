@@ -26,7 +26,7 @@ import { CandidateCard } from '@/components/social/CandidateCard';
 import { CityCommunities, type CityCommunity } from '@/components/social/CityCommunities';
 import { RequestsPanel, type SocialRequestView } from '@/components/social/RequestsPanel';
 import { SocialProfileSheet } from '@/components/social/SocialProfileSheet';
-import { ProductionWoofWorkspace } from '@/components/social/ProductionWoofWorkspace';
+import { ProductionWoofWorkspace, type WoofRecommendationEntry } from '@/components/social/ProductionWoofWorkspace';
 import { SelectField } from '@/components/ui/FormControls';
 import {
   anchorCards,
@@ -585,6 +585,7 @@ export default function Home() {
   const [newWishCategory, setNewWishCategory] = useState('gear');
   const [thingCaptureOpen, setThingCaptureOpen] = useState(false);
   const [mainRecommendation, setMainRecommendation] = useState<Recommendation | null>(null);
+  const [woofRecommendationEntry, setWoofRecommendationEntry] = useState<WoofRecommendationEntry | null>(null);
   const [recommendationState, setRecommendationState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [recommendationBusyAction, setRecommendationBusyAction] = useState<'primary' | 'snooze' | 'dismiss' | null>(null);
   const [viralCardFormat, setViralCardFormat] = useState<ViralCardFormat>('story');
@@ -887,6 +888,19 @@ export default function Home() {
   }
 
   function openRecommendationAction(action: RecommendationAction) {
+    if (action.intent === 'open_gav') {
+      setWoofRecommendationEntry({
+        key: crypto.randomUUID(),
+        view: action.view,
+        targetId: action.view === 'live_signal' ? action.signalId : action.view === 'requests' ? action.requestId : undefined,
+      });
+      setTabState('nearby');
+      setJourneyDetail('nearby');
+      const nextUrl = new URL(window.location.href);
+      nextUrl.hash = 'nearby';
+      window.history.pushState({ tab: 'nearby', detail: 'nearby' }, '', nextUrl);
+      return;
+    }
     if (action.intent === 'open_reminder') {
       setCareView('active');
       setTab('calendar');
@@ -925,6 +939,14 @@ export default function Home() {
     if (mainRecommendation?.status !== 'accepted' || mainRecommendation.primaryAction.intent !== intent) return undefined;
     if (intent === 'open_reminder' && mainRecommendation.primaryAction.intent === 'open_reminder'
       && mainRecommendation.primaryAction.reminderId !== domainId) return undefined;
+    return mainRecommendation.id;
+  }
+
+  function acceptedGavRecommendationId(view: 'live_signal' | 'requests' | 'give_signal', targetId?: string) {
+    const action = mainRecommendation?.primaryAction;
+    if (mainRecommendation?.status !== 'accepted' || action?.intent !== 'open_gav' || action.view !== view) return undefined;
+    if (view === 'live_signal' && action.view === 'live_signal' && action.signalId !== targetId) return undefined;
+    if (view === 'requests' && action.view === 'requests' && action.requestId !== targetId) return undefined;
     return mainRecommendation.id;
   }
 
@@ -1120,6 +1142,7 @@ export default function Home() {
     const idempotencyKey = socialRequestKeysRef.current[keyId] ?? `social-request:${crypto.randomUUID()}`;
     socialRequestKeysRef.current[keyId] = idempotencyKey;
     setSocialBusyId(candidatePetId);
+    const recommendationId = signalId ? acceptedGavRecommendationId('live_signal', signalId) : undefined;
     try {
       const response = await fetch('/api/social/requests', {
         method: 'POST',
@@ -1130,6 +1153,7 @@ export default function Home() {
           recipientPetId: candidatePetId,
           scenario,
           signalId,
+          recommendationId,
           idempotencyKey,
         }),
       });
@@ -1139,6 +1163,7 @@ export default function Home() {
       }
       delete socialRequestKeysRef.current[keyId];
       await loadSocialSurface();
+      if (response.ok) finishRecommendationOutcome(recommendationId);
     } finally {
       setSocialBusyId(null);
     }
@@ -1150,6 +1175,7 @@ export default function Home() {
     setSocialBusyId('signal');
     setSocialViewerLocation(draft.location);
     setError('');
+    const recommendationId = acceptedGavRecommendationId('give_signal');
     try {
       const response = await fetch('/api/social/signals', {
         method: 'PUT', credentials: 'include',
@@ -1163,6 +1189,7 @@ export default function Home() {
           pace: draft.pace,
           note: draft.note,
           idempotencyKey,
+          recommendationId,
         }),
       });
       if (!response.ok) {
@@ -1170,6 +1197,7 @@ export default function Home() {
         return;
       }
       await loadSocialSurface();
+      finishRecommendationOutcome(recommendationId);
     } finally { setSocialBusyId(null); }
   }
 
@@ -1190,18 +1218,20 @@ export default function Home() {
   async function updateSocialRequest(id: string, action: 'accept' | 'reject' | 'cancel' | 'close' | 'block') {
     if (socialBusyId) return;
     setSocialBusyId(id);
+    const recommendationId = action === 'accept' ? acceptedGavRecommendationId('requests', id) : undefined;
     try {
       const response = await fetch(`/api/social/requests/${encodeURIComponent(id)}`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, recommendationId }),
       });
       if (!response.ok) {
         setError(action === 'block' ? 'Не получилось заблокировать пользователя.' : 'Не получилось изменить запрос.');
         return;
       }
       await loadSocialSurface();
+      finishRecommendationOutcome(recommendationId);
     } finally {
       setSocialBusyId(null);
     }
@@ -4298,6 +4328,7 @@ export default function Home() {
         />}
 
         {hasDog && tab === 'nearby' && journeyDetail === 'nearby' && <ProductionWoofWorkspace
+          key={woofRecommendationEntry?.key ?? 'woof-workspace'}
           dogName={profile.dogName || 'Собака'}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" fill />}
           profile={socialProfile}
@@ -4314,6 +4345,7 @@ export default function Home() {
           missingTelegramUsernameAction={missingTelegramUsernameAction}
           invite={socialInvite ? { petName: socialInvite.petName, expiresAt: socialInvite.expiresAt } : null}
           inviteState={socialInviteState}
+          recommendationEntry={woofRecommendationEntry}
           onAcceptInvite={acceptSocialInvite}
           onDismissInvite={dismissSocialInvite}
           onSaveProfile={saveSocialProfile}

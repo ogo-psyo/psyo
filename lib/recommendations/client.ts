@@ -101,5 +101,8 @@ export function recommendationActionLabel(action: RecommendationAction) {
   if (action.intent === 'open_health') return 'Открыть наблюдения';
   if (action.intent === 'open_habits') return 'Добавить привычку';
   if (action.intent === 'plan_walk') return 'Спланировать прогулку';
-  return 'Добавить в вещи';
+  if (action.intent === 'add_wishlist') return 'Добавить в вещи';
+  if (action.view === 'requests') return 'Ответить';
+  if (action.view === 'give_signal') return 'Дать Гав';
+  return 'Открыть Гав';
 }

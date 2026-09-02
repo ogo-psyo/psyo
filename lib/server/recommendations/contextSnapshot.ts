@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { RecommendationEvidence } from '@/packages/recommendations/contracts';
+import { distanceKm } from '@/lib/socialCore';
 
 type Row = Record<string, unknown>;
 type QueryResult<T> = { data: T; error: unknown };
@@ -35,6 +36,30 @@ export type RecommendationContextSnapshot = {
     catFriendly?: string;
     triggers: string[];
   } & WithEvidence) | null;
+  socialDiscovery: ({
+    discoverable: boolean;
+    city: string;
+    scenarios: string[];
+    hasCoarseLocation: boolean;
+    ownSignalActive: boolean;
+  } & WithEvidence) | null;
+  socialRequests: Array<{
+    id: string;
+    scenario: string;
+    source: string;
+    status: string;
+    createdAt: string;
+  } & WithEvidence>;
+  walkSignals: Array<{
+    id: string;
+    petId: string;
+    name: string;
+    startsAt: string;
+    expiresAt: string;
+    pace: string;
+    temperament?: string;
+    dogFriendly?: string;
+  } & WithEvidence>;
   reminders: Array<{
     id: string;
     type: string;
@@ -91,6 +116,11 @@ function rows(value: unknown): Row[] {
   return result;
 }
 
+function nestedRow(value: unknown): Row | null {
+  if (Array.isArray(value)) return row(value[0]);
+  return row(value);
+}
+
 function text(value: unknown, limit = 160): string | undefined {
   if (typeof value !== 'string') return undefined;
   const normalized = value.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -135,7 +165,15 @@ export async function loadRecommendationContext(input: {
   throwQueryError(petResult);
   if (!petResult.data) throw new Error('PET_NOT_FOUND');
 
-  const [passportResult, socialResult, remindersResult, observationsResult, habitsResult, zonesResult, wishlistResult] = await Promise.all([
+  const discoveryResult = await input.supabase.from('social_discovery_profiles')
+    .select('pet_id,discoverable,city,scenarios,coarse_lat,coarse_lng,updated_at')
+    .eq('pet_id', input.petId).maybeSingle() as unknown as QueryResult<Row | null>;
+  throwQueryError(discoveryResult);
+  const discoveryRow = row(discoveryResult.data);
+  const discoveryCity = text(discoveryRow?.city, 40);
+
+  const [passportResult, socialResult, remindersResult, observationsResult, habitsResult, zonesResult, wishlistResult,
+    socialRequestsResult, blocksResult, reportsResult, walkSignalsResult] = await Promise.all([
     input.supabase.from('pet_passports')
       .select('pet_id,diet,allergies,medication,health_notes,vaccine_status,parasite_status,updated_at')
       .eq('pet_id', input.petId).maybeSingle(),
@@ -158,11 +196,25 @@ export async function loadRecommendationContext(input: {
     input.supabase.from('wishlist_items')
       .select('id,title,category,reason,priority,status,created_at,updated_at')
       .eq('pet_id', input.petId).is('deleted_at', null),
+    input.supabase.from('social_match_requests')
+      .select('id,sender_owner_id,sender_pet_id,recipient_owner_id,recipient_pet_id,scenario,source,signal_id,status,created_at,updated_at')
+      .or(`sender_pet_id.eq.${input.petId},recipient_pet_id.eq.${input.petId}`).in('status', ['pending', 'accepted'])
+      .order('created_at', { ascending: false }).limit(20),
+    input.supabase.from('social_blocks').select('blocker_owner_id,blocked_owner_id')
+      .or(`blocker_owner_id.eq.${input.ownerId},blocked_owner_id.eq.${input.ownerId}`),
+    input.supabase.from('social_reports').select('reported_owner_id').eq('reporter_owner_id', input.ownerId),
+    discoveryCity ? input.supabase.from('social_walk_signals')
+      .select('id,owner_id,pet_id,city,coarse_lat,coarse_lng,starts_at,expires_at,pace,status,updated_at,pets!inner(name,social_profiles(temperament,dog_friendly))')
+      .eq('city', discoveryCity).eq('status', 'active').gt('expires_at', capturedAt)
+      .order('starts_at', { ascending: true }).limit(100)
+      : Promise.resolve({ data: [], error: null }),
   ]) as unknown as [
     QueryResult<Row | null>, QueryResult<Row | null>, QueryResult<Row[]>, QueryResult<Row[]>,
+    QueryResult<Row[]>, QueryResult<Row[]>, QueryResult<Row[]>, QueryResult<Row[]>,
     QueryResult<Row[]>, QueryResult<Row[]>, QueryResult<Row[]>,
   ];
-  for (const result of [passportResult, socialResult, remindersResult, observationsResult, habitsResult, zonesResult, wishlistResult]) {
+  for (const result of [passportResult, socialResult, remindersResult, observationsResult, habitsResult, zonesResult, wishlistResult,
+    socialRequestsResult, blocksResult, reportsResult, walkSignalsResult]) {
     throwQueryError(result);
   }
 
@@ -206,6 +258,91 @@ export async function loadRecommendationContext(input: {
       updatedAt: iso(socialRow.updated_at),
     }, capturedAt),
   } : null;
+
+  const discoveryLat = number(discoveryRow?.coarse_lat);
+  const discoveryLng = number(discoveryRow?.coarse_lng);
+  const discoveryLocation = discoveryLat !== undefined && discoveryLng !== undefined
+    ? { lat: discoveryLat, lng: discoveryLng }
+    : null;
+  const excludedOwners = new Set<string>();
+  for (const item of rows(blocksResult.data)) {
+    const blocker = text(item.blocker_owner_id, 160);
+    const blocked = text(item.blocked_owner_id, 160);
+    if (blocker === input.ownerId && blocked) excludedOwners.add(blocked);
+    if (blocked === input.ownerId && blocker) excludedOwners.add(blocker);
+  }
+  for (const item of rows(reportsResult.data)) {
+    const reported = text(item.reported_owner_id, 160);
+    if (reported) excludedOwners.add(reported);
+  }
+  const signalRows = rows(walkSignalsResult.data);
+  const ownSignalActive = signalRows.some((item) => text(item.owner_id, 160) === input.ownerId
+    && text(item.pet_id, 160) === input.petId
+    && text(item.status, 40) === 'active'
+    && (iso(item.expires_at) ? Date.parse(String(item.expires_at)) > input.now.getTime() : false));
+  const discoveryEvidence = discoveryRow ? evidence({
+    sourceType: 'profile', sourceId: `social-discovery:${input.petId}`, ownerConfirmed: true,
+    updatedAt: iso(discoveryRow.updated_at),
+  }, capturedAt) : null;
+  const socialDiscovery = discoveryRow && discoveryCity ? {
+    discoverable: discoveryRow.discoverable === true,
+    city: discoveryCity,
+    scenarios: strings(discoveryRow.scenarios),
+    hasCoarseLocation: Boolean(discoveryLocation),
+    ownSignalActive,
+    evidence: discoveryEvidence!,
+  } : null;
+
+  const socialRequests = rows(socialRequestsResult.data).flatMap((item) => {
+    const id = text(item.id, 160);
+    const senderOwnerId = text(item.sender_owner_id, 160);
+    const scenario = text(item.scenario, 40);
+    const source = text(item.source, 40);
+    const status = text(item.status, 40);
+    const createdAt = iso(item.created_at);
+    if (!id || !senderOwnerId || excludedOwners.has(senderOwnerId)
+      || text(item.recipient_owner_id, 160) !== input.ownerId || text(item.recipient_pet_id, 160) !== input.petId
+      || !scenario || !source || status !== 'pending' || !createdAt) return [];
+    return [{ id, scenario, source, status, createdAt, evidence: evidence({
+      sourceType: 'social_request', sourceId: id, observedAt: createdAt, ownerConfirmed: true,
+      updatedAt: iso(item.updated_at),
+    }, capturedAt) }];
+  });
+
+  const requestedSignalIds = new Set(rows(socialRequestsResult.data).flatMap((item) => {
+    if (text(item.source, 40) !== 'signal' || text(item.sender_owner_id, 160) !== input.ownerId
+      || text(item.sender_pet_id, 160) !== input.petId || !['pending', 'accepted'].includes(text(item.status, 40) ?? '')) return [];
+    const signalId = text(item.signal_id, 160);
+    return signalId ? [signalId] : [];
+  }));
+
+  const walkSignals = signalRows.flatMap((item) => {
+    const id = text(item.id, 160);
+    const ownerId = text(item.owner_id, 160);
+    const petId = text(item.pet_id, 160);
+    const city = text(item.city, 40);
+    const lat = number(item.coarse_lat);
+    const lng = number(item.coarse_lng);
+    const startsAt = iso(item.starts_at);
+    const expiresAt = iso(item.expires_at);
+    const pace = text(item.pace, 40);
+    const status = text(item.status, 40);
+    const pet = nestedRow(item.pets);
+    const traits = nestedRow(pet?.social_profiles);
+    const name = text(pet?.name, 80);
+    if (!discoveryLocation || !id || requestedSignalIds.has(id) || !ownerId || ownerId === input.ownerId || excludedOwners.has(ownerId)
+      || !petId || city !== discoveryCity || lat === undefined || lng === undefined || !startsAt || !expiresAt
+      || Date.parse(expiresAt) <= input.now.getTime() || !pace || status !== 'active' || !name
+      || distanceKm(discoveryLocation, { lat, lng }) > 3) return [];
+    return [{
+      id, petId, name, startsAt, expiresAt, pace,
+      temperament: text(traits?.temperament, 80), dogFriendly: text(traits?.dog_friendly, 40),
+      evidence: evidence({
+        sourceType: 'social_signal', sourceId: id, observedAt: startsAt, ownerConfirmed: true,
+        updatedAt: iso(item.updated_at), excerpt: name,
+      }, capturedAt),
+    }];
+  });
 
   const reminders = rows(remindersResult.data).flatMap((item) => {
     const id = text(item.id, 160);
@@ -300,6 +437,9 @@ export async function loadRecommendationContext(input: {
     pet.evidence,
     ...(passport ? [passport.evidence] : []),
     ...(social ? [social.evidence] : []),
+    ...(socialDiscovery ? [socialDiscovery.evidence] : []),
+    ...socialRequests.map((item) => item.evidence),
+    ...walkSignals.map((item) => item.evidence),
     ...reminders.map((item) => item.evidence),
     ...observations.map((item) => item.evidence),
     ...habits.map((item) => item.evidence),
@@ -307,5 +447,9 @@ export async function loadRecommendationContext(input: {
     ...wishlist.map((item) => item.evidence),
   ];
 
-  return { petId: input.petId, capturedAt, pet, passport, social, reminders, observations, habits, zones, wishlist, facts };
+  return {
+    petId: input.petId, capturedAt, pet, passport, social,
+    socialDiscovery, socialRequests, walkSignals,
+    reminders, observations, habits, zones, wishlist, facts,
+  };
 }

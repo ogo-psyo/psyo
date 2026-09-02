@@ -67,13 +67,16 @@ test('rejects malformed or unsupported lifecycle commands', () => {
   assert.equal(parseLifecycleCommand(null).ok, false);
 });
 
-test('accepts the five allowlisted primary action shapes', () => {
+test('accepts the recommendation primary action shapes including Gав entry points', () => {
   const actions: RecommendationAction[] = [
     { intent: 'open_reminder', reminderId: 'reminder-1' },
     { intent: 'open_health', observationId: 'observation-1' },
     { intent: 'open_habits', draft: { kind: 'training', title: 'Спокойная выдержка', cadence: 'daily', targetPerPeriod: 1 } },
     { intent: 'plan_walk', zoneIds: ['zone-1'], limitation: 'route_not_verified_safe' },
     { intent: 'add_wishlist', draft: { title: 'Подобрать адресник', category: 'gear', reason: 'Для прогулки' } },
+    { intent: 'open_gav', view: 'live_signal', signalId: 'signal-1' },
+    { intent: 'open_gav', view: 'requests', requestId: 'request-1' },
+    { intent: 'open_gav', view: 'give_signal' },
   ];
 
   for (const primaryAction of actions) {

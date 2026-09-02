@@ -3,6 +3,8 @@ import fs from 'node:fs/promises';
 
 const base = process.env.BASE_URL || 'http://localhost:3102';
 const outDir = process.env.OUT_DIR || 'artifacts/recommendation-card';
+const gavScenario = process.env.RECOMMENDATION_SCENARIO === 'gav';
+const gavView = process.env.GAV_VIEW || 'requests';
 await fs.mkdir(outDir, { recursive: true });
 
 const pet = {
@@ -49,6 +51,23 @@ const baseRecommendation = {
   primaryAction: { intent: 'open_reminder', reminderId: 'rem-1' },
   fingerprint: 'a'.repeat(64),
 };
+const gavAction = gavView === 'live_signal'
+  ? { intent: 'open_gav', view: 'live_signal', signalId: 'signal-gav-1' }
+  : gavView === 'give_signal'
+    ? { intent: 'open_gav', view: 'give_signal' }
+    : { intent: 'open_gav', view: 'requests', requestId: 'request-gav-1' };
+const recommendationFixture = gavScenario ? {
+  ...baseRecommendation,
+  id: 'recommendation-gav-review-1',
+  scenarioKey: 'gav_incoming_request',
+  policyVersion: 'gav_incoming_request@1',
+  category: 'social',
+  title: gavView === 'live_signal' ? 'Луна дала Гав рядом' : gavView === 'give_signal' ? 'Позвать компанию на прогулку' : 'В Гав ждёт новый отклик',
+  whyNow: [gavView === 'live_signal' ? 'Сигнал активен недалеко от вашего района' : gavView === 'give_signal' ? 'У вас есть привычка «Вечерняя прогулка»' : 'Другой владелец ждёт вашего решения'],
+  limitation: 'Контакт откроется только после взаимного согласия.',
+  primaryAction: gavAction,
+  evidence: [{ sourceType: 'social_request', sourceId: 'request-gav-1', capturedAt: '2026-09-02T15:00:00.000Z', ownerConfirmed: true }],
+} : baseRecommendation;
 
 const browser = await chromium.launch({ headless: true });
 const results = [];
@@ -102,11 +121,17 @@ try {
       if (request.method() === 'PATCH') {
         const command = request.postDataJSON();
         status = command.action === 'show' ? 'shown' : command.action === 'accept' ? 'accepted' : command.action === 'snooze' ? 'snoozed' : 'dismissed';
-        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ recommendation: { ...baseRecommendation, status } }) });
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ recommendation: { ...recommendationFixture, status } }) });
         return;
       }
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ main: { ...baseRecommendation, status } }) });
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ main: { ...recommendationFixture, status } }) });
     });
+    if (gavScenario) {
+      await page.route('**/api/social/profile**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ profile: { petId: pet.id, discoverable: true, city: 'moscow', scenarios: ['walk'], coarseLocation: { lat: 55.75, lng: 37.61 } } }) }));
+      await page.route('**/api/social/candidates**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ candidates: { nearby: [], city: [] } }) }));
+      await page.route('**/api/social/requests**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests: [{ id: 'request-gav-1', senderPetId: 'pet-luna', recipientPetId: pet.id, scenario: 'walk', source: 'signal', status: 'pending', createdAt: '2026-09-02T15:00:00.000Z', otherDog: { name: 'Луна', avatarUrl: null }, contactVisibility: 'hidden_until_mutual_consent', telegramContactUrl: null }] }) }));
+      await page.route('**/api/social/signals**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signals: gavView === 'live_signal' ? [{ id: 'signal-gav-1', petId: 'pet-luna', name: 'Луна', avatarUrl: null, city: 'moscow', district: null, approximateLocation: { lat: 55.76, lng: 37.61 }, privacyRadiusMeters: 700, startsAt: '2026-09-02T15:10:00.000Z', expiresAt: '2026-09-03T15:10:00.000Z', pace: 'calm', note: null, temperament: 'calm', dogFriendly: 'yes', isMine: false, contactVisibility: 'hidden_until_mutual_consent' }] : [], viewer: { approximateLocation: { lat: 55.75, lng: 37.61 }, radiusMeters: 3000, city: 'moscow' } }) }));
+    }
 
     await page.goto(base, { waitUntil: 'networkidle' });
 
@@ -149,8 +174,13 @@ try {
     await page.screenshot({ path: `${outDir}/${viewport.name}.png`, fullPage: false });
 
     if (viewport.action === 'accept') {
-      await page.getByRole('button', { name: 'Открыть дело', exact: true }).click();
-      await page.getByRole('heading', { name: 'План заботы', exact: true }).waitFor();
+      const gavButton = gavView === 'live_signal' ? 'Открыть Гав' : gavView === 'give_signal' ? 'Дать Гав' : 'Ответить';
+      await page.getByRole('button', { name: gavScenario ? gavButton : 'Открыть дело', exact: true }).click();
+      if (gavScenario) {
+        if (gavView === 'requests') await page.getByRole('dialog', { name: 'Отклики и связи' }).waitFor();
+        if (gavView === 'give_signal') await page.getByRole('heading', { name: 'Когда идём?' }).waitFor();
+        if (gavView === 'live_signal') await page.locator('.woof-signal-main b', { hasText: 'Луна' }).waitFor();
+      } else await page.getByRole('heading', { name: 'План заботы', exact: true }).waitFor();
     } else if (viewport.action === 'snooze') {
       await page.getByRole('button', { name: 'На завтра', exact: true }).click();
       await card.waitFor({ state: 'detached' });

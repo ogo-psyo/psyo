@@ -30,6 +30,17 @@ for (const token of ['attemptCount + 1', 'nextRetryAt', 'countExhausted', 'CRON_
 if (!read('vercel.json').includes('/api/internal/recommendation-outcomes')) failures.push('Vercel cron does not invoke recommendation outcome retries');
 const habitRoute = read('app/api/habits/route.ts');
 if (!habitRoute.includes('linkRecommendationOutcome') || !habitRoute.includes("domainType: 'habit'")) failures.push('recommended habit creation does not close its outcome');
+const gavMigration = read('supabase/migrations/20260902202000_recommendation_gav.sql');
+for (const token of ["'social'", "'social_signal'", "'social_request'"]) {
+  if (!gavMigration.includes(token)) failures.push(`Gav database contract missing: ${token}`);
+}
+const socialRoutes = `${read('app/api/social/signals/route.ts')}\n${read('app/api/social/requests/route.ts')}\n${read('app/api/social/requests/[id]/route.ts')}`;
+for (const token of ['linkRecommendationOutcome', "domainType: 'social_signal'", "domainType: 'social_request'"]) {
+  if (!socialRoutes.includes(token)) failures.push(`Gav recommendation outcome hook missing: ${token}`);
+}
+for (const token of ["action.intent === 'open_gav'", 'woofRecommendationEntry']) {
+  if (!page.includes(token)) failures.push(`Gav recommendation navigation missing: ${token}`);
+}
 
 if (failures.length) {
   console.error(failures.map((failure) => `- ${failure}`).join('\n'));

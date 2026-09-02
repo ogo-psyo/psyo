@@ -26,7 +26,7 @@ function parseOutcome(value: unknown, recommendationId: string): RecommendationO
   const occurredAt = typeof source.occurredAt === 'string' && Number.isFinite(Date.parse(source.occurredAt))
     ? new Date(source.occurredAt).toISOString()
     : '';
-  if (!['reminder', 'habit', 'route', 'wishlist'].includes(String(domainType))
+  if (!['reminder', 'habit', 'route', 'wishlist', 'social_request', 'social_signal'].includes(String(domainType))
     || !domainId || !['completed', 'failed'].includes(String(result)) || !occurredAt) return null;
   return {
     recommendationId,
