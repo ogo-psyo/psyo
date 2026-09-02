@@ -10,6 +10,19 @@ import {
   recommendationFingerprint,
   selectMainRecommendation,
 } from '../../lib/server/recommendations/engine';
+import {
+  listForPet,
+  recalculateForPet,
+  type PersistEvaluationInput,
+  type RecommendationStore,
+  type StoredRecommendation,
+} from '../../lib/server/recommendations/repository';
+import {
+  deleteRecommendationHistoryForOwner,
+  recordOutcomeForOwner,
+  transitionForOwner,
+  type RecommendationDomainAdapter,
+} from '../../lib/server/recommendations/lifecycle';
 
 type Fixture = { data: unknown; error: unknown };
 
@@ -432,4 +445,222 @@ test('ranking is tiered, stable, and deterministic across 100 shuffled replays',
     const shuffled = index % 2 ? [lowScoreBetterTier, highTier] : [highTier, lowScoreBetterTier];
     assert.equal(JSON.stringify(evaluateRecommendations({ petId: 'pet-1', now, candidates: shuffled })), baseline);
   }
+});
+
+class MemoryRecommendationStore implements RecommendationStore {
+  readonly records: StoredRecommendation[] = [];
+  readonly preferences: Array<{ ownerId: string; petId: string; category: StoredRecommendation['category']; enabled: boolean }> = [];
+  readonly domainSources = new Set(['reminder:reminder-engine', 'habit:habit-1', 'route:route-1', 'wishlist:wishlist-1']);
+  private sequence = 0;
+
+  async assertOwnedPet(ownerId: string, petId: string) {
+    if (ownerId !== 'owner-1' || petId !== 'pet-1') throw new Error('PET_NOT_FOUND');
+  }
+
+  async listHistory(ownerId: string, petId: string) {
+    return this.records.filter((item) => item.ownerId === ownerId && item.petId === petId).map((item) => ({ ...item }));
+  }
+
+  async listPreferences(ownerId: string, petId: string) {
+    return this.preferences.filter((item) => item.ownerId === ownerId && item.petId === petId)
+      .map(({ category, enabled }) => ({ category, enabled }));
+  }
+
+  async persistEvaluation(input: PersistEvaluationInput) {
+    for (const id of input.supersedeIds) {
+      const found = this.records.find((item) => item.id === id && item.ownerId === input.ownerId);
+      if (found) {
+        found.status = 'superseded';
+        found.resolvedAt = input.evaluatedAt;
+      }
+    }
+    const persisted: StoredRecommendation[] = [];
+    for (const item of input.upserts) {
+      const existing = this.records.find((record) => record.ownerId === input.ownerId
+        && record.petId === input.petId && record.fingerprint === item.recommendation.fingerprint
+        && ['candidate', 'eligible', 'shown', 'accepted', 'snoozed'].includes(record.status));
+      if (existing) {
+        Object.assign(existing, item.recommendation, { id: existing.id, status: existing.status, subjectId: item.subjectId });
+        persisted.push({ ...existing });
+      } else {
+        const created = {
+          ...item.recommendation, id: `recommendation-${++this.sequence}`,
+          ownerId: input.ownerId, subjectId: item.subjectId,
+        } satisfies StoredRecommendation;
+        this.records.push(created);
+        persisted.push({ ...created });
+      }
+    }
+    return persisted;
+  }
+
+  async getForOwner(ownerId: string, recommendationId: string) {
+    return this.records.find((item) => item.ownerId === ownerId && item.id === recommendationId) ?? null;
+  }
+
+  async transition(input: { ownerId: string; recommendationId: string; action: string; payload?: Record<string, unknown>; occurredAt: string }) {
+    const item = await this.getForOwner(input.ownerId, input.recommendationId);
+    if (!item) throw new Error('RECOMMENDATION_NOT_FOUND');
+    const statuses: Record<string, StoredRecommendation['status']> = {
+      accept: 'accepted', snooze: 'snoozed', dismiss: 'dismissed', complete: 'completed', fail: 'failed', supersede: 'superseded',
+    };
+    const status = statuses[input.action];
+    if (!status) throw new Error('INVALID_RECOMMENDATION_TRANSITION');
+    item.status = status;
+    if (status === 'snoozed') item.snoozedUntil = String(input.payload?.until);
+    if (['dismissed', 'completed', 'failed', 'superseded'].includes(status)) item.resolvedAt = input.occurredAt;
+    return { ...item };
+  }
+
+  async setPreference(ownerId: string, petId: string, category: StoredRecommendation['category'], enabled: boolean) {
+    const existing = this.preferences.find((item) => item.ownerId === ownerId && item.petId === petId && item.category === category);
+    if (existing) existing.enabled = enabled;
+    else this.preferences.push({ ownerId, petId, category, enabled });
+  }
+
+  async deleteHistory(ownerId: string, petId: string) {
+    for (let index = this.records.length - 1; index >= 0; index -= 1) {
+      if (this.records[index]?.ownerId === ownerId && this.records[index]?.petId === petId) this.records.splice(index, 1);
+    }
+  }
+}
+
+function repositorySnapshot(dueAt = '2026-09-01T12:00:00.000Z') {
+  const capturedAt = '2026-09-02T12:00:00.000Z';
+  return policySnapshot({ reminders: [{
+    id: 'reminder-engine', type: 'grooming', title: 'Когти', dueAt, status: 'active',
+    evidence: { sourceType: 'reminder', sourceId: 'reminder-engine', capturedAt, dueAt, ownerConfirmed: true },
+  }] });
+}
+
+test('repository recalculation upserts an active fingerprint and returns at most two secondary items', async () => {
+  const store = new MemoryRecommendationStore();
+  const now = new Date('2026-09-02T12:00:00.000Z');
+  const input = { store, ownerId: 'owner-1', petId: 'pet-1', now, loadContext: async () => repositorySnapshot() };
+  const first = await recalculateForPet(input);
+  const second = await recalculateForPet(input);
+  assert.equal(first.main?.id, second.main?.id);
+  assert.equal(store.records.filter((item) => item.status === 'eligible').length, 1);
+  assert.equal(second.secondary.length <= 2, true);
+  assert.equal(second.evaluatedAt, now.toISOString());
+});
+
+test('repository supersedes the prior active recommendation when the same subject fact changes', async () => {
+  const store = new MemoryRecommendationStore();
+  const now = new Date('2026-09-02T12:00:00.000Z');
+  await recalculateForPet({ store, ownerId: 'owner-1', petId: 'pet-1', now, loadContext: async () => repositorySnapshot() });
+  const originalId = store.records[0]!.id;
+  await recalculateForPet({
+    store, ownerId: 'owner-1', petId: 'pet-1', now,
+    loadContext: async () => repositorySnapshot('2026-09-02T11:00:00.000Z'),
+  });
+  assert.equal(store.records.find((item) => item.id === originalId)?.status, 'superseded');
+  assert.equal(store.records.filter((item) => item.status === 'eligible').length, 1);
+});
+
+function domainAdapter(store: MemoryRecommendationStore): RecommendationDomainAdapter {
+  return {
+    async targetBelongsToOwnerPet(input) {
+      return store.domainSources.has(`${input.domainType}:${input.domainId}`);
+    },
+    async verifyAndSynchronize(input) {
+      return input.action.intent === 'open_reminder'
+        ? { verified: true, domainType: 'reminder', domainId: input.action.reminderId, occurredAt: '2026-09-02T11:00:00.000Z' }
+        : { verified: false };
+    },
+  };
+}
+
+async function seededStore() {
+  const store = new MemoryRecommendationStore();
+  const now = new Date('2026-09-02T12:00:00.000Z');
+  const result = await recalculateForPet({ store, ownerId: 'owner-1', petId: 'pet-1', now, loadContext: async () => repositorySnapshot() });
+  const recommendation = result.main!;
+  recommendation.status = 'shown';
+  const stored = store.records.find((item) => item.id === recommendation.id)!;
+  stored.status = 'shown';
+  return { store, recommendation, now };
+}
+
+test('lifecycle validates snooze and accept never implies completion', async () => {
+  const { store, recommendation, now } = await seededStore();
+  await assert.rejects(transitionForOwner({
+    store, domain: domainAdapter(store), ownerId: 'owner-1', recommendationId: recommendation.id,
+    command: { action: 'snooze', until: now.toISOString() }, now,
+  }), /INVALID_SNOOZE_UNTIL/);
+  const accepted = await transitionForOwner({
+    store, domain: domainAdapter(store), ownerId: 'owner-1', recommendationId: recommendation.id,
+    command: { action: 'accept' }, now,
+  });
+  assert.equal(accepted.recommendation.status, 'accepted');
+});
+
+test('failed domain outcome is never recorded as completed and ownership is checked', async () => {
+  const { store, recommendation, now } = await seededStore();
+  await transitionForOwner({
+    store, domain: domainAdapter(store), ownerId: 'owner-1', recommendationId: recommendation.id,
+    command: { action: 'accept' }, now,
+  });
+  const failed = await recordOutcomeForOwner({
+    store, domain: domainAdapter(store), ownerId: 'owner-1', outcome: {
+      recommendationId: recommendation.id, domainType: 'reminder', domainId: 'reminder-engine',
+      result: 'failed', occurredAt: '2026-09-02T12:05:00.000Z',
+    }, now,
+  });
+  assert.equal(failed.status, 'failed');
+  const foreign = await seededStore();
+  foreign.store.domainSources.delete('reminder:reminder-engine');
+  await assert.rejects(recordOutcomeForOwner({
+    store: foreign.store, domain: domainAdapter(foreign.store), ownerId: 'owner-1', outcome: {
+      recommendationId: foreign.recommendation.id, domainType: 'reminder', domainId: 'reminder-engine',
+      result: 'completed', occurredAt: '2026-09-02T12:06:00.000Z',
+    }, now,
+  }), /DOMAIN_TARGET_NOT_FOUND/);
+});
+
+test('domain completion can resolve a shown recommendation outside the card', async () => {
+  const { store, recommendation, now } = await seededStore();
+  const completed = await recordOutcomeForOwner({
+    store, domain: domainAdapter(store), ownerId: 'owner-1', outcome: {
+      recommendationId: recommendation.id, domainType: 'reminder', domainId: 'reminder-engine',
+      result: 'completed', occurredAt: '2026-09-02T12:05:00.000Z',
+    }, now,
+  });
+  assert.equal(completed.status, 'completed');
+});
+
+test('wrong_data returns a correction source and never_suggest cannot hide safety override', async () => {
+  const { store, recommendation, now } = await seededStore();
+  const correction = await transitionForOwner({
+    store, domain: domainAdapter(store), ownerId: 'owner-1', recommendationId: recommendation.id,
+    command: { action: 'dismiss', reason: 'wrong_data' }, now,
+  });
+  assert.deepEqual(correction.correctionSource, { sourceType: 'reminder', sourceId: 'reminder-engine' });
+
+  const routine = await seededStore();
+  await transitionForOwner({
+    store: routine.store, domain: domainAdapter(routine.store), ownerId: 'owner-1', recommendationId: routine.recommendation.id,
+    command: { action: 'dismiss', reason: 'never_suggest' }, now,
+  });
+  assert.deepEqual(await routine.store.listPreferences('owner-1', 'pet-1'), [{ category: 'care', enabled: false }]);
+
+  const safetyStore = new MemoryRecommendationStore();
+  safetyStore.records.push({ ...store.records[0]!, id: 'safety-1', risk: 'safety_override', status: 'shown' });
+  await assert.rejects(transitionForOwner({
+    store: safetyStore, domain: domainAdapter(safetyStore), ownerId: 'owner-1', recommendationId: 'safety-1',
+    command: { action: 'dismiss', reason: 'never_suggest' }, now,
+  }), /SAFETY_OVERRIDE_PREFERENCE_FORBIDDEN/);
+});
+
+test('already_done verifies the domain and deleting recommendation history preserves domain sources', async () => {
+  const { store, recommendation, now } = await seededStore();
+  const alreadyDone = await transitionForOwner({
+    store, domain: domainAdapter(store), ownerId: 'owner-1', recommendationId: recommendation.id,
+    command: { action: 'dismiss', reason: 'already_done' }, now,
+  });
+  assert.equal(alreadyDone.synchronizedOutcome?.domainId, 'reminder-engine');
+  const sourcesBefore = [...store.domainSources];
+  await deleteRecommendationHistoryForOwner({ store, ownerId: 'owner-1', petId: 'pet-1' });
+  assert.deepEqual(await listForPet({ store, ownerId: 'owner-1', petId: 'pet-1' }), []);
+  assert.deepEqual([...store.domainSources], sourcesBefore);
 });

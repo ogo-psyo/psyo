@@ -373,19 +373,19 @@ Commit: `git commit -m "feat(recommendations): add deterministic gates and ranki
 - Produces: `recalculateForPet`, `listForPet`, `transitionForOwner`, `recordOutcomeForOwner`.
 - Consumes: context loader, engine, Supabase client, injected clock.
 
-- [ ] **Step 1: Write failing repository tests with an in-memory adapter**
+- [x] **Step 1: Write failing repository tests with an in-memory adapter**
 
 Cover upsert-by-active-fingerprint, supersede on changed subject fact/policy version, no completion on failed outcome, domain completion outside the card and deletion of recommendation history without deleting domain sources.
 
-- [ ] **Step 2: Implement repository boundary**
+- [x] **Step 2: Implement repository boundary**
 
 Repository accepts `ownerId` from server auth only. `recalculateForPet` loads preferences and active history, evaluates, upserts recommendation/evidence in one server transaction/RPC and returns `{ main, secondary: secondary.slice(0,2), evaluatedAt }`.
 
-- [ ] **Step 3: Implement lifecycle state machine**
+- [x] **Step 3: Implement lifecycle state machine**
 
 `snooze` requires future `until`; `dismiss` requires a reason; `accept` does not imply completed. `already_done` records feedback and asks the domain adapter to verify/synchronize. `wrong_data` returns the source ref needed for correction. `never_suggest` writes routine preference; reject for safety override.
 
-- [ ] **Step 4: Implement domain outcome mapping**
+- [x] **Step 4: Implement domain outcome mapping**
 
 ```ts
 export type RecommendationOutcome = {
@@ -399,11 +399,15 @@ export type RecommendationOutcome = {
 
 Validate that action intent matches domain type and target belongs to the same owner/pet. `failed` transitions accepted/shown to `failed`, never `completed`.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
-Run: `npx vitest run scripts/qa/recommendation-engine.behavior.test.ts`
+Run: `npx tsx --test scripts/qa/recommendation-engine.behavior.test.ts`
 Expected: all 12 PRD criteria PASS.
 Commit: `git commit -m "feat(recommendations): persist evaluation and lifecycle outcomes"`
+
+Implementation note: the repository transaction is backed by
+`20260902163000_recommendation_repository.sql`; its clean-reset pgTAP coverage lives in
+`supabase/tests/recommendation_repository.sql`.
 
 ---
 
