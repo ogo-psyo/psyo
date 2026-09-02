@@ -36,6 +36,9 @@ class QueryStub implements PromiseLike<Fixture> {
   select(columns: string) { this.calls.push(`${this.table}.select:${columns}`); return this; }
   eq(column: string, value: unknown) { this.calls.push(`${this.table}.eq:${column}=${String(value)}`); return this; }
   neq(column: string, value: unknown) { this.calls.push(`${this.table}.neq:${column}=${String(value)}`); return this; }
+  in(column: string, value: unknown[]) { this.calls.push(`${this.table}.in:${column}=${value.join(',')}`); return this; }
+  or(value: string) { this.calls.push(`${this.table}.or:${value}`); return this; }
+  gt(column: string, value: unknown) { this.calls.push(`${this.table}.gt:${column}=${String(value)}`); return this; }
   is(column: string, value: unknown) { this.calls.push(`${this.table}.is:${column}=${String(value)}`); return this; }
   order(column: string, options: unknown) { this.calls.push(`${this.table}.order:${column}:${JSON.stringify(options)}`); return this; }
   limit(value: number) { this.calls.push(`${this.table}.limit:${value}`); return this; }
@@ -79,6 +82,24 @@ test('context snapshot is owner scoped, bounded, provenance rich and privacy all
       play_style: 'gentle', trainability: 'high', child_friendly: 'yes', dog_friendly: 'careful',
       cat_friendly: 'unknown', triggers: ['scooters'], updated_at: '2026-09-01T11:00:00.000Z',
     }, error: null },
+    social_discovery_profiles: { data: {
+      pet_id: 'pet-1', discoverable: true, city: 'moscow', scenarios: ['walk'],
+      coarse_lat: 55.75, coarse_lng: 37.61, district: 'SECRET_EXACT_DISTRICT', updated_at: '2026-09-01T11:30:00.000Z',
+    }, error: null },
+    social_match_requests: { data: [
+      { id: 'request-incoming', recipient_owner_id: 'owner-1', recipient_pet_id: 'pet-1', sender_owner_id: 'owner-2', sender_pet_id: 'pet-2', scenario: 'walk', source: 'signal', status: 'pending', created_at: '2026-09-02T11:40:00.000Z', message: 'SECRET_REQUEST_MESSAGE' },
+      { id: 'request-outgoing', recipient_owner_id: 'owner-5', recipient_pet_id: 'pet-5', sender_owner_id: 'owner-1', sender_pet_id: 'pet-1', scenario: 'walk', source: 'signal', signal_id: 'signal-requested', status: 'pending', created_at: '2026-09-02T11:30:00.000Z' },
+      { id: 'request-blocked', recipient_owner_id: 'owner-1', recipient_pet_id: 'pet-1', sender_owner_id: 'owner-3', sender_pet_id: 'pet-3', scenario: 'walk', source: 'signal', status: 'pending', created_at: '2026-09-02T11:20:00.000Z' },
+    ], error: null },
+    social_blocks: { data: [{ blocker_owner_id: 'owner-1', blocked_owner_id: 'owner-3' }], error: null },
+    social_reports: { data: [], error: null },
+    social_walk_signals: { data: [
+      { id: 'signal-own', owner_id: 'owner-1', pet_id: 'pet-1', city: 'moscow', coarse_lat: 55.75, coarse_lng: 37.61, starts_at: '2026-09-02T11:50:00.000Z', expires_at: '2026-09-02T13:50:00.000Z', pace: 'balanced', status: 'active', pets: { name: 'Мята', social_profiles: { temperament: 'calm', dog_friendly: 'yes' } } },
+      { id: 'signal-nearby', owner_id: 'owner-2', pet_id: 'pet-2', city: 'moscow', coarse_lat: 55.76, coarse_lng: 37.61, starts_at: '2026-09-02T12:10:00.000Z', expires_at: '2026-09-02T14:10:00.000Z', pace: 'calm', status: 'active', note: 'SECRET_SIGNAL_NOTE', pets: { name: 'Луна', social_profiles: { temperament: 'calm', dog_friendly: 'yes' } } },
+      { id: 'signal-requested', owner_id: 'owner-5', pet_id: 'pet-5', city: 'moscow', coarse_lat: 55.76, coarse_lng: 37.60, starts_at: '2026-09-02T12:05:00.000Z', expires_at: '2026-09-02T14:05:00.000Z', pace: 'calm', status: 'active', pets: { name: 'Уже позвали', social_profiles: { temperament: 'calm', dog_friendly: 'yes' } } },
+      { id: 'signal-far', owner_id: 'owner-4', pet_id: 'pet-4', city: 'moscow', coarse_lat: 55.95, coarse_lng: 37.61, starts_at: '2026-09-02T12:10:00.000Z', expires_at: '2026-09-02T14:10:00.000Z', pace: 'active', status: 'active', pets: { name: 'Далеко', social_profiles: {} } },
+      { id: 'signal-blocked', owner_id: 'owner-3', pet_id: 'pet-3', city: 'moscow', coarse_lat: 55.75, coarse_lng: 37.62, starts_at: '2026-09-02T12:10:00.000Z', expires_at: '2026-09-02T14:10:00.000Z', pace: 'calm', status: 'active', pets: { name: 'Скрыта', social_profiles: {} } },
+    ], error: null },
     reminders: { data: [{
       id: 'reminder-1', type: 'grooming', title: 'Когти', due_at: '2026-09-01T09:00:00.000Z',
       snoozed_until: null, status: 'active', updated_at: '2026-08-30T09:00:00.000Z',
@@ -127,7 +148,8 @@ test('context snapshot is owner scoped, bounded, provenance rich and privacy all
   for (const secret of [
     'SECRET_PHOTO', 'SECRET_PHOTO_2', 'SECRET_MICROCHIP', 'SECRET_CONTACT',
     'SECRET_DOCUMENT_CONTENT', 'SECRET_RAW_NOTE', 'SECRET_UNCONFIRMED_NOTE',
-    'SECRET_MANUAL_NOTE', 'SECRET_SHOPPING_URL', '55.751', '37.618',
+    'SECRET_MANUAL_NOTE', 'SECRET_SHOPPING_URL', 'SECRET_EXACT_DISTRICT', 'SECRET_REQUEST_MESSAGE',
+    'SECRET_SIGNAL_NOTE', '55.75', '55.76', '55.95', '37.61', '37.62', '55.751', '37.618',
   ]) assert.equal(serialized.includes(secret), false, `snapshot leaked ${secret}`);
 
   assert.equal(snapshot.pet.id, 'pet-1');
@@ -140,6 +162,13 @@ test('context snapshot is owner scoped, bounded, provenance rich and privacy all
   assert.equal(snapshot.observations[1]?.sufficient, false);
   assert.equal(snapshot.observations[1]?.value, undefined);
   assert.equal(snapshot.observations[2]?.value, 'спокойная');
+  assert.deepEqual(snapshot.socialDiscovery, {
+    discoverable: true, city: 'moscow', scenarios: ['walk'], hasCoarseLocation: true, ownSignalActive: true,
+    evidence: snapshot.socialDiscovery?.evidence,
+  });
+  assert.deepEqual(snapshot.socialRequests.map((item) => item.id), ['request-incoming']);
+  assert.deepEqual(snapshot.walkSignals.map((item) => item.id), ['signal-nearby']);
+  assert.equal(snapshot.walkSignals[0]?.name, 'Луна');
   assert.deepEqual(snapshot.zones[0], {
     id: 'zone-1', type: 'risk_zone', title: 'Самокаты', areaLabel: 'у парка', note: 'много самокатов',
     evidence: snapshot.zones[0]?.evidence,
@@ -176,6 +205,9 @@ function policySnapshot(overrides: Partial<RecommendationContextSnapshot> = {}):
     pet: { id: 'pet-1', lifeStage: 'adult', evidence: profileEvidence },
     passport: null,
     social: null,
+    socialDiscovery: null,
+    socialRequests: [],
+    walkSignals: [],
     reminders: [],
     observations: [],
     habits: [],
@@ -186,13 +218,16 @@ function policySnapshot(overrides: Partial<RecommendationContextSnapshot> = {}):
   };
 }
 
-test('policy registry exposes exactly five immutable versioned policies', () => {
+test('policy registry exposes the core and Gав immutable versioned policies', () => {
   assert.deepEqual(listActivePolicies().map(({ key, version }) => [key, version]), [
     ['care_due', 'care_due@1'],
     ['wellbeing_change', 'wellbeing_change@1'],
     ['habit_explicit_goal', 'habit_explicit_goal@1'],
     ['walk_with_constraints', 'walk_with_constraints@1'],
     ['thing_for_task', 'thing_for_task@1'],
+    ['gav_incoming_request', 'gav_incoming_request@1'],
+    ['gav_nearby_signal', 'gav_nearby_signal@1'],
+    ['gav_start_signal', 'gav_start_signal@1'],
   ]);
   assert.equal(getPolicy('care_due')?.version, 'care_due@1');
   assert.equal(getPolicy('care_due', 'care_due@1')?.key, 'care_due');
@@ -200,6 +235,74 @@ test('policy registry exposes exactly five immutable versioned policies', () => 
   assert.equal(getPolicy('red_flag'), undefined);
   assert.equal(listActivePolicies().every((policy) => Object.isFrozen(policy)), true);
   assert.equal(Object.isFrozen(listActivePolicies()), true);
+});
+
+test('Gав policies prioritize an incoming request, surface a nearby live signal and offer a signal from a walk habit', () => {
+  const capturedAt = '2026-09-02T12:00:00.000Z';
+  const now = new Date(capturedAt);
+  const evidence = (sourceType: 'social_request' | 'social_signal' | 'profile' | 'habit', sourceId: string) => ({
+    sourceType, sourceId, capturedAt, ownerConfirmed: true,
+  });
+  const snapshot = policySnapshot({
+    social: {
+      socialMode: 'ask_first', dogFriendly: 'careful', triggers: [],
+      evidence: evidence('profile', 'social:pet-1'),
+    },
+    socialDiscovery: {
+      discoverable: true, city: 'moscow', scenarios: ['walk'], hasCoarseLocation: true, ownSignalActive: false,
+      evidence: evidence('profile', 'social-discovery:pet-1'),
+    },
+    socialRequests: [{
+      id: 'request-1', scenario: 'walk', source: 'signal', status: 'pending', createdAt: '2026-09-02T11:50:00.000Z',
+      evidence: { ...evidence('social_request', 'request-1'), observedAt: '2026-09-02T11:50:00.000Z' },
+    }],
+    walkSignals: [{
+      id: 'signal-1', petId: 'pet-2', name: 'Луна', startsAt: '2026-09-02T12:10:00.000Z',
+      expiresAt: '2026-09-02T14:10:00.000Z', pace: 'calm', temperament: 'calm', dogFriendly: 'yes',
+      evidence: { ...evidence('social_signal', 'signal-1'), observedAt: '2026-09-02T12:10:00.000Z' },
+    }],
+    reminders: [{
+      id: 'reminder-overdue', type: 'care', title: 'Уход', dueAt: '2026-09-01T12:00:00.000Z', status: 'active',
+      evidence: { sourceType: 'reminder', sourceId: 'reminder-overdue', capturedAt, dueAt: '2026-09-01T12:00:00.000Z', ownerConfirmed: true },
+    }],
+    habits: [{
+      id: 'habit-walk', kind: 'walk', title: 'Вечерняя прогулка', cadence: 'daily', targetPerPeriod: 1, status: 'active',
+      evidence: evidence('habit', 'habit-walk'),
+    }],
+  });
+  const candidates = buildCandidates(snapshot, { now });
+  const incoming = candidates.find((item) => item.scenarioKey === 'gav_incoming_request');
+  const nearby = candidates.find((item) => item.scenarioKey === 'gav_nearby_signal');
+  const start = candidates.find((item) => item.scenarioKey === 'gav_start_signal');
+  assert.deepEqual(incoming?.primaryAction, { intent: 'open_gav', view: 'requests', requestId: 'request-1' });
+  assert.deepEqual(nearby?.primaryAction, { intent: 'open_gav', view: 'live_signal', signalId: 'signal-1' });
+  assert.equal(nearby?.title, 'Луна дала Гав рядом');
+  assert.deepEqual(start?.primaryAction, { intent: 'open_gav', view: 'give_signal' });
+  const main = selectMainRecommendation(evaluateRecommendations({ petId: 'pet-1', now, candidates }));
+  assert.equal(main?.scenarioKey, 'gav_incoming_request');
+});
+
+test('Gав discovery suggestions respect contact boundaries and never expose coordinates', () => {
+  const capturedAt = '2026-09-02T12:00:00.000Z';
+  const blocked = policySnapshot({
+    social: {
+      socialMode: 'do_not_approach', dogFriendly: 'no', triggers: [],
+      evidence: { sourceType: 'profile', sourceId: 'social:pet-1', capturedAt, ownerConfirmed: true },
+    },
+    socialDiscovery: {
+      discoverable: true, city: 'moscow', scenarios: ['walk'], hasCoarseLocation: true, ownSignalActive: false,
+      evidence: { sourceType: 'profile', sourceId: 'social-discovery:pet-1', capturedAt, ownerConfirmed: true },
+    },
+    walkSignals: [{
+      id: 'signal-1', petId: 'pet-2', name: 'Луна', startsAt: '2026-09-02T12:10:00.000Z',
+      expiresAt: '2026-09-02T14:10:00.000Z', pace: 'calm', temperament: 'calm', dogFriendly: 'yes',
+      evidence: { sourceType: 'social_signal', sourceId: 'signal-1', capturedAt, ownerConfirmed: true },
+    }],
+  });
+  const candidates = buildCandidates(blocked, { now: new Date(capturedAt) });
+  assert.equal(candidates.some((item) => ['gav_nearby_signal', 'gav_start_signal'].includes(item.scenarioKey)), false);
+  assert.equal(JSON.stringify(blocked).includes('55.'), false);
+  assert.equal(JSON.stringify(blocked).includes('37.'), false);
 });
 
 test('policy care_due creates candidates only for overdue or upcoming active reminders', () => {
@@ -545,6 +648,16 @@ function repositorySnapshot(dueAt = '2026-09-01T12:00:00.000Z') {
   }] });
 }
 
+function gavRequestSnapshot() {
+  const capturedAt = '2026-09-02T12:00:00.000Z';
+  return policySnapshot({
+    socialRequests: [{
+      id: 'request-gav', scenario: 'walk', source: 'signal', status: 'pending', createdAt: '2026-09-02T11:50:00.000Z',
+      evidence: { sourceType: 'social_request', sourceId: 'request-gav', capturedAt, observedAt: '2026-09-02T11:50:00.000Z', ownerConfirmed: true },
+    }],
+  });
+}
+
 test('repository recalculation upserts an active fingerprint and returns at most two secondary items', async () => {
   const store = new MemoryRecommendationStore();
   const now = new Date('2026-09-02T12:00:00.000Z');
@@ -689,6 +802,31 @@ test('AC06 domain completion can resolve a shown recommendation outside the card
     }, now,
   });
   assert.equal(completed.status, 'completed');
+});
+
+test('Gav request acceptance resolves only the exact recommended request', async () => {
+  const store = new MemoryRecommendationStore();
+  const now = new Date('2026-09-02T12:00:00.000Z');
+  const result = await recalculateForPet({
+    store, ownerId: 'owner-1', petId: 'pet-1', now, loadContext: async () => gavRequestSnapshot(),
+  });
+  const recommendation = result.main!;
+  recommendation.status = 'shown';
+  store.records.find((item) => item.id === recommendation.id)!.status = 'shown';
+  store.domainSources.add('social_request:request-gav');
+  const completed = await recordOutcomeForOwner({
+    store, domain: domainAdapter(store), ownerId: 'owner-1', outcome: {
+      recommendationId: recommendation.id, domainType: 'social_request', domainId: 'request-gav',
+      result: 'completed', occurredAt: '2026-09-02T12:05:00.000Z',
+    }, now,
+  });
+  assert.equal(completed.status, 'completed');
+  await assert.rejects(recordOutcomeForOwner({
+    store, domain: domainAdapter(store), ownerId: 'owner-1', outcome: {
+      recommendationId: recommendation.id, domainType: 'social_request', domainId: 'request-other',
+      result: 'completed', occurredAt: '2026-09-02T12:06:00.000Z',
+    }, now, idempotencyKey: 'different-request',
+  }), /DOMAIN_ACTION_MISMATCH/);
 });
 
 test('wrong_data returns a correction source and never_suggest cannot hide safety override', async () => {

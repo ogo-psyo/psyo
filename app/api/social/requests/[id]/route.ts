@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { transitionSocialRequest, type SocialRequestAction } from '@/lib/socialCore';
 import { readIdempotencyKey, socialRequestContext, socialStorageError } from '@/lib/server/socialHttp';
 import { areRequestPetsDiscoverable, contactUrlForRequestRow, enforceSocialRateLimit, isOwnerPairBlocked } from '@/lib/server/socialService';
+import { linkRecommendationOutcome } from '@/lib/server/recommendations/domainOutcomeLink';
 
 export const runtime = 'nodejs';
 
@@ -13,6 +14,7 @@ export async function PATCH(request: Request, routeContext: { params: Promise<{ 
   const { id } = await routeContext.params;
   const body = await request.json().catch(() => null);
   const action = typeof body?.action === 'string' ? body.action : '';
+  const recommendationId = typeof body?.recommendationId === 'string' ? body.recommendationId.trim() : '';
   try {
     const { data: current, error } = await context.supabase
       .from('social_match_requests').select('*').eq('id', id).maybeSingle();
@@ -68,10 +70,18 @@ export async function PATCH(request: Request, routeContext: { params: Promise<{ 
     });
     if (!transition.ok) return NextResponse.json({ error: transition.code }, { status: transition.code.endsWith('_REQUIRED') ? 403 : 409 });
     if (transition.replayed) {
+      const recommendationOutcome = action === 'accept' && recommendationId && process.env.RECOMMENDATIONS_FOUNDATION_ENABLED === 'true'
+        ? await linkRecommendationOutcome({
+          supabase: context.supabase, ownerId: context.ownerId, recommendationId,
+          domainType: 'social_request', domainId: id, result: 'completed',
+          idempotencyKey: `social-request-accept:${id}`, occurredAt: current.responded_at,
+        })
+        : undefined;
       return NextResponse.json({
         request: { id, status: transition.status },
         telegramContactUrl: contactUrlForRequestRow(current, context.ownerId, pairBlocked, participantsAvailable),
         replayed: true,
+        ...(recommendationOutcome ? { recommendationOutcome } : {}),
       });
     }
 
@@ -106,12 +116,20 @@ export async function PATCH(request: Request, routeContext: { params: Promise<{ 
       .select('*').maybeSingle();
     if (updateError) return socialStorageError();
     if (!updated) return NextResponse.json({ error: 'REQUEST_ALREADY_RESOLVED' }, { status: 409 });
+    const recommendationOutcome = action === 'accept' && recommendationId && process.env.RECOMMENDATIONS_FOUNDATION_ENABLED === 'true'
+      ? await linkRecommendationOutcome({
+        supabase: context.supabase, ownerId: context.ownerId, recommendationId,
+        domainType: 'social_request', domainId: id, result: 'completed',
+        idempotencyKey: `social-request-accept:${id}`, occurredAt: updated.responded_at,
+      })
+      : undefined;
     return NextResponse.json({
       request: { id, status: updated.status },
       telegramContactUrl: contactUrlForRequestRow(updated, context.ownerId, false),
       missingTelegramUsernameAction: updated.status === 'accepted' && !context.verifiedTelegramContact.username
         ? 'Добавьте имя пользователя в настройках Telegram, чтобы открыть чат'
         : null,
+      ...(recommendationOutcome ? { recommendationOutcome } : {}),
     });
   } catch (error) {
     return socialStorageError(error);

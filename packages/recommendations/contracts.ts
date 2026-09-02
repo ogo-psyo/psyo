@@ -1,4 +1,4 @@
-export type RecommendationCategory = 'care' | 'wellbeing' | 'habit' | 'walk' | 'thing';
+export type RecommendationCategory = 'care' | 'wellbeing' | 'habit' | 'walk' | 'thing' | 'social';
 
 export type RecommendationRisk = 'routine' | 'caution' | 'safety_override';
 
@@ -24,6 +24,8 @@ export type RecommendationSourceType =
   | 'map_zone'
   | 'route'
   | 'wishlist'
+  | 'social_signal'
+  | 'social_request'
   | 'explicit_request';
 
 export type ConfidenceLevel = 'high' | 'medium' | 'insufficient';
@@ -57,7 +59,10 @@ export type RecommendationAction =
   | {
       intent: 'add_wishlist';
       draft: { title: string; category: string; reason: string };
-    };
+    }
+  | { intent: 'open_gav'; view: 'live_signal'; signalId: string }
+  | { intent: 'open_gav'; view: 'requests'; requestId: string }
+  | { intent: 'open_gav'; view: 'give_signal' };
 
 export type RecommendationEvidence = {
   sourceType: RecommendationSourceType;
@@ -205,6 +210,11 @@ function isRecommendationAction(action: RecommendationAction) {
       && typeof action.draft.category === 'string'
       && typeof action.draft.reason === 'string'
       && Boolean(action.draft.reason.trim());
+  }
+  if (action.intent === 'open_gav') {
+    if (action.view === 'give_signal') return true;
+    if (action.view === 'live_signal') return typeof action.signalId === 'string' && Boolean(action.signalId.trim());
+    if (action.view === 'requests') return typeof action.requestId === 'string' && Boolean(action.requestId.trim());
   }
   return false;
 }

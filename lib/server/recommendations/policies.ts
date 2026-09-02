@@ -209,6 +209,61 @@ function thingForTask(snapshot: RecommendationContextSnapshot, context: Evaluati
   })];
 }
 
+function socialContactAllowed(snapshot: RecommendationContextSnapshot) {
+  return !['do_not_approach', 'known_only'].includes(snapshot.social?.socialMode ?? '')
+    && snapshot.social?.dogFriendly !== 'no';
+}
+
+function gavIncomingRequest(snapshot: RecommendationContextSnapshot, context: EvaluationContext) {
+  return snapshot.socialRequests.filter((request) => request.status === 'pending').map((request) => candidate({
+    snapshot, scenarioKey: 'gav_incoming_request', policyVersion: 'gav_incoming_request@1', category: 'social', risk: 'routine',
+    subjectId: request.id, normalizedReason: `${request.scenario}:${request.source}:${request.createdAt}`,
+    freshUntil: future(context.now, 12 * HOUR), expiresAt: future(context.now, DAY), evidence: [request.evidence],
+    tier: 1, urgency: 95, relevance: 100, title: 'В Гав ждёт новый отклик',
+    whyNow: ['Другой владелец ждёт вашего решения'],
+    limitation: 'Контакт откроется только после взаимного согласия.',
+    primaryAction: { intent: 'open_gav', view: 'requests', requestId: request.id },
+  }));
+}
+
+function gavNearbySignal(snapshot: RecommendationContextSnapshot, context: EvaluationContext) {
+  if (!socialContactAllowed(snapshot)) return [];
+  return snapshot.walkSignals.flatMap((signal) => {
+    const expiresAt = Date.parse(signal.expiresAt);
+    const startsAt = Date.parse(signal.startsAt);
+    if (!Number.isFinite(expiresAt) || expiresAt <= context.now.getTime() || signal.dogFriendly === 'no') return [];
+    if (snapshot.social?.socialMode === 'calm_dogs_only' && signal.temperament !== 'calm') return [];
+    const freshUntil = new Date(Math.min(expiresAt, context.now.getTime() + 2 * HOUR)).toISOString();
+    return [candidate({
+      snapshot, scenarioKey: 'gav_nearby_signal', policyVersion: 'gav_nearby_signal@1', category: 'social', risk: 'routine',
+      subjectId: signal.id, normalizedReason: `${signal.petId}:${signal.startsAt}:${signal.pace}`,
+      freshUntil, expiresAt: signal.expiresAt, evidence: [signal.evidence], tier: 3,
+      urgency: Number.isFinite(startsAt) && startsAt <= context.now.getTime() + 30 * 60_000 ? 90 : 70,
+      relevance: 100, title: `${signal.name} дала Гав рядом`,
+      whyNow: ['Сигнал активен недалеко от вашего района'],
+      limitation: 'Место показано приблизительно. Условия встречи решают владельцы.',
+      primaryAction: { intent: 'open_gav', view: 'live_signal', signalId: signal.id },
+    })];
+  });
+}
+
+function gavStartSignal(snapshot: RecommendationContextSnapshot, context: EvaluationContext) {
+  const discovery = snapshot.socialDiscovery;
+  if (!discovery?.hasCoarseLocation || discovery.ownSignalActive || !discovery.scenarios.includes('walk') || !socialContactAllowed(snapshot)) return [];
+  const walkHabit = snapshot.habits.find((habit) => habit.status === 'active' && habit.kind === 'walk');
+  if (!walkHabit) return [];
+  return [candidate({
+    snapshot, scenarioKey: 'gav_start_signal', policyVersion: 'gav_start_signal@1', category: 'social', risk: 'routine',
+    subjectId: walkHabit.id, normalizedReason: `${walkHabit.id}:${discovery.city}`,
+    freshUntil: future(context.now, 12 * HOUR), expiresAt: future(context.now, DAY),
+    evidence: [walkHabit.evidence, discovery.evidence], tier: 4, urgency: 45, relevance: 85,
+    title: 'Позвать компанию на прогулку',
+    whyNow: [`У вас есть привычка «${walkHabit.title}»`],
+    limitation: 'Гав показывает только примерный район и автоматически исчезает.',
+    primaryAction: { intent: 'open_gav', view: 'give_signal' },
+  })];
+}
+
 function freezePolicy(policy: RecommendationPolicy): RecommendationPolicy {
   Object.freeze(policy.requiredEvidence);
   Object.freeze(policy.allowedActionIntents);
@@ -245,5 +300,20 @@ export const PHASE_ZERO_POLICIES = Object.freeze([
     key: 'thing_for_task', version: 'thing_for_task@1', category: 'thing', tier: 5,
     requiredEvidence: evidenceAlternatives('explicit_request', 'reminder'), freshnessMs: 3 * DAY, expiryMs: 7 * DAY, defaultCooldownMs: 30 * DAY,
     allowedActionIntents: ['add_wishlist'], template: Object.freeze({ title: 'Добавить вещь для задачи' }), generate: thingForTask,
+  }),
+  freezePolicy({
+    key: 'gav_incoming_request', version: 'gav_incoming_request@1', category: 'social', tier: 1,
+    requiredEvidence: evidenceAlternatives('social_request'), freshnessMs: 12 * HOUR, expiryMs: DAY, defaultCooldownMs: 12 * HOUR,
+    allowedActionIntents: ['open_gav'], template: Object.freeze({ title: 'Ответить в Гав' }), generate: gavIncomingRequest,
+  }),
+  freezePolicy({
+    key: 'gav_nearby_signal', version: 'gav_nearby_signal@1', category: 'social', tier: 3,
+    requiredEvidence: evidenceAlternatives('social_signal'), freshnessMs: 2 * HOUR, expiryMs: 3 * HOUR, defaultCooldownMs: 2 * HOUR,
+    allowedActionIntents: ['open_gav'], template: Object.freeze({ title: 'Открыть Гав рядом' }), generate: gavNearbySignal,
+  }),
+  freezePolicy({
+    key: 'gav_start_signal', version: 'gav_start_signal@1', category: 'social', tier: 4,
+    requiredEvidence: Object.freeze([Object.freeze(['habit', 'profile'] as const)]), freshnessMs: 12 * HOUR, expiryMs: DAY, defaultCooldownMs: DAY,
+    allowedActionIntents: ['open_gav'], template: Object.freeze({ title: 'Дать Гав' }), generate: gavStartSignal,
   }),
 ] satisfies readonly RecommendationPolicy[]);

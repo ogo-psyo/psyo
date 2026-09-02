@@ -39,7 +39,7 @@ type EvaluationInput = {
 };
 
 const activeStatuses = new Set<RecommendationStatus>(['candidate', 'eligible', 'shown', 'accepted', 'snoozed']);
-const allActionIntents = ['open_reminder', 'open_health', 'open_habits', 'plan_walk', 'add_wishlist'];
+const allActionIntents = ['open_reminder', 'open_health', 'open_habits', 'plan_walk', 'add_wishlist', 'open_gav'];
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
@@ -101,6 +101,15 @@ function onCooldown(candidate: RecommendationCandidate, fingerprint: string, his
     return related.some((item) => item.status === 'completed'
       || (item.status === 'dismissed' && within(item.resolvedAt, now, 30 * DAY))
       || (item.status === 'snoozed' && within(item.resolvedAt, now, 7 * DAY)));
+  }
+  if (candidate.scenarioKey === 'gav_incoming_request') {
+    return related.some((item) => within(item.shownAt ?? item.resolvedAt, now, 12 * HOUR));
+  }
+  if (candidate.scenarioKey === 'gav_nearby_signal') {
+    return related.some((item) => within(item.shownAt ?? item.resolvedAt, now, 2 * HOUR));
+  }
+  if (candidate.scenarioKey === 'gav_start_signal') {
+    return related.some((item) => within(item.shownAt ?? item.resolvedAt, now, DAY));
   }
   return false;
 }

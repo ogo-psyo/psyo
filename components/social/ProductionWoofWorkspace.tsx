@@ -10,6 +10,11 @@ import { WoofLiveMap } from './WoofLiveMap';
 
 type SignalDraft = { startsAt: string; pace: WalkPace; note: string; location: CoarseLocation };
 type IncomingInvite = { petName: string | null; expiresAt: string };
+export type WoofRecommendationEntry = {
+  key: string;
+  view: 'live_signal' | 'requests' | 'give_signal';
+  targetId?: string;
+};
 
 type Props = {
   dogName: string;
@@ -28,6 +33,7 @@ type Props = {
   missingTelegramUsernameAction?: string | null;
   invite: IncomingInvite | null;
   inviteState: 'idle' | 'loading' | 'ready' | 'gone' | 'error';
+  recommendationEntry?: WoofRecommendationEntry | null;
   onAcceptInvite: () => void | Promise<void>;
   onDismissInvite: () => void;
   onSaveProfile: (draft: Omit<SocialProfile, 'petId'>) => void | Promise<void>;
@@ -91,11 +97,13 @@ function CandidateProfile({ candidate, busy, onClose, onRequest }: {
 
 export function ProductionWoofWorkspace(props: Props) {
   const [mode, setMode] = useState<'live' | 'meet'>('live');
-  const [selectedSignalId, setSelectedSignalId] = useState<string | null>(null);
-  const [signalComposer, setSignalComposer] = useState(false);
+  const [selectedSignalId, setSelectedSignalId] = useState<string | null>(
+    props.recommendationEntry?.view === 'live_signal' ? props.recommendationEntry.targetId ?? null : null,
+  );
+  const [signalComposer, setSignalComposer] = useState(props.recommendationEntry?.view === 'give_signal');
   const [profileEditor, setProfileEditor] = useState(false);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
-  const [requestsOpen, setRequestsOpen] = useState(false);
+  const [requestsOpen, setRequestsOpen] = useState(props.recommendationEntry?.view === 'requests');
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [liveWhen, setLiveWhen] = useState<'all' | 'now' | 'later'>('all');
   const [livePace, setLivePace] = useState<'all' | WalkPace>('all');

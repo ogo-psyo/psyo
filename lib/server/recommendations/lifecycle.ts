@@ -8,7 +8,7 @@ import type { RecommendationStore, StoredRecommendation } from './repository';
 
 export type RecommendationOutcome = {
   recommendationId: string;
-  domainType: 'reminder' | 'habit' | 'route' | 'wishlist';
+  domainType: 'reminder' | 'habit' | 'route' | 'wishlist' | 'social_request' | 'social_signal';
   domainId: string;
   result: 'completed' | 'failed';
   occurredAt: string;
@@ -115,11 +115,13 @@ function expectedDomain(action: RecommendationAction): RecommendationOutcome['do
   if (action.intent === 'open_habits') return 'habit';
   if (action.intent === 'plan_walk') return 'route';
   if (action.intent === 'add_wishlist') return 'wishlist';
+  if (action.intent === 'open_gav') return action.view === 'give_signal' ? 'social_signal' : 'social_request';
   return null;
 }
 
 function intentTargetsDomainId(action: RecommendationAction, outcome: RecommendationOutcome) {
   if (action.intent === 'open_reminder') return action.reminderId === outcome.domainId;
+  if (action.intent === 'open_gav' && action.view === 'requests') return action.requestId === outcome.domainId;
   return true;
 }
 
@@ -192,6 +194,28 @@ function resultOccurredAt(row: Record<string, unknown>) {
 export function createSupabaseRecommendationDomainAdapter(supabase: SupabaseClient): RecommendationDomainAdapter {
   return {
     async targetBelongsToOwnerPet(input) {
+      if (input.domainType === 'social_signal') {
+        if (input.action.intent !== 'open_gav' || input.action.view !== 'give_signal') return false;
+        const result = await supabase.from('social_walk_signals').select('id,created_at').eq('id', input.domainId)
+          .eq('pet_id', input.petId).eq('owner_id', input.ownerId).gte('created_at', input.notBefore).maybeSingle();
+        if (result.error) throw result.error;
+        return Boolean(result.data);
+      }
+      if (input.domainType === 'social_request') {
+        if (input.action.intent !== 'open_gav' || input.action.view === 'give_signal') return false;
+        let query = supabase.from('social_match_requests').select('id,created_at,responded_at,status')
+          .eq('id', input.domainId);
+        if (input.action.view === 'requests') {
+          if (input.action.requestId !== input.domainId) return false;
+          query = query.eq('recipient_pet_id', input.petId).eq('recipient_owner_id', input.ownerId).eq('status', 'accepted');
+        } else {
+          query = query.eq('sender_pet_id', input.petId).eq('sender_owner_id', input.ownerId)
+            .eq('source', 'signal').eq('signal_id', input.action.signalId).gte('created_at', input.notBefore);
+        }
+        const result = await query.maybeSingle();
+        if (result.error) throw result.error;
+        return Boolean(result.data);
+      }
       if (input.domainType === 'route') {
         if (input.action.intent !== 'plan_walk') return false;
         const result = await supabase.from('map_routes').select('id,created_at').eq('id', input.domainId)
@@ -225,6 +249,35 @@ export function createSupabaseRecommendationDomainAdapter(supabase: SupabaseClie
       return Boolean(result.data);
     },
     async verifyAndSynchronize(input) {
+      if (input.action.intent === 'open_gav' && input.action.view === 'requests') {
+        const result = await supabase.from('social_match_requests').select('id,status,responded_at,created_at')
+          .eq('id', input.action.requestId).eq('recipient_pet_id', input.petId)
+          .eq('recipient_owner_id', input.ownerId).eq('status', 'accepted').maybeSingle();
+        if (result.error) throw result.error;
+        const row = resultRow(result.data);
+        if (row) return {
+          verified: true as const, domainType: 'social_request' as const, domainId: String(row.id), occurredAt: resultOccurredAt(row),
+        };
+      }
+      if (input.action.intent === 'open_gav' && input.action.view === 'live_signal') {
+        const result = await supabase.from('social_match_requests').select('id,created_at')
+          .eq('sender_pet_id', input.petId).eq('sender_owner_id', input.ownerId)
+          .eq('source', 'signal').eq('signal_id', input.action.signalId).limit(1).maybeSingle();
+        if (result.error) throw result.error;
+        const row = resultRow(result.data);
+        if (row) return {
+          verified: true as const, domainType: 'social_request' as const, domainId: String(row.id), occurredAt: resultOccurredAt(row),
+        };
+      }
+      if (input.action.intent === 'open_gav' && input.action.view === 'give_signal') {
+        const result = await supabase.from('social_walk_signals').select('id,created_at')
+          .eq('pet_id', input.petId).eq('owner_id', input.ownerId).eq('status', 'active').limit(1).maybeSingle();
+        if (result.error) throw result.error;
+        const row = resultRow(result.data);
+        if (row) return {
+          verified: true as const, domainType: 'social_signal' as const, domainId: String(row.id), occurredAt: resultOccurredAt(row),
+        };
+      }
       if (input.action.intent === 'open_reminder') {
         const result = await supabase.from('reminders').select('id,status,completed_at,updated_at,pets!inner(owner_id)')
           .eq('id', input.action.reminderId).eq('pet_id', input.petId).eq('pets.owner_id', input.ownerId).maybeSingle();

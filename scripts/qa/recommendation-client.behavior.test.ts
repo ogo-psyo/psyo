@@ -86,4 +86,7 @@ test('each typed recommendation action has concise Russian copy', () => {
   assert.equal(recommendationActionLabel({ intent: 'open_habits' }), 'Добавить привычку');
   assert.equal(recommendationActionLabel({ intent: 'plan_walk', zoneIds: [], limitation: 'route_not_verified_safe' }), 'Спланировать прогулку');
   assert.equal(recommendationActionLabel({ intent: 'add_wishlist', draft: { title: 'Поводок', category: 'walk', reason: 'Для прогулки' } }), 'Добавить в вещи');
+  assert.equal(recommendationActionLabel({ intent: 'open_gav', view: 'live_signal', signalId: 'signal-1' }), 'Открыть Гав');
+  assert.equal(recommendationActionLabel({ intent: 'open_gav', view: 'requests', requestId: 'request-1' }), 'Ответить');
+  assert.equal(recommendationActionLabel({ intent: 'open_gav', view: 'give_signal' }), 'Дать Гав');
 });

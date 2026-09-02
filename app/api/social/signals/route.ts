@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { closeWalkSignal, listWalkSignals, normalizeWalkSignalInput, saveWalkSignal } from '@/lib/server/socialService';
 import { socialRequestContext, socialStorageError } from '@/lib/server/socialHttp';
 import { parseWalkSignalRadiusSearch, parseWalkSignalViewerSearch } from '@/lib/socialCore';
+import { linkRecommendationOutcome } from '@/lib/server/recommendations/domainOutcomeLink';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,7 +42,15 @@ export async function PUT(request: Request) {
   try {
     const result = await saveWalkSignal({ supabase: context.supabase, ownerId: context.ownerId, value: normalized.value, idempotencyKey: key });
     if ('code' in result) return NextResponse.json({ error: result.code }, { status: result.code === 'PET_NOT_FOUND' ? 404 : 409 });
-    return NextResponse.json(result, { status: result.replayed ? 200 : 201 });
+    const recommendationId = typeof body?.recommendationId === 'string' ? body.recommendationId.trim() : '';
+    const recommendationOutcome = recommendationId && process.env.RECOMMENDATIONS_FOUNDATION_ENABLED === 'true'
+      ? await linkRecommendationOutcome({
+        supabase: context.supabase, ownerId: context.ownerId, recommendationId,
+        domainType: 'social_signal', domainId: result.signal.id, result: 'completed', idempotencyKey: key,
+        occurredAt: result.signal.created_at,
+      })
+      : undefined;
+    return NextResponse.json({ ...result, ...(recommendationOutcome ? { recommendationOutcome } : {}) }, { status: result.replayed ? 200 : 201 });
   } catch (error) {
     return socialStorageError(error);
   }
