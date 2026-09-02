@@ -2,6 +2,16 @@ export type IsoDateTime = string;
 export type EntityId = string;
 export type PsyoUserId = string;
 
+export type {
+  Recommendation,
+  RecommendationAction,
+  RecommendationCandidate,
+  RecommendationContextSnapshot,
+  RecommendationDecision,
+  RecommendationEvidence,
+  RecommendationLifecycleCommand,
+} from '../recommendations/contracts';
+
 export type ServiceReadinessState = 'ready' | 'partial' | 'blocked' | 'demo';
 
 export type ServiceReadiness = {

@@ -31,6 +31,7 @@ const cases = [
   ['tsx', 'scripts/qa/observation-extraction-service.behavior.test.ts'],
   ['tsx', 'scripts/qa/observation-extraction-route.behavior.test.ts'],
   ['tsx', 'scripts/qa/wellbeing-scoring.behavior.test.ts'],
+  ['tsx', 'scripts/qa/recommendation-contracts.behavior.test.ts'],
   ['tsx', 'scripts/qa/voice-ingestion-service.behavior.test.ts'],
   ['tsx', 'scripts/qa/stt-rate-limit.behavior.test.ts'],
   ['tsx', 'scripts/qa/groq-stt.behavior.test.ts'],
