@@ -232,6 +232,20 @@ describe('recommendation lifecycle routes', () => {
       ownerId: 'owner-auth', outcome: expect.objectContaining({ recommendationId: 'recommendation-1' }),
     }));
   });
+
+  test('foreign lifecycle and outcome targets are both hidden as 404', async () => {
+    state.transition.mockRejectedValueOnce(new Error('RECOMMENDATION_NOT_FOUND'));
+    const lifecycle = await PATCH(request('/api/recommendations/foreign', {
+      method: 'PATCH', headers: { 'Idempotency-Key': 'foreign-patch-1' }, json: { action: 'accept' },
+    }), { params: Promise.resolve({ id: 'foreign' }) });
+    state.outcome.mockRejectedValueOnce(new Error('RECOMMENDATION_NOT_FOUND'));
+    const outcome = await POST_OUTCOME(request('/api/recommendations/foreign/outcome', {
+      method: 'POST', headers: { 'Idempotency-Key': 'foreign-outcome-1' },
+      json: { domainType: 'reminder', domainId: 'reminder-1', result: 'completed', occurredAt: '2026-09-02T12:00:00.000Z' },
+    }), { params: Promise.resolve({ id: 'foreign' }) });
+    expect(lifecycle.status).toBe(404);
+    expect(outcome.status).toBe(404);
+  });
 });
 
 describe('domain outcome post-success linking', () => {

@@ -491,36 +491,35 @@ Commit: `git commit -m "feat(recommendations): connect verified domain outcomes"
 **Interfaces:**
 - Produces: repeatable local gate included in `qa:contracts`.
 
-- [ ] **Step 1: Create failing static contract gate**
+- [x] **Step 1: Create failing static contract gate**
 
 Check required files, RLS tokens, active fingerprint unique index, server-only repository, feature flag default, five registered versions, absence of imports from assistant generation, absence of banned fields (`microchip`, `vet_contact`, geometry coordinates, document body) in snapshot/analytics.
 
-- [ ] **Step 2: Add gate to package.json**
+- [x] **Step 2: Add gate to package.json**
 
 Append `node scripts/qa/check-recommendation-foundation-contract.mjs` to `qa:contracts`.
 
-- [ ] **Step 3: Run focused verification**
+- [x] **Step 3: Run focused verification**
 
 ```bash
-npx vitest run scripts/qa/recommendation-contracts.behavior.test.ts \
-  scripts/qa/recommendation-engine.behavior.test.ts \
-  scripts/qa/recommendation-routes.behavior.test.ts
+npx tsx --test scripts/qa/recommendation-engine.behavior.test.ts
+npx vitest run scripts/qa/vitest/recommendation-routes.test.ts
 node scripts/qa/check-recommendation-foundation-contract.mjs
-supabase test db supabase/tests/recommendation_foundation.sql
+npx supabase test db supabase/tests/recommendation_foundation.sql supabase/tests/recommendation_repository.sql
 ```
 
 Expected: all PASS.
 
-- [ ] **Step 4: Run full repository gate**
+- [x] **Step 4: Run full repository gate**
 
 Run: `npm run qa:local`
 Expected: lint within warning budget, all Vitest tests PASS, Next production build PASS, all contracts PASS.
 
-- [ ] **Step 5: Perform manual security review**
+- [x] **Step 5: Perform manual security review**
 
 Verify with two owners and two pets: cross-owner GET/PATCH/outcome returns 404; serialized API response contains no excluded privacy fields; disabled flag exposes no endpoint behavior; safety pack absence cannot produce `safety_override`; assistant output cannot mutate a policy decision.
 
-- [ ] **Step 6: Record Phase 0 terminal state**
+- [x] **Step 6: Record Phase 0 terminal state**
 
 Phase 0 is complete only when:
 
@@ -532,6 +531,21 @@ Phase 0 is complete only when:
 6. full `qa:local` passes.
 
 Commit: `git commit -m "test(recommendations): gate phase zero foundation"`
+
+### Phase 0 terminal evidence — 2026-09-02
+
+- `npm run qa:local`: PASS; Vitest 89/89, production build and all contracts PASS,
+  ESLint 0 errors (219 warnings within the 220 baseline).
+- Clean local Supabase reset: PASS; foundation + repository pgTAP 9/9.
+- Security review: two-owner/two-pet RLS and foreign transition checks PASS; API GET,
+  PATCH and outcome hide foreign targets as 404; disabled flag hides all three routes.
+- Privacy review: serialized API fixtures exclude owner ids, raw evidence payload and
+  coordinates; the snapshot contract bans microchip, veterinary contact, geometry and
+  document-body fields.
+- Safety/AI review: registry contains exactly five versions, no policy emits
+  `safety_override`, and recommendation decision sources import no assistant/LLM path.
+- Rollout state: foundation remains dark; no UI, production DB migration or deploy was
+  performed.
 
 ---
 

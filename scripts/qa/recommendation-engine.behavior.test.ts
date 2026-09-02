@@ -221,7 +221,7 @@ test('policy care_due creates candidates only for overdue or upcoming active rem
   assert.deepEqual(care.map((candidate) => candidate.primaryAction.intent), ['open_reminder', 'open_reminder']);
 });
 
-test('policy wellbeing_change needs two comparable owner-confirmed observations and never diagnoses', () => {
+test('AC10 wellbeing_change needs two comparable owner-confirmed observations and never diagnoses', () => {
   const capturedAt = '2026-09-02T12:00:00.000Z';
   const observation = (id: string, type: string, observedAt: string, sufficient = true, value = 'ест меньше') => ({
     id, type, observedAt, source: 'assistant', sufficient, value: sufficient ? value : undefined,
@@ -247,7 +247,7 @@ test('policy wellbeing_change needs two comparable owner-confirmed observations 
   assert.equal(unconfirmed.some((candidate) => candidate.scenarioKey === 'wellbeing_change'), false);
 });
 
-test('policy habit_explicit_goal requires an explicit goal and respects habit and wellbeing conflicts', () => {
+test('AC08 habit_explicit_goal requires an explicit goal and respects habit and wellbeing conflicts', () => {
   const now = new Date('2026-09-02T12:00:00.000Z');
   const explicitGoal = { requestId: 'request-habit-1', kind: 'training', title: 'Выдержка', cadence: 'daily' as const, targetPerPeriod: 1 };
   const positive = buildCandidates(policySnapshot(), { now, explicitGoal });
@@ -265,7 +265,7 @@ test('policy habit_explicit_goal requires an explicit goal and respects habit an
     .some((candidate) => candidate.scenarioKey === 'habit_explicit_goal'), false);
 });
 
-test('policy walk_with_constraints is explicit and exposes zone IDs without coordinates', () => {
+test('AC09 walk_with_constraints is explicit and exposes zone IDs without coordinates', () => {
   const capturedAt = '2026-09-02T12:00:00.000Z';
   const zone = {
     id: 'zone-1', type: 'risk_zone', title: 'Самокаты', areaLabel: 'у парка',
@@ -283,7 +283,7 @@ test('policy walk_with_constraints is explicit and exposes zone IDs without coor
   assert.equal(active[0]?.limitation, 'Псё не подтверждает безопасность маршрута.');
 });
 
-test('policy thing_for_task needs a reason and suppresses bought or unsuitable matches', () => {
+test('AC07 thing_for_task needs a reason and suppresses bought or unsuitable matches', () => {
   const now = new Date('2026-09-02T12:00:00.000Z');
   const request = { requestId: 'request-thing-1', title: 'Шлейка', category: 'gear', reason: 'для прогулки' };
   const positive = buildCandidates(policySnapshot(), { now, thing: request })
@@ -595,7 +595,7 @@ test('lifecycle validates snooze and accept never implies completion', async () 
   assert.equal(accepted.recommendation.status, 'accepted');
 });
 
-test('failed domain outcome is never recorded as completed and ownership is checked', async () => {
+test('AC05 failed domain outcome is never recorded as completed and ownership is checked', async () => {
   const { store, recommendation, now } = await seededStore();
   await transitionForOwner({
     store, domain: domainAdapter(store), ownerId: 'owner-1', recommendationId: recommendation.id,
@@ -618,7 +618,7 @@ test('failed domain outcome is never recorded as completed and ownership is chec
   }), /DOMAIN_TARGET_NOT_FOUND/);
 });
 
-test('domain completion can resolve a shown recommendation outside the card', async () => {
+test('AC06 domain completion can resolve a shown recommendation outside the card', async () => {
   const { store, recommendation, now } = await seededStore();
   const completed = await recordOutcomeForOwner({
     store, domain: domainAdapter(store), ownerId: 'owner-1', outcome: {
