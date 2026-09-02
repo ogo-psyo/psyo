@@ -40,6 +40,7 @@
 - `app/api/recommendations/[id]/route.ts` — snooze/dismiss/accept lifecycle endpoint.
 - `app/api/recommendations/[id]/outcome/route.ts` — idempotent domain outcome endpoint.
 - `scripts/qa/recommendation-contracts.behavior.test.ts` — DTO/validation/fingerprint tests.
+- `scripts/qa/recommendation-storage.behavior.test.ts` — статический schema/RLS/RPC contract, выполняемый без локального Postgres.
 - `scripts/qa/recommendation-engine.behavior.test.ts` — fixtures пяти сценариев и 12 PRD acceptance criteria.
 - `scripts/qa/recommendation-routes.behavior.test.ts` — auth, ownership, flag и idempotency characterization.
 - `scripts/qa/check-recommendation-foundation-contract.mjs` — статический production contract gate.
@@ -144,21 +145,22 @@ Commit: `git commit -m "feat(recommendations): define phase zero contracts"`
 **Files:**
 - Create: `supabase/migrations/20260902150000_recommendation_foundation.sql`
 - Create: `supabase/tests/recommendation_foundation.sql`
+- Create: `scripts/qa/recommendation-storage.behavior.test.ts`
 
 **Interfaces:**
 - Produces tables: `recommendations`, `recommendation_evidence`, `recommendation_events`, `recommendation_preferences`, `recommendation_mutations`.
 - Produces RPC: `recommendation_transition_atomic(owner, key, fingerprint, recommendation, action, payload)`.
 
-- [ ] **Step 1: Write failing database assertions**
+- [x] **Step 1: Write failing database assertions**
 
-Test owner A can read/update only recommendations for owner A's pet; owner B sees zero rows. Test duplicate `(pet_id, fingerprint, active)` cannot create two active records. Test replay of the same idempotency key returns the same response; changed fingerprint raises `IDEMPOTENCY_KEY_REUSED`.
+Test owner A can read and atomically transition only recommendations for owner A's pet; owner B sees zero rows. Test duplicate `(pet_id, fingerprint, active)` cannot create two active records. Test replay of the same idempotency key returns the same response; changed fingerprint raises `IDEMPOTENCY_KEY_REUSED`.
 
-- [ ] **Step 2: Run database test and verify RED**
+- [x] **Step 2: Run static storage contract and verify RED**
 
-Run: `supabase test db supabase/tests/recommendation_foundation.sql`
-Expected: FAIL because recommendation relations do not exist.
+Run: `npx tsx scripts/qa/recommendation-storage.behavior.test.ts`
+Expected: FAIL because the recommendation migration does not exist. The executable SQL suite remains the final database gate.
 
-- [ ] **Step 3: Create constrained tables**
+- [x] **Step 3: Create constrained tables**
 
 Required columns:
 
@@ -195,9 +197,9 @@ create table public.recommendations (
 );
 ```
 
-Если `pet_owner_id` отсутствует, создать `security definer stable` helper с пустым `search_path`; не дублировать owner lookup в клиенте. Evidence хранит `source_type`, `source_id`, времена, `owner_confirmed`, `input_confidence`, `excerpt`; events — `from_status`, `to_status`, `event_type`, sanitized `payload`.
+Связь `owner_id ↔ pet_id` проверять server-side trigger-функцией `recommendation_enforce_pet_owner()` с `security definer` и пустым `search_path`; не дублировать owner lookup в клиенте. Evidence хранит `source_type`, `source_id`, времена, `owner_confirmed`, `input_confidence`, `excerpt`; events — `from_status`, `to_status`, `event_type`, sanitized `payload`.
 
-- [ ] **Step 4: Add indexes and partial uniqueness**
+- [x] **Step 4: Add indexes and partial uniqueness**
 
 ```sql
 create unique index recommendations_active_fingerprint_uidx
@@ -209,11 +211,11 @@ create index recommendation_events_audit_idx
   on public.recommendation_events(recommendation_id, created_at);
 ```
 
-- [ ] **Step 5: Add RLS and grants**
+- [x] **Step 5: Add RLS and grants**
 
 Enable RLS on all five tables. Policies derive ownership through `auth.uid()` and pet ownership. Revoke direct client insert/update/delete on recommendation/events/mutations; mutations go through the atomic RPC. Preferences may be changed owner-scoped.
 
-- [ ] **Step 6: Implement legal atomic transitions**
+- [x] **Step 6: Implement legal atomic transitions**
 
 Allowed transitions:
 
@@ -227,6 +229,8 @@ snoozed -> eligible | dismissed | expired | superseded
 Reject every other transition with `INVALID_RECOMMENDATION_TRANSITION`. Lock by `(owner_id,idempotency_key)`, verify pet ownership inside the transaction, update row and append exactly one event.
 
 - [ ] **Step 7: Verify GREEN and commit**
+
+Локальный статус 2026-09-02: static storage contract GREEN; динамический SQL gate подготовлен, но не выполнен — локальный Supabase не запущен, Docker/Podman отсутствует (`ECONNREFUSED 127.0.0.1:54322`).
 
 Run: `supabase db reset && supabase test db supabase/tests/recommendation_foundation.sql`
 Expected: migration applies; all assertions PASS.
