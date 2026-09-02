@@ -11,6 +11,10 @@ for (const marker of [
   'Добавить контекст',
   'data-observation-metrics',
   'health-observation-grid',
+  'data-observation-calendar',
+  'health-calendar-grid',
+  'selectedDayEntries',
+  'В этот день отметок нет',
   'Контекст владельца',
   'не отмечено',
 ]) assert.ok(screen.includes(marker), `structured observation screen must expose: ${marker}`);
@@ -23,5 +27,6 @@ assert.ok(editor.includes('<ObservationMetricFields'), 'editing must reuse the s
 assert.ok(editor.includes('Изменить контекст'), 'editing note must remain secondary');
 assert.ok(!editor.includes('<label>Настроение<input'), 'editing must not fall back to free-text metric inputs');
 assert.ok(!screen.includes('entrySummary(entry).slice'), 'history must not flatten metrics into a comment-like sentence');
+assert.ok(!screen.includes('entries.map((entry)'), 'calendar must not render the full observation backlog at once');
 
 console.log('structured observations behavior ok');

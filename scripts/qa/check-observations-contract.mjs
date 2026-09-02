@@ -78,7 +78,7 @@ for (const token of [
 for (const token of ['<HealthTimelineScreen', 'onStartEdit={startObservationEdit}', 'onDelete={deleteObservation}']) {
   if (!files.page.includes(token)) failures.push(`canonical health wiring missing: ${token}`);
 }
-for (const token of ['Записать наблюдение', 'aria-label="История наблюдений"', '<ObservationEditor', '<ObservationMetricFields', 'data-observation-metrics', 'Контекст владельца', 'Изменить', 'Убрать']) {
+for (const token of ['Записать наблюдение', 'aria-label="История наблюдений"', '<ObservationEditor', '<ObservationMetricFields', 'data-observation-calendar', 'health-calendar-grid', 'data-observation-metrics', 'Контекст владельца', 'Изменить', 'Убрать']) {
   if (!files.health.includes(token)) failures.push(`canonical health lifecycle missing: ${token}`);
 }
 if (files.profileMemory.includes("surface === 'health'")) {

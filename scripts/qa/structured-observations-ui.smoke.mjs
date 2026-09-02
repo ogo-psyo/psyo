@@ -12,7 +12,8 @@ const profile = {
 };
 const observations = [
   { id: 'structured-o1', createdAt: '2026-09-02T09:10:00.000Z', mood: 'спокойное', appetite: 'обычный', stool: 'обычный', energy: 'обычная', note: 'После обычной утренней прогулки.' },
-  { id: 'structured-o2', createdAt: '2026-09-03T08:40:00.000Z', mood: 'вялое', appetite: 'ниже обычного', note: 'После позднего возвращения домой.' },
+  { id: 'structured-o2', createdAt: '2026-09-03T08:40:00.000Z', mood: 'вялое', appetite: 'ниже обычного', stool: 'мягкий', energy: 'ниже обычного', note: 'После позднего возвращения домой.' },
+  { id: 'structured-o3', createdAt: '2026-09-02T17:25:00.000Z', mood: 'радостное', appetite: 'обычный' },
 ];
 
 const browser = await chromium.launch({ headless: true });
@@ -51,8 +52,16 @@ try {
     await captureContext.locator('summary').click();
     if (!await captureContext.locator('textarea').isVisible()) throw new Error(`${viewport.name}: owner context did not open`);
 
+    const calendar = screen.locator('[data-observation-calendar]');
+    if (await calendar.locator('.health-calendar-grid > button').count() !== 30) throw new Error(`${viewport.name}: September calendar did not render`);
+    if (!/3 сентября, наблюдений: 1/.test(await calendar.locator('.health-calendar-grid > button[aria-pressed="true"]').getAttribute('aria-label') || '')) throw new Error(`${viewport.name}: latest observed day is not selected by default`);
+    await calendar.getByRole('button', { name: 'Предыдущий месяц' }).click();
+    if (!/август/i.test(await calendar.locator('.health-calendar-toolbar b').textContent() || '')) throw new Error(`${viewport.name}: previous month navigation failed`);
+    await calendar.getByRole('button', { name: 'Следующий месяц' }).click();
+    await calendar.getByRole('button', { name: /2 сентября, наблюдений: 2/ }).click();
+
     const records = screen.locator('.health-timeline article');
-    if (await records.count() !== 2) throw new Error(`${viewport.name}: seeded observations not rendered`);
+    if (await records.count() !== 2) throw new Error(`${viewport.name}: calendar did not limit records to the selected day`);
     const firstGrid = records.first().locator('.health-observation-grid');
     if (await firstGrid.locator('div').count() !== 4) throw new Error(`${viewport.name}: record is not a four-metric matrix`);
     if (!await records.nth(1).getByText('не отмечено', { exact: true }).first().isVisible()) throw new Error(`${viewport.name}: missing metric is not explicit`);
