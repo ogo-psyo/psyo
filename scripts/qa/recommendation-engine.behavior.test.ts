@@ -4,6 +4,12 @@ import test from 'node:test';
 import { loadRecommendationContext } from '../../lib/server/recommendations/contextSnapshot';
 import type { RecommendationContextSnapshot } from '../../lib/server/recommendations/contextSnapshot';
 import { buildCandidates, getPolicy, listActivePolicies } from '../../lib/server/recommendations/policyRegistry';
+import {
+  GATE_ORDER,
+  evaluateRecommendations,
+  recommendationFingerprint,
+  selectMainRecommendation,
+} from '../../lib/server/recommendations/engine';
 
 type Fixture = { data: unknown; error: unknown };
 
@@ -282,4 +288,148 @@ test('policy thing_for_task needs a reason and suppresses bought or unsuitable m
   };
   assert.equal(buildCandidates(policySnapshot({ wishlist: [prior] }), { now, thing: request })
     .some((candidate) => candidate.scenarioKey === 'thing_for_task'), false);
+});
+
+function engineCandidates() {
+  const now = new Date('2026-09-02T12:00:00.000Z');
+  const capturedAt = now.toISOString();
+  const reminder = {
+    id: 'reminder-engine', type: 'grooming', title: 'Когти', dueAt: '2026-09-01T12:00:00.000Z', status: 'active',
+    evidence: {
+      sourceType: 'reminder' as const, sourceId: 'reminder-engine', capturedAt,
+      dueAt: '2026-09-01T12:00:00.000Z', ownerConfirmed: true,
+    },
+  };
+  const candidates = buildCandidates(policySnapshot({ reminders: [reminder] }), { now });
+  return { now, care: candidates.find((candidate) => candidate.scenarioKey === 'care_due')! };
+}
+
+test('AC01 keeps one active canonical fingerprint and reuses persisted identity', () => {
+  const { now, care } = engineCandidates();
+  const equivalent = { ...care, normalizedReason: `  ${care.normalizedReason.toUpperCase()}   ` };
+  assert.equal(recommendationFingerprint(care), recommendationFingerprint(equivalent));
+  const fingerprint = recommendationFingerprint(care);
+  const decisions = evaluateRecommendations({
+    petId: 'pet-1', now, candidates: [care, equivalent],
+    existing: [{ id: 'persisted-1', fingerprint, scenarioKey: care.scenarioKey, subjectId: care.subjectId, status: 'eligible' }],
+  });
+  assert.equal(decisions.filter((decision) => decision.status === 'eligible').length, 1);
+  assert.equal(decisions.filter((decision) => decision.status === 'suppressed' && decision.reasons.includes('duplicate')).length, 1);
+  assert.equal(decisions.find((decision) => decision.status === 'eligible')?.recommendation.id, 'persisted-1');
+});
+
+test('AC02 hard gates keep fixed order and report the first suppression reason', () => {
+  assert.deepEqual(GATE_ORDER, [
+    'ownership', 'required_evidence', 'freshness', 'owner_confirmation',
+    'conflict', 'action_available', 'preference', 'dedup', 'cooldown',
+  ]);
+  const { now, care } = engineCandidates();
+  const decisions = evaluateRecommendations({
+    petId: 'pet-1', now,
+    candidates: [{ ...care, evidence: [], freshUntil: '2026-09-01T00:00:00.000Z' }],
+  });
+  assert.deepEqual(decisions[0], {
+    status: 'suppressed', candidate: { ...care, evidence: [], freshUntil: '2026-09-01T00:00:00.000Z', suppressionReasons: ['missing_evidence'] },
+    reasons: ['missing_evidence'],
+  });
+});
+
+test('AC03 safety override always owns the main slot over routine score', () => {
+  const { now, care } = engineCandidates();
+  const safety = {
+    ...care,
+    scenarioKey: 'wellbeing_change', policyVersion: 'wellbeing_change@1', category: 'wellbeing' as const,
+    risk: 'safety_override' as const, subjectId: 'safety-1', normalizedReason: 'approved safety fixture',
+    evidence: [{ ...care.evidence[0]!, sourceType: 'observation' as const, sourceId: 'safety-1' }],
+    primaryAction: { intent: 'open_health' as const, observationId: 'safety-1' },
+    rank: { tier: 99, urgency: 0, actionability: 0, relevance: 0, annoyancePenalty: 100 },
+  };
+  const decisions = evaluateRecommendations({ petId: 'pet-1', now, candidates: [care, safety] });
+  assert.equal(selectMainRecommendation(decisions)?.risk, 'safety_override');
+});
+
+test('AC04 explicit snooze wins and suppresses recalculation until its time', () => {
+  const { now, care } = engineCandidates();
+  const fingerprint = recommendationFingerprint(care);
+  const before = evaluateRecommendations({
+    petId: 'pet-1', now, candidates: [care],
+    existing: [{
+      id: 'persisted-1', fingerprint, scenarioKey: care.scenarioKey, subjectId: care.subjectId,
+      status: 'snoozed', snoozedUntil: '2026-09-02T13:00:00.000Z',
+    }],
+  });
+  assert.deepEqual(before[0]?.status === 'suppressed' ? before[0].reasons : [], ['cooldown']);
+  const after = evaluateRecommendations({
+    petId: 'pet-1', now: new Date('2026-09-02T13:00:01.000Z'), candidates: [care],
+    existing: [{
+      id: 'persisted-1', fingerprint, scenarioKey: care.scenarioKey, subjectId: care.subjectId,
+      status: 'snoozed', snoozedUntil: '2026-09-02T13:00:00.000Z',
+    }],
+  });
+  assert.equal(after[0]?.status, 'eligible');
+});
+
+test('AC11 engine has no LLM path and preserves approved policy copy', () => {
+  const { now, care } = engineCandidates();
+  const result = evaluateRecommendations({ petId: 'pet-1', now, candidates: [care] });
+  const recommendation = result[0]?.status === 'eligible' ? result[0].recommendation : null;
+  assert.equal(recommendation?.title, care.title);
+  assert.deepEqual(recommendation?.whyNow, care.whyNow);
+});
+
+test('AC12 disabled routine category suppresses routine but never safety override', () => {
+  const { now, care } = engineCandidates();
+  const routine = evaluateRecommendations({
+    petId: 'pet-1', now, candidates: [care], preferences: [{ category: 'care', enabled: false }],
+  });
+  assert.deepEqual(routine[0]?.status === 'suppressed' ? routine[0].reasons : [], ['category_disabled']);
+  const safety = { ...care, risk: 'safety_override' as const };
+  assert.equal(evaluateRecommendations({
+    petId: 'pet-1', now, candidates: [safety], preferences: [{ category: 'care', enabled: false }],
+  })[0]?.status, 'eligible');
+});
+
+test('scenario cooldown defaults are enforced without crossing their boundaries', () => {
+  const { now, care } = engineCandidates();
+  const snapshot = policySnapshot();
+  const habit = buildCandidates(snapshot, { now, explicitGoal: {
+    requestId: 'habit-cooldown', kind: 'training', title: 'Выдержка', cadence: 'daily', targetPerPeriod: 1,
+  } }).find((candidate) => candidate.scenarioKey === 'habit_explicit_goal')!;
+  const walk = buildCandidates(snapshot, {
+    now, walk: { requestId: 'walk-cooldown', mode: 'explicit' },
+  }).find((candidate) => candidate.scenarioKey === 'walk_with_constraints')!;
+  const thing = buildCandidates(snapshot, { now, thing: {
+    requestId: 'thing-cooldown', title: 'Шлейка', category: 'gear', reason: 'для прогулки',
+  } }).find((candidate) => candidate.scenarioKey === 'thing_for_task')!;
+  const checks = [
+    { candidate: care, status: 'shown' as const, at: '2026-09-01T13:00:00.000Z', field: 'shownAt' as const, blocked: true },
+    { candidate: care, status: 'shown' as const, at: '2026-09-01T11:00:00.000Z', field: 'shownAt' as const, blocked: false },
+    { candidate: habit, status: 'dismissed' as const, at: '2026-08-04T12:00:00.000Z', field: 'resolvedAt' as const, blocked: true },
+    { candidate: walk, status: 'shown' as const, at: '2026-09-02T01:00:00.000Z', field: 'shownAt' as const, blocked: true },
+    { candidate: thing, status: 'dismissed' as const, at: '2026-08-04T12:00:00.000Z', field: 'resolvedAt' as const, blocked: true },
+    { candidate: thing, status: 'snoozed' as const, at: '2026-08-26T13:00:00.000Z', field: 'resolvedAt' as const, blocked: true },
+    { candidate: thing, status: 'snoozed' as const, at: '2026-08-25T11:00:00.000Z', field: 'resolvedAt' as const, blocked: false },
+  ];
+  for (const [index, check] of checks.entries()) {
+    const state = {
+      id: `history-${index}`, fingerprint: recommendationFingerprint(check.candidate),
+      scenarioKey: check.candidate.scenarioKey, subjectId: check.candidate.subjectId, status: check.status,
+      [check.field]: check.at,
+    };
+    const decision = evaluateRecommendations({ petId: 'pet-1', now, candidates: [check.candidate], existing: [state] })[0];
+    assert.equal(decision?.status, check.blocked ? 'suppressed' : 'eligible');
+    if (check.blocked && decision?.status === 'suppressed') assert.deepEqual(decision.reasons, ['cooldown']);
+  }
+});
+
+test('ranking is tiered, stable, and deterministic across 100 shuffled replays', () => {
+  const { now, care } = engineCandidates();
+  const highTier = { ...care, subjectId: 'tier-4', normalizedReason: 'tier four', rank: { ...care.rank, tier: 4, urgency: 100 } };
+  const lowScoreBetterTier = { ...care, subjectId: 'tier-3', normalizedReason: 'tier three', rank: { ...care.rank, tier: 3, urgency: 0 } };
+  const baseline = JSON.stringify(evaluateRecommendations({ petId: 'pet-1', now, candidates: [highTier, lowScoreBetterTier] }));
+  assert.equal(selectMainRecommendation(JSON.parse(baseline))?.fingerprint, recommendationFingerprint(lowScoreBetterTier));
+  for (let index = 0; index < 100; index += 1) {
+    const shuffled = index % 2 ? [lowScoreBetterTier, highTier] : [highTier, lowScoreBetterTier];
+    assert.equal(JSON.stringify(evaluateRecommendations({ petId: 'pet-1', now, candidates: shuffled })), baseline);
+  }
 });

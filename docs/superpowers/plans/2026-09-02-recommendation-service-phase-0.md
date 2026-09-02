@@ -328,11 +328,11 @@ Commit: `git commit -m "feat(recommendations): add versioned phase zero policies
 - Produces: `evaluateRecommendations(input): RecommendationDecision[]`, `selectMainRecommendation(decisions)`, `recommendationFingerprint(candidate)`.
 - Consumes registry candidates and persisted state/preferences supplied as values; pure core performs no database calls.
 
-- [ ] **Step 1: Write failing PRD acceptance tests 1–5, 7–12**
+- [x] **Step 1: Write failing PRD acceptance tests 1–5, 7–12**
 
 Name tests by criterion, e.g. `AC01 keeps one active fingerprint`, `AC03 safety override occupies main slot`, `AC11 ignores LLM availability`. Inject `now`; never call real clock in pure functions.
 
-- [ ] **Step 2: Implement hard gates in fixed order**
+- [x] **Step 2: Implement hard gates in fixed order**
 
 ```ts
 const GATE_ORDER = [
@@ -343,19 +343,19 @@ const GATE_ORDER = [
 
 First failure yields a structured suppression reason. Persist all evaluated candidates for audit, but only `eligible` may rank.
 
-- [ ] **Step 3: Implement canonical SHA-256 fingerprint**
+- [x] **Step 3: Implement canonical SHA-256 fingerprint**
 
 Hash stable JSON of `{ petId, scenarioKey, subjectId, normalizedReason, policyVersion }`; trim/lowercase reason, collapse whitespace, sort object keys. Never use `JSON.stringify` on unordered raw DB objects.
 
-- [ ] **Step 4: Implement cooldown precedence**
+- [x] **Step 4: Implement cooldown precedence**
 
 Explicit `snoozedUntil` wins. Then preference disable for routine. Then scenario defaults: care 24h, wellbeing until changed/superseded, habit 30d after dismiss, walk 12h/session, thing 30d dismiss/7d snooze/permanent same-reason suppression after bought/not_suitable.
 
-- [ ] **Step 5: Implement tiered stable ranking**
+- [x] **Step 5: Implement tiered stable ranking**
 
 Sort by: `risk=safety_override` first; then policy tier asc; urgency desc; actionability desc; relevance desc; annoyance penalty asc; due time asc; signal time desc; id asc. A numeric component cannot cross tier.
 
-- [ ] **Step 6: Verify deterministic replay**
+- [x] **Step 6: Verify deterministic replay**
 
 Run the same fixture 100 times with shuffled input order. Expected: identical decisions, fingerprints and main recommendation.
 Commit: `git commit -m "feat(recommendations): add deterministic gates and ranking"`
