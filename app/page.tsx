@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, CopySimple, FilePdf, Files, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning, ShoppingBag, Sparkle, TextT, Trash, UploadSimple } from '@phosphor-icons/react';
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { PaperSheet, WatercolorScreen } from '@/components/watercolor';
@@ -18,6 +18,7 @@ import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
 import type { DogModuleSummary } from '@/components/home/AllFunctionsHub';
 import { HabitScreen, type HabitDraft, type HabitView } from '@/components/habits/HabitScreen';
 import { HealthTimelineScreen } from '@/components/health/HealthTimelineScreen';
+import { RecommendationCard } from '@/components/recommendations/RecommendationCard';
 import { ProfileMemoryWorkspace } from '@/components/profile/ProfileMemoryWorkspace';
 import { NextCareCard } from '@/components/today/NextCareCard';
 import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
@@ -64,6 +65,8 @@ import { rc1Config } from '@/lib/rc1';
 import { extractObservationCandidates, ingestionFingerprint, type IngestionDecision, type ObservationCandidate } from '@/lib/observationIngestion';
 import type { CandidateGroup, CoarseLocation, SocialProfile, SocialScenario, WalkPace, WalkSignal } from '@/lib/socialCore';
 import type { ActionSuggestion } from '@/packages/contracts';
+import type { Recommendation, RecommendationAction, RecommendationLifecycleCommand } from '@/packages/recommendations/contracts';
+import { loadMainRecommendation, RecommendationRequestError, transitionRecommendation } from '@/lib/recommendations/client';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
 type Notice = 'idle' | 'saved' | 'mapSaved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
@@ -526,6 +529,7 @@ export default function Home() {
   const [habits, setHabits] = useState<HabitView[]>([]);
   const [habitLoading, setHabitLoading] = useState(false);
   const [habitBusyId, setHabitBusyId] = useState<string | null>(null);
+  const [suggestedHabitDraft, setSuggestedHabitDraft] = useState<HabitDraft | null>(null);
   const [dogSummary, setDogSummary] = useState<DogModuleSummary | null>(null);
   const [moduleErrors, setModuleErrors] = useState<{ habits?: string; health?: string }>({});
   const [socialProfile, setSocialProfile] = useState<SocialProfile | null>(null);
@@ -580,6 +584,9 @@ export default function Home() {
   const [newWishReason, setNewWishReason] = useState('');
   const [newWishCategory, setNewWishCategory] = useState('gear');
   const [thingCaptureOpen, setThingCaptureOpen] = useState(false);
+  const [mainRecommendation, setMainRecommendation] = useState<Recommendation | null>(null);
+  const [recommendationState, setRecommendationState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [recommendationBusyAction, setRecommendationBusyAction] = useState<'primary' | 'snooze' | 'dismiss' | null>(null);
   const [viralCardFormat, setViralCardFormat] = useState<ViralCardFormat>('story');
   const [viralCardMood, setViralCardMood] = useState<ViralCardMood>('bold');
   const [viralCardHeadline, setViralCardHeadline] = useState('');
@@ -808,6 +815,124 @@ export default function Home() {
 
   function authHeaders(): Record<string, string> {
     return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+  }
+
+  const refreshRecommendation = useCallback(async (signal?: AbortSignal) => {
+    const petId = profile.backendPetId;
+    if (!petId || (!session?.access_token && !telegramSession.ownerId)) {
+      setMainRecommendation(null);
+      setRecommendationState('idle');
+      return;
+    }
+    setRecommendationState('loading');
+    try {
+      const headers: Record<string, string> = session?.access_token
+        ? { Authorization: `Bearer ${session.access_token}` }
+        : {};
+      let recommendation = await loadMainRecommendation({ petId, headers, signal });
+      if (recommendation?.status === 'eligible') {
+        recommendation = await transitionRecommendation({
+          recommendationId: recommendation.id,
+          command: { action: 'show' },
+          headers,
+          signal,
+        });
+      }
+      if (signal?.aborted) return;
+      setMainRecommendation(recommendation);
+      setRecommendationState('ready');
+    } catch (recommendationError) {
+      if (signal?.aborted) return;
+      if (recommendationError instanceof RecommendationRequestError
+        && ['RECOMMENDATIONS_DISABLED', 'AUTH_REQUIRED', 'PET_NOT_FOUND'].includes(recommendationError.code)) {
+        setMainRecommendation(null);
+        setRecommendationState('idle');
+        return;
+      }
+      setRecommendationState('error');
+    }
+  }, [profile.backendPetId, session?.access_token, telegramSession.ownerId]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => { void refreshRecommendation(controller.signal); }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [refreshRecommendation]);
+
+  async function updateRecommendation(
+    command: RecommendationLifecycleCommand,
+    busyAction: 'primary' | 'snooze' | 'dismiss',
+  ) {
+    if (!mainRecommendation || recommendationBusyAction) return null;
+    setRecommendationBusyAction(busyAction);
+    setError('');
+    try {
+      const updated = await transitionRecommendation({
+        recommendationId: mainRecommendation.id,
+        command,
+        headers: authHeaders(),
+      });
+      setMainRecommendation(['dismissed', 'snoozed'].includes(updated.status) ? null : updated);
+      setRecommendationState('ready');
+      return updated;
+    } catch {
+      setError('Не удалось обновить совет. Проверь соединение и попробуй снова.');
+      return null;
+    } finally {
+      setRecommendationBusyAction(null);
+    }
+  }
+
+  function openRecommendationAction(action: RecommendationAction) {
+    if (action.intent === 'open_reminder') {
+      setCareView('active');
+      setTab('calendar');
+      return;
+    }
+    if (action.intent === 'open_health') {
+      setTab('health');
+      return;
+    }
+    if (action.intent === 'open_habits') {
+      setSuggestedHabitDraft(action.draft ?? null);
+      setTab('habits');
+      return;
+    }
+    if (action.intent === 'plan_walk') {
+      setProductionMapMode('route');
+      setTab('map');
+      return;
+    }
+    setNewWishTitle(action.draft.title);
+    setNewWishCategory(action.draft.category);
+    setNewWishReason(action.draft.reason);
+    setThingCaptureOpen(true);
+    setTab('things');
+  }
+
+  async function acceptMainRecommendation() {
+    if (!mainRecommendation || recommendationBusyAction) return;
+    const recommendation = mainRecommendation.status === 'accepted'
+      ? mainRecommendation
+      : await updateRecommendation({ action: 'accept' }, 'primary');
+    if (recommendation) openRecommendationAction(recommendation.primaryAction);
+  }
+
+  function acceptedRecommendationId(intent: RecommendationAction['intent'], domainId?: string) {
+    if (mainRecommendation?.status !== 'accepted' || mainRecommendation.primaryAction.intent !== intent) return undefined;
+    if (intent === 'open_reminder' && mainRecommendation.primaryAction.intent === 'open_reminder'
+      && mainRecommendation.primaryAction.reminderId !== domainId) return undefined;
+    return mainRecommendation.id;
+  }
+
+  function finishRecommendationOutcome(recommendationId?: string) {
+    if (recommendationId && mainRecommendation?.id === recommendationId) {
+      setMainRecommendation(null);
+      setRecommendationState('ready');
+    }
   }
 
   async function loadSocialSurface(signal?: AbortSignal, viewerLocationOverride?: CoarseLocation | null, radiusKmOverride?: number) {
@@ -1920,11 +2045,17 @@ export default function Home() {
     setHabitBusyId('create');
     setError('');
     try {
+      const recommendationId = mainRecommendation?.status === 'accepted'
+        && mainRecommendation.primaryAction.intent === 'open_habits'
+        && mainRecommendation.primaryAction.draft
+        && JSON.stringify(mainRecommendation.primaryAction.draft) === JSON.stringify(draft)
+        ? mainRecommendation.id
+        : undefined;
       const response = await fetch('/api/habits', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ petId: profile.backendPetId, ...draft }),
+        body: JSON.stringify({ petId: profile.backendPetId, ...draft, recommendationId }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload.habit) {
@@ -1932,6 +2063,8 @@ export default function Home() {
         return false;
       }
       await loadRealModules(profile.backendPetId);
+      setSuggestedHabitDraft(null);
+      finishRecommendationOutcome(recommendationId);
       return true;
     } catch {
       setError('Привычка не сохранилась. Проверь соединение и попробуй снова.');
@@ -1947,17 +2080,19 @@ export default function Home() {
     setHabitBusyId(habitId);
     setError('');
     try {
+      const recommendationId = acceptedRecommendationId('open_habits');
       const response = await fetch(`/api/habits/${encodeURIComponent(habitId)}/checkins`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ recommendationId }),
       });
       if (!response.ok) {
         setError('Не получилось отметить привычку. Попробуй снова.');
         return;
       }
       finishCareMutation(scope);
+      finishRecommendationOutcome(recommendationId);
       await loadRealModules(profile.backendPetId);
     } catch {
       setError('Не получилось отметить привычку. Проверь соединение и попробуй снова.');
@@ -2641,14 +2776,24 @@ export default function Home() {
       return true;
     }
     try {
+      const category = preset?.category || newWishCategory;
+      const reason = preset?.reason || newWishReason || null;
+      const recommendationId = mainRecommendation?.status === 'accepted'
+        && mainRecommendation.primaryAction.intent === 'add_wishlist'
+        && mainRecommendation.primaryAction.draft.title === title
+        && mainRecommendation.primaryAction.draft.category === category
+        && mainRecommendation.primaryAction.draft.reason === reason
+        ? mainRecommendation.id
+        : undefined;
       const response = await fetch('/api/wishlist', {
         method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ petId: profile.backendPetId, title, category: preset?.category || newWishCategory, reason: preset?.reason || newWishReason || null, priority: preset?.priority || 'medium', status: 'wanted' }),
+        body: JSON.stringify({ petId: profile.backendPetId, title, category, reason, priority: preset?.priority || 'medium', status: 'wanted', recommendationId }),
       });
       await response.json().catch(() => ({}));
       if (!response.ok) { setError('Не удалось добавить вещь'); return false; }
       setNewWishTitle(''); setNewWishReason(''); setThingCaptureOpen(false);
       await loadBootstrap();
+      finishRecommendationOutcome(recommendationId);
       return true;
     } catch {
       setError('Не удалось добавить вещь');
@@ -2749,8 +2894,9 @@ export default function Home() {
     }
     if (!profile.backendPetId) return setError('Сначала сохрани профиль собаки.');
 
+    const recommendationId = drawMode === 'route' ? acceptedRecommendationId('plan_walk') : undefined;
     const body = drawMode === 'route'
-      ? { type: 'route', title, petId: profile.backendPetId, path: routePoints, visibility, description: newZoneNote || null, routeSource: mapRouteMeta?.routeSource || 'planned', startedAt: mapRouteMeta?.startedAt, durationSeconds: mapRouteMeta?.durationSeconds ?? 0, distanceMeters: mapRouteMeta?.distanceMeters ?? 0 }
+      ? { type: 'route', title, petId: profile.backendPetId, path: routePoints, visibility, description: newZoneNote || null, routeSource: mapRouteMeta?.routeSource || 'planned', startedAt: mapRouteMeta?.startedAt, durationSeconds: mapRouteMeta?.durationSeconds ?? 0, distanceMeters: mapRouteMeta?.distanceMeters ?? 0, recommendationId }
       : { type: 'point', title, petId: profile.backendPetId, lat: pickedZonePoint?.lat, lng: pickedZonePoint?.lng, zone_type: newZoneType, visibility, description: newZoneNote || null };
 
     const response = await fetch('/api/map/features', {
@@ -2764,6 +2910,7 @@ export default function Home() {
     if (drawMode === 'route') {
       const createdRoute = normalizeOwnerRoutes([result.feature])[0];
       if (createdRoute) setOwnerRoutes((current) => upsertOwnerRoute(current, createdRoute));
+      finishRecommendationOutcome(recommendationId);
     }
     setNotice(visibility === 'shared' ? 'sharing' : 'mapSaved');
     setPickedZonePoint(null);
@@ -3064,12 +3211,13 @@ export default function Home() {
     }
     const scope = `reminder:complete:${id}`;
     const completedAt = careMutationTime(scope, () => new Date().toISOString());
+    const recommendationId = acceptedRecommendationId('open_reminder', id);
     setReminderMutationBusy(scope);
     try {
       const response = await fetch(`/api/reminders/${id}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({ completedAt }),
+        body: JSON.stringify({ completedAt, recommendationId }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -3084,6 +3232,7 @@ export default function Home() {
         }));
       }
       finishCareMutation(scope);
+      finishRecommendationOutcome(recommendationId);
       setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
       return true;
     } catch {
@@ -3906,6 +4055,16 @@ export default function Home() {
           careTitle={todayCare.title}
           careDetail={todayCare.detail}
           careActionLabel={todayCare.state === 'empty' ? 'Добавить первое дело' : todayCare.actionLabel}
+          recommendationSlot={<RecommendationCard
+            dogName={profile.dogName}
+            recommendation={mainRecommendation}
+            state={recommendationState}
+            busyAction={recommendationBusyAction}
+            onPrimary={() => { void acceptMainRecommendation(); }}
+            onSnooze={() => { void updateRecommendation({ action: 'snooze', until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() }, 'snooze'); }}
+            onDismiss={() => { void updateRecommendation({ action: 'dismiss', reason: 'not_relevant' }, 'dismiss'); }}
+            onRetry={() => { void refreshRecommendation(); }}
+          />}
           profileEntries={profileJourneyEntries}
           profileFacts={[profile.lifeStage || profile.age, profile.sex, profile.energyLevel].filter(Boolean) as string[]}
           observationPoints={observations.map((item) => ({
@@ -4112,6 +4271,7 @@ export default function Home() {
           onArchive={archiveHabit}
           onCheckIn={checkInHabit}
           onRetry={() => loadRealModules(profile.backendPetId)}
+          suggestedDraft={suggestedHabitDraft}
         />}
 
         {hasDog && tab === 'health' && <HealthTimelineScreen

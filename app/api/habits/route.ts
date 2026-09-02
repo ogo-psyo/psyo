@@ -4,6 +4,7 @@ import { getRequestAuth } from '@/lib/server/auth';
 import { createHabitForOwner, listHabitsForOwner, normalizeHabitInput } from '@/lib/server/habitService';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
 import { problem } from '@/packages/contracts';
+import { linkRecommendationOutcome } from '@/lib/server/recommendations/domainOutcomeLink';
 
 export const runtime = 'nodejs';
 
@@ -35,7 +36,20 @@ export async function POST(request: Request) {
   if (!ownerId) return NextResponse.json(problem('AUTH_REQUIRED', 401, 'Authentication required', 'Open Псё from Telegram.'), { status: 401 });
   if (!supabase) return NextResponse.json(problem('STORAGE_UNAVAILABLE', 503, 'Storage unavailable', 'Habit storage is not configured.'), { status: 503 });
   try {
-    return NextResponse.json({ habit: await createHabitForOwner({ supabase, ownerId, habit }) }, { status: 201 });
+    const created = await createHabitForOwner({ supabase, ownerId, habit });
+    const recommendationId = typeof body?.recommendationId === 'string' ? body.recommendationId.trim() : '';
+    const recommendationOutcome = recommendationId && process.env.RECOMMENDATIONS_FOUNDATION_ENABLED === 'true'
+      ? await linkRecommendationOutcome({
+        supabase,
+        ownerId,
+        recommendationId,
+        domainType: 'habit',
+        domainId: created.id,
+        result: 'completed',
+        idempotencyKey: request.headers.get('idempotency-key')?.trim() || `habit:${created.id}`,
+      })
+      : undefined;
+    return NextResponse.json({ habit: created, ...(recommendationOutcome ? { recommendationOutcome } : {}) }, { status: 201 });
   } catch (error) {
     const status = error instanceof Error && error.message.includes('PET_NOT_FOUND') ? 404 : 500;
     return NextResponse.json(problem(status === 404 ? 'PET_NOT_FOUND' : 'HABIT_CREATE_FAILED', status, 'Habit was not saved', 'Could not save this habit.'), { status });

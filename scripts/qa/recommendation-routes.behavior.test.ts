@@ -106,7 +106,7 @@ function fakeDatabase(results: Record<string, DbResult>) {
         return Promise.resolve(result).then(resolve, reject);
       },
     } as Record<string, unknown>;
-    for (const method of ['eq', 'insert', 'is', 'limit', 'maybeSingle', 'order', 'select', 'single', 'upsert'] as const) {
+    for (const method of ['eq', 'gte', 'insert', 'is', 'limit', 'maybeSingle', 'order', 'select', 'single', 'upsert'] as const) {
       chain[method] = (...args: unknown[]) => {
         calls.push({ target: table, method, args });
         return chain;
