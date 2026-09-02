@@ -2,6 +2,7 @@
 
 import { ArrowLeft, Heartbeat } from '@phosphor-icons/react';
 import { ObservationEditor, type ObservationEditorDraft } from '@/components/care/ObservationEditor';
+import { ObservationMetricFields, observationMetricCount, observationMetricDefinitions } from '@/components/health/ObservationMetricFields';
 import { parasiteOptions, vaccineOptions } from '@/lib/data';
 
 export type HealthEntryView = {
@@ -14,19 +15,12 @@ export type HealthEntryView = {
   createdAt: string;
 };
 
-const choices = {
-  mood: ['спокойное', 'радостное', 'тревожное', 'вялое'],
-  appetite: ['обычный', 'ниже обычного', 'выше обычного', 'не ела'],
-  stool: ['обычный', 'мягкий', 'твёрдый', 'не было'],
-  energy: ['обычная', 'ниже обычного', 'выше обычного', 'нет сил'],
-};
-
-function Choice({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
-  return <fieldset className="health-choice"><legend>{label}</legend><div>{options.map((option) => <button key={option} type="button" className={value === option ? 'active' : ''} aria-pressed={value === option} onClick={() => onChange(value === option ? '' : option)}>{option}</button>)}</div></fieldset>;
-}
-
-function entrySummary(entry: HealthEntryView) {
-  return [entry.mood, entry.appetite && `аппетит ${entry.appetite}`, entry.stool && `стул ${entry.stool}`, entry.energy && `энергия ${entry.energy}`].filter(Boolean);
+function observationDate(value: string) {
+  const date = new Date(value);
+  return {
+    date: date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }),
+    time: date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+  };
 }
 
 export function HealthTimelineScreen({
@@ -72,6 +66,7 @@ export function HealthTimelineScreen({
   onFactChange: (patch: Partial<typeof facts>) => void;
   onSaveFacts: () => Promise<void>;
 }) {
+  const selectedMetricCount = observationMetricCount(draft);
   return (
     <section className="module-screen health-screen" aria-labelledby="health-screen-title">
       <button className="secondary-flow-back" type="button" onClick={onBack}><ArrowLeft weight="bold" aria-hidden="true" /> Назад во Всё</button>
@@ -83,13 +78,12 @@ export function HealthTimelineScreen({
       {error && <div className="module-error" role="alert"><b>История не загрузилась</b><p>{error}</p><button type="button" onClick={() => void onRetry()}>Повторить</button></div>}
 
       <form className="health-capture" onSubmit={async (event) => { event.preventDefault(); await onSave(); }}>
-        <h3>Что заметили?</h3>
-        <p>Выбери только то, что действительно заметил. Остальное Псё не будет додумывать.</p>
-        <Choice label="Настроение" value={draft.mood} options={choices.mood} onChange={(value) => onDraftChange({ mood: value })} />
-        <Choice label="Аппетит" value={draft.appetite} options={choices.appetite} onChange={(value) => onDraftChange({ appetite: value })} />
-        <Choice label="Стул" value={draft.stool} options={choices.stool} onChange={(value) => onDraftChange({ stool: value })} />
-        <Choice label="Энергия" value={draft.energy} options={choices.energy} onChange={(value) => onDraftChange({ energy: value })} />
-        <label>Заметка <span>необязательно</span><textarea value={draft.note || ''} onChange={(event) => onDraftChange({ note: event.target.value })} placeholder="Что изменилось?" /></label>
+        <header className="health-capture-heading"><div><h3>Новая отметка</h3><p>Отметь только факты. Незаполненные показатели останутся пустыми.</p></div><span className="health-capture-progress" aria-label={`${selectedMetricCount} из 4 показателей отмечено`}>{selectedMetricCount}/4</span></header>
+        <ObservationMetricFields values={draft} onChange={onDraftChange} />
+        <details className="health-capture-context">
+          <summary><span>Добавить контекст</span><small>необязательно</small></summary>
+          <label><span className="sr-only">Контекст наблюдения</span><textarea value={draft.note || ''} onChange={(event) => onDraftChange({ note: event.target.value })} placeholder="Например, после долгой прогулки или смены корма" /></label>
+        </details>
         <button className="primary" type="submit" disabled={saving || !draft.mood && !draft.appetite && !draft.stool && !draft.energy && !draft.note?.trim()}>{saving ? 'Сохраняю…' : 'Записать наблюдение'}</button>
       </form>
 
@@ -106,13 +100,21 @@ export function HealthTimelineScreen({
       </details>
 
       <section className="health-timeline" aria-label="История наблюдений">
-        <h3>История</h3>
-        {!error && entries.length ? entries.map((entry) => <article key={entry.id}>
+        <header className="health-timeline-heading"><div><h3>Наблюдения</h3><p>{entries.length ? 'Показатели собраны отдельно — их удобно сравнивать между записями.' : 'Первая отметка станет точкой отсчёта.'}</p></div>{entries.length > 0 && <span>{entries.length}</span>}</header>
+        {!error && entries.length ? entries.map((entry) => {
+          const recorded = observationMetricCount(entry);
+          const when = observationDate(entry.createdAt);
+          return <article key={entry.id}>
           {editingId === entry.id ? <ObservationEditor draft={editDraft} busy={mutationBusy} onChange={onEditDraftChange} onCancel={onCancelEdit} onSave={() => onSaveEdit(entry.id)} /> : <>
-            <time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</time>
-            <div><b>{entrySummary(entry)[0] || 'Заметка владельца'}</b>{entrySummary(entry).slice(1).length > 0 && <p>{entrySummary(entry).slice(1).join(' · ')}</p>}{entry.note && <small>{entry.note}</small>}<div className="care-row-actions"><button type="button" disabled={mutationBusy} onClick={() => onStartEdit(entry)}>Изменить</button><button type="button" className="danger-action" disabled={mutationBusy} onClick={() => void onDelete(entry.id)}>Убрать</button></div></div>
+            <header className="health-observation-heading"><time dateTime={entry.createdAt}><b>{when.date}</b><small>{when.time}</small></time><span>{recorded ? `${recorded} из 4` : 'без показателей'}</span></header>
+            <dl className="health-observation-grid" data-observation-metrics>
+              {observationMetricDefinitions.map(({ key, label }) => <div key={key} data-state={entry[key] ? 'recorded' : 'empty'}><dt>{label}</dt><dd>{entry[key] || 'не отмечено'}</dd></div>)}
+            </dl>
+            {entry.note && <details className="health-observation-context"><summary>Контекст владельца <span>открыть</span></summary><p>{entry.note}</p></details>}
+            <div className="care-row-actions health-observation-actions"><button type="button" disabled={mutationBusy} onClick={() => onStartEdit(entry)}>Изменить</button><button type="button" className="danger-action" disabled={mutationBusy} onClick={() => void onDelete(entry.id)}>Убрать</button></div>
           </>}
-        </article>) : !error ? <div className="module-empty"><b>История начнётся с первой записи</b><p>Это факты владельца, а не диагноз или автоматическая рекомендация.</p></div> : null}
+        </article>;
+        }) : !error ? <div className="module-empty"><b>История начнётся с первой отметки</b><p>Выбери один или несколько показателей. Комментарий можно добавить только как контекст.</p></div> : null}
       </section>
     </section>
   );

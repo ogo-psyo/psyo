@@ -8430,3 +8430,164 @@ body { background:linear-gradient(160deg,#cbfedb 0%,#f7fff9 48%,#98df73 140%); c
 .wishlist-edit-form label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 750; }
 .wishlist-edit-form input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; }
 .wishlist-edit-form input:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent); outline-offset: 2px; }
+
+/* Structured observations: facts first, owner context second. */
+.health-screen { color: #171814; }
+
+.health-capture {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid #171814;
+  border-radius: 20px;
+  background: #dde3d2;
+  box-shadow: none;
+}
+
+.health-capture-heading,
+.health-timeline-heading,
+.health-observation-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.health-capture-heading > div,
+.health-timeline-heading > div { min-width: 0; }
+.health-capture-heading h3,
+.health-timeline-heading h3 { margin: 0; font-size: 18px; line-height: 1.2; }
+.health-capture-heading p,
+.health-timeline-heading p { max-width: 42ch; margin: 4px 0 0; color: #4e5149; font-size: 12px; font-weight: 700; line-height: 1.4; }
+
+.health-capture-progress,
+.health-timeline-heading > span,
+.health-observation-heading > span {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 30px;
+  padding: 0 9px;
+  border: 1px solid #171814;
+  border-radius: 999px;
+  background: #fffdf8;
+  color: #171814;
+  font-size: 11px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.health-metric-fields { display: grid; gap: 16px; }
+.health-choice { min-width: 0; margin: 0; padding: 0; border: 0; }
+.health-choice legend { margin-bottom: 7px; color: #171814; font-size: 12px; font-weight: 850; }
+.health-choice > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.health-choice button {
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px;
+  border: 1px solid #cbcbc2;
+  border-radius: 14px;
+  background: #fffdf8;
+  color: #171814;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.health-choice button.active { border-color: #171814; background: #d8ff72; color: #171814; }
+.health-choice-current { margin: -1px 0 7px; color: #4e5149; font-size: 11px; font-weight: 700; line-height: 1.35; }
+.health-choice-current b { color: #171814; }
+
+.health-capture-context,
+.observation-edit-context,
+.health-observation-context { border-top: 1px solid rgba(23,24,20,.24); }
+.health-capture-context > summary,
+.observation-edit-context > summary,
+.health-observation-context > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #171814;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+  list-style: none;
+}
+.health-capture-context > summary::-webkit-details-marker,
+.observation-edit-context > summary::-webkit-details-marker,
+.health-observation-context > summary::-webkit-details-marker { display: none; }
+.health-capture-context > summary small,
+.health-capture-context > summary span:last-child,
+.observation-edit-context > summary span,
+.health-observation-context > summary span { color: #4e5149; font-size: 10px; font-weight: 750; }
+.health-capture-context label,
+.observation-edit-context label { display: block; padding-top: 6px; }
+.health-capture-context textarea,
+.observation-edit-context textarea {
+  width: 100%;
+  min-height: 82px;
+  padding: 11px 13px;
+  border: 1px solid #cbcbc2;
+  border-radius: 14px;
+  background: #fffdf8;
+  color: #171814;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.4;
+  resize: vertical;
+  box-shadow: none;
+}
+.health-capture > button { min-height: 48px; }
+
+.health-timeline { display: grid; gap: 0; }
+.health-timeline-heading { padding-bottom: 14px; }
+.health-timeline article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  padding: 16px 0;
+  border: 0;
+  border-top: 1px solid #cbcbc2;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.health-observation-heading time { display: grid; gap: 2px; color: #171814; }
+.health-observation-heading time b { font-size: 14px; line-height: 1.2; }
+.health-observation-heading time small { margin: 0; color: #4e5149; font-size: 10px; }
+.health-observation-heading > span { border-color: #cbcbc2; background: transparent; }
+
+.health-observation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #cbcbc2;
+  border-radius: 14px;
+  background: #fffdf8;
+}
+.health-observation-grid > div { min-width: 0; padding: 10px 11px; }
+.health-observation-grid > div:nth-child(even) { border-left: 1px solid #cbcbc2; }
+.health-observation-grid > div:nth-child(n + 3) { border-top: 1px solid #cbcbc2; }
+.health-observation-grid dt { color: #4e5149; font-size: 9px; font-weight: 800; line-height: 1.2; }
+.health-observation-grid dd { margin: 4px 0 0; overflow-wrap: anywhere; color: #171814; font-size: 12px; font-weight: 850; line-height: 1.25; }
+.health-observation-grid > div[data-state='empty'] dd { color: #73766d; font-weight: 650; }
+
+.health-observation-context { margin-top: -1px; }
+.health-observation-context p { margin: 0; padding: 2px 0 8px; color: #171814; font-size: 12px; font-weight: 650; line-height: 1.45; }
+.health-observation-actions { justify-content: flex-start; }
+
+.structured-observation-editor { width: 100%; gap: 14px; }
+.structured-observation-editor > header b,
+.structured-observation-editor > header small { display: block; }
+.structured-observation-editor > header b { color: #171814; font-size: 14px; }
+.structured-observation-editor > header small { margin-top: 3px; color: #4e5149; font-size: 10px; }
+.structured-observation-editor .health-metric-fields { gap: 13px; }
+.structured-observation-editor .care-row-actions { justify-content: flex-start; }
+
+@media (max-width: 359px) {
+  .health-capture { padding: 16px 14px; }
+}
