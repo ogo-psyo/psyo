@@ -2,10 +2,12 @@
 -- Apply all migrations first, then run this file with `supabase test db`.
 begin;
 
+create extension if not exists pgtap with schema extensions;
+select plan(4);
+
 do $$
 declare
   v_owner_a uuid := '11111111-1111-4111-8111-111111111111';
-  v_owner_b uuid := '22222222-2222-4222-8222-222222222222';
   v_owner_b uuid := '22222222-2222-4222-8222-222222222222';
   v_pet_a uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
   v_pet_b uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -50,6 +52,7 @@ begin
 
 end
 $$;
+select pass('fixture creation and active fingerprint deduplication');
 
 -- owner A sees its recommendation
 select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
@@ -62,6 +65,7 @@ begin
 end
 $$;
 reset role;
+select pass('owner A can read its recommendation');
 
 -- owner B sees zero recommendations
 select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
@@ -74,10 +78,12 @@ begin
 end
 $$;
 reset role;
+select pass('owner B cannot read owner A recommendation');
 
 do $$
 declare
   v_owner_a uuid := '11111111-1111-4111-8111-111111111111';
+  v_owner_b uuid := '22222222-2222-4222-8222-222222222222';
   v_recommendation uuid := 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
   v_response jsonb;
   v_replay jsonb;
@@ -139,5 +145,7 @@ begin
   end;
 end
 $$;
+select pass('atomic lifecycle, replay protection, ownership, and transition whitelist');
 
+select * from finish();
 rollback;

@@ -228,9 +228,9 @@ snoozed -> eligible | dismissed | expired | superseded
 
 Reject every other transition with `INVALID_RECOMMENDATION_TRANSITION`. Lock by `(owner_id,idempotency_key)`, verify pet ownership inside the transaction, update row and append exactly one event.
 
-- [ ] **Step 7: Verify GREEN and commit**
+- [x] **Step 7: Verify GREEN and commit**
 
-Локальный статус 2026-09-02: static storage contract GREEN; динамический SQL gate подготовлен, но не выполнен — локальный Supabase не запущен, Docker/Podman отсутствует (`ECONNREFUSED 127.0.0.1:54322`).
+Локальный статус 2026-09-02: миграция успешно применена с нуля через `supabase db reset`; динамический pgTAP suite прошёл 4/4 на локальном Supabase/Postgres. Storage foundation сохранён в `a5093a4`, исправление исполнимого SQL test harness — в следующем verification commit.
 
 Run: `supabase db reset && supabase test db supabase/tests/recommendation_foundation.sql`
 Expected: migration applies; all assertions PASS.
