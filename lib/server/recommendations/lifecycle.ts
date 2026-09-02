@@ -22,6 +22,8 @@ export interface RecommendationDomainAdapter {
     petId: string;
     domainType: RecommendationOutcome['domainType'];
     domainId: string;
+    action: RecommendationAction;
+    notBefore: string;
   }): Promise<boolean>;
   verifyAndSynchronize(input: {
     ownerId: string;
@@ -148,6 +150,8 @@ export async function recordOutcomeForOwner(input: {
     petId: recommendation.petId,
     domainType: input.outcome.domainType,
     domainId: input.outcome.domainId,
+    action: recommendation.primaryAction,
+    notBefore: recommendation.shownAt ?? recommendation.createdAt,
   });
   if (!belongs) throw new Error('DOMAIN_TARGET_NOT_FOUND');
   return input.store.transition({
@@ -189,15 +193,34 @@ export function createSupabaseRecommendationDomainAdapter(supabase: SupabaseClie
   return {
     async targetBelongsToOwnerPet(input) {
       if (input.domainType === 'route') {
-        const result = await supabase.from('map_routes').select('id').eq('id', input.domainId)
-          .eq('pet_id', input.petId).eq('owner_id', input.ownerId).maybeSingle();
+        if (input.action.intent !== 'plan_walk') return false;
+        const result = await supabase.from('map_routes').select('id,created_at').eq('id', input.domainId)
+          .eq('pet_id', input.petId).eq('owner_id', input.ownerId).gte('created_at', input.notBefore).maybeSingle();
         if (result.error) throw result.error;
         return Boolean(result.data);
       }
-      const table = input.domainType === 'reminder' ? 'reminders'
-        : input.domainType === 'habit' ? 'pet_habits' : 'wishlist_items';
-      const result = await supabase.from(table).select('id,pets!inner(owner_id)').eq('id', input.domainId)
-        .eq('pet_id', input.petId).eq('pets.owner_id', input.ownerId).maybeSingle();
+      if (input.domainType === 'reminder') {
+        if (input.action.intent !== 'open_reminder' || input.action.reminderId !== input.domainId) return false;
+        const result = await supabase.from('reminders').select('id,pets!inner(owner_id)').eq('id', input.domainId)
+          .eq('pet_id', input.petId).eq('pets.owner_id', input.ownerId).maybeSingle();
+        if (result.error) throw result.error;
+        return Boolean(result.data);
+      }
+      if (input.domainType === 'habit') {
+        if (input.action.intent !== 'open_habits' || !input.action.draft) return false;
+        const result = await supabase.from('pet_habits').select('id,pets!inner(owner_id)').eq('id', input.domainId)
+          .eq('pet_id', input.petId).eq('pets.owner_id', input.ownerId)
+          .eq('kind', input.action.draft.kind).eq('title', input.action.draft.title)
+          .eq('cadence', input.action.draft.cadence).eq('target_per_period', input.action.draft.targetPerPeriod)
+          .gte('created_at', input.notBefore).maybeSingle();
+        if (result.error) throw result.error;
+        return Boolean(result.data);
+      }
+      if (input.action.intent !== 'add_wishlist') return false;
+      const result = await supabase.from('wishlist_items').select('id,pets!inner(owner_id)').eq('id', input.domainId)
+        .eq('pet_id', input.petId).eq('pets.owner_id', input.ownerId)
+        .eq('title', input.action.draft.title).eq('category', input.action.draft.category)
+        .eq('reason', input.action.draft.reason).gte('created_at', input.notBefore).maybeSingle();
       if (result.error) throw result.error;
       return Boolean(result.data);
     },

@@ -1,0 +1,104 @@
+.card {
+  --recommendation-field: #d8ff72;
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #171814;
+  border-radius: 28px;
+  background: var(--recommendation-field);
+  color: #171814;
+}
+
+.card[data-category='wellbeing'],
+.card[data-category='walk'] { --recommendation-field: #a9c7c9; }
+.card[data-category='thing'] { --recommendation-field: #f3df64; }
+.card[data-status='accepted'] { --recommendation-field: #dde3d2; }
+
+.heading {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #171814;
+  border-radius: 14px;
+  background: #fffdf8;
+}
+
+.icon svg { width: 25px; height: 25px; }
+.heading div { min-width: 0; }
+.heading h2 { margin: 0; font-size: 22px; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance; }
+.heading p { margin: 5px 0 0; color: #4e5149; font-size: 12px; font-weight: 750; line-height: 1.4; }
+
+.reasons {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 13px 14px;
+  border: 1px solid rgba(23, 24, 20, .28);
+  border-radius: 14px;
+  background: rgba(255, 253, 248, .72);
+  list-style: none;
+}
+
+.reasons li { display: grid; grid-template-columns: 7px minmax(0, 1fr); gap: 9px; font-size: 14px; font-weight: 750; line-height: 1.4; }
+.reasons li::before { width: 7px; height: 7px; margin-top: 6px; border-radius: 50%; background: #171814; content: ''; }
+
+.limitation { margin: -4px 0 0; color: #4e5149; font-size: 12px; font-weight: 700; line-height: 1.4; }
+
+.actions { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
+.actions button {
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid #171814;
+  border-radius: 14px;
+  background: #fffdf8;
+  color: #171814;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.actions button:first-child { background: #171814; color: #fffdf8; }
+.actions button:disabled { cursor: wait; opacity: .62; }
+.actions button:focus-visible, .retry:focus-visible { outline: 3px solid #315ea8; outline-offset: 3px; }
+.actions button:active:not(:disabled), .retry:active { transform: translateY(1px); }
+
+.status { margin: -5px 0 0; font-size: 12px; font-weight: 750; line-height: 1.4; }
+
+.shell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  min-height: 64px;
+  padding: 12px 14px;
+  border-top: 1px solid #cbcbc2;
+  border-bottom: 1px solid #cbcbc2;
+  color: #4e5149;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.loading::after { width: 96px; height: 12px; border-radius: 8px; background: #dde3d2; content: ''; animation: pulse 1.1s ease-in-out infinite alternate; }
+.retry { min-height: 44px; padding: 0 12px; border: 1px solid #171814; border-radius: 14px; background: #fffdf8; color: #171814; font: inherit; font-weight: 850; }
+
+@keyframes pulse { to { opacity: .42; } }
+
+@media (max-width: 390px) {
+  .actions { grid-template-columns: 1fr 1fr; }
+  .actions button:first-child { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading::after { animation: none; }
+  .actions button, .retry { transition: none; }
+}

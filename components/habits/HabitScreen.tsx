@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Archive, ArrowLeft, Check, ListChecks, PencilSimple, Plus } from '@phosphor-icons/react';
 
 export type HabitView = {
@@ -47,6 +47,7 @@ export function HabitScreen({
   onArchive,
   onCheckIn,
   onRetry,
+  suggestedDraft,
 }: {
   dogName: string;
   habits: HabitView[];
@@ -60,11 +61,19 @@ export function HabitScreen({
   onArchive: (habitId: string) => Promise<void>;
   onCheckIn: (habitId: string) => Promise<void>;
   onRetry: () => Promise<void>;
+  suggestedDraft?: HabitDraft | null;
 }) {
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<HabitDraft>({ title: '', kind: 'walk', cadence: 'daily', targetPerPeriod: 1 });
   const completed = useMemo(() => habits.reduce((total, habit) => total + completedInCurrentPeriod(habit), 0), [habits]);
+
+  useEffect(() => {
+    if (!suggestedDraft) return;
+    setEditingId(null);
+    setDraft(suggestedDraft);
+    setAdding(true);
+  }, [suggestedDraft]);
 
   return (
     <section className="module-screen habit-screen" aria-labelledby="habit-screen-title">

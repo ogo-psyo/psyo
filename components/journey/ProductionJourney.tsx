@@ -92,6 +92,7 @@ type ProductionJourneyProps = BaseProps & {
   onOpenCare?: () => void;
   onOpenCard?: () => void;
   onAskAssistant?: () => void;
+  recommendationSlot?: ReactNode;
   map?: ReactNode;
   mapWorkspace?: ReactNode;
   riskTitle?: string;
@@ -303,6 +304,8 @@ function TodayScreen(props: ProductionJourneyProps) {
         <span className="all-profile-action">Открыть Псё <ArrowRight weight="bold" /></span>
       </button>
     </section>
+
+    {props.recommendationSlot}
 
     <section className="all-scenarios" data-all-scenarios data-parity="production-today-summary" aria-labelledby="all-scenarios-title">
       <header><h2 id="all-scenarios-title">Что нужно решить?</h2><p>Выберите ситуацию — Псё проведёт по шагам и откроет нужное действие.</p></header>

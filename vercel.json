@@ -1,6 +1,7 @@
 {
   "framework": "nextjs",
   "crons": [
-    { "path": "/api/internal/avatar-retention", "schedule": "17 3 * * *" }
+    { "path": "/api/internal/avatar-retention", "schedule": "17 3 * * *" },
+    { "path": "/api/internal/recommendation-outcomes", "schedule": "37 3 * * *" }
   ]
 }
