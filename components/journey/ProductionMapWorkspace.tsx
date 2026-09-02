@@ -584,40 +584,48 @@ export function ProductionMapWorkspace({
           {(routeFlow === 'recording' || routeFlow === 'paused' || routeFlow === 'record-review' || routeFlow === 'planning' || routeFlow === 'plan-review') && <button type="button" className="route-discard-trigger" onClick={requestDiscard}>Отменить</button>}
         </header>
 
+        <div className="production-route-controller-body" data-route-controller-body>
         {(routeFlow === 'recording' || routeFlow === 'paused') && <>
           <dl className="production-route-metrics">
             <div><dt>Время</dt><dd>{formatDuration(elapsedSeconds)}</dd></div>
             <div><dt>Расстояние</dt><dd>{formatDistance(routeDistance)}</dd></div>
             <div><dt>Сигнал</dt><dd>{routeFlow === 'recording' ? 'Запись' : 'Пауза'}</dd></div>
           </dl>
-          {routeFlow === 'recording' ? <button type="button" className="production-route-pause" onClick={pauseWalk}><Pause weight="fill" aria-hidden="true" /><span>Пауза</span></button> : <div className="production-route-paused-actions">
-            <button type="button" className="primary" onClick={watchRoute}><Play weight="fill" aria-hidden="true" />Продолжить</button>
-            <button type="button" className="secondary" disabled={!canSaveDraft} onClick={finishWalk}><Stop weight="fill" aria-hidden="true" />{canSaveDraft ? 'Завершить' : 'Пройдите несколько метров'}</button>
-          </div>}
           <p className="production-route-open-note"><ShieldCheck weight="regular" aria-hidden="true" />Пока идёт запись, оставьте Псё открытым. Черновик сохранится, если вы смените вкладку.</p>
         </>}
 
         {routeFlow === 'gps-error' && <section className="production-route-error" role="alert">
           <NavigationArrow weight="regular" aria-hidden="true" />
           <div><b>Псё не видит ваше местоположение</b><p>Разрешите геопозицию в Telegram и попробуйте снова или постройте путь вручную.</p></div>
-          <button type="button" className="primary" onClick={watchRoute}>Попробовать снова</button>
-          <button type="button" className="secondary" onClick={startPlanning}>Построить заранее</button>
-          <button type="button" className="text-action" onClick={discardRoute}>Вернуться на карту</button>
         </section>}
 
         {routeFlow === 'planning' && <>
           <div className="production-route-plan-help"><PencilSimple weight="regular" aria-hidden="true" /><div><b>{routePoints.length ? 'Добавьте следующий поворот' : 'Отметьте начало маршрута'}</b><p>Передвиньте карту так, чтобы метка оказалась в нужном месте, затем добавьте точку.</p></div></div>
-          <div className="production-route-plan-actions">
-            <button type="button" className="primary" onClick={addCenterPoint}><MapPin weight="fill" aria-hidden="true" />Добавить точку</button>
-            <button type="button" className="secondary" disabled={!routePoints.length} onClick={undoLastPoint}><ArrowCounterClockwise weight="regular" aria-hidden="true" />Убрать последнюю</button>
-            <button type="button" className="secondary" disabled={!canSaveDraft} onClick={reviewPlannedRoute}>Готово</button>
-          </div>
         </>}
 
         {(routeFlow === 'record-review' || routeFlow === 'plan-review') && <div className="production-route-review">
           <div className="production-route-review-summary"><Footprints weight="regular" aria-hidden="true" /><div><b>{routeFlow === 'record-review' ? 'Прогулка записана' : 'Маршрут построен'}</b><p>{formatDuration(elapsedSeconds)} · {formatDistance(routeDistance)} · {formatPointCount(routePoints.length)}</p></div></div>
           {composer}
         </div>}
+        </div>
+
+        {(routeFlow === 'recording' || routeFlow === 'paused' || routeFlow === 'gps-error' || routeFlow === 'planning') && <footer className={`production-route-controller-actions ${routeFlow}`} data-route-controller-actions>
+          {routeFlow === 'recording' && <button type="button" className="primary" onClick={pauseWalk}><Pause weight="fill" aria-hidden="true" />Пауза</button>}
+          {routeFlow === 'paused' && <>
+            <button type="button" className="primary" onClick={watchRoute}><Play weight="fill" aria-hidden="true" />Продолжить</button>
+            <button type="button" className="secondary" disabled={!canSaveDraft} onClick={finishWalk}><Stop weight="fill" aria-hidden="true" />{canSaveDraft ? 'Завершить' : 'Пройдите несколько метров'}</button>
+          </>}
+          {routeFlow === 'gps-error' && <>
+            <button type="button" className="primary" onClick={watchRoute}>Попробовать снова</button>
+            <button type="button" className="secondary" onClick={startPlanning}>Построить заранее</button>
+            <button type="button" className="text-action" onClick={discardRoute}>Вернуться на карту</button>
+          </>}
+          {routeFlow === 'planning' && <>
+            <button type="button" className="primary" onClick={addCenterPoint}><MapPin weight="fill" aria-hidden="true" />Добавить точку</button>
+            <button type="button" className="secondary" disabled={!routePoints.length} onClick={undoLastPoint}><ArrowCounterClockwise weight="regular" aria-hidden="true" />Убрать точку</button>
+            <button type="button" className="secondary" disabled={!canSaveDraft} onClick={reviewPlannedRoute}>Готово</button>
+          </>}
+        </footer>}
       </>}
     </section> : mode === 'risk' ? <section className="production-map-snap-sheet expanded risk-sheet" data-map-snap-sheet>
       <header className="production-map-simple-heading"><div><b>Предупредить об опасности</b><p>{pickedPoint ? 'Место выбрано · добавьте пояснение' : 'Коснитесь места на карте'}</p></div><button type="button" onClick={() => onModeChange('view')}>Отменить</button></header>
