@@ -62,9 +62,9 @@ export async function transitionForOwner(input: {
     }) };
   }
 
-  if (input.command.action === 'accept') {
+  if (input.command.action === 'show' || input.command.action === 'accept') {
     return { recommendation: await input.store.transition({
-      ownerId: input.ownerId, recommendationId: input.recommendationId, action: 'accept',
+      ownerId: input.ownerId, recommendationId: input.recommendationId, action: input.command.action,
       occurredAt: input.now.toISOString(), idempotencyKey: input.idempotencyKey,
     }) };
   }

@@ -25,7 +25,7 @@ export async function GET(request: Request) {
   if (!petId) return recommendationProblem('PET_REQUIRED', 400, 'Dog required', 'Choose a dog.');
   try {
     const service = createRecommendationService(context.supabase);
-    const recommendations = await service.listForPet({ ownerId: context.ownerId, petId });
+    const recommendations = await service.listForPet({ ownerId: context.ownerId, petId, now: new Date() });
     return json({ recommendations: recommendations.map(publicRecommendation) });
   } catch (error) {
     return recommendationRouteError(error);

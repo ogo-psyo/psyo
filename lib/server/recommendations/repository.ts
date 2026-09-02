@@ -108,9 +108,16 @@ export async function recalculateForPet(input: RecalculateInput) {
   return { main: ordered[0] ?? null, secondary: ordered.slice(1, 3), evaluatedAt: input.now.toISOString() };
 }
 
-export async function listForPet(input: { store: RecommendationStore; ownerId: string; petId: string }) {
+export async function listForPet(input: { store: RecommendationStore; ownerId: string; petId: string; now?: Date }) {
   await input.store.assertOwnedPet(input.ownerId, input.petId);
-  return (await input.store.listHistory(input.ownerId, input.petId)).filter((item) => ACTIVE_STATUSES.has(item.status));
+  const now = (input.now ?? new Date()).getTime();
+  return (await input.store.listHistory(input.ownerId, input.petId)).filter((item) => (
+    ACTIVE_STATUSES.has(item.status)
+    && (item.status === 'accepted' || (
+      Number.isFinite(Date.parse(item.expiresAt)) && Date.parse(item.expiresAt) > now
+    ))
+    && !(item.status === 'snoozed' && Number.isFinite(Date.parse(item.snoozedUntil ?? '')) && Date.parse(item.snoozedUntil!) > now)
+  ));
 }
 
 type EvidenceRow = {
@@ -263,7 +270,7 @@ export function createRecommendationService(supabase: SupabaseClient) {
       store,
       loadContext: (contextInput) => loadRecommendationContext({ supabase, ...contextInput }),
     }),
-    listForPet: (input: { ownerId: string; petId: string }) => listForPet({ store, ...input }),
+    listForPet: (input: { ownerId: string; petId: string; now?: Date }) => listForPet({ store, ...input }),
     store,
   };
 }

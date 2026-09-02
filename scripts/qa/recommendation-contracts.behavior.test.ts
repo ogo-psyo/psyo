@@ -42,6 +42,10 @@ const baseRecommendation: Recommendation = {
 };
 
 test('normalizes valid lifecycle commands', () => {
+  assert.deepEqual(parseLifecycleCommand({ action: 'show' }), {
+    ok: true,
+    value: { action: 'show' },
+  });
   assert.deepEqual(parseLifecycleCommand({ action: 'snooze', until: '2026-09-03T12:00:00Z' }), {
     ok: true,
     value: { action: 'snooze', until: '2026-09-03T12:00:00.000Z' },

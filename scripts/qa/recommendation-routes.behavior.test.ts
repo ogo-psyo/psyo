@@ -162,7 +162,7 @@ describe('hidden recommendation collection route', () => {
   test('GET lists without recalculation and strips owner, raw payload and coordinates', async () => {
     const response = await GET(request('/api/recommendations?petId=pet-1'));
     expect(response.status).toBe(200);
-    expect(state.list).toHaveBeenCalledWith({ ownerId: 'owner-auth', petId: 'pet-1' });
+    expect(state.list).toHaveBeenCalledWith(expect.objectContaining({ ownerId: 'owner-auth', petId: 'pet-1', now: expect.any(Date) }));
     expect(state.recalculate).not.toHaveBeenCalled();
     const serialized = JSON.stringify(await body(response));
     for (const secret of ['SECRET_OWNER', 'SECRET_OWNER_SNAKE', 'SECRET_RAW', 'SECRET_EVIDENCE_PAYLOAD', '55.75', '37.61']) {
@@ -216,6 +216,16 @@ describe('recommendation lifecycle routes', () => {
       method: 'PATCH', headers: { 'Idempotency-Key': 'invalid-key-1' }, json: { action: 'dismiss' },
     }), ctx);
     expect(response.status).toBe(400);
+  });
+
+  test('PATCH exposes the impression transition needed before user controls', async () => {
+    const response = await PATCH(request('/api/recommendations/recommendation-1', {
+      method: 'PATCH', headers: { 'Idempotency-Key': 'show-key-0001' }, json: { action: 'show' },
+    }), ctx);
+    expect(response.status).toBe(200);
+    expect(state.transition).toHaveBeenCalledWith(expect.objectContaining({
+      ownerId: 'owner-auth', recommendationId: 'recommendation-1', command: { action: 'show' },
+    }));
   });
 
   test('outcome validates its shape and forwards the URL recommendation id', async () => {

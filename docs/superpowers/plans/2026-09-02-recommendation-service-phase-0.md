@@ -80,6 +80,10 @@
 Проверить точные unions:
 
 ```ts
+assert.deepEqual(parseLifecycleCommand({ action: 'show' }), {
+  ok: true,
+  value: { action: 'show' },
+});
 assert.deepEqual(parseLifecycleCommand({ action: 'snooze', until: '2026-09-03T12:00:00Z' }), {
   ok: true,
   value: { action: 'snooze', until: '2026-09-03T12:00:00.000Z' },
@@ -227,6 +231,8 @@ snoozed -> eligible | dismissed | expired | superseded
 ```
 
 Reject every other transition with `INVALID_RECOMMENDATION_TRANSITION`. Lock by `(owner_id,idempotency_key)`, verify pet ownership inside the transaction, update row and append exactly one event.
+
+Implementation correction from merge review: `show` is an explicit idempotent lifecycle command, so Phase 1 can move a freshly persisted `eligible` card into `shown` before accept/snooze/dismiss. Recalculation atomically expires elapsed records and reactivates elapsed snoozes with a `reactivate` event; read-only listing excludes expired and not-yet-due snoozed records.
 
 - [x] **Step 7: Verify GREEN and commit**
 
@@ -534,9 +540,9 @@ Commit: `git commit -m "test(recommendations): gate phase zero foundation"`
 
 ### Phase 0 terminal evidence — 2026-09-02
 
-- `npm run qa:local`: PASS; Vitest 89/89, production build and all contracts PASS,
+- `npm run qa:local`: PASS after merge review; Vitest 90/90, production build and all contracts PASS,
   ESLint 0 errors (219 warnings within the 220 baseline).
-- Clean local Supabase reset: PASS; foundation + repository pgTAP 9/9.
+- Clean local Supabase reset: PASS; foundation + repository pgTAP 10/10.
 - Security review: two-owner/two-pet RLS and foreign transition checks PASS; API GET,
   PATCH and outcome hide foreign targets as 404; disabled flag hides all three routes.
 - Privacy review: serialized API fixtures exclude owner ids, raw evidence payload and
@@ -546,6 +552,13 @@ Commit: `git commit -m "test(recommendations): gate phase zero foundation"`
   `safety_override`, and recommendation decision sources import no assistant/LLM path.
 - Rollout state: foundation remains dark; no UI, production DB migration or deploy was
   performed.
+- Merge review corrections: added the missing idempotent `eligible → shown` API path,
+  atomic elapsed-snooze reactivation, expiration of stale unaccepted rows and read-side
+  filtering for snoozed/expired recommendations.
+- Pre-enable follow-ups: the durable outcome retry table still needs an operational retry
+  consumer/alert, and non-reminder domain outcomes should bind more narrowly than the
+  current owner+pet+domain-type check. These do not block merging disabled dark
+  infrastructure, but they block enabling the feature flag in production.
 
 ---
 
@@ -556,7 +569,7 @@ Commit: `git commit -m "test(recommendations): gate phase zero foundation"`
 3. Lifecycle + outcome: care recommendation can be snoozed/dismissed/completed truthfully.
 4. Remaining four candidate builders: fixtures only, still behind flag.
 5. Hidden API + domain hooks: integration ready, UI still absent.
-6. Full gate: Phase 0 foundation is shippable as dark infrastructure.
+6. Full gate: Phase 0 foundation is mergeable as disabled dark infrastructure; production enablement remains separately gated.
 
 ## Explicit Phase 1 boundary
 

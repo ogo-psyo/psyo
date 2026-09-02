@@ -467,6 +467,18 @@ class MemoryRecommendationStore implements RecommendationStore {
   }
 
   async persistEvaluation(input: PersistEvaluationInput) {
+    const evaluatedAt = Date.parse(input.evaluatedAt);
+    for (const record of this.records) {
+      if (record.ownerId !== input.ownerId || record.petId !== input.petId) continue;
+      if (['candidate', 'eligible', 'shown', 'snoozed'].includes(record.status)
+        && Date.parse(record.expiresAt) <= evaluatedAt) {
+        record.status = 'expired';
+        record.resolvedAt = input.evaluatedAt;
+      } else if (record.status === 'snoozed' && Date.parse(record.snoozedUntil ?? '') <= evaluatedAt) {
+        record.status = 'eligible';
+        record.snoozedUntil = undefined;
+      }
+    }
     for (const id of input.supersedeIds) {
       const found = this.records.find((item) => item.id === id && item.ownerId === input.ownerId);
       if (found) {
@@ -502,7 +514,7 @@ class MemoryRecommendationStore implements RecommendationStore {
     const item = await this.getForOwner(input.ownerId, input.recommendationId);
     if (!item) throw new Error('RECOMMENDATION_NOT_FOUND');
     const statuses: Record<string, StoredRecommendation['status']> = {
-      accept: 'accepted', snooze: 'snoozed', dismiss: 'dismissed', complete: 'completed', fail: 'failed', supersede: 'superseded',
+      show: 'shown', accept: 'accepted', snooze: 'snoozed', dismiss: 'dismissed', complete: 'completed', fail: 'failed', supersede: 'superseded',
     };
     const status = statuses[input.action];
     if (!status) throw new Error('INVALID_RECOMMENDATION_TRANSITION');
@@ -558,6 +570,46 @@ test('repository supersedes the prior active recommendation when the same subjec
   assert.equal(store.records.filter((item) => item.status === 'eligible').length, 1);
 });
 
+test('repository recalculation reactivates the same recommendation after snooze elapses', async () => {
+  const store = new MemoryRecommendationStore();
+  const initialNow = new Date('2026-09-02T12:00:00.000Z');
+  const first = await recalculateForPet({
+    store, ownerId: 'owner-1', petId: 'pet-1', now: initialNow, loadContext: async () => repositorySnapshot(),
+  });
+  const recommendationId = first.main!.id;
+  await transitionForOwner({
+    store, domain: domainAdapter(store), ownerId: 'owner-1', recommendationId,
+    command: { action: 'show' }, now: initialNow,
+  });
+  await transitionForOwner({
+    store, domain: domainAdapter(store), ownerId: 'owner-1', recommendationId,
+    command: { action: 'snooze', until: '2026-09-02T13:00:00.000Z' }, now: initialNow,
+  });
+
+  const recalculated = await recalculateForPet({
+    store, ownerId: 'owner-1', petId: 'pet-1', now: new Date('2026-09-02T13:00:01.000Z'),
+    loadContext: async () => repositorySnapshot(),
+  });
+  assert.equal(recalculated.main?.id, recommendationId);
+  assert.equal(recalculated.main?.status, 'eligible');
+  assert.equal(recalculated.main?.snoozedUntil, undefined);
+});
+
+test('repository listing hides expired and not-yet-reactivated snoozed recommendations', async () => {
+  const store = new MemoryRecommendationStore();
+  const now = new Date('2026-09-02T12:00:00.000Z');
+  const result = await recalculateForPet({
+    store, ownerId: 'owner-1', petId: 'pet-1', now, loadContext: async () => repositorySnapshot(),
+  });
+  const item = store.records.find((record) => record.id === result.main!.id)!;
+  item.status = 'snoozed';
+  item.snoozedUntil = '2026-09-02T13:00:00.000Z';
+  assert.deepEqual(await listForPet({ store, ownerId: 'owner-1', petId: 'pet-1', now }), []);
+  item.status = 'eligible';
+  item.expiresAt = '2026-09-02T11:59:59.000Z';
+  assert.deepEqual(await listForPet({ store, ownerId: 'owner-1', petId: 'pet-1', now }), []);
+});
+
 function domainAdapter(store: MemoryRecommendationStore): RecommendationDomainAdapter {
   return {
     async targetBelongsToOwnerPet(input) {
@@ -582,8 +634,18 @@ async function seededStore() {
   return { store, recommendation, now };
 }
 
-test('lifecycle validates snooze and accept never implies completion', async () => {
-  const { store, recommendation, now } = await seededStore();
+test('lifecycle exposes eligible to shown before user controls and accept never implies completion', async () => {
+  const store = new MemoryRecommendationStore();
+  const now = new Date('2026-09-02T12:00:00.000Z');
+  const result = await recalculateForPet({
+    store, ownerId: 'owner-1', petId: 'pet-1', now, loadContext: async () => repositorySnapshot(),
+  });
+  const recommendation = result.main!;
+  const shown = await transitionForOwner({
+    store, domain: domainAdapter(store), ownerId: 'owner-1', recommendationId: recommendation.id,
+    command: { action: 'show' }, now,
+  });
+  assert.equal(shown.recommendation.status, 'shown');
   await assert.rejects(transitionForOwner({
     store, domain: domainAdapter(store), ownerId: 'owner-1', recommendationId: recommendation.id,
     command: { action: 'snooze', until: now.toISOString() }, now,

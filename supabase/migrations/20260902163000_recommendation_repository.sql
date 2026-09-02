@@ -22,6 +22,8 @@ declare
   v_evidence jsonb;
   v_recommendation_id uuid;
   v_superseded record;
+  v_reactivated record;
+  v_expired record;
   v_result jsonb;
 begin
   if not exists (
@@ -34,6 +36,39 @@ begin
   perform pg_catalog.pg_advisory_xact_lock(
     pg_catalog.hashtextextended(p_owner_id::text || ':' || p_pet_id::text || ':recommendations', 0)
   );
+
+  for v_expired in
+    select id, status from public.recommendations
+    where owner_id = p_owner_id and pet_id = p_pet_id
+      and status in ('candidate','eligible','shown','snoozed')
+      and expires_at <= p_evaluated_at
+    for update
+  loop
+    update public.recommendations
+    set status = 'expired', resolved_at = p_evaluated_at
+    where id = v_expired.id;
+    insert into public.recommendation_events (
+      recommendation_id, event_type, from_status, to_status, payload, created_at
+    ) values (
+      v_expired.id, 'expire', v_expired.status, 'expired', '{}'::jsonb, p_evaluated_at
+    );
+  end loop;
+
+  for v_reactivated in
+    select id from public.recommendations
+    where owner_id = p_owner_id and pet_id = p_pet_id
+      and status = 'snoozed' and snoozed_until <= p_evaluated_at and expires_at > p_evaluated_at
+    for update
+  loop
+    update public.recommendations
+    set status = 'eligible', snoozed_until = null
+    where id = v_reactivated.id;
+    insert into public.recommendation_events (
+      recommendation_id, event_type, from_status, to_status, payload, created_at
+    ) values (
+      v_reactivated.id, 'reactivate', 'snoozed', 'eligible', '{}'::jsonb, p_evaluated_at
+    );
+  end loop;
 
   for v_superseded in
     select id, status from public.recommendations

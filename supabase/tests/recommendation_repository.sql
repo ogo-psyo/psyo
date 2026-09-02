@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(5);
+select plan(6);
 
 select has_table('public', 'recommendation_outcome_failures', 'retryable outcome failures have durable storage');
 
@@ -38,9 +38,64 @@ begin
   v_recommendation_id := (v_result->0->>'id')::uuid;
   if v_result->0->>'subject_id' <> v_reminder::text then raise exception 'subject id was not persisted'; end if;
   if jsonb_array_length(v_result->0->'recommendation_evidence') <> 1 then raise exception 'evidence was not persisted'; end if;
+  update public.recommendations
+  set status = 'snoozed', snoozed_until = now() - interval '1 second'
+  where id = v_recommendation_id;
+  v_result := public.recommendation_persist_evaluation_atomic(v_owner, v_pet, now(), '{}'::uuid[], v_payload);
+  if (select status from public.recommendations where id = v_recommendation_id) <> 'eligible' then
+    raise exception 'elapsed snooze was not reactivated';
+  end if;
+  if (select snoozed_until from public.recommendations where id = v_recommendation_id) is not null then
+    raise exception 'elapsed snooze timestamp was not cleared';
+  end if;
+  if (select count(*) from public.recommendation_events where recommendation_id = v_recommendation_id and event_type = 'reactivate') <> 1 then
+    raise exception 'reactivation event was not recorded exactly once';
+  end if;
 end
 $$;
-select pass('atomic evaluation persists subject identity and evidence');
+select pass('atomic evaluation persists evidence and reactivates elapsed snooze');
+
+do $$
+declare
+  v_owner uuid := '31111111-1111-4111-8111-111111111111';
+  v_pet uuid := '3aaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  v_expiring uuid;
+  v_accepted uuid;
+begin
+  insert into public.recommendations (
+    owner_id, pet_id, subject_id, scenario_key, policy_version, category, risk, status,
+    fingerprint, title, why_now, primary_action, confidence, rank, fresh_until, expires_at
+  ) values
+  (
+    v_owner, v_pet, 'expired-subject', 'care_due', 'care_due@1', 'care', 'routine', 'eligible',
+    repeat('5', 64), 'Истёкшая рекомендация', '["Срок прошёл"]', '{"intent":"open_reminder","reminderId":"expired"}',
+    '{"dataSufficiency":"high","sourceReliability":"high","ruleCertainty":"high"}',
+    '{"tier":2,"urgency":100,"actionability":100,"relevance":100,"annoyancePenalty":0}',
+    now() - interval '2 hours', now() - interval '1 hour'
+  ),
+  (
+    v_owner, v_pet, 'accepted-subject', 'care_due', 'care_due@1', 'care', 'routine', 'accepted',
+    repeat('6', 64), 'Принятая рекомендация', '["Действие начато"]', '{"intent":"open_reminder","reminderId":"accepted"}',
+    '{"dataSufficiency":"high","sourceReliability":"high","ruleCertainty":"high"}',
+    '{"tier":2,"urgency":100,"actionability":100,"relevance":100,"annoyancePenalty":0}',
+    now() - interval '2 hours', now() - interval '1 hour'
+  );
+  select id into v_expiring from public.recommendations where fingerprint = repeat('5', 64);
+  select id into v_accepted from public.recommendations where fingerprint = repeat('6', 64);
+
+  perform public.recommendation_persist_evaluation_atomic(v_owner, v_pet, now(), '{}'::uuid[], '[]'::jsonb);
+  if (select status from public.recommendations where id = v_expiring) <> 'expired' then
+    raise exception 'elapsed eligible recommendation was not expired';
+  end if;
+  if (select count(*) from public.recommendation_events where recommendation_id = v_expiring and event_type = 'expire') <> 1 then
+    raise exception 'expiry event was not recorded exactly once';
+  end if;
+  if (select status from public.recommendations where id = v_accepted) <> 'accepted' then
+    raise exception 'accepted recommendation must await its domain outcome';
+  end if;
+end
+$$;
+select pass('recalculation expires stale active cards but preserves accepted work');
 
 do $$
 declare
@@ -76,7 +131,7 @@ declare
   v_count bigint;
 begin
   v_count := public.recommendation_delete_history_for_owner(v_owner, v_pet);
-  if v_count <> 1 then raise exception 'unexpected recommendation delete count'; end if;
+  if v_count <> 3 then raise exception 'unexpected recommendation delete count'; end if;
   if not exists (select 1 from public.reminders where id = '3ddddddd-dddd-4ddd-8ddd-dddddddddddd') then
     raise exception 'domain source was deleted with recommendation history';
   end if;

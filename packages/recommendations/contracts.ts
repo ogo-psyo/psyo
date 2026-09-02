@@ -134,6 +134,7 @@ export type RecommendationDecision =
     };
 
 export type RecommendationLifecycleCommand =
+  | { action: 'show' }
   | { action: 'accept' }
   | { action: 'snooze'; until: string }
   | { action: 'dismiss'; reason: DismissReason };
@@ -162,8 +163,8 @@ export function parseLifecycleCommand(
 ): { ok: true; value: RecommendationLifecycleCommand } | { ok: false; error: string } {
   if (!isRecord(input)) return { ok: false, error: 'INVALID_LIFECYCLE_COMMAND' };
 
-  if (input.action === 'accept') {
-    return { ok: true, value: { action: 'accept' } };
+  if (input.action === 'show' || input.action === 'accept') {
+    return { ok: true, value: { action: input.action } };
   }
 
   if (input.action === 'snooze') {

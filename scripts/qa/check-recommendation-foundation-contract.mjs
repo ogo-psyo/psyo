@@ -38,6 +38,8 @@ for (const token of [
   "where status in ('candidate','eligible','shown','accepted','snoozed')",
   'recommendation_persist_evaluation_atomic',
   'recommendation_outcome_atomic',
+  "when 'show' then 'shown'",
+  "'reactivate', 'snoozed', 'eligible'",
   'recommendation_outcome_failures_retry_idx',
   'from public, anon, authenticated',
   'to service_role',
