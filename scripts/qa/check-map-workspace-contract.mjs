@@ -63,6 +63,7 @@ for (const requirement of [
   'mapWorkspace={<ProductionMapWorkspace',
   'onReplaceRoutePoints={setRoutePoints}',
   'onRouteMetaChange={setMapRouteMeta}',
+  "tab === 'map' && productionMapMode !== 'view'",
   'data-map-saved-content',
   'data-map-composer-content',
 ]) {

@@ -43,7 +43,7 @@ async function assertAnchoredActions(page, label) {
   if (geometry.controller.left < 8 || geometry.controller.right > geometry.viewport.width - 8 || geometry.controller.top < 8 || geometry.controller.bottom > geometry.viewport.height - 8) throw new Error(`${label}: route controller escaped viewport`);
   if (geometry.body.bottom > geometry.actions.top + 1) throw new Error(`${label}: scroll body overlaps anchored actions`);
   if (geometry.buttons.some((button) => button.left < geometry.actions.left || button.right > geometry.actions.right || button.top < geometry.actions.top || button.bottom > geometry.actions.bottom)) throw new Error(`${label}: action escaped its anchored row`);
-  if (geometry.viewport.width < 760 && geometry.navigation?.visible) throw new Error(`${label}: mobile navigation still covers route actions`);
+  if (geometry.viewport.width < 760 && geometry.navigation) throw new Error(`${label}: mobile navigation must be removed while route controls are active`);
   if (geometry.viewport.width < 760 && geometry.navigation?.visible && geometry.actions.bottom > geometry.navigation.top) throw new Error(`${label}: route actions overlap navigation`);
 }
 
@@ -94,14 +94,17 @@ try {
 
   await keyboardPage.getByRole('option', { name: /Ветклиника рядом/ }).click();
   await keyboardPage.locator('[data-route-action="risk"]').click();
+  if (await keyboardPage.locator('.app-tabs').count()) throw new Error('keyboard: mobile navigation must be removed while the risk form is active');
   await keyboardPage.getByRole('textbox', { name: /Название/ }).focus();
   const riskActions = keyboardPage.locator('.risk-sheet .production-map-composer-actions');
   await riskActions.scrollIntoViewIfNeeded();
   const riskGeometry = await riskActions.evaluate((element) => {
     const rect = element.getBoundingClientRect();
     const sheet = element.closest('[data-map-snap-sheet]')?.getBoundingClientRect();
-    return { top: rect.top, bottom: rect.bottom, sheetTop: sheet?.top, sheetBottom: sheet?.bottom, viewportHeight: window.innerHeight };
+    const navigation = document.querySelector('.app-tabs');
+    return { top: rect.top, bottom: rect.bottom, sheetTop: sheet?.top, sheetBottom: sheet?.bottom, viewportHeight: window.innerHeight, navigationPresent: Boolean(navigation) };
   });
+  if (riskGeometry.navigationPresent) throw new Error('keyboard: navigation remounted behind the risk form');
   if (riskGeometry.sheetTop === undefined || riskGeometry.sheetBottom === undefined || riskGeometry.top < riskGeometry.sheetTop || riskGeometry.bottom > Math.min(riskGeometry.sheetBottom, riskGeometry.viewportHeight)) throw new Error('keyboard: form actions are not reachable inside the sheet');
   if (outDir) await keyboardPage.screenshot({ path: `${outDir}/map-risk-keyboard.png`, fullPage: false });
   await keyboardContext.close();

@@ -4429,7 +4429,7 @@ export default function Home() {
         {notice !== 'idle' && <div className="toast" role="status" aria-live="polite">{notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
       </section>
 
-      {hasDog && <AppNavigation active={activePrimaryRoute} onAskAssistant={openAssistantSheet} onNavigate={(route) => {
+      {hasDog && !(tab === 'map' && productionMapMode !== 'view') && <AppNavigation active={activePrimaryRoute} onAskAssistant={openAssistantSheet} onNavigate={(route) => {
         setJourneyDetail(null);
         setAssistantOpen(false);
         setTab(route);
