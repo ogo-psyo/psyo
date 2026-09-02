@@ -54,6 +54,20 @@ try {
     await page.screenshot({ path: `${outDir}/${viewport.name}-scenario.png`, fullPage: false });
     await page.getByRole('button', { name: /Записать наблюдение/ }).click();
     await page.locator('.all-scenario-capture .voice-observation-capture').waitFor();
+    await page.getByRole('button', { name: /Найти компанию на прогулку/ }).click();
+    await page.locator('[data-scenario-workspace="social"]').waitFor();
+    const scenarioButtons = page.locator('.all-scenario-choices > button');
+    if (await scenarioButtons.count() !== 4) throw new Error('expected four guided scenarios including Gav');
+    const scenarioGeometry = await scenarioButtons.evaluateAll((buttons) => buttons.map((button) => {
+      const rect = button.getBoundingClientRect();
+      return { width: rect.width, height: rect.height };
+    }));
+    if (scenarioGeometry.some(({ width, height }) => width < 130 || height < 96)) throw new Error(`scenario grid is too cramped: ${JSON.stringify(scenarioGeometry)}`);
+    await page.screenshot({ path: `${outDir}/${viewport.name}-gav-scenario.png`, fullPage: false });
+    await page.getByRole('button', { name: 'Открыть Гав', exact: true }).click();
+    await page.locator('[data-production-journey="nearby"]').waitFor();
+    await page.locator('.app-tabs button[data-route="today"]').click({ force: true });
+    await screen.waitFor();
     await page.getByRole('button', { name: /Открыть профиль Мята в Псё/ }).click();
     await page.locator('[data-profile-memory]').waitFor();
     await page.locator('.app-tabs button[data-route="today"]').click({ force: true });

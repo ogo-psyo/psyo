@@ -14,6 +14,7 @@ for (const marker of [
   'data-scenario-workspace',
   'Изменилось самочувствие',
   'Организовать уход',
+  'Найти компанию на прогулку',
   'Передать собаку другому',
   'Наблюдения',
   'data-observation-timeline',
@@ -24,7 +25,10 @@ for (const marker of [
   'onAddObservation={() => setTab(\'health\')}',
   'onOpenCare={() =>',
   'onOpenCard={() => setTab(\'card\')}',
+  "onNavigate={(route) => {",
 ]) assert.ok(page.includes(marker), `screen «Всё» must connect real product action: ${marker}`);
+
+assert.ok(journey.includes("props.onNavigate('nearby')"), 'Gav scenario must open the real social workspace');
 
 assert.ok(page.includes("const preserveLocalGuest = payload.mode === 'demo'"), 'anonymous demo bootstrap must preserve local observations used by charts');
 
