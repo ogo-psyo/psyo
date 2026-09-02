@@ -426,11 +426,11 @@ Implementation note: the repository transaction is backed by
 - `PATCH /api/recommendations/:id` accepts validated lifecycle command.
 - `POST /api/recommendations/:id/outcome` accepts validated domain outcome.
 
-- [ ] **Step 1: Write route characterization tests**
+- [x] **Step 1: Write route characterization tests**
 
 Test missing auth = 401; disabled flag = 404; missing/foreign pet = 404; malformed body = 400; missing/reused idempotency key = 400/409; storage unavailable = 503; success never exposes `owner_id`, raw evidence payload or coordinates.
 
-- [ ] **Step 2: Add the disabled-by-default flag**
+- [x] **Step 2: Add the disabled-by-default flag**
 
 `.env.example`:
 
@@ -440,13 +440,13 @@ RECOMMENDATIONS_FOUNDATION_ENABLED=false
 
 Every route checks exact string `'true'` before auth/storage work and returns RFC7807 `problem('RECOMMENDATIONS_DISABLED', 404, ...)`.
 
-- [ ] **Step 3: Use the established auth boundary**
+- [x] **Step 3: Use the established auth boundary**
 
 Resolve `ownerId = auth.user?.id ?? session?.ownerId`; obtain Supabase server client; do not read `ownerId` from query/body/header. Use `problem()` for every error.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
-Run: `npx vitest run scripts/qa/recommendation-routes.behavior.test.ts`
+Run: `npx vitest run scripts/qa/vitest/recommendation-routes.test.ts`
 Expected: PASS.
 Commit: `git commit -m "feat(recommendations): expose flagged owner scoped api"`
 

@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   RecommendationAction,
   RecommendationEvidence,
@@ -166,4 +167,69 @@ export async function deleteRecommendationHistoryForOwner(input: {
 }) {
   await input.store.assertOwnedPet(input.ownerId, input.petId);
   await input.store.deleteHistory(input.ownerId, input.petId);
+}
+
+function resultRow(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+function resultOccurredAt(row: Record<string, unknown>) {
+  for (const key of ['completed_at', 'updated_at', 'created_at']) {
+    const value = row[key];
+    if (typeof value === 'string' && Number.isFinite(Date.parse(value))) return new Date(value).toISOString();
+  }
+  return new Date(0).toISOString();
+}
+
+export function createSupabaseRecommendationDomainAdapter(supabase: SupabaseClient): RecommendationDomainAdapter {
+  return {
+    async targetBelongsToOwnerPet(input) {
+      if (input.domainType === 'route') {
+        const result = await supabase.from('map_routes').select('id').eq('id', input.domainId)
+          .eq('pet_id', input.petId).eq('owner_id', input.ownerId).maybeSingle();
+        if (result.error) throw result.error;
+        return Boolean(result.data);
+      }
+      const table = input.domainType === 'reminder' ? 'reminders'
+        : input.domainType === 'habit' ? 'pet_habits' : 'wishlist_items';
+      const result = await supabase.from(table).select('id,pets!inner(owner_id)').eq('id', input.domainId)
+        .eq('pet_id', input.petId).eq('pets.owner_id', input.ownerId).maybeSingle();
+      if (result.error) throw result.error;
+      return Boolean(result.data);
+    },
+    async verifyAndSynchronize(input) {
+      if (input.action.intent === 'open_reminder') {
+        const result = await supabase.from('reminders').select('id,status,completed_at,updated_at,pets!inner(owner_id)')
+          .eq('id', input.action.reminderId).eq('pet_id', input.petId).eq('pets.owner_id', input.ownerId).maybeSingle();
+        if (result.error) throw result.error;
+        const row = resultRow(result.data);
+        if (row?.status === 'done') return {
+          verified: true as const, domainType: 'reminder' as const, domainId: String(row.id), occurredAt: resultOccurredAt(row),
+        };
+        return { verified: false as const };
+      }
+      if (input.action.intent === 'open_habits' && input.action.draft) {
+        const result = await supabase.from('pet_habits').select('id,created_at,pets!inner(owner_id)')
+          .eq('pet_id', input.petId).eq('pets.owner_id', input.ownerId)
+          .eq('kind', input.action.draft.kind).eq('title', input.action.draft.title).eq('status', 'active').limit(1).maybeSingle();
+        if (result.error) throw result.error;
+        const row = resultRow(result.data);
+        if (row) return {
+          verified: true as const, domainType: 'habit' as const, domainId: String(row.id), occurredAt: resultOccurredAt(row),
+        };
+      }
+      if (input.action.intent === 'add_wishlist') {
+        const result = await supabase.from('wishlist_items').select('id,created_at,pets!inner(owner_id)')
+          .eq('pet_id', input.petId).eq('pets.owner_id', input.ownerId)
+          .eq('title', input.action.draft.title).eq('category', input.action.draft.category)
+          .eq('reason', input.action.draft.reason).is('deleted_at', null).limit(1).maybeSingle();
+        if (result.error) throw result.error;
+        const row = resultRow(result.data);
+        if (row) return {
+          verified: true as const, domainType: 'wishlist' as const, domainId: String(row.id), occurredAt: resultOccurredAt(row),
+        };
+      }
+      return { verified: false as const };
+    },
+  };
 }
