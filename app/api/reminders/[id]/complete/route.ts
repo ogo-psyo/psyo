@@ -3,6 +3,7 @@ import { getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
 import { careError, careMutationError, careRequestFingerprint, readCareIdempotencyKey } from '@/lib/server/careHttp';
+import { linkRecommendationOutcome } from '@/lib/server/recommendations/domainOutcomeLink';
 
 export const runtime = 'nodejs';
 type Ctx = { params: Promise<{ id: string }> };
@@ -28,7 +29,16 @@ export async function POST(request: Request, ctx: Ctx) {
       p_completed_at: completedAt,
     });
     if (error) throw error;
-    return NextResponse.json(data);
+    const recommendationId = typeof body.recommendationId === 'string' ? body.recommendationId.trim() : '';
+    const recommendationOutcome = recommendationId && process.env.RECOMMENDATIONS_FOUNDATION_ENABLED === 'true'
+      ? await linkRecommendationOutcome({
+        supabase, ownerId, recommendationId, domainType: 'reminder', domainId: id, result: 'completed', idempotencyKey,
+        occurredAt: completedAt ?? undefined,
+      })
+      : undefined;
+    return NextResponse.json(recommendationOutcome
+      ? { ...(data as Record<string, unknown>), recommendationOutcome }
+      : data);
   } catch (error) {
     return careMutationError(error);
   }
