@@ -47,7 +47,10 @@ try {
     }, profile);
     await page.reload({ waitUntil: 'networkidle' });
 
-    const capture = page.locator('.voice-observation-capture');
+    const observationComposer = page.locator('[data-observation-composer]');
+    await observationComposer.waitFor();
+    await observationComposer.click();
+    const capture = page.locator('[data-all-observation-trends] .voice-observation-capture');
     async function assertActivePhase(phase) {
       await capture.locator(`.voice-capture-${phase}`).waitFor();
       await page.waitForFunction(() => document.querySelector('.phone-shell')?.classList.contains('voice-capture-active'));

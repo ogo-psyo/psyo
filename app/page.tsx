@@ -4180,7 +4180,6 @@ export default function Home() {
             onSave={saveVoiceObservationCandidates}
             onSavePrivateNote={saveVoicePrivateNote}
           />}
-          onAddObservation={() => setTab('health')}
           onOpenCare={() => {
             setCareView('active');
             setTab('calendar');

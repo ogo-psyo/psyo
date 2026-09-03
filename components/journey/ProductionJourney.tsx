@@ -11,6 +11,7 @@ import {
   FirstAid,
   Heart,
   MapTrifold,
+  Microphone,
   Package,
   PaperPlaneTilt,
   PawPrint,
@@ -261,14 +262,19 @@ function ObservationTimelineRow({ metric, points }: { metric: WellbeingMetric; p
   </article>;
 }
 
-function AllObservationTrends({ dogName, points, onAddObservation }: { dogName: string; points: JourneyObservationPoint[]; onAddObservation?: () => void }) {
+function AllObservationTrends({ dogName, points, captureOpen, voiceCapture, onToggleCapture }: { dogName: string; points: JourneyObservationPoint[]; captureOpen: boolean; voiceCapture?: ReactNode; onToggleCapture: () => void }) {
   const ordered = [...points].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).slice(-7);
   const copy = observationTimelineCopy(ordered);
   const firstDate = ordered[0] ? new Date(ordered[0].createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : null;
   const lastDate = ordered.at(-1) ? new Date(ordered.at(-1)!.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : null;
   const recordsLabel = ordered.length === 1 ? '1 запись' : ordered.length > 1 && ordered.length < 5 ? `${ordered.length} записи` : `${ordered.length} записей`;
   return <section className="all-observation-trends" data-all-observation-trends data-parity="production-today-history" aria-labelledby="all-observation-title">
-    <header><div><h2 id="all-observation-title">Наблюдения</h2><p>{ordered.length ? `${recordsLabel} · ${firstDate}${firstDate !== lastDate ? ` — ${lastDate}` : ''}` : `Начните с первой записи о ${dogName}`}</p></div><button type="button" onClick={onAddObservation}>Записать</button></header>
+    <header><div><h2 id="all-observation-title">Наблюдения</h2><p>{ordered.length ? `${recordsLabel} · ${firstDate}${firstDate !== lastDate ? ` — ${lastDate}` : ''}` : `Начните с первой записи о ${dogName}`}</p></div></header>
+    <button className="all-observation-composer" data-observation-composer type="button" aria-label={`Рассказать о состоянии ${dogName}`} aria-expanded={captureOpen} aria-controls="all-observation-capture" onClick={onToggleCapture}>
+      <span><b>Как {dogName} сегодня?</b><small>Написать или надиктовать</small></span>
+      <span className="all-observation-composer-mic" aria-hidden="true"><Microphone weight="regular" /></span>
+    </button>
+    {captureOpen && <div className="all-observation-capture" id="all-observation-capture">{voiceCapture}</div>}
     <div className="all-observation-summary"><b>{copy.title}</b><p>{copy.detail}</p></div>
     <div className="all-observation-timeline" data-observation-timeline>
       <div className="all-observation-scale" aria-hidden="true"><span>показатель</span><span>обычное состояние</span></div>
@@ -291,6 +297,10 @@ function TodayScreen(props: ProductionJourneyProps) {
   const careTitle = props.careTitle || 'Сегодня всё сделано';
   const [activeScenario, setActiveScenario] = useState<ScenarioId | null>(null);
   const [observationCaptureOpen, setObservationCaptureOpen] = useState(false);
+  const openObservationCapture = () => {
+    setActiveScenario(null);
+    setObservationCaptureOpen(true);
+  };
   const selectScenario = (scenario: ScenarioId) => {
     setActiveScenario(scenario);
     if (scenario !== 'health') setObservationCaptureOpen(false);
@@ -319,7 +329,7 @@ function TodayScreen(props: ProductionJourneyProps) {
       {activeScenario === 'health' && <article className="all-scenario-workspace is-health" data-scenario-workspace="health">
         <div><h3>Понять, что изменилось</h3><p>Зафиксируйте признаки один раз — Псё сохранит контекст и покажет, с чем сравнить.</p></div>
         <ol><li>Опишите изменение</li><li>Уточните аппетит, пищеварение и энергию</li><li>Проверьте сводку перед следующим шагом</li></ol>
-        <div className="all-scenario-actions"><button type="button" onClick={() => setObservationCaptureOpen((open) => !open)} aria-expanded={observationCaptureOpen}>Записать наблюдение</button><button type="button" onClick={() => props.onNavigate('health')}>Открыть историю</button></div>
+        <div className="all-scenario-actions"><button type="button" onClick={openObservationCapture} aria-expanded={observationCaptureOpen} aria-controls="all-observation-capture">Записать наблюдение</button><button type="button" onClick={() => props.onNavigate('health')}>Открыть историю</button></div>
       </article>}
       {activeScenario === 'care' && <article className="all-scenario-workspace is-care" data-scenario-workspace="care">
         <div><h3>Собрать уход в один план</h3><p>{props.careDetail || 'Проверьте ближайшие дела, добавьте повторения и назначьте понятный следующий шаг.'}</p></div>
@@ -336,10 +346,9 @@ function TodayScreen(props: ProductionJourneyProps) {
         <ol><li>Проверьте публичные данные</li><li>Добавьте правила ухода</li><li>Отправьте отдельную безопасную ссылку</li></ol>
         <div className="all-scenario-actions"><button type="button" onClick={props.onOpenCard}>Подготовить памятку</button></div>
       </article>}
-      {observationCaptureOpen && <div className="all-scenario-capture">{props.voiceCapture}</div>}
     </section>
 
-    <AllObservationTrends dogName={props.dogName} points={props.observationPoints || []} onAddObservation={props.onAddObservation} />
+    <AllObservationTrends dogName={props.dogName} points={props.observationPoints || []} captureOpen={observationCaptureOpen} voiceCapture={props.voiceCapture} onToggleCapture={() => setObservationCaptureOpen((open) => !open)} />
     {props.children}
   </main>;
 }

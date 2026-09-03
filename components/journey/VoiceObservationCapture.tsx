@@ -249,6 +249,12 @@ export function VoiceObservationCapture({
     return () => shell?.classList.remove('voice-capture-active');
   }, [saved, state.phase]);
 
+  useEffect(() => {
+    if (state.phase === 'idle') return;
+    const frame = window.requestAnimationFrame(() => captureRef.current?.scrollIntoView({ block: 'nearest' }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [state.phase]);
+
   if (saved) {
     return <section ref={captureRef} className="voice-observation-capture is-saved" aria-live="polite">
       <div><h2>{privateNoteSaved && !candidates.length ? 'Заметка сохранена' : 'Контекст обновлён'}</h2><p>{candidates.length ? `${savedDecisions.length ? savedDecisions.map((item) => operationLabels[item.operation]).join(' · ') : 'Сохранены подтверждённые показатели'}.` : ''}{privateNoteSaved ? `${candidates.length ? ' ' : ''}Исходный текст сохранён как приватная заметка.` : `${candidates.length ? ' ' : ''}Отдельная заметка не создана.`}</p></div>
