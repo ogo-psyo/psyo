@@ -751,3 +751,78 @@ button:active:not(:disabled) {
     animation-iteration-count: 1 !important;
   }
 }
+
+.assistant-action-buttons > .assistant-action-result {
+  display: grid;
+  align-items: start;
+  gap: 10px;
+  padding: 12px;
+}
+
+.assistant-action-result > span {
+  line-height: 1.35;
+}
+
+.assistant-action-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.assistant-action-buttons .assistant-action-links > button {
+  min-height: 44px;
+  color: #fffdf8;
+  background: #171814;
+}
+
+.thing-plan-option {
+  grid-template-columns: 26px minmax(0, 1fr) !important;
+  align-items: center;
+  min-height: 58px;
+  border: 1px solid var(--wc-line);
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: var(--wc-ink) !important;
+  background: var(--wc-paper);
+}
+
+.thing-plan-option input[type='checkbox'] {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: var(--wc-ink);
+}
+
+.thing-plan-option span {
+  display: grid;
+  gap: 2px;
+}
+
+.thing-plan-option small {
+  color: var(--wc-ink-soft);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.wishlist-plan-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--wc-ink) !important;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.wishlist-plan-date svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 420px) {
+  .assistant-action-links {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

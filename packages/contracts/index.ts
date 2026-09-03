@@ -84,7 +84,7 @@ export type ActionSuggestion = AssistantActionBase & (
   | {
     intent: 'add_wishlist';
     destination: { screen: 'things'; mode: 'create' };
-    payload: { title: string; category?: string; note?: string };
+    payload: { title: string; category?: string; note?: string; dueDate?: string };
   }
   | {
     intent: 'add_map_place';

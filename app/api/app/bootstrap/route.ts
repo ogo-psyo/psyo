@@ -46,6 +46,10 @@ function mapReminder(row: any) {
   return { id: row.id, petId: row.pet_id, type: row.type, title: row.title, dueAt: row.due_at, recurrence: row.recurrence, status: row.status, completedAt: row.completed_at, snoozedUntil: row.snoozed_until };
 }
 
+function mapWishlist(row: any) {
+  return { id: row.id, petId: row.pet_id, title: row.title, category: row.category, reason: row.reason ?? undefined, url: row.url ?? undefined, priority: row.priority, status: row.status, plannedFor: row.planned_for ?? undefined, reminderId: row.reminder_id ?? undefined, createdAt: row.created_at };
+}
+
 function mapObservation(row: any) {
   const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
   return { id: row.id, petId: row.pet_id, type: row.type, value: row.value, note: row.note ?? undefined, observedAt: row.observed_at, mood: typeof metadata.mood === 'string' ? metadata.mood : row.type === 'mood' ? row.value : undefined, appetite: typeof metadata.appetite === 'string' ? metadata.appetite : row.type === 'appetite' ? row.value : undefined, stool: typeof metadata.stool === 'string' ? metadata.stool : row.type === 'stool' ? row.value : undefined, energy: typeof metadata.energy === 'string' ? metadata.energy : row.type === 'energy' ? row.value : undefined, source: row.source, metadata, createdAt: row.created_at, updatedAt: row.updated_at };
@@ -114,7 +118,7 @@ export async function GET(request: Request) {
     reminders: (remindersResult.data ?? []).map(mapReminder),
     zones: zonesResult.data ?? [],
     routes: routesResult.error ? [] : routesResult.data ?? [],
-    wishlist: wishlistResult.data ?? [],
+    wishlist: (wishlistResult.data ?? []).map(mapWishlist),
     observations: observationsResult.error ? [] : (observationsResult.data ?? []).map(mapObservation),
     documents: documentsResult.error ? [] : (documentsResult.data ?? []).map((row) => ({
       id: row.id,

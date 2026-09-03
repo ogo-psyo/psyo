@@ -83,6 +83,8 @@ export type WishlistItem = {
   url?: string;
   priority: 'low' | 'medium' | 'high';
   status: 'wanted' | 'bought' | 'not_suitable';
+  plannedFor?: ISODateString;
+  reminderId?: EntityId;
 };
 
 export type PetObservation = {

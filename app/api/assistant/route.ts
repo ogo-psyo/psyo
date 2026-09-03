@@ -22,8 +22,8 @@ function hasMedicalSafetyTerm(question: string) {
 function classifyQuestion(question: string): AssistantKind {
   if (hasMedicalSafetyTerm(question) || /вакцин|привив|рвот|понос|кров|температ|болит|хром|вял|кашл|симптом|анализ|вет|здоров|лекар/i.test(question)) return 'health_triage';
   if (/повод|(?:^|\s)лай(?:\s|$)|лает|лаять|тян|один|команд|подзыв|тренир|поведен/i.test(question)) return 'training';
+  if (/куп|покуп|заказ|товар|игруш|амуниц|ошейн|шлейк|заканчива.*(?:корм|лакомств)/i.test(question)) return 'shopping';
   if (/корм|еда|режим|грум|уход|обработ/i.test(question)) return 'care';
-  if (/куп|товар|игруш|амуниц|ошейн|шлейк/i.test(question)) return 'shopping';
   return 'general';
 }
 
@@ -48,6 +48,16 @@ function tomorrowDate() {
   return date.toISOString().slice(0, 10);
 }
 
+function shoppingDraft(question: string, name: string) {
+  if (/корм|еда/i.test(question)) return { title: 'Купить корм', category: 'food' };
+  if (/лакомств/i.test(question)) return { title: 'Купить лакомства', category: 'treats' };
+  if (/игруш/i.test(question)) return { title: 'Купить игрушку', category: 'toy' };
+  if (/шлейк/i.test(question)) return { title: 'Подобрать шлейку', category: 'gear' };
+  if (/ошейн/i.test(question)) return { title: 'Подобрать ошейник', category: 'gear' };
+  if (/грум/i.test(question)) return { title: 'Записаться на груминг', category: 'grooming' };
+  return { title: 'Подобрать вещь под задачу', category: 'other', note: `Проверить вариант для ${name} после ответа ассистента.` };
+}
+
 function buildActionSuggestions(question: string, context: any): ActionSuggestion[] {
   const kind = classifyQuestion(question);
   const name = context?.pet?.name || 'собаки';
@@ -62,14 +72,14 @@ function buildActionSuggestions(question: string, context: any): ActionSuggestio
   }
 
   if (kind === 'shopping') {
+    const draft = shoppingDraft(question, name);
     return [{
       intent: 'add_wishlist',
-      humanLabel: 'Добавить в список вещей',
+      humanLabel: 'Добавить в вещи и план',
       destination: { screen: 'things', mode: 'create' },
       payload: {
-        title: 'Подобрать вещь под задачу',
-        category: 'other',
-        note: `Проверить вариант для ${name} после ответа ассистента.`,
+        ...draft,
+        dueDate: tomorrowDate(),
       },
     }];
   }

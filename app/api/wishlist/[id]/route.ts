@@ -41,6 +41,10 @@ export async function PATCH(request: Request, ctx: Ctx) {
   if (allowedCategories.has(body.category)) patch.category = body.category;
   if (allowedPriorities.has(body.priority)) patch.priority = body.priority;
   if (allowedStatuses.has(body.status)) patch.status = body.status;
+  if (body.status === 'wanted') {
+    patch.planned_for = null;
+    patch.reminder_id = null;
+  }
 
   if (Object.keys(patch).length === 0) return NextResponse.json({ error: 'NO_VALID_FIELDS' }, { status: 400 });
 

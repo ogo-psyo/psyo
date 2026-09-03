@@ -23,6 +23,7 @@ const cases = [
   ['tsx', 'scripts/qa/crud-matrix.behavior.test.ts'],
   ['tsx', 'scripts/qa/all-screen.behavior.test.ts'],
   ['tsx', 'scripts/qa/assistant-route.behavior.test.ts'],
+  ['tsx', 'scripts/qa/wishlist-plan-contract.behavior.test.ts'],
   ['tsx', 'scripts/qa/assistant-context.behavior.test.ts'],
   ['tsx', 'scripts/qa/assistant-answer-service.behavior.test.ts'],
   ['tsx', 'scripts/qa/assistant-rate-limit.behavior.test.ts'],
