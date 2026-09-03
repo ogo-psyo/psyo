@@ -6,6 +6,7 @@ const outDir = process.env.OUT_DIR || 'artifacts/wishlist-plan-ui';
 const tomorrow = new Date();
 tomorrow.setDate(tomorrow.getDate() + 1);
 const plannedFor = [tomorrow.getFullYear(), String(tomorrow.getMonth() + 1).padStart(2, '0'), String(tomorrow.getDate()).padStart(2, '0')].join('-');
+const plannedForLabel = new Date(`${plannedFor}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 const profile = {
   dogName: 'Плутон', breedId: 'mixed', breedGroupId: 'mixed', lifeStage: 'взрослый',
   photos: [], selectedStyle: 'city', backendPetId: 'guest-wishlist-plan', isPublic: false,
@@ -70,7 +71,9 @@ try {
     await page.getByRole('button', { name: 'Открыть в плане' }).click();
     await page.locator('[data-care-calendar]').waitFor();
     const selected = page.locator('[data-care-calendar] [aria-pressed="true"]');
-    if (!(await selected.getAttribute('aria-label'))?.includes('1 дело')) throw new Error(`${viewport.name}: linked calendar day was not selected`);
+    const selectedLabel = await selected.getAttribute('aria-label');
+    if (!selectedLabel?.startsWith(`${plannedForLabel},`)) throw new Error(`${viewport.name}: linked calendar day was overridden (${selectedLabel})`);
+    if (!selectedLabel.includes('1 дело')) throw new Error(`${viewport.name}: linked calendar day has no purchase reminder`);
     await page.locator('.care-calendar-view .care-task-list').getByText('Купить корм', { exact: true }).waitFor();
     const geometry = await page.evaluate(() => ({ viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
     if (geometry.scrollWidth > geometry.viewport) throw new Error(`${viewport.name}: horizontal overflow ${geometry.scrollWidth}/${geometry.viewport}`);

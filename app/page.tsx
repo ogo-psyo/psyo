@@ -2857,6 +2857,7 @@ export default function Home() {
   function openWishlistPlan(item: WishlistView) {
     if (!item.plannedFor) return;
     const date = new Date(`${item.plannedFor}T12:00:00`);
+    calendarAutoSelectedPetRef.current = profile.backendPetId || 'guest';
     setSelectedCalendarDate(item.plannedFor);
     setNewReminderDueDate(item.plannedFor);
     setCalendarCursor(date);
@@ -3475,6 +3476,7 @@ export default function Home() {
     if (target === 'calendar' && action.intent === 'add_wishlist' && action.payload.dueDate) {
       const date = new Date(`${action.payload.dueDate}T12:00:00`);
       navigateFromAssistant({ screen: 'calendar', mode: 'create' }, () => {
+        calendarAutoSelectedPetRef.current = profile.backendPetId || 'guest';
         setCareView('active');
         setSelectedCalendarDate(action.payload.dueDate || dateInputValue(date));
         setCalendarCursor(date);
