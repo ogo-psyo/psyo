@@ -564,6 +564,7 @@ export default function Home() {
   const [reminderHistory, setReminderHistory] = useState<Record<string, ReminderHistoryItem[]>>({});
   const [calendarCursor, setCalendarCursor] = useState(() => new Date());
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => dateInputValue(new Date()));
+  const calendarAutoSelectedPetRef = useRef<string | null>(null);
   const [careView, setCareView] = useState<'active' | 'history'>('active');
   const [newZoneTitle, setNewZoneTitle] = useState('');
   const [newZoneNote, setNewZoneNote] = useState('');
@@ -1700,22 +1701,6 @@ export default function Home() {
     const hook = viralCardMood === 'safety' ? 'Сохрани перед прогулкой:' : viralCardMood === 'club' ? 'Официальная карточка хорошей собаки:' : 'Смотри, какая карточка получилась в Псё:';
     return `${hook} ${name}. Правило контакта: ${rule}.`;
   }, [profile.dogName, profile.socialMode, viralCardMood]);
-  const groupedReminders = useMemo(() => {
-    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-    const tomorrowStart = new Date(todayStart); tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-    return activeReminders.reduce<{ overdue: ReminderView[]; today: ReminderView[]; upcoming: ReminderView[] }>((groups, reminder) => {
-      const due = new Date(reminder.snoozedUntil || reminder.dueAt).getTime();
-      if (Number.isFinite(due) && due < todayStart.getTime()) groups.overdue.push(reminder);
-      else if (Number.isFinite(due) && due < tomorrowStart.getTime()) groups.today.push(reminder);
-      else groups.upcoming.push(reminder);
-      return groups;
-    }, { overdue: [], today: [], upcoming: [] });
-  }, [activeReminders]);
-  const visibleCareReminders = useMemo(() => [
-    ...groupedReminders.overdue.map((reminder) => ({ ...reminder, group: 'просрочено' })),
-    ...groupedReminders.today.map((reminder) => ({ ...reminder, group: 'сегодня' })),
-    ...groupedReminders.upcoming.map((reminder) => ({ ...reminder, group: 'скоро' })),
-  ].slice(0, 6), [groupedReminders]);
   const remindersByDate = useMemo(() => activeReminders.reduce<Record<string, ReminderView[]>>((index, reminder) => {
     const key = reminderDateInputValue(reminder);
     index[key] = [...(index[key] ?? []), reminder];
@@ -1746,6 +1731,16 @@ export default function Home() {
     const date = new Date(`${selectedCalendarDate}T10:00:00`);
     return Number.isFinite(date.getTime()) ? date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'long' }) : 'выбранный день';
   }, [selectedCalendarDate]);
+  useEffect(() => {
+    const petKey = profile.backendPetId || 'guest';
+    if (tab !== 'calendar' || careView !== 'active' || activeReminders.length === 0 || calendarAutoSelectedPetRef.current === petKey) return;
+    const nearestReminder = [...activeReminders].sort((a, b) => new Date(a.snoozedUntil || a.dueAt).getTime() - new Date(b.snoozedUntil || b.dueAt).getTime())[0];
+    const nearestDate = reminderDateInputValue(nearestReminder);
+    const parsedDate = new Date(`${nearestDate}T10:00:00`);
+    calendarAutoSelectedPetRef.current = petKey;
+    setSelectedCalendarDate(nearestDate);
+    setCalendarCursor(parsedDate);
+  }, [activeReminders, careView, profile.backendPetId, tab]);
   const petName = profile.dogName.trim();
   const petNameGent = inflectPetName(profile.dogName, 'gent');
   const petNameDatv = inflectPetName(profile.dogName, 'datv');
@@ -4363,21 +4358,69 @@ export default function Home() {
           onRetry={() => loadSocialSurface().catch(() => setNearbyState('error'))}
         />}
 
-        {hasDog && tab === 'calendar' && <WatercolorScreen className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Добавить, перенести, закрыть или вернуть дело без отдельной возни с календарём." aside={<CalendarDots className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'calendar' && <WatercolorScreen className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Выбери день и работай только с тем, что относится к этой дате." aside={<CalendarDots className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
           <SecondaryFlowHeader label="Назад во Всё" onBack={() => closeSecondaryFlow('today')} />
           <section className="care-workbench" aria-label="Дела ухода">
             <div className="care-workbench-head">
               <div><span className="eyebrow">сейчас в плане</span><h3>{activeReminders.length ? formatCount(activeReminders.length, ['активное дело', 'активных дела', 'активных дел']) : 'Добавь первое дело'}</h3></div>
-              <button className="primary" onClick={() => document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus()}>Добавить дело</button>
+              <button className="primary" onClick={() => {
+                setNewReminderDueDate(selectedCalendarDate);
+                document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus();
+              }}>Добавить дело</button>
             </div>
             <div className="care-view-toggle" aria-label="Раздел плана ухода">
-              <button className={careView === 'active' ? 'active' : ''} onClick={() => setCareView('active')} aria-pressed={careView === 'active'}>Ближайшие</button>
+              <button className={careView === 'active' ? 'active' : ''} onClick={() => setCareView('active')} aria-pressed={careView === 'active'}>Календарь</button>
               <button className={careView === 'history' ? 'active' : ''} onClick={() => setCareView('history')} aria-pressed={careView === 'history'}>История</button>
             </div>
 
-            {careView === 'active' && <div className="care-task-list">
-              {visibleCareReminders.length === 0 && <article className="care-empty-state"><b>Добавь первое дело</b><p>Обработка, вакцина, груминг, корм, врач или своё напоминание. Дальше оно будет видно первым экраном и уйдёт в историю после выполнения.</p></article>}
-              {visibleCareReminders.map((reminder) => <article key={reminder.id} className={`care-task-card ${new Date(reminder.snoozedUntil || reminder.dueAt).getTime() < new Date().setHours(0, 0, 0, 0) ? 'warning' : ''}`}>
+            {careView === 'active' && <div className="care-calendar-view">
+              <section className="care-calendar-panel" data-care-calendar aria-label="Календарь дел">
+                <div className="calendar-toolbar">
+                  <button type="button" aria-label="Предыдущий месяц" onClick={() => setCalendarCursor((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}><ArrowLeft weight="bold" aria-hidden="true" /></button>
+                  <b>{calendarTitle}</b>
+                  <button type="button" aria-label="Следующий месяц" onClick={() => setCalendarCursor((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))}><ArrowRight weight="bold" aria-hidden="true" /></button>
+                </div>
+                <div className="calendar-mode-row">
+                  <span>{formatCount(activeReminders.length, ['дело в плане', 'дела в плане', 'дел в плане'])}</span>
+                  <button type="button" onClick={() => {
+                    const today = new Date();
+                    const key = dateInputValue(today);
+                    setCalendarCursor(today);
+                    setSelectedCalendarDate(key);
+                  }}>Сегодня</button>
+                </div>
+                <div className="care-calendar-grid" role="grid" aria-label={calendarTitle}>
+                  {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((weekday) => <span className="calendar-weekday" role="columnheader" key={weekday}>{weekday}</span>)}
+                  {calendarDays.map((day) => <button
+                    type="button"
+                    role="gridcell"
+                    key={day.key}
+                    className={`calendar-day${day.inMonth ? '' : ' muted'}${day.reminders.length ? ' has-care' : ''}${day.isToday ? ' today' : ''}${day.isSelected ? ' selected' : ''}`}
+                    aria-pressed={day.isSelected}
+                    aria-label={`${day.date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, ${formatCount(day.reminders.length, ['дело', 'дела', 'дел'])}`}
+                    onClick={() => {
+                      setSelectedCalendarDate(day.key);
+                      setNewReminderDueDate(day.key);
+                      if (!day.inMonth) setCalendarCursor(day.date);
+                    }}
+                  >
+                    <span>{day.date.getDate()}</span>
+                    {day.reminders.length > 0 && <b aria-hidden="true">{day.reminders.length}</b>}
+                  </button>)}
+                </div>
+              </section>
+
+              <div className="selected-day-panel">
+                <div><span>Дела на выбранную дату</span><b>{selectedDateLabel}</b></div>
+                <button type="button" onClick={() => {
+                  setNewReminderDueDate(selectedCalendarDate);
+                  document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus();
+                }}>Добавить</button>
+              </div>
+
+              <div className="care-task-list" aria-live="polite">
+              {selectedDateReminders.length === 0 && <article className="care-empty-state"><b>На этот день дел нет</b><p>Выбери другую дату или добавь дело — выбранный день уже подставлен в форму.</p></article>}
+              {selectedDateReminders.map((reminder) => <article key={reminder.id} className={`care-task-card ${new Date(reminder.snoozedUntil || reminder.dueAt).getTime() < new Date().setHours(0, 0, 0, 0) ? 'warning' : ''}`}>
                 {editingReminderId === reminder.id ? <form className="reminder-edit-form" onSubmit={async (event) => {
                   event.preventDefault();
                   const data = new FormData(event.currentTarget);
@@ -4414,6 +4457,7 @@ export default function Home() {
                   </div>
                 </>}
               </article>)}
+              </div>
             </div>}
 
             {careView === 'history' && <div className="care-task-list">
