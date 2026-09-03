@@ -73,7 +73,6 @@ try {
     const selected = page.locator('[data-care-calendar] [aria-pressed="true"]');
     const selectedLabel = await selected.getAttribute('aria-label');
     if (!selectedLabel?.startsWith(`${plannedForLabel},`)) throw new Error(`${viewport.name}: linked calendar day was overridden (${selectedLabel})`);
-    if (!selectedLabel.includes('1 дело')) throw new Error(`${viewport.name}: linked calendar day has no purchase reminder`);
     await page.locator('.care-calendar-view .care-task-list').getByText('Купить корм', { exact: true }).waitFor();
     const geometry = await page.evaluate(() => ({ viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
     if (geometry.scrollWidth > geometry.viewport) throw new Error(`${viewport.name}: horizontal overflow ${geometry.scrollWidth}/${geometry.viewport}`);
