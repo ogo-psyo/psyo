@@ -22,27 +22,46 @@ async function openMap(page) {
 async function assertAnchoredActions(page, label) {
   const geometry = await page.evaluate(() => {
     const controller = document.querySelector('[data-route-controller]')?.getBoundingClientRect();
+    const controllerStyle = document.querySelector('[data-route-controller]') ? getComputedStyle(document.querySelector('[data-route-controller]')) : null;
     const body = document.querySelector('[data-route-controller-body]')?.getBoundingClientRect();
-    const actions = document.querySelector('[data-route-controller-actions]')?.getBoundingClientRect();
+    const actionsElement = document.querySelector('[data-route-controller-actions]');
+    const actions = actionsElement?.getBoundingClientRect();
+    const actionsStyle = actionsElement ? getComputedStyle(actionsElement) : null;
     const navigation = document.querySelector('.app-tabs');
     const buttons = [...document.querySelectorAll('[data-route-controller-actions] button')].map((button) => {
       const rect = button.getBoundingClientRect();
-      return { top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left };
+      return { label: button.textContent?.trim(), top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left, width: rect.width };
     });
     return {
       viewport: { width: window.innerWidth, height: window.innerHeight },
-      controller: controller && { top: controller.top, right: controller.right, bottom: controller.bottom, left: controller.left },
+      controller: controller && { top: controller.top, right: controller.right, bottom: controller.bottom, left: controller.left, bottomLeftRadius: controllerStyle?.borderBottomLeftRadius, bottomRightRadius: controllerStyle?.borderBottomRightRadius },
       body: body && { top: body.top, bottom: body.bottom, scrollHeight: body.scrollHeight, clientHeight: body.clientHeight },
-      actions: actions && { top: actions.top, right: actions.right, bottom: actions.bottom, left: actions.left },
+      actions: actions && {
+        top: actions.top,
+        right: actions.right,
+        bottom: actions.bottom,
+        left: actions.left,
+        contentLeft: actions.left + Number.parseFloat(actionsStyle?.paddingLeft || '0'),
+        contentRight: actions.right - Number.parseFloat(actionsStyle?.paddingRight || '0'),
+        contentWidth: actions.width - Number.parseFloat(actionsStyle?.paddingLeft || '0') - Number.parseFloat(actionsStyle?.paddingRight || '0'),
+      },
       navigation: navigation ? { visible: getComputedStyle(navigation).visibility !== 'hidden', top: navigation.getBoundingClientRect().top } : null,
       buttons,
       overflow: document.documentElement.scrollWidth > window.innerWidth,
     };
   });
   if (geometry.overflow || !geometry.controller || !geometry.body || !geometry.actions || !geometry.buttons.length) throw new Error(`${label}: route layout is incomplete`);
-  if (geometry.controller.left < 8 || geometry.controller.right > geometry.viewport.width - 8 || geometry.controller.top < 8 || geometry.controller.bottom > geometry.viewport.height - 8) throw new Error(`${label}: route controller escaped viewport`);
+  if (geometry.controller.left < 0 || geometry.controller.right > geometry.viewport.width || geometry.controller.top < 0 || geometry.controller.bottom > geometry.viewport.height) throw new Error(`${label}: route controller escaped viewport`);
+  if (geometry.viewport.width >= 760 && (geometry.controller.left < 8 || geometry.controller.right > geometry.viewport.width - 8 || geometry.controller.top < 8 || geometry.controller.bottom > geometry.viewport.height - 8)) throw new Error(`${label}: landscape route controller lost its viewport inset`);
   if (geometry.body.bottom > geometry.actions.top + 1) throw new Error(`${label}: scroll body overlaps anchored actions`);
   if (geometry.buttons.some((button) => button.left < geometry.actions.left || button.right > geometry.actions.right || button.top < geometry.actions.top || button.bottom > geometry.actions.bottom)) throw new Error(`${label}: action escaped its anchored row`);
+  if (geometry.viewport.width < 760 && Math.abs(geometry.controller.bottom - geometry.viewport.height) > 1) throw new Error(`${label}: route controls are floating above the viewport edge`);
+  if (geometry.viewport.width < 760 && (geometry.controller.left > 1 || geometry.controller.right < geometry.viewport.width - 1)) throw new Error(`${label}: route control dock is not anchored edge to edge`);
+  if (geometry.viewport.width < 760 && (geometry.controller.bottomLeftRadius !== '0px' || geometry.controller.bottomRightRadius !== '0px')) throw new Error(`${label}: route control dock still has floating bottom corners`);
+  const primary = geometry.buttons.find((button) => button.label?.includes('Добавить точку'));
+  if (geometry.controller.right - geometry.controller.left <= 500 && primary && primary.width < geometry.actions.contentWidth - 1) throw new Error(`${label}: primary route action is squeezed beside secondary controls`);
+  const secondary = geometry.buttons.filter((button) => button !== primary);
+  if (primary && secondary.length === 2 && Math.max(...secondary.map((button) => button.right)) < geometry.actions.contentRight - 1) throw new Error(`${label}: secondary route actions leave an unstable empty slot`);
   if (geometry.viewport.width < 760 && geometry.navigation) throw new Error(`${label}: mobile navigation must be removed while route controls are active`);
   if (geometry.viewport.width < 760 && geometry.navigation?.visible && geometry.actions.bottom > geometry.navigation.top) throw new Error(`${label}: route actions overlap navigation`);
 }
