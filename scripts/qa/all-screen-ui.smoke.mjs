@@ -45,6 +45,24 @@ try {
     if (await page.locator('[data-observation-timeline] .all-observation-track path').count() !== 4) throw new Error(`real observation data was not rendered; persisted keys: ${persisted.observationKeys.join(',')}`);
     if (!await page.locator('.all-observation-summary').getByText('В последней записи меньше отклонений').isVisible()) throw new Error('observation summary does not explain the latest comparison');
     if (!await page.locator('.all-observation-row').first().getByText('Ближе к обычному').isVisible()) throw new Error('metric comparison does not use the shared ordinary-state baseline');
+    const observationComposer = page.locator('[data-all-observation-trends] [data-observation-composer]');
+    await observationComposer.waitFor();
+    if ((await observationComposer.getAttribute('aria-label')) !== 'Рассказать о состоянии Мята') throw new Error('observation composer does not expose a clear accessible action');
+    await observationComposer.click();
+    const observationCapture = page.locator('[data-all-observation-trends] .all-observation-capture .voice-observation-capture');
+    await observationCapture.waitFor();
+    await page.getByRole('button', { name: 'Записать голосом' }).waitFor();
+    if (await page.locator('.app-tabs').isVisible()) throw new Error('navigation overlaps the expanded observation input');
+    const observationInputGeometry = await page.evaluate(() => {
+      const section = document.querySelector('[data-all-observation-trends]')?.getBoundingClientRect();
+      const composer = document.querySelector('[data-observation-composer]')?.getBoundingClientRect();
+      const capture = document.querySelector('.all-observation-capture')?.getBoundingClientRect();
+      return { section, composer, capture };
+    });
+    if (!observationInputGeometry.section || !observationInputGeometry.composer || !observationInputGeometry.capture) throw new Error('observation input layout is incomplete');
+    if (observationInputGeometry.capture.top < observationInputGeometry.composer.bottom || observationInputGeometry.capture.left < observationInputGeometry.section.left || observationInputGeometry.capture.right > observationInputGeometry.section.right) throw new Error('voice capture escaped the observation input section');
+    await observationCapture.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${outDir}/${viewport.name}-observation-input.png`, fullPage: false });
     const layout = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
     if (layout.scrollWidth > layout.width) throw new Error(`horizontal overflow ${layout.scrollWidth}/${layout.width}`);
 
@@ -53,7 +71,7 @@ try {
     await page.locator('[data-all-scenarios]').scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${outDir}/${viewport.name}-scenario.png`, fullPage: false });
     await page.getByRole('button', { name: /Записать наблюдение/ }).click();
-    await page.locator('.all-scenario-capture .voice-observation-capture').waitFor();
+    await page.locator('[data-all-observation-trends] .all-observation-capture .voice-observation-capture').waitFor();
     await page.getByRole('button', { name: /Найти компанию на прогулку/ }).click();
     await page.locator('[data-scenario-workspace="social"]').waitFor();
     const scenarioButtons = page.locator('.all-scenario-choices > button');

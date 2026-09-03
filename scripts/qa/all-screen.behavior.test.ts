@@ -17,16 +17,22 @@ for (const marker of [
   'Найти компанию на прогулку',
   'Передать собаку другому',
   'Наблюдения',
+  'data-observation-composer',
+  'Рассказать о состоянии',
   'data-observation-timeline',
 ]) assert.ok(journey.includes(marker), `screen «Всё» must expose: ${marker}`);
 
+assert.ok(journey.includes("setObservationCaptureOpen(true)"), 'observation composer must open capture directly');
+assert.ok(journey.includes('all-observation-capture'), 'voice capture must stay inside the observation input section');
+
 for (const marker of [
   'observationPoints={observations.map',
-  'onAddObservation={() => setTab(\'health\')}',
   'onOpenCare={() =>',
   'onOpenCard={() => setTab(\'card\')}',
   "onNavigate={(route) => {",
 ]) assert.ok(page.includes(marker), `screen «Всё» must connect real product action: ${marker}`);
+
+assert.ok(!page.includes("onAddObservation={() => setTab('health')}"), 'observation input must not redirect away from the All screen');
 
 assert.ok(journey.includes("props.onNavigate('nearby')"), 'Gav scenario must open the real social workspace');
 
