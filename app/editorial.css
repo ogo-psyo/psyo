@@ -810,7 +810,8 @@ select {
 /* Map stays spatial, but its controls use the same flat field-guide hardware. */
 [data-production-map-workspace] .production-map-topbar > *,
 [data-production-map-workspace] .production-map-search,
-[data-production-map-workspace] .production-map-snap-sheet {
+[data-production-map-workspace] .production-map-snap-sheet,
+[data-production-map-workspace] .production-route-controller {
   border: 1px solid var(--editorial-ink) !important;
   border-radius: var(--editorial-radius) !important;
   background: rgb(244 243 238 / 96%) !important;
