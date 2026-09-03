@@ -287,7 +287,7 @@ describe('domain outcome post-success linking', () => {
   test('habit and wishlist successes link their persisted domain ids', async () => {
     state.admin = fakeDatabase({
       pets: { data: { id: 'pet-1' }, error: null },
-      wishlist_items: { data: { id: 'wishlist-1', pet_id: 'pet-1', title: 'Шлейка' }, error: null },
+      'rpc:wishlist_create_plan_atomic': { data: { item: { id: 'wishlist-1', petId: 'pet-1', title: 'Шлейка', createdAt: '2026-09-02T12:00:00.000Z' }, reminder: null, mode: 'user' }, error: null },
     }).client;
     const habit = await CHECK_IN_HABIT(request('/api/habits/habit-1/checkins', {
       method: 'POST', headers: { 'Idempotency-Key': 'habit-key-1' }, json: { recommendationId: 'recommendation-1' },

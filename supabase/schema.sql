@@ -111,6 +111,8 @@ create table if not exists public.wishlist_items (
   url text,
   priority text not null default 'medium' check (priority in ('low','medium','high')),
   status text not null default 'wanted' check (status in ('wanted','bought','not_suitable')),
+  planned_for date,
+  reminder_id uuid references public.reminders(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

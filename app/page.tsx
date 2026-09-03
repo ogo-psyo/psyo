@@ -74,7 +74,7 @@ type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' 
 type ReminderTimeMode = 'exact' | 'flexible' | 'approximate';
 type ReminderView = { id: string; petId: string; type: string; title: string; dueAt: string; recurrence?: ReminderRecurrence; status: string; snoozedUntil?: string; completedAt?: string; nextDueAt?: string };
 type ReminderHistoryItem = { id: string; eventType?: string; payload?: { dueAt?: string; completedAt?: string; nextDueAt?: string | null }; createdAt: string };
-type WishlistView = { id: string; petId: string; title: string; category: string; reason?: string; url?: string; priority: string; status: string; created_at?: string };
+type WishlistView = { id: string; petId: string; title: string; category: string; reason?: string; url?: string; priority: string; status: string; plannedFor?: string; reminderId?: string; createdAt?: string; created_at?: string };
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; visibility?: 'private' | 'shared' | 'public'; share_token?: string | null; created_at?: string };
 type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; avatar_source?: 'none' | 'uploaded' | 'generated'; active_avatar_asset_id?: string | null; photo_urls?: string[] };
 type AuthSession = { access_token: string; user: { email?: string } };
@@ -241,7 +241,7 @@ function SecondaryFlowHeader({ label, onBack }: { label: string; onBack: () => v
   );
 }
 
-type AssistantActionStatus = { state: 'idle' | 'loading' | 'success' | 'error'; message?: string };
+type AssistantActionStatus = { state: 'idle' | 'loading' | 'success' | 'error'; message?: string; plannedFor?: string };
 
 function assistantActionKey(action: ActionSuggestion, index: number) {
   return `${action.intent}:${action.humanLabel}:${index}`;
@@ -251,7 +251,7 @@ function AssistantActionButtons({ actions, statuses, onApply, onOpen }: {
   actions: ActionSuggestion[];
   statuses: Record<string, AssistantActionStatus>;
   onApply: (action: ActionSuggestion, key: string) => void;
-  onOpen: (action: ActionSuggestion) => void;
+  onOpen: (action: ActionSuggestion, target?: 'primary' | 'calendar') => void;
 }) {
   if (!actions.length) return null;
   return (
@@ -259,7 +259,13 @@ function AssistantActionButtons({ actions, statuses, onApply, onOpen }: {
       {actions.map((action, index) => {
         const key = assistantActionKey(action, index);
         const status = statuses[key] || { state: 'idle' as const };
-        if (status.state === 'success') return <div key={key} role="status"><span>Готово</span><button type="button" onClick={() => onOpen(action)}>Открыть</button></div>;
+        if (status.state === 'success') return <div className="assistant-action-result" key={key} role="status">
+          <span>{status.message || 'Действие сохранено'}</span>
+          <div className="assistant-action-links">
+            <button type="button" onClick={() => onOpen(action)}>{action.intent === 'add_wishlist' ? 'Открыть вещи' : 'Открыть'}</button>
+            {action.intent === 'add_wishlist' && status.plannedFor && <button type="button" onClick={() => onOpen(action, 'calendar')}>Открыть план</button>}
+          </div>
+        </div>;
         if (status.state === 'error') return <div key={key} role="alert"><span>{status.message || 'Не удалось выполнить действие.'}</span><button type="button" onClick={() => onApply(action, key)}>Повторить</button></div>;
         return <button key={key} type="button" disabled={status.state === 'loading'} aria-busy={status.state === 'loading'} onClick={() => onApply(action, key)}>
           {status.state === 'loading' ? `${action.humanLabel}…` : action.humanLabel}
@@ -357,6 +363,16 @@ function dateInputValue(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function dateAfterDays(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return dateInputValue(date);
+}
+
+function wishlistReminderTitle(title: string) {
+  return /^(купить|заказать|забрать)/i.test(title.trim()) ? title.trim() : `Купить: ${title.trim()}`;
 }
 
 function isoFromDateInput(value: string) {
@@ -584,6 +600,8 @@ export default function Home() {
   const [newWishTitle, setNewWishTitle] = useState('');
   const [newWishReason, setNewWishReason] = useState('');
   const [newWishCategory, setNewWishCategory] = useState('gear');
+  const [newWishNeedsReminder, setNewWishNeedsReminder] = useState(true);
+  const [newWishPlannedFor, setNewWishPlannedFor] = useState(() => dateAfterDays(1));
   const [thingCaptureOpen, setThingCaptureOpen] = useState(false);
   const [mainRecommendation, setMainRecommendation] = useState<Recommendation | null>(null);
   const [woofRecommendationEntry, setWoofRecommendationEntry] = useState<WoofRecommendationEntry | null>(null);
@@ -2785,18 +2803,26 @@ export default function Home() {
     }
   }
 
-  async function createWishlistItem(preset?: { title: string; category?: string; reason?: string; priority?: string }) {
+  async function createWishlistItem(preset?: { title: string; category?: string; reason?: string; priority?: string; plannedFor?: string; source?: 'assistant' | 'manual' }) {
     const title = (preset?.title || newWishTitle).trim();
     if (!title) { setError('Добавь название позиции.'); return false; }
+    const plannedFor = preset?.plannedFor || (newWishNeedsReminder ? newWishPlannedFor : undefined);
+    const dueAt = plannedFor ? reminderDueAt(plannedFor, '12:00', 'flexible') : undefined;
     if (!profile.backendPetId) {
       if (!isGuestMode()) { setError('Сначала сохрани профиль собаки.'); return false; }
       ensureGuestPetId();
     }
     if (isGuestMode()) {
       const petId = ensureGuestPetId();
-      setWishlist((current) => [{ id: guestId('wish'), petId, title, category: preset?.category || newWishCategory, reason: preset?.reason || newWishReason || undefined, priority: preset?.priority || 'medium', status: 'wanted', created_at: new Date().toISOString() }, ...current]);
+      const reminderId = plannedFor ? guestId('reminder') : undefined;
+      const wishlistItem: WishlistView = { id: guestId('wish'), petId, title, category: preset?.category || newWishCategory, reason: preset?.reason || newWishReason || undefined, priority: preset?.priority || 'medium', status: 'wanted', plannedFor, reminderId, createdAt: new Date().toISOString() };
+      setWishlist((current) => [wishlistItem, ...current]);
+      if (plannedFor && reminderId && dueAt) {
+        setReminders((current) => [{ id: reminderId, petId, type: wishlistItem.category === 'food' ? 'food' : 'custom', title: wishlistReminderTitle(title), dueAt, recurrence: 'none', status: 'active' }, ...current]);
+      }
       setNewWishTitle('');
       setNewWishReason('');
+      setNewWishPlannedFor(dateAfterDays(1));
       setThingCaptureOpen(false);
       return true;
     }
@@ -2810,20 +2836,42 @@ export default function Home() {
         && mainRecommendation.primaryAction.draft.reason === reason
         ? mainRecommendation.id
         : undefined;
+      const scope = `wishlist:create:${profile.backendPetId}:${title}:${category}:${plannedFor || 'unplanned'}`;
       const response = await fetch('/api/wishlist', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ petId: profile.backendPetId, title, category, reason, priority: preset?.priority || 'medium', status: 'wanted', recommendationId }),
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+        body: JSON.stringify({ petId: profile.backendPetId, title, category, reason, priority: preset?.priority || 'medium', plannedFor, dueAt, recommendationId, source: preset?.source || 'manual' }),
       });
       await response.json().catch(() => ({}));
-      if (!response.ok) { setError('Не удалось добавить вещь'); return false; }
-      setNewWishTitle(''); setNewWishReason(''); setThingCaptureOpen(false);
+      if (!response.ok) { setError('Покупка не сохранилась. Всё введённое осталось в форме — проверь связь и попробуй снова.'); return false; }
+      setNewWishTitle(''); setNewWishReason(''); setNewWishPlannedFor(dateAfterDays(1)); setThingCaptureOpen(false);
       await loadBootstrap();
+      finishCareMutation(scope);
       finishRecommendationOutcome(recommendationId);
       return true;
     } catch {
-      setError('Не удалось добавить вещь');
+      setError('Покупка не сохранилась. Всё введённое осталось в форме — проверь связь и попробуй снова.');
       return false;
     }
+  }
+
+  function openWishlistPlan(item: WishlistView) {
+    if (!item.plannedFor) return;
+    const date = new Date(`${item.plannedFor}T12:00:00`);
+    setSelectedCalendarDate(item.plannedFor);
+    setNewReminderDueDate(item.plannedFor);
+    setCalendarCursor(date);
+    setCareView('active');
+    setJourneyDetail(null);
+    setTab('calendar');
+  }
+
+  async function completeWishlistItem(item: WishlistView) {
+    if (!item.reminderId) return updateWishlistItem(item.id, { status: 'bought' });
+    const completed = await completeReminder(item.reminderId);
+    if (completed && isGuestMode()) {
+      setWishlist((current) => current.map((entry) => entry.id === item.id ? { ...entry, status: 'bought' } : entry));
+    }
+    return completed;
   }
 
   async function createZone(preset?: { title: string; type?: string; note?: string; radiusMeters?: number; approximateLat?: number; approximateLng?: number }) {
@@ -3143,7 +3191,10 @@ export default function Home() {
     const item = wishlist.find((entry) => entry.id === id);
     if (isGuestMode()) {
       setWishlist((current) => current.filter((entry) => entry.id !== id));
-      if (item) setRemovedWishlistItem(item);
+      if (item?.reminderId) {
+        setReminders((current) => current.filter((reminder) => reminder.id !== item.reminderId));
+      }
+      if (item) setRemovedWishlistItem({ ...item, plannedFor: undefined, reminderId: undefined });
       return;
     }
     const response = await fetch(`/api/wishlist/${id}`, { method: 'DELETE', headers: authHeaders() });
@@ -3231,6 +3282,7 @@ export default function Home() {
     }
     if (isGuestMode()) {
       setReminders((current) => current.map((item) => item.id === id ? { ...item, status: 'done', completedAt: new Date().toISOString() } : item));
+      setWishlist((current) => current.map((item) => item.reminderId === id ? { ...item, status: 'bought' } : item));
       setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
       return true;
     }
@@ -3419,12 +3471,22 @@ export default function Home() {
     window.history.replaceState({ tab: nextTab }, '', nextUrl);
   }
 
-  function openAssistantAction(action: ActionSuggestion) {
+  function openAssistantAction(action: ActionSuggestion, target: 'primary' | 'calendar' = 'primary') {
+    if (target === 'calendar' && action.intent === 'add_wishlist' && action.payload.dueDate) {
+      const date = new Date(`${action.payload.dueDate}T12:00:00`);
+      navigateFromAssistant({ screen: 'calendar', mode: 'create' }, () => {
+        setCareView('active');
+        setSelectedCalendarDate(action.payload.dueDate || dateInputValue(date));
+        setCalendarCursor(date);
+      });
+      return;
+    }
     navigateFromAssistant(action.destination, () => {
       if (action.destination.screen === 'calendar') setCareView('active');
       if (action.destination.screen === 'things') setThingCaptureOpen(false);
       if (action.destination.screen === 'map') setProductionMapMode('view');
     });
+    if (action.destination.screen === 'things') setJourneyDetail('things');
   }
 
   async function handleApplyAction(action: ActionSuggestion, key: string) {
@@ -3461,6 +3523,8 @@ export default function Home() {
         category: action.payload.category || 'other',
         reason: action.payload.note,
         priority: action.safetyFlag === 'vet_boundary' ? 'high' : 'medium',
+        plannedFor: action.payload.dueDate,
+        source: 'assistant',
       });
     }
     assistantActionBusyRef.current.delete(key);
@@ -3468,7 +3532,11 @@ export default function Home() {
       setAssistantActionStatuses((current) => ({ ...current, [key]: { state: 'error', message: 'Не удалось сохранить. Проверь связь и повтори.' } }));
       return;
     }
-    setAssistantActionStatuses((current) => ({ ...current, [key]: { state: 'success' } }));
+    const plannedFor = action.intent === 'add_wishlist' ? action.payload.dueDate : undefined;
+    const message = plannedFor
+      ? `Добавлено в вещи и план на ${new Date(`${plannedFor}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}`
+      : 'Действие сохранено';
+    setAssistantActionStatuses((current) => ({ ...current, [key]: { state: 'success', message, plannedFor } }));
   }
 
   async function startPlusCheckout() {
@@ -4629,7 +4697,12 @@ export default function Home() {
               <option value="other">другое</option>
             </select></label>
             <label>Зачем <span className="field-optional">необязательно</span><input value={newWishReason} onChange={(event) => setNewWishReason(event.target.value)} placeholder="Например, старый адресник потерялся" /></label>
-            <button className="primary full" onClick={() => createWishlistItem()} disabled={!newWishTitle.trim()}>{newWishTitle.trim() ? 'Добавить в вещи' : 'Напиши название'}</button>
+            <label className="thing-plan-option">
+              <input type="checkbox" checked={newWishNeedsReminder} onChange={(event) => setNewWishNeedsReminder(event.target.checked)} />
+              <span><b>Добавить в план</b><small>Псё напомнит купить к выбранной дате</small></span>
+            </label>
+            {newWishNeedsReminder && <label>Купить до<input type="date" min={dateInputValue(new Date())} value={newWishPlannedFor} onChange={(event) => setNewWishPlannedFor(event.target.value)} /></label>}
+            <button className="primary full" onClick={() => createWishlistItem()} disabled={!newWishTitle.trim() || (newWishNeedsReminder && !newWishPlannedFor)}>{newWishTitle.trim() ? newWishNeedsReminder ? 'Добавить в вещи и план' : 'Добавить в вещи' : 'Напиши название'}</button>
           </PaperSheet>}
 
           {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <article className="empty-state"><b>Список пока пуст</b><p>Здесь можно держать покупки и услуги для {profile.dogName}.</p></article>}
@@ -4637,9 +4710,11 @@ export default function Home() {
           {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Вещи собаки">
             {wantedWishlist.map((item) => <article key={item.id} className={`wishlist-item priority-${item.priority}`}>
               {editingWishlistId === item.id ? <form className="wishlist-edit-form" onSubmit={async (event) => { event.preventDefault(); await updateWishlistItem(item.id, { title: wishlistTitleDraft.trim(), reason: wishlistReasonDraft.trim() || undefined }); }}><label>Название<input value={wishlistTitleDraft} maxLength={160} onChange={(event) => setWishlistTitleDraft(event.target.value)} /></label><label>Зачем <span className="field-optional">необязательно</span><input value={wishlistReasonDraft} maxLength={500} onChange={(event) => setWishlistReasonDraft(event.target.value)} /></label><div className="wishlist-actions"><button type="submit" disabled={!wishlistTitleDraft.trim()}>Сохранить</button><button type="button" onClick={() => setEditingWishlistId(null)}>Отмена</button></div></form> : <><div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div><div className="wishlist-actions">
+                {item.plannedFor && <p className="wishlist-plan-date"><CalendarBlank weight="bold" aria-hidden="true" />В плане на {new Date(`${item.plannedFor}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}
                 {item.url && <a href={item.url} target="_blank" rel="noreferrer">Открыть</a>}
+                {item.plannedFor && <button type="button" onClick={() => openWishlistPlan(item)}>Открыть в плане</button>}
                 <button onClick={() => { setEditingWishlistId(item.id); setWishlistTitleDraft(item.title); setWishlistReasonDraft(item.reason || ''); }}>Изменить</button>
-                <button onClick={() => updateWishlistItem(item.id, { status: 'bought' })}>Куплено</button>
+                <button onClick={() => completeWishlistItem(item)}>Куплено</button>
                 <button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button>
               </div></>}
             </article>)}
@@ -4650,7 +4725,7 @@ export default function Home() {
             <div className="section-title"><div><span className="eyebrow">история</span><h3>Уже закрыто</h3></div></div>
             {boughtWishlist.slice(0, 4).map((item) => <article key={item.id} className="wishlist-item">
               <div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div>
-              <div className="wishlist-actions"><button onClick={() => updateWishlistItem(item.id, { status: 'wanted' })}>Вернуть</button><button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Удалить</button></div>
+              <div className="wishlist-actions"><button onClick={() => updateWishlistItem(item.id, { status: 'wanted', plannedFor: undefined, reminderId: undefined })}>Вернуть</button><button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Удалить</button></div>
             </article>)}
           </section>}
 

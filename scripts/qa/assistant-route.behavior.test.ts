@@ -148,6 +148,17 @@ test('shopping advice can continue in wishlist', async () => {
   assert.deepEqual(body.actionSuggestions[0].destination, { screen: 'things', mode: 'create' });
 });
 
+test('an explicit food purchase becomes one dated wishlist and calendar action', async () => {
+  const body = await (await assistantHandler()(ownerRequest('Записать покупку корма'))).json();
+  const action = body.actionSuggestions[0];
+
+  assert.equal(action.intent, 'add_wishlist');
+  assert.equal(action.humanLabel, 'Добавить в вещи и план');
+  assert.equal(action.payload.title, 'Купить корм');
+  assert.equal(action.payload.category, 'food');
+  assert.match(action.payload.dueDate, /^\d{4}-\d{2}-\d{2}$/);
+});
+
 test('unsupported general advice does not receive a fake call to action', async () => {
   const body = await (await assistantHandler()(ownerRequest('Почему собаки видят сны?'))).json();
   assert.deepEqual(body.actionSuggestions, []);
