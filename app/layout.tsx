@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Manrope, Unbounded } from 'next/font/google';
+import { ReleaseFreshnessGuard } from '@/components/ReleaseFreshnessGuard';
 import './globals.css';
 import './refinement.css';
 import './pouf.css';
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${manrope.variable} ${unbounded.variable}`}>
         <span hidden aria-hidden="true" data-psyo-design-contract="living-field-guide-2026-08" />
         <script src="https://telegram.org/js/telegram-web-app.js" async />
+        <ReleaseFreshnessGuard />
         {children}
       </body>
     </html>
