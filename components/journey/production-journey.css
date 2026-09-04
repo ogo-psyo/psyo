@@ -906,6 +906,99 @@
   font-weight: 900;
 }
 
+.voice-capture-analysis {
+  margin-top: 0;
+}
+
+.voice-capture-result {
+  display: grid;
+  gap: 12px;
+}
+
+.voice-capture-result > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.voice-capture-result > header h3,
+.voice-capture-result > header p {
+  margin: 0;
+}
+
+.voice-capture-result > header h3 {
+  font-size: 17px;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+}
+
+.voice-capture-result > header p {
+  margin-top: 4px;
+  color: #3e6657;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.voice-capture-summary-facts {
+  border-top: 1px solid rgba(7,129,77,.18);
+}
+
+.voice-capture-summary-facts article {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(92px, .65fr) minmax(0, 1.35fr);
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(7,129,77,.18);
+}
+
+.voice-capture-summary-facts span {
+  color: #3e6657;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.voice-capture-summary-facts b {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.voice-capture-details-toggle {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: #315e4d;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.voice-capture-details-toggle svg {
+  width: 17px;
+  height: 17px;
+  transition: transform 160ms ease-out;
+}
+
+.voice-capture-details-toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.voice-capture-details {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(7,129,77,.18);
+}
+
 .voice-capture-trust,
 .voice-capture-facts-head {
   display: flex;
@@ -914,6 +1007,10 @@
   color: #3e6657;
   font-size: 12px;
   font-weight: 800;
+}
+
+.voice-capture-trust {
+  flex-wrap: wrap;
 }
 
 .voice-capture-trust b,
@@ -1034,6 +1131,10 @@
   border-radius: 16px;
   background: #fff4d7;
   color: #5e4818;
+}
+
+.voice-capture-review > .voice-capture-empty {
+  margin-top: 0;
 }
 
 .voice-capture-empty b { font-size: 14px; }

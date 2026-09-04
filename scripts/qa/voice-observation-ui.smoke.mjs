@@ -18,7 +18,7 @@ const browser = await chromium.launch({
 });
 const results = [];
 try {
-  for (const viewport of [{ width: 320, height: 720 }, { width: 390, height: 844 }]) {
+  for (const viewport of [{ width: 320, height: 720 }, { width: 390, height: 844 }, { width: 1280, height: 900 }]) {
     const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
     let transcriptionMode = 'success';
     await page.route('**/api/stt/transcribe', async (route) => {
@@ -51,6 +51,7 @@ try {
     await observationComposer.waitFor();
     await observationComposer.click();
     const capture = page.locator('[data-all-observation-trends] .voice-observation-capture');
+    if (await observationComposer.count()) throw new Error(`${viewport.width}: collapsed composer remains visible beside the active capture`);
     async function assertActivePhase(phase) {
       await capture.locator(`.voice-capture-${phase}`).waitFor();
       await page.waitForFunction(() => document.querySelector('.phone-shell')?.classList.contains('voice-capture-active'));
@@ -80,23 +81,22 @@ try {
     await capture.getByRole('button', { name: 'Записать голосом' }).click();
     await capture.getByRole('button', { name: 'Остановить' }).click();
     await assertActivePhase('progress');
-    await capture.getByLabel('Проверь расшифровку').waitFor();
+    await capture.getByRole('button', { name: 'Сохранить в наблюдения' }).waitFor();
     const reviewNavigation = await page.evaluate(() => ({
       activeClass: document.querySelector('.phone-shell')?.classList.contains('voice-capture-active'),
       navigationHidden: getComputedStyle(document.querySelector('.app-tabs')).display === 'none',
     }));
     if (!reviewNavigation.activeClass || !reviewNavigation.navigationHidden) throw new Error(`${viewport.width}: review phase does not suppress bottom navigation`);
-    await capture.getByRole('button', { name: 'Разобрать на показатели' }).click();
     await capture.getByText('Энергия', { exact: true }).waitFor();
     await capture.getByText('Аппетит', { exact: true }).waitFor();
-    await capture.getByText('Без заметки', { exact: true }).waitFor();
+    if (await capture.getByText('Новая запись', { exact: false }).count()) throw new Error(`${viewport.width}: technical operation leaked into the primary review`);
+    if (await capture.getByLabel('Проверь расшифровку').count()) throw new Error(`${viewport.width}: transcript editor must stay behind progressive disclosure`);
+    await page.screenshot({ path: `${outDir}/primary-${viewport.width}.png`, fullPage: false });
+    await capture.getByRole('button', { name: 'Проверить и изменить' }).click();
     const noteChoice = capture.getByRole('checkbox', { name: /Сохранить ещё и приватную заметку/ });
     await noteChoice.waitFor();
     if (await noteChoice.isChecked()) throw new Error(`${viewport.width}: private note must be opt-in`);
     await noteChoice.check();
-    await capture.getByText('1 приватная заметка', { exact: true }).waitFor();
-    await capture.getByText('Будет сохранено:', { exact: false }).waitFor();
-    await capture.getByText('Новая запись', { exact: false }).first().waitFor();
     await capture.locator('.voice-capture-facts input').first().fill('спит заметно больше обычного');
 
     const metrics = await page.evaluate(() => {
@@ -121,8 +121,8 @@ try {
     results.push(metrics);
     await page.screenshot({ path: `${outDir}/review-${viewport.width}.png`, fullPage: false });
     await capture.getByLabel('Проверь расшифровку').fill('Мы славно погуляли около большого дерева.');
-    await capture.getByRole('button', { name: 'Разобрать на показатели' }).click();
-    await capture.getByText('Показатели не найдены', { exact: true }).waitFor();
+    await capture.getByRole('button', { name: 'Обновить результат' }).click();
+    await capture.getByText('Не нашла конкретных изменений', { exact: true }).waitFor();
     await capture.getByText('Ничего не сохранено.', { exact: false }).waitFor();
     await capture.getByRole('button', { name: 'Закрыть голосовой ввод' }).click();
     transcriptionMode = 'error';
@@ -134,6 +134,10 @@ try {
       navigationHidden: getComputedStyle(document.querySelector('.app-tabs')).display === 'none',
     }));
     if (!errorNavigation.activeClass || !errorNavigation.navigationHidden) throw new Error(`${viewport.width}: error phase does not suppress bottom navigation`);
+    await capture.getByRole('button', { name: 'Продолжить текстом' }).click();
+    await capture.getByLabel(`Рассказать о состоянии ${profile.dogName}`).fill(`${profile.dogName} сегодня вялая`);
+    await capture.getByRole('button', { name: 'Продолжить с введённым текстом' }).click();
+    await capture.getByRole('button', { name: 'Сохранить в наблюдения' }).waitFor();
     await page.close();
   }
   console.log(JSON.stringify({ ok: true, results }, null, 2));

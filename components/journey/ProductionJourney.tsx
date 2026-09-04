@@ -270,10 +270,10 @@ function AllObservationTrends({ dogName, points, captureOpen, voiceCapture, onTo
   const recordsLabel = ordered.length === 1 ? '1 запись' : ordered.length > 1 && ordered.length < 5 ? `${ordered.length} записи` : `${ordered.length} записей`;
   return <section className="all-observation-trends" data-all-observation-trends data-parity="production-today-history" aria-labelledby="all-observation-title">
     <header><div><h2 id="all-observation-title">Наблюдения</h2><p>{ordered.length ? `${recordsLabel} · ${firstDate}${firstDate !== lastDate ? ` — ${lastDate}` : ''}` : `Начните с первой записи о ${dogName}`}</p></div></header>
-    <button className="all-observation-composer" data-observation-composer type="button" aria-label={`Рассказать о состоянии ${dogName}`} aria-expanded={captureOpen} aria-controls="all-observation-capture" onClick={onToggleCapture}>
+    {!captureOpen && <button className="all-observation-composer" data-observation-composer type="button" aria-label={`Рассказать о состоянии ${dogName}`} aria-expanded="false" aria-controls="all-observation-capture" onClick={onToggleCapture}>
       <span><b>Как {dogName} сегодня?</b><small>Написать или надиктовать</small></span>
       <span className="all-observation-composer-mic" aria-hidden="true"><Microphone weight="regular" /></span>
-    </button>
+    </button>}
     {captureOpen && <div className="all-observation-capture" id="all-observation-capture">{voiceCapture}</div>}
     <div className="all-observation-summary"><b>{copy.title}</b><p>{copy.detail}</p></div>
     <div className="all-observation-timeline" data-observation-timeline>
