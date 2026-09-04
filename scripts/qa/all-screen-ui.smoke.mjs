@@ -20,13 +20,17 @@ const browser = await chromium.launch({ headless: true });
 try {
   for (const viewport of [{ width: 320, height: 720, name: 'narrow' }, { width: 390, height: 844, name: 'mobile' }, { width: 1280, height: 900, name: 'desktop' }]) {
     const page = await browser.newPage({ viewport });
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.evaluate(({ storedProfile, storedObservations }) => {
+    await page.route('**/api/app/bootstrap*', (route) => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ mode: 'demo', connected: false, empty: true, pets: [], reminders: [], wishlist: [], zones: [], routes: [], observations: [], documents: [] }),
+    }));
+    await page.addInitScript(({ storedProfile, storedObservations }) => {
       localStorage.setItem('pso.topapp.onboarding.v1', 'done');
       localStorage.setItem('pso.product.profile.v5', JSON.stringify(storedProfile));
       localStorage.setItem(`pso.topapp.observations.v2:${storedProfile.backendPetId}`, JSON.stringify(storedObservations));
     }, { storedProfile: profile, storedObservations: observations });
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.goto(base, { waitUntil: 'networkidle' });
 
     const persisted = await page.evaluate(() => ({
       profile: JSON.parse(localStorage.getItem('pso.product.profile.v5') || '{}'),
@@ -51,16 +55,16 @@ try {
     await observationComposer.click();
     const observationCapture = page.locator('[data-all-observation-trends] .all-observation-capture .voice-observation-capture');
     await observationCapture.waitFor();
+    if (await observationComposer.count()) throw new Error('collapsed observation composer remains visible beside the active capture');
     await page.getByRole('button', { name: 'Записать голосом' }).waitFor();
     if (await page.locator('.app-tabs').isVisible()) throw new Error('navigation overlaps the expanded observation input');
     const observationInputGeometry = await page.evaluate(() => {
       const section = document.querySelector('[data-all-observation-trends]')?.getBoundingClientRect();
-      const composer = document.querySelector('[data-observation-composer]')?.getBoundingClientRect();
       const capture = document.querySelector('.all-observation-capture')?.getBoundingClientRect();
-      return { section, composer, capture };
+      return { section, capture };
     });
-    if (!observationInputGeometry.section || !observationInputGeometry.composer || !observationInputGeometry.capture) throw new Error('observation input layout is incomplete');
-    if (observationInputGeometry.capture.top < observationInputGeometry.composer.bottom || observationInputGeometry.capture.left < observationInputGeometry.section.left || observationInputGeometry.capture.right > observationInputGeometry.section.right) throw new Error('voice capture escaped the observation input section');
+    if (!observationInputGeometry.section || !observationInputGeometry.capture) throw new Error('observation input layout is incomplete');
+    if (observationInputGeometry.capture.top < observationInputGeometry.section.top || observationInputGeometry.capture.left < observationInputGeometry.section.left || observationInputGeometry.capture.right > observationInputGeometry.section.right) throw new Error('voice capture escaped the observation input section');
     await observationCapture.scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${outDir}/${viewport.name}-observation-input.png`, fullPage: false });
     const layout = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
