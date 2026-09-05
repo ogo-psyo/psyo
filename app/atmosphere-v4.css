@@ -111,11 +111,30 @@ dialog > form {
   -webkit-backdrop-filter: blur(18px);
 }
 
+body:has([data-home-capture]) .app-tabs {
+  display: none !important;
+}
+
 .app-tabs button.active,
 .app-tabs [aria-current='page'] {
   color: var(--v4-forest-deep) !important;
   background: linear-gradient(145deg, var(--v4-lime), #c9eba7) !important;
   box-shadow: inset 0 0 0 1px rgb(23 77 56 / 10%), 0 4px 12px rgb(23 77 56 / 12%);
+}
+
+@media (max-width: 359px) {
+  .app-tabs .ui-button-content { gap: 2px; }
+  .app-tabs .ui-button-content > span:last-child {
+    width: 100%;
+    overflow: visible;
+    overflow-wrap: normal;
+    font-family: var(--font-pouf), Manrope, system-ui, sans-serif !important;
+    font-size: 8px !important;
+    font-weight: 850;
+    line-height: 1 !important;
+    text-align: center;
+    white-space: nowrap !important;
+  }
 }
 
 button,

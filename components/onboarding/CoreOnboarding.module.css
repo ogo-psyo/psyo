@@ -1,0 +1,46 @@
+.sheet {
+  width: min(100%, 430px) !important;
+  max-height: min(820px, calc(var(--dog-sheet-viewport-height, 100dvh) - 24px)) !important;
+  border: 0 !important;
+  border-radius: 22px 22px 0 0 !important;
+  padding: 0 !important;
+  overflow: auto;
+  color: #17231d;
+  background:
+    radial-gradient(90% 48% at 100% 0%, rgb(225 212 248 / 82%), transparent 74%),
+    radial-gradient(85% 48% at 0% 22%, rgb(193 235 211 / 72%), transparent 72%),
+    #f8fbf8 !important;
+  box-shadow: 0 -10px 60px rgb(15 57 41 / 24%) !important;
+}
+
+.intro { min-height: 270px; padding: 24px 22px 28px; display: flex; flex-direction: column; align-items: flex-start; }
+.mark { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; color: #fff; background: #174d38; box-shadow: inset 0 1px rgb(255 255 255 / 18%), 0 10px 24px rgb(15 57 41 / 22%); }
+.mark svg { width: 23px; height: 23px; }
+.time { margin-top: 24px; color: #174d38; font-size: 11px; font-weight: 850; }
+.intro h2 { margin: 9px 0 0 !important; font-family: var(--font-display-cyrillic), Unbounded, sans-serif !important; font-size: clamp(34px, 10vw, 46px) !important; line-height: .98 !important; letter-spacing: -.04em !important; }
+.intro p { max-width: 35ch; margin: 16px 0 0 !important; color: #506158 !important; font-size: 13px !important; line-height: 1.48 !important; }
+.expanded .intro { min-height: 0; padding-block: 18px; }
+.expanded .time { margin-top: 14px; }
+.expanded .intro h2 { font-size: clamp(28px, 8vw, 38px) !important; }
+.expanded .intro p { margin-top: 10px !important; }
+
+.form { margin: 0 10px 10px; border-radius: 18px; padding: 18px 14px 14px; background: rgb(255 255 255 / 92%); box-shadow: 0 12px 34px rgb(15 57 41 / 12%); }
+.nameLabel { display: grid; gap: 7px; color: #41564b; font-size: 11px; font-weight: 800; }
+.nameLabel input { width: 100%; min-height: 58px !important; border: 1px solid rgb(23 77 56 / 16%) !important; border-radius: 13px !important; padding: 0 14px !important; color: #17231d; background: #fff !important; font: 750 18px/1.2 var(--font-pouf), Manrope, sans-serif !important; box-shadow: inset 0 2px 5px rgb(15 57 41 / 5%); }
+.nameLabel input:focus { outline: 3px solid rgb(23 77 56 / 18%); outline-offset: 2px; }
+.detailsToggle { width: 100%; min-height: 66px; margin-top: 12px; border: 0; border-top: 1px solid rgb(23 77 56 / 12%); padding: 12px 2px 0; display: flex; align-items: center; justify-content: space-between; color: #17231d; background: transparent; text-align: left; }
+.detailsToggle > span { display: flex; gap: 10px; align-items: center; }.detailsToggle > span > svg { width: 36px; height: 36px; padding: 8px; border-radius: 11px; color: #174d38; background: #dff3e7; }.detailsToggle b, .detailsToggle small { display: block; }.detailsToggle b { font-size: 12px; }.detailsToggle small { margin-top: 3px; color: #657169; font-size: 10px; }.detailsToggle > svg { transition: transform 200ms ease-out; }.rotated { transform: rotate(180deg); }
+.details { padding-top: 14px; animation: detailsReveal 200ms cubic-bezier(.16, 1, .3, 1) both; }
+.form :global(.onboarding-step-actions) { margin-top: 16px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 9px; }
+.form :global(.onboarding-step-actions > button) { min-height: 50px; border-radius: 12px; }
+.form :global(.onboarding-step-actions > .primary) { display: flex; gap: 9px; align-items: center; justify-content: center; color: #fff; background: linear-gradient(145deg, #1a553d, #103a2a); box-shadow: inset 0 1px rgb(255 255 255 / 18%), 0 10px 24px rgb(15 57 41 / 20%); }
+
+@keyframes detailsReveal { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .details { animation: none; }.detailsToggle > svg { transition: none; } }
+@media (max-width: 350px) { .intro { padding-inline: 18px; }.intro h2 { font-size: 32px !important; }.form { margin-inline: 6px; } }
+@media (max-height: 600px) {
+  .intro { min-height: 0; padding-block: 12px; }
+  .mark, .time, .intro p { display: none; }
+  .intro h2 { margin: 0 !important; font-size: 26px !important; line-height: 1.04 !important; }
+  .form { margin-top: 0; }
+}

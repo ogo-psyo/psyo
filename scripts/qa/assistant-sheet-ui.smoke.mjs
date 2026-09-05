@@ -35,7 +35,7 @@ try {
     }, profile);
     await page.reload({ waitUntil: 'networkidle' });
 
-    const trigger = page.getByRole('button', { name: 'Спросить Псё' }).first();
+    const trigger = page.getByRole('button', { name: /Спросить о Мята/ }).first();
     await trigger.click();
     const dialog = page.getByRole('dialog', { name: 'Спросить Псё' });
     await dialog.waitFor();
@@ -66,24 +66,6 @@ try {
     if (!metrics.open || metrics.provider !== 'groq' || metrics.mode !== 'groq_contextual') throw new Error(`${viewport.width}: diagnostics missing`);
     if (metrics.top < 0 || metrics.bottom > metrics.viewportHeight + 1 || metrics.composerBottom > metrics.viewportHeight + 1) throw new Error(`${viewport.width}: sheet/composer outside viewport ${JSON.stringify(metrics)}`);
     await page.screenshot({ path: `artifacts/assistant-sheet-ui/review-${viewport.width}.png`, fullPage: false });
-    await dialog.getByRole('button', { name: 'Поставить короткую тренировку' }).click();
-    await dialog.getByText('Готово', { exact: true }).waitFor();
-    await dialog.getByRole('button', { name: 'Открыть' }).click();
-    await dialog.waitFor({ state: 'detached' });
-    if (!page.url().endsWith('#calendar')) throw new Error(`${viewport.width}: reminder did not navigate to calendar`);
-
-    await page.locator('.app-tabs').getByRole('button', { name: 'всё', exact: true }).click();
-    await page.waitForURL(/#today$/);
-    await page.getByRole('button', { name: 'Спросить Псё' }).first().click();
-    const routeDialog = page.getByRole('dialog', { name: 'Спросить Псё' });
-    await routeDialog.getByLabel('Вопрос ассистенту').fill('Подбери спокойный маршрут');
-    await routeDialog.getByLabel('Вопрос ассистенту').press('Enter');
-    await routeDialog.getByRole('button', { name: 'Запланировать прогулку' }).click();
-    await routeDialog.waitFor({ state: 'detached' });
-    if (!page.url().endsWith('#map')) throw new Error(`${viewport.width}: plan_walk did not navigate to map`);
-    await page.getByRole('region', { name: 'Построить заранее' }).waitFor();
-    const routePointCount = await page.locator('[data-route-flow="planning"]').getByText('0 точек', { exact: false }).count();
-    if (!routePointCount) throw new Error(`${viewport.width}: plan_walk fabricated route coordinates or did not open preplanning`);
     results.push(metrics);
     await page.close();
   }

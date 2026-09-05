@@ -22,7 +22,7 @@ const freshOwner = {
 assert.deepEqual(freshOwner.visibleTabs, ['today', 'profile', 'map', 'nearby', 'things']);
 assert.equal(freshOwner.blockingOnboarding, false, 'fresh owners must see the real app shell');
 
-for (const token of ['Имя собаки', 'Завести профиль', 'Возраст', 'Пол', 'Порода', 'Не сейчас', 'role="dialog"']) {
+for (const token of ['Имя собаки', 'Создать профиль', 'Возраст', 'Пол', 'Порода', 'Не сейчас', 'role="dialog"']) {
   assert.ok(creationSheet.includes(token), `contextual dog creation is missing: ${token}`);
 }
 for (const forbidden of ['шаг 1 из 2', 'шаг 2 из 2', 'Первое дело', 'firstReminder']) {

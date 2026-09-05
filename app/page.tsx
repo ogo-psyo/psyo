@@ -15,11 +15,13 @@ import { CareActionNotice, type CareFeedback } from '@/components/care/CareActio
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
 import { ObservationEditor, type ObservationEditorDraft } from '@/components/care/ObservationEditor';
 import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
+import { FirstRunWelcome } from '@/components/onboarding/FirstRunWelcome';
 import type { DogModuleSummary } from '@/components/home/AllFunctionsHub';
 import { HabitScreen, type HabitDraft, type HabitView } from '@/components/habits/HabitScreen';
 import { HealthTimelineScreen } from '@/components/health/HealthTimelineScreen';
 import { RecommendationCard } from '@/components/recommendations/RecommendationCard';
 import { ProfileMemoryWorkspace } from '@/components/profile/ProfileMemoryWorkspace';
+import { ProductionHome } from '@/components/profile/ProductionHome';
 import { NextCareCard } from '@/components/today/NextCareCard';
 import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
 import { CandidateCard } from '@/components/social/CandidateCard';
@@ -503,6 +505,7 @@ function blobFromCanvas(canvas: HTMLCanvasElement) {
 }
 
 export default function Home() {
+  const [homeCaptureOpen, setHomeCaptureOpen] = useState(false);
   const [profile, setProfile] = useState<DogProfile>(defaultProfile);
   const [profileHydrated, setProfileHydrated] = useState(false);
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
@@ -4134,16 +4137,9 @@ export default function Home() {
           </>}
         </section>}
 
-        {!hasDog && <section className="first-run-activation" aria-labelledby="first-run-title">
-          <GeneratedAvatar profile={profile} ready={false} size="large" />
-          <div>
-            <h2 id="first-run-title">Добавь собаку</h2>
-            <p>Начни с имени. После этого Псё покажет одно ближайшее дело и сохранит всё остальное на потом.</p>
-          </div>
-          <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>
-        </section>}
+        {!hasDog && <FirstRunWelcome onStart={() => setDogCreationOpen(true)} />}
 
-        {hasDog && tab === 'today' && !journeyDetail && <ProductionJourney route="today"
+        {hasDog && tab === 'today' && !journeyDetail && <ProductionHome
           dogName={profile.dogName}
           breedLabel={breedLabel}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
@@ -4160,9 +4156,7 @@ export default function Home() {
             onDismiss={() => { void updateRecommendation({ action: 'dismiss', reason: 'not_relevant' }, 'dismiss'); }}
             onRetry={() => { void refreshRecommendation(); }}
           />}
-          profileEntries={profileJourneyEntries}
-          profileFacts={[profile.lifeStage || profile.age, profile.sex, profile.energyLevel].filter(Boolean) as string[]}
-          observationPoints={observations.map((item) => ({
+          observations={observations.map((item) => ({
             id: item.id,
             createdAt: item.createdAt,
             mood: item.mood,
@@ -4186,14 +4180,10 @@ export default function Home() {
           }}
           onOpenCard={() => setTab('card')}
           onAskAssistant={openAssistantSheet}
+          onCaptureOpenChange={setHomeCaptureOpen}
           onCareAction={() => todayCare.reminderId
             ? completeReminder(todayCare.reminderId)
             : (setCareView(todayCare.target === 'history' ? 'history' : 'active'), setTab('calendar'))}
-          onOpenIdentity={() => {
-            setJourneyDetail(null);
-            setTab('profile');
-            setAvatarComposerOpen(true);
-          }}
           onNavigate={(route) => {
             setJourneyDetail(null);
             setTab(route);
@@ -4741,7 +4731,7 @@ export default function Home() {
         {notice !== 'idle' && <div className="toast" role="status" aria-live="polite">{notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
       </section>
 
-      {hasDog && !(tab === 'map' && productionMapMode !== 'view') && <AppNavigation active={activePrimaryRoute} onAskAssistant={openAssistantSheet} onNavigate={(route) => {
+      {hasDog && !homeCaptureOpen && !(tab === 'map' && productionMapMode !== 'view') && <AppNavigation active={activePrimaryRoute} dogName={profile.dogName} onAskAssistant={openAssistantSheet} onNavigate={(route) => {
         setJourneyDetail(null);
         setAssistantOpen(false);
         setTab(route);

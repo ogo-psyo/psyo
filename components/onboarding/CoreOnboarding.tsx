@@ -1,6 +1,8 @@
 'use client';
 
-import { type FocusEvent, useEffect, useRef } from 'react';
+import { type FocusEvent, useEffect, useRef, useState } from 'react';
+import { ArrowRight, CaretDown, PawPrint, Sparkle } from '@phosphor-icons/react';
+import styles from './CoreOnboarding.module.css';
 
 export function CoreOnboarding({
   open,
@@ -35,8 +37,10 @@ export function CoreOnboarding({
   onDismiss: () => void;
   onSubmit: () => Promise<void>;
 }) {
+  const [detailsOpen, setDetailsOpen] = useState(Boolean(lifeStage || sex || breedValue));
   const backdropRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -45,7 +49,7 @@ export function CoreOnboarding({
     previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const page = document.querySelector<HTMLElement>('.phone-shell');
     page?.setAttribute('inert', '');
-    const frame = window.requestAnimationFrame(() => dialogRef.current?.focus({ preventScroll: true }));
+    const frame = window.requestAnimationFrame(() => (nameInputRef.current || dialogRef.current)?.focus({ preventScroll: true }));
 
     const viewport = window.visualViewport;
     const syncVisibleViewport = () => {
@@ -91,7 +95,7 @@ export function CoreOnboarding({
     >
       <section
         ref={dialogRef}
-        className="care-delete-dialog dog-creation-sheet"
+        className={`care-delete-dialog dog-creation-sheet ${styles.sheet} ${detailsOpen ? styles.expanded : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="dog-creation-title"
@@ -113,11 +117,16 @@ export function CoreOnboarding({
           }
         }}
       >
-        <h2 id="dog-creation-title">Профиль собаки</h2>
-        <p>Начни с имени. Остальное можно написать своими словами или заполнить позже.</p>
-        <form onSubmit={(event) => { event.preventDefault(); void onSubmit(); }}>
-          <label htmlFor="dog-creation-name">Имя собаки</label>
+        <div className={styles.intro}>
+          <span className={styles.mark} aria-hidden="true"><PawPrint weight="fill" /></span>
+          <span className={styles.time}>Профиль за минуту</span>
+          <h2 id="dog-creation-title">Как зовут<br />твою собаку?</h2>
+          <p>Имени достаточно, чтобы начать. Фото, породу и остальные данные можно добавить позже.</p>
+        </div>
+        <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void onSubmit(); }}>
+          <label className={styles.nameLabel} htmlFor="dog-creation-name"><span>Имя собаки</span>
           <input
+            ref={nameInputRef}
             id="dog-creation-name"
             value={dogName}
             onChange={(event) => onNameChange(event.target.value)}
@@ -126,7 +135,16 @@ export function CoreOnboarding({
             placeholder="Например, Боня"
             maxLength={80}
             disabled={busy}
+            autoFocus
           />
+          </label>
+
+          <button className={styles.detailsToggle} type="button" aria-expanded={detailsOpen} aria-controls="dog-creation-details" onClick={() => setDetailsOpen((value) => !value)} disabled={busy}>
+            <span><Sparkle weight="duotone" /><span><b>{detailsOpen ? 'Дополнительные данные' : 'Добавить детали'}</b><small>Необязательно · можно пропустить</small></span></span>
+            <CaretDown className={detailsOpen ? styles.rotated : ''} weight="bold" />
+          </button>
+
+          {detailsOpen && <div className={styles.details} id="dog-creation-details">
           <div className="dog-creation-core-fields">
             <label htmlFor="dog-creation-age">Возраст или дата рождения
               <input
@@ -169,10 +187,11 @@ export function CoreOnboarding({
             </datalist>
           </label>
           <small id="dog-creation-breed-note" className="dog-creation-note">Можно указать любую породу, написать «метис» или оставить поле пустым.</small>
+          </div>}
           <div className="onboarding-step-actions">
             <button type="button" onClick={onDismiss} disabled={busy}>Не сейчас</button>
             <button className="primary" type="submit" disabled={busy || !dogName.trim()}>
-              {busy ? 'Создаю профиль…' : 'Завести профиль'}
+              {busy ? 'Создаю профиль…' : <><span>Создать профиль</span><ArrowRight weight="bold" /></>}
             </button>
           </div>
         </form>

@@ -318,13 +318,13 @@ function TodayScreen(props: ProductionJourneyProps) {
     {props.recommendationSlot}
 
     <section className="all-scenarios" data-all-scenarios data-parity="production-today-summary" aria-labelledby="all-scenarios-title">
-      <header><h2 id="all-scenarios-title">Что нужно решить?</h2><p>Выберите ситуацию — Псё проведёт по шагам и откроет нужное действие.</p></header>
+      <header><h2 id="all-scenarios-title">Как помочь {props.dogName}?</h2><p>Выберите ситуацию — Псё объяснит следующий шаг и откроет нужный раздел.</p></header>
       <button type="button" className="all-scenario-freeform" onClick={props.onAskAssistant}><ChatCircleDots weight="duotone" /><span><b>Опишите своими словами</b><small>Псё учтёт профиль и последние записи</small></span><ArrowRight weight="bold" /></button>
       <div className="all-scenario-choices" role="group" aria-label="Быстрые сценарии">
-        <button type="button" aria-pressed={activeScenario === 'health'} onClick={() => selectScenario('health')}><FirstAid weight="duotone" /><span>Изменилось самочувствие</span></button>
-        <button type="button" aria-pressed={activeScenario === 'care'} onClick={() => selectScenario('care')}><CalendarCheck weight="duotone" /><span>Организовать уход</span></button>
-        <button type="button" aria-pressed={activeScenario === 'social'} onClick={() => selectScenario('social')}><UsersThree weight="duotone" /><span>Найти компанию на прогулку</span></button>
-        <button type="button" aria-pressed={activeScenario === 'handoff'} onClick={() => selectScenario('handoff')}><ShieldCheck weight="duotone" /><span>Передать собаку другому</span></button>
+        <button type="button" data-tone="health" aria-pressed={activeScenario === 'health'} onClick={() => selectScenario('health')}><FirstAid weight="duotone" /><span><b>Изменилось самочувствие</b><small>Запись и история наблюдений</small></span><ArrowRight weight="bold" /></button>
+        <button type="button" data-tone="care" aria-pressed={activeScenario === 'care'} onClick={() => selectScenario('care')}><CalendarCheck weight="duotone" /><span><b>Организовать уход</b><small>Календарь, повторы и история</small></span><ArrowRight weight="bold" /></button>
+        <button type="button" data-tone="social" aria-pressed={activeScenario === 'social'} onClick={() => selectScenario('social')}><UsersThree weight="duotone" /><span><b>Найти компанию</b><small>Карта сигналов «Гав» рядом</small></span><ArrowRight weight="bold" /></button>
+        <button type="button" data-tone="handoff" aria-pressed={activeScenario === 'handoff'} onClick={() => selectScenario('handoff')}><ShieldCheck weight="duotone" /><span><b>Передать собаку другому</b><small>Безопасная памятка без лишних данных</small></span><ArrowRight weight="bold" /></button>
       </div>
       {activeScenario === 'health' && <article className="all-scenario-workspace is-health" data-scenario-workspace="health">
         <div><h3>Понять, что изменилось</h3><p>Зафиксируйте признаки один раз — Псё сохранит контекст и покажет, с чем сравнить.</p></div>
@@ -497,7 +497,7 @@ export function ProductionAssistantSheet({
   return <dialog ref={dialogRef} className="v3-assistant-backdrop production-assistant-backdrop" aria-labelledby="production-assistant-title" aria-describedby="production-assistant-description" data-assistant-provider={diagnostic?.provider || 'pending'} data-assistant-mode={diagnostic?.mode || 'pending'} onCancel={(event) => { event.preventDefault(); closeSheet(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSheet(); }}>
     <section className="v3-assistant-sheet">
       <div className="v3-sheet-handle" />
-      <header><div className="v3-assistant-mark"><Sparkle weight="fill" /></div><div><span>контекст: {dogName}</span><h2 id="production-assistant-title">Спросить Псё</h2></div><button type="button" onClick={closeSheet} aria-label="Закрыть"><X weight="bold" /></button></header>
+      <header><div className="v3-assistant-mark"><Sparkle weight="fill" /></div><div><span className="production-assistant-context-chip">контекст · {dogName}</span><h2 id="production-assistant-title">Спросить Псё</h2></div><button type="button" onClick={closeSheet} aria-label="Закрыть"><X weight="bold" /></button></header>
       <div className="production-assistant-scroll">
         <div className="v3-assistant-context"><DogAvatar avatar={avatar} small /><p id="production-assistant-description">Учту профиль {dogName}, дела, наблюдения, прогулки, документы и этот диалог. Не заменяю ветеринара.</p></div>
         {suggestions.length > 0 && <div className="v3-prompt-list" aria-label="Подсказки для вопроса">{suggestions.slice(0, 3).map((suggestion) => <button key={suggestion} type="button" onClick={() => onAsk(suggestion)}>{suggestion}</button>)}</div>}

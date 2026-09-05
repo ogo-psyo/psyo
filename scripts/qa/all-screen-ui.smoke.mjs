@@ -43,24 +43,24 @@ try {
 
     const screen = page.locator('[data-production-journey="today"]');
     await screen.waitFor();
-    const ordered = await screen.locator('[data-all-profile], [data-all-scenarios], [data-all-observation-trends]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-all-profile') !== null ? 'profile' : node.getAttribute('data-all-scenarios') !== null ? 'scenarios' : 'trends'));
-    if (ordered.join(',') !== 'profile,scenarios,trends') throw new Error(`wrong block order: ${ordered.join(',')}`);
-    if (await page.locator('[data-observation-timeline] .all-observation-row').count() !== 4) throw new Error('expected four observation rows on one timeline');
-    if (await page.locator('[data-observation-timeline] .all-observation-track path').count() !== 4) throw new Error(`real observation data was not rendered; persisted keys: ${persisted.observationKeys.join(',')}`);
-    if (!await page.locator('.all-observation-summary').getByText('В последней записи меньше отклонений').isVisible()) throw new Error('observation summary does not explain the latest comparison');
-    if (!await page.locator('.all-observation-row').first().getByText('Ближе к обычному').isVisible()) throw new Error('metric comparison does not use the shared ordinary-state baseline');
-    const observationComposer = page.locator('[data-all-observation-trends] [data-observation-composer]');
-    await observationComposer.waitFor();
-    if ((await observationComposer.getAttribute('aria-label')) !== 'Рассказать о состоянии Мята') throw new Error('observation composer does not expose a clear accessible action');
-    await observationComposer.click();
-    const observationCapture = page.locator('[data-all-observation-trends] .all-observation-capture .voice-observation-capture');
+    const ordered = await screen.locator('[data-home-today], [data-home-secondary], [data-home-scenarios], [data-home-snapshot]').evaluateAll((nodes) => nodes.map((node) => node.hasAttribute('data-home-today') ? 'today' : node.hasAttribute('data-home-secondary') ? 'secondary' : node.hasAttribute('data-home-scenarios') ? 'scenarios' : 'snapshot'));
+    if (ordered.join(',') !== 'today,secondary,scenarios,snapshot') throw new Error(`wrong home hierarchy: ${ordered.join(',')}`);
+    if (!await page.getByRole('heading', { name: /Как Мята сегодня/ }).isVisible()) throw new Error('personalized today heading is missing');
+    if (await page.locator('[data-home-primary]').count() !== 1) throw new Error('home must expose exactly one primary check-in action');
+    if (await page.locator('[data-home-secondary] > button').count() !== 2) throw new Error('home must expose exactly two secondary actions');
+    await page.locator('[data-home-primary]').click();
+    const observationCapture = page.locator('[data-home-capture] .voice-observation-capture');
     await observationCapture.waitFor();
-    if (await observationComposer.count()) throw new Error('collapsed observation composer remains visible beside the active capture');
     await page.getByRole('button', { name: 'Записать голосом' }).waitFor();
-    if (await page.locator('.app-tabs').isVisible()) throw new Error('navigation overlaps the expanded observation input');
+    const navigationState = await page.evaluate(() => ({
+      capture: Boolean(document.querySelector('[data-home-capture]')),
+      bodyHasCapture: document.body.matches(':has([data-home-capture])'),
+      display: document.querySelector('.app-tabs') ? getComputedStyle(document.querySelector('.app-tabs')).display : 'none',
+    }));
+    if (navigationState.display !== 'none') throw new Error(`navigation overlaps the expanded observation input: ${JSON.stringify(navigationState)}`);
     const observationInputGeometry = await page.evaluate(() => {
-      const section = document.querySelector('[data-all-observation-trends]')?.getBoundingClientRect();
-      const capture = document.querySelector('.all-observation-capture')?.getBoundingClientRect();
+      const section = document.querySelector('[data-production-home]')?.getBoundingClientRect();
+      const capture = document.querySelector('[data-home-capture]')?.getBoundingClientRect();
       return { section, capture };
     });
     if (!observationInputGeometry.section || !observationInputGeometry.capture) throw new Error('observation input layout is incomplete');
@@ -70,39 +70,42 @@ try {
     const layout = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
     if (layout.scrollWidth > layout.width) throw new Error(`horizontal overflow ${layout.scrollWidth}/${layout.width}`);
 
+    await page.getByRole('button', { name: 'Закрыть', exact: true }).click();
     await page.getByRole('button', { name: /Изменилось самочувствие/ }).click();
-    await page.locator('[data-scenario-workspace="health"]').waitFor();
-    await page.locator('[data-all-scenarios]').scrollIntoViewIfNeeded();
+    await page.locator('[data-home-scenarios] article').waitFor();
+    await page.locator('[data-home-scenarios]').scrollIntoViewIfNeeded();
     await page.screenshot({ path: `${outDir}/${viewport.name}-scenario.png`, fullPage: false });
     await page.getByRole('button', { name: /Записать наблюдение/ }).click();
-    await page.locator('[data-all-observation-trends] .all-observation-capture .voice-observation-capture').waitFor();
+    await page.locator('[data-home-capture] .voice-observation-capture').waitFor();
+    await page.getByRole('button', { name: 'Закрыть', exact: true }).click();
     await page.getByRole('button', { name: /Найти компанию на прогулку/ }).click();
-    await page.locator('[data-scenario-workspace="social"]').waitFor();
-    const scenarioButtons = page.locator('.all-scenario-choices > button');
+    await page.locator('[data-home-scenarios] article').waitFor();
+    const scenarioButtons = page.locator('[data-home-scenarios] > div > button');
     if (await scenarioButtons.count() !== 4) throw new Error('expected four guided scenarios including Gav');
     const scenarioGeometry = await scenarioButtons.evaluateAll((buttons) => buttons.map((button) => {
       const rect = button.getBoundingClientRect();
       return { width: rect.width, height: rect.height };
     }));
-    if (scenarioGeometry.some(({ width, height }) => width < 130 || height < 96)) throw new Error(`scenario grid is too cramped: ${JSON.stringify(scenarioGeometry)}`);
+    if (scenarioGeometry.some(({ width, height }) => width < 260 || height < 44)) throw new Error(`scenario list is too cramped: ${JSON.stringify(scenarioGeometry)}`);
     await page.screenshot({ path: `${outDir}/${viewport.name}-gav-scenario.png`, fullPage: false });
-    await page.getByRole('button', { name: 'Открыть Гав', exact: true }).click();
+    await page.getByRole('button', { name: 'Открыть карту «Гав»', exact: true }).click();
     await page.locator('[data-production-journey="nearby"]').waitFor();
     await page.locator('.app-tabs button[data-route="today"]').click({ force: true });
     await screen.waitFor();
-    await page.getByRole('button', { name: /Открыть профиль Мята в Псё/ }).click();
+    await page.getByRole('button', { name: /Открыть профиль Мята/ }).click();
     await page.locator('[data-profile-memory]').waitFor();
     await page.locator('.app-tabs button[data-route="today"]').click({ force: true });
     await screen.waitFor();
+    await page.waitForTimeout(500);
 
     await page.screenshot({ path: `${outDir}/${viewport.name}.png`, fullPage: false });
     if (viewport.name === 'mobile') {
-      await page.locator('[data-all-observation-trends]').scrollIntoViewIfNeeded();
+      await page.locator('[data-home-snapshot]').scrollIntoViewIfNeeded();
       await page.screenshot({ path: `${outDir}/mobile-trends.png`, fullPage: false });
     }
     await page.close();
   }
-  console.log(JSON.stringify({ ok: true, blocks: ['profile', 'scenarios', 'trends'], timelineRows: 4, scenarioWorkspace: true, scenarioCapture: true, profileNavigation: true }, null, 2));
+  console.log(JSON.stringify({ ok: true, hierarchy: ['today', 'secondary', 'scenarios', 'snapshot'], primaryActions: 1, secondaryActions: 2, scenarioWorkspace: true, scenarioCapture: true, profileNavigation: true }, null, 2));
 } finally {
   await browser.close();
 }

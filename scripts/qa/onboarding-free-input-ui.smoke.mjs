@@ -25,18 +25,19 @@ try {
       body: JSON.stringify(emptyBootstrap),
     }));
     await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1_000);
     await page.getByRole('button', { name: 'Добавить собаку', exact: true }).click();
 
-    const dialog = page.getByRole('dialog', { name: 'Профиль собаки' });
+    const dialog = page.getByRole('dialog').first();
     await dialog.waitFor();
-    assert.equal(await dialog.evaluate((element) => document.activeElement === element), true, 'dialog should receive focus without opening the keyboard');
+    assert.equal(await dialog.locator('#dog-creation-name').evaluate((element) => document.activeElement === element), true, 'name input should receive focus for the under-one-minute flow');
+    assert.equal(await dialog.getByRole('button', { name: 'Создать профиль' }).isDisabled(), true);
+    await dialog.getByRole('button', { name: /Добавить детали/ }).click();
     assert.equal(await dialog.locator('input').count(), 3);
     assert.equal(await dialog.locator('#dog-creation-age').getAttribute('list'), 'dog-creation-age-options');
     assert.equal(await dialog.locator('#dog-creation-breed').getAttribute('list'), 'dog-creation-breed-options');
-    assert.equal(await dialog.getByRole('button', { name: 'Завести профиль' }).isDisabled(), true);
-
     await dialog.locator('#dog-creation-name').fill('Боня');
-    assert.equal(await dialog.getByRole('button', { name: 'Завести профиль' }).isEnabled(), true);
+    assert.equal(await dialog.getByRole('button', { name: 'Создать профиль' }).isEnabled(), true);
     await dialog.locator('#dog-creation-age').fill('2 года 4 месяца');
     await dialog.locator('#dog-creation-breed').fill('австралийский лабрадудль');
     assert.equal(await dialog.locator('#dog-creation-age').inputValue(), '2 года 4 месяца');

@@ -12,7 +12,7 @@ const careNotice = read('components/care/CareActionNotice.tsx');
 const deleteDialog = read('components/care/DeleteCareDialog.tsx');
 const desktopContext = read('components/app/DesktopContextPanel.tsx');
 const nextCareCard = read('components/today/NextCareCard.tsx');
-const journey = read('components/journey/ProductionJourney.tsx');
+const productionHome = read('components/profile/ProductionHome.tsx');
 const observationDisclosure = read('components/today/ObservationDisclosure.tsx');
 const onboarding = read('components/onboarding/CoreOnboarding.tsx');
 const css = read('app/globals.css');
@@ -22,7 +22,7 @@ for (const token of ['buildTodayCareView', "'empty'", "'overdue'", "'today'", "'
   if (!today.includes(token)) failures.push(`TodayService contract missing: ${token}`);
 }
 
-for (const token of ["label: 'всё'", "label: 'псё'", "label: 'карта'", "label: 'гав'", "label: 'вещи'"]) {
+for (const token of ["label: 'Главная'", "label: 'Профиль'", "label: 'Карта'", "label: 'Гав'", "label: 'Вещи'"]) {
   if (!nav.includes(token)) failures.push(`primary navigation missing: ${token}`);
 }
 
@@ -54,7 +54,7 @@ for (const token of ['today-first-viewport', 'ближайшее дело', 'О�
   if (!nextCareCard.includes(token)) failures.push(`focused Today missing: ${token}`);
 }
 
-if (!journey.includes('title={`${props.dogName} сегодня`}')) {
+if (!productionHome.includes('Как {dogName}')) {
   failures.push('focused Today missing its single dog-aware screen title');
 }
 
@@ -62,7 +62,7 @@ for (const token of ['<details', 'Записать наблюдение', 'По�
   if (!observationDisclosure.includes(token)) failures.push(`observation disclosure missing: ${token}`);
 }
 
-for (const token of ['Профиль собаки', 'Остальное можно написать своими словами', 'Имя собаки', 'Возраст или дата рождения', 'Пол', 'Порода', 'Не сейчас', 'Завести профиль']) {
+for (const token of ['Профиль за минуту', 'Имени достаточно, чтобы начать', 'Имя собаки', 'Возраст или дата рождения', 'Пол', 'Порода', 'Не сейчас', 'Создать профиль']) {
   if (!onboarding.includes(token)) failures.push(`onboarding contract missing: ${token}`);
 }
 

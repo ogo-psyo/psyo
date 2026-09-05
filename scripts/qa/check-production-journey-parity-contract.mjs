@@ -14,19 +14,22 @@ function rejectText(text, marker, label) {
 
 const page = source('app/page.tsx');
 const shell = source('components/journey/ProductionJourney.tsx');
+const home = source('components/profile/ProductionHome.tsx');
 const profileMemory = source('components/profile/ProfileMemoryWorkspace.tsx');
 const css = source('components/journey/production-journey.css');
 const globals = source('app/globals.css');
 
 requireText(page, "from '@/components/journey/ProductionJourney'", 'production root');
-for (const route of ['today', 'map', 'nearby', 'things']) {
+requireText(page, '<ProductionHome', 'production route today');
+for (const route of ['map', 'nearby', 'things']) {
   requireText(page, `<ProductionJourney route="${route}"`, `production route ${route}`);
 }
 requireText(page, '<ProfileMemoryWorkspace', 'production profile memory route');
 requireText(page, '<ProductionAssistantSheet', 'assistant overlay');
-requireText(shell, 'production-today-summary', 'useful Today summary');
-requireText(shell, 'production-today-history', 'real Today history');
-requireText(page, 'profileEntries={profileJourneyEntries}', 'Today real-event data');
+requireText(home, 'data-home-today', 'useful Today summary');
+requireText(home, 'data-home-snapshot', 'real Today snapshot');
+requireText(page, 'observations={observations.map', 'Today real-event data');
+requireText(home, 'recommendationSlot', 'Today recommendation service');
 rejectText(shell, 'v3-orbit-bubble', 'non-interactive Today badges');
 requireText(shell, 'data-scenario-workspace="social"', 'guided Gav scenario workspace');
 requireText(shell, "onClick={() => props.onNavigate('nearby')}>Открыть Гав", 'guided Gav scenario action');

@@ -8,11 +8,11 @@ export type PrimaryRoute = 'today' | 'profile' | 'map' | 'nearby' | 'things';
 type PetIconName = 'home' | 'paw' | 'map' | 'nearby' | 'bag';
 
 const routes: { id: PrimaryRoute; label: string; icon: PetIconName }[] = [
-  { id: 'today', label: 'всё', icon: 'home' },
-  { id: 'profile', label: 'псё', icon: 'paw' },
-  { id: 'map', label: 'карта', icon: 'map' },
-  { id: 'nearby', label: 'гав', icon: 'nearby' },
-  { id: 'things', label: 'вещи', icon: 'bag' },
+  { id: 'today', label: 'Главная', icon: 'home' },
+  { id: 'profile', label: 'Профиль', icon: 'paw' },
+  { id: 'map', label: 'Карта', icon: 'map' },
+  { id: 'nearby', label: 'Гав', icon: 'nearby' },
+  { id: 'things', label: 'Вещи', icon: 'bag' },
 ];
 
 // Streamline Plump via Iconify, CC BY 4.0.
@@ -34,10 +34,12 @@ export function AppNavigation({
   active,
   onNavigate,
   onAskAssistant,
+  dogName,
 }: {
   active: string;
   onNavigate: (route: PrimaryRoute) => void;
   onAskAssistant?: () => void;
+  dogName?: string;
 }) {
   return (
     <nav className="app-tabs" aria-label="Основные разделы">
@@ -60,7 +62,7 @@ export function AppNavigation({
             <span className="app-tab-icon" aria-hidden="true">
               <PetNavIcon name={route.icon} />
             </span>
-            <span>{route.label}</span>
+            <span>{route.id === 'profile' && dogName ? dogName : route.label}</span>
           </Button>
         );
       })}

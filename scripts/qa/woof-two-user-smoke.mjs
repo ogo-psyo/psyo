@@ -45,10 +45,13 @@ async function makeUser(browser, { ownerId, pet, location }) {
   await page.locator('.app-tabs button[data-route="nearby"]').click({ force: true });
   await page.waitForTimeout(250);
   if (!await page.locator('.production-woof-workspace').count()) {
-    await page.getByRole('button', { name: /Гав/ }).last().click({ force: true });
+    await page.locator('.production-journey-woof').getByRole('button', { name: /Гав/ }).click({ force: true });
   }
   await page.locator('.production-woof-workspace').waitFor();
-  await page.locator('.woof-topbar > button').first().click();
+  const requestsDialog = page.getByRole('dialog', { name: 'Отклики и связи' });
+  if (await requestsDialog.isVisible().catch(() => false)) {
+    await requestsDialog.getByRole('button', { name: 'Закрыть' }).click();
+  }
   await page.waitForTimeout(500);
   return { context, page };
 }
