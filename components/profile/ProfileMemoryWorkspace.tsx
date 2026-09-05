@@ -131,6 +131,31 @@ function EditorSelect(props: { label: string; value: string; options: string[]; 
   return <label className={styles.editorField}><span>{props.label}</span><select value={props.value} onChange={(event) => props.onChange(event.target.value)}><option value="">Не указано</option>{props.options.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>;
 }
 
+function BreedDirectoryField({ profile, onChange }: { profile: DogProfile; onChange: (patch: Partial<DogProfile>) => void }) {
+  const selected = breedCatalog.find((breed) => breed.id === profile.breedId);
+  const value = profile.breedId === 'custom' ? profile.breedCustom : selected?.title || '';
+  return <label className={styles.editorField}>
+    <span>Порода</span>
+    <input
+      list="profile-breed-directory"
+      value={value}
+      onChange={(event) => {
+        const query = event.target.value;
+        const breed = breedCatalog.find((item) => item.title.localeCompare(query, 'ru', { sensitivity: 'base' }) === 0);
+        onChange(breed
+          ? { breedId: breed.id, breedGroupId: breed.groupId, breedCustom: '' }
+          : { breedId: 'custom', breedCustom: query });
+      }}
+      placeholder="Начните вводить породу"
+      autoComplete="off"
+    />
+    <datalist id="profile-breed-directory">
+      {breedCatalog.filter((breed) => breed.id !== 'custom').map((breed) => <option key={breed.id} value={breed.title} />)}
+    </datalist>
+    <small>Поиск по справочнику; если породы нет, оставьте своё название.</small>
+  </label>;
+}
+
 export function ProfileMemoryWorkspace(props: Props) {
   const [surface, setSurface] = useState<Surface>('overview');
   const [editor, setEditor] = useState<EditorDomain | null>(null);
@@ -381,8 +406,7 @@ export function ProfileMemoryWorkspace(props: Props) {
 
             {editor === 'passport' && <>
               <EditorField label="Имя" value={editorDraft.dogName} onChange={(dogName) => updateEditorProfile({ dogName })} />
-              <label className={styles.editorField}><span>Порода</span><select value={editorDraft.breedId} onChange={(event) => { const breed = breedCatalog.find((item) => item.id === event.target.value); if (breed) updateEditorProfile({ breedId: breed.id, breedGroupId: breed.groupId }); }}>{breedCatalog.map((breed) => <option key={breed.id} value={breed.id}>{breed.title}</option>)}</select></label>
-              {editorDraft.breedId === 'custom' && <EditorField label="Своя порода или тип" value={editorDraft.breedCustom} onChange={(breedCustom) => updateEditorProfile({ breedCustom })} placeholder="Как вы называете породу" />}
+              <BreedDirectoryField profile={editorDraft} onChange={updateEditorProfile} />
               <EditorSelect label="Возрастная группа" value={editorDraft.lifeStage} options={[...lifeStageOptions]} onChange={(lifeStage) => updateEditorProfile({ lifeStage })} />
               <EditorSelect label="Пол" value={editorDraft.sex} options={[...sexOptions]} onChange={(sex) => updateEditorProfile({ sex })} />
               <EditorField label="Вес" value={editorDraft.weight} onChange={(weight) => updateEditorProfile({ weight })} placeholder="Например, 8,4 кг" />

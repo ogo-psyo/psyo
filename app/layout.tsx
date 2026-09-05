@@ -5,6 +5,7 @@ import './globals.css';
 import './refinement.css';
 import './pouf.css';
 import './editorial.css';
+import './atmosphere-v4.css';
 
 const manrope = Manrope({
   subsets: ['cyrillic', 'latin'],
@@ -43,7 +44,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#f7f6f0',
+  themeColor: '#f3f7f2',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -17,6 +17,12 @@ colors:
   yellow: "#f3df64"
   pink: "#eba4bf"
   focus-blue: "#315ea8"
+  watercolor-mint: "#91d6b1"
+  watercolor-lilac: "#d9bff0"
+  wash-health: "#e7f5eb"
+  wash-care: "#fff4c8"
+  wash-handoff: "#e6f3ee"
+  lime-shadow: "#c9eba7"
 typography:
   display:
     fontFamily: "Unbounded, Manrope, system-ui, sans-serif"
@@ -116,11 +122,11 @@ The visual world is warm, precise, and protective: flat paper, near-black ink, f
 - Unbounded display moments paired with Manrope for all working copy and controls;
 - semantic route and state colors applied to meaningful regions;
 - mobile bottom dock and a true three-region editorial workspace on wide screens;
-- flat surfaces at rest, with no gradients and no persistent shadows.
+- calm watercolor-gradient atmosphere behind the editorial surface, with restrained depth on focal cards and floating controls.
 
 ## Colors
 
-The exact kit palette is warm paper, near-black ink, subdued botanical neutrals, and a small set of semantic fields.
+The exact kit palette is neutral paper, near-black ink, subdued botanical neutrals, and a small set of semantic fields. Low-opacity mint, lilac, and yellow washes may blend in the canvas and focal surfaces; they never carry text meaning alone.
 
 ### Primary
 
@@ -153,7 +159,7 @@ The exact kit palette is warm paper, near-black ink, subdued botanical neutrals,
 
 **The Field Rule.** Color owns a meaningful region rather than appearing as scattered decoration: lime for the current action, blue for spatial or completed context, lilac for social, yellow for things, and coral for danger.
 
-**The Exact Kit Rule.** Use the normative palette tokens; do not introduce near-duplicate greens, mints, or off-whites.
+**The Exact Kit Rule.** Use the normative palette tokens, including the documented watercolor washes; do not introduce near-duplicate greens, mints, or off-whites.
 
 ## Typography
 
@@ -186,7 +192,7 @@ The Today workspace uses a two-column internal composition on wider screens, wit
 
 ## Elevation & Depth
 
-The system is flat at rest. Depth comes from adjacent paper tones, semantic fields, one-pixel borders, two-pixel section rules, and spatial composition. Persistent navigation, cards, controls, and desktop rails have no shadow. A restrained shadow may appear only on a temporary modal sheet; overlays use a dark translucent backdrop. Gradients are not part of the system.
+The system remains mostly flat, but focal cards, map frames, sheets, and persistent navigation may use one restrained shadow to establish hierarchy. Watercolor gradients belong to the canvas and semantic focal surfaces; they must not reduce contrast or appear as glow around controls. Overlays use a dark translucent backdrop.
 
 ### Shadow Vocabulary
 
@@ -252,6 +258,6 @@ The assistant entry is a near-black, bordered control with raised-paper text and
 - **Don't** render the application as a phone mockup beside utility cards.
 - **Don't** use uppercase tracked kickers above headings.
 - **Don't** float the assistant over primary content or navigation.
-- **Don't** add gradients, glass effects, or persistent shadows.
+- **Don't** add gradient text, decorative glass, diffuse control glow, or shadows on every surface.
 - **Don't** rebuild deep flows from nested, equally elevated cards.
 - **Don't** substitute near-duplicate mint or green values for the exact kit palette.
