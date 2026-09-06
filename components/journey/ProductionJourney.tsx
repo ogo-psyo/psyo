@@ -511,7 +511,7 @@ export function ProductionAssistantSheet({
       <form className="production-assistant-composer" onSubmit={(event) => { event.preventDefault(); onAsk(); }}>
         <label className="sr-only" htmlFor="production-assistant-question">Вопрос ассистенту</label>
         <input id="production-assistant-question" ref={inputRef} value={question} onChange={(event) => onQuestionChange(event.target.value)} placeholder={`Спроси о ${dogName}…`} />
-        <button type="submit" disabled={loading || !question.trim()} aria-label={loading ? 'Псё думает' : 'Отправить'}>{loading ? <Sparkle weight="fill" /> : <PaperPlaneTilt weight="fill" />}</button>
+        <button type="submit" disabled={loading || !question.trim()} aria-busy={loading} aria-label={loading ? 'Псё думает' : 'Отправить'}>{loading ? <Sparkle weight="fill" /> : <PaperPlaneTilt weight="fill" />}</button>
       </form>
     </section>
   </dialog>;
