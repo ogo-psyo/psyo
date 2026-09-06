@@ -30,14 +30,14 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#f4f6f2',
+  themeColor: '#fdfcf9',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" suppressHydrationWarning>
       <body className="companion-app">
-        <span hidden aria-hidden="true" data-psyo-design-contract="ios-watercolor-v5-20260906" />
+        <span hidden aria-hidden="true" data-psyo-design-contract="journal-v6-20260906" />
         <script src="https://telegram.org/js/telegram-web-app.js" async />
         <ReleaseFreshnessGuard />
         {children}

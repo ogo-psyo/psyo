@@ -671,3 +671,13 @@
 .editorSheet > footer { background: var(--paper); }
 .editorField input[type='search'] { min-height:48px; width:100%; border:1px solid var(--line); padding:12px; border-radius:14px; color:var(--ink); background:var(--surface); }
 @media (min-width:760px) { .identityStage, .identityCopy { min-height:260px; } }
+
+/* Journal overview is a real page, not a second phone nested inside the app. */
+.stage { --paper:#fdfcf9; --surface:#fffefa; --ink:#253b34; --muted:#617067; --line:#dfe5dc; --forest:#405845; --cobalt:#405845; --cobalt-soft:#e7eee0; --pouf-dark:0 2px 4px rgb(32 61 50 / 8%); --pouf-light:none; padding-bottom:calc(100px + env(safe-area-inset-bottom)); }
+.phone { width:100%; height:auto; min-height:0; margin:0; overflow:visible; display:block; border-radius:0; background:transparent; box-shadow:none; }
+.screen { overflow:visible; }
+.stage[data-surface='overview'] .screen { padding:0; }
+.stage .domainActions { margin:14px 0 20px; }
+.stage button:active { transform:none; box-shadow:none; opacity:.8; }
+.domainSurface { padding-inline:24px; }
+@media(max-width:359px) { .domainSurface { padding-inline:19px; } }

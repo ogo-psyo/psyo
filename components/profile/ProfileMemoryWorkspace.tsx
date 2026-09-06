@@ -1,27 +1,23 @@
 'use client';
 
+import { JournalMasthead } from '@/components/journal/JournalMasthead';
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
-  ArrowRight,
   CalendarCheck,
   CaretRight,
-  CheckCircle,
   ClockCounterClockwise,
   Dog,
-  FirstAid,
-  ForkKnife,
   Info,
   Microphone,
   NotePencil,
   PawPrint,
-  Pulse,
+  Plus,
+  Heart,
   ShieldCheck,
   Sparkle,
   UploadSimple,
-  UsersThree,
-  WarningCircle,
   X,
 } from '@phosphor-icons/react';
 import {
@@ -238,57 +234,25 @@ export function ProfileMemoryWorkspace(props: Props) {
     <section className={styles.stage} data-profile-memory data-surface={surface}>
       <div className={styles.phone}>
         <div className={styles.screen}>
-          {surface === 'overview' && <>
-            <header className={styles.overviewHeader}>
-              <button type="button" aria-label="Вернуться на главную" onClick={props.onBack}><ArrowLeft weight="bold" /></button>
-              <button className={styles.petSwitcherTrigger} type="button" onClick={openIdentity} aria-label={`Настроить образ ${props.profile.dogName}`}>
-                <span className={!hasIdentity ? styles.petSwitcherEmpty : ''}>{hasIdentity ? <img src={props.imageUrl} alt="" /> : <PawPrint weight="duotone" />}</span>
-                <b>{props.profile.dogName}</b><CaretRight weight="bold" />
+          {surface === 'overview' && <div className="journal-profile" data-journal-profile>
+            <JournalMasthead onAskAssistant={props.onAskAssistant} />
+            <section className="journal-passport">
+              <div><h1>{props.profile.dogName}</h1><p>{props.breedLabel}{props.profile.age || props.profile.lifeStage ? ` · ${props.profile.age || props.profile.lifeStage}` : ''}</p><button type="button" className="journal-text-link" onClick={(event) => openEditor('passport', event.currentTarget)}>Изменить данные <NotePencil aria-hidden="true" /></button></div>
+              <button ref={identityTriggerRef} type="button" className="journal-portrait" onClick={openIdentity} aria-label={`Изменить фото или образ ${props.profile.dogName}`}>
+                {hasIdentity ? <img src={props.imageUrl} alt={`Фото ${props.profile.dogName}`} /> : <span className="journal-monogram">{props.profile.dogName.trim().slice(0, 1).toLocaleUpperCase('ru-RU') || 'П'}</span>}
               </button>
-            </header>
-
-            <section className={styles.livingHero}>
-              <button ref={identityTriggerRef} type="button" className={`${styles.identityStage} ${styles.identityButton}`} onClick={openIdentity} aria-label={`Изменить фото или образ ${props.profile.dogName}`}>
-                <div className={styles.identityCopy}>
-                  <h1>{props.profile.dogName}</h1>
-                  <p>{props.breedLabel}{props.profile.lifeStage ? ` · ${props.profile.lifeStage}` : ''}</p>
-                  <span className={styles.identityPhrase}><PawPrint weight="fill" /> {valueOrEmpty(props.profile.temperament || props.profile.playStyle, 'Добавить характер')}</span>
-                </div>
-                <span className={`${styles.avatar} ${!hasIdentity ? styles.avatarEmpty : ''}`}>
-                  {hasIdentity ? <img src={props.imageUrl} alt={`Фото ${props.profile.dogName}`} /> : <><b className={styles.avatarMonogram}>{props.profile.dogName.trim().slice(0, 1).toLocaleUpperCase('ru-RU') || 'П'}</b><PawPrint weight="duotone" /><small>добавить образ</small></>}
-                </span>
-              </button>
-
-              <article className={styles.nowRecord} aria-label="Вывод Псё">
-                <div className={styles.nowHeading}>
-                  <span><Pulse weight="bold" /></span>
-                  <div><h2>{observationTitle(latest)}</h2><p>{observationDetail(latest)}</p></div>
-                </div>
-                <div className={styles.freshness}><span>{latest ? 'Последние данные' : 'Данных пока мало'}</span><b>{latest ? readableDate(latest.createdAt) : 'добавить наблюдение'}</b></div>
-                <button type="button" onClick={() => latest ? props.onOpenHealth() : setSurface('capture')}><span>{latest ? 'Посмотреть основания' : 'Рассказать, как дела'}</span><ArrowRight weight="bold" /></button>
-              </article>
             </section>
-
-            <section className={styles.domainList} aria-labelledby="memory-title">
-              <h2 id="memory-title">Память о {props.profile.dogName}</h2>
-              <button type="button" onClick={props.onOpenHealth}><span className={latest ? styles.domainAttention : ''}><FirstAid weight="duotone" /></span><div><b>Здоровье</b><strong>{latest ? observationTitle(latest) : 'Наблюдений пока нет'}</strong><small>{latest ? `Обновлено ${readableDate(latest.createdAt)}` : 'Постоянные факты и динамика отдельно'}</small></div><CaretRight /></button>
-              <button type="button" onClick={() => setSurface('character')}><span><Sparkle weight="duotone" /></span><div><b>Характер</b><strong>{valueOrEmpty(props.profile.temperament, 'Портрет только формируется')}</strong><small>{props.profile.energyLevel || props.profile.trainability ? 'Подтверждено владельцем' : 'Можно заполнить постепенно'}</small></div><CaretRight /></button>
-              <button type="button" onClick={() => setSurface('social')}><span><UsersThree weight="duotone" /></span><div><b>С окружающими</b><strong>{valueOrEmpty(props.profile.socialMode, 'Правила знакомства не добавлены')}</strong><small>{props.profile.triggers ? 'Есть важные триггеры' : 'Ситуации и повадки по контексту'}</small></div><CaretRight /></button>
-              <button type="button" onClick={() => setSurface('passport')}><span><Dog weight="duotone" /></span><div><b>Паспорт и внешность</b><strong>{props.breedLabel}</strong><small>{props.profile.microchip ? 'Микрочип добавлен' : 'Микрочип не добавлен'}</small></div><CaretRight /></button>
-              <button type="button" onClick={() => setSurface('history')}><span><ClockCounterClockwise weight="duotone" /></span><div><b>История</b><strong>{history.length ? `${history.length} последних событий` : 'История пока пустая'}</strong><small>Наблюдения, документы и выполненные дела</small></div><CaretRight /></button>
+            <section className="journal-record"><h2>Его история — здесь</h2><p>Наблюдения и события по дням.</p><button type="button" className="journal-primary" onClick={() => setSurface('capture')}><Plus aria-hidden="true" />Добавить запись</button></section>
+            <section className="journal-profile-index" aria-labelledby="memory-title"><h2 id="memory-title">О собаке</h2>
+              <button type="button" className="journal-index-row" onClick={() => setSurface('passport')}><span className="journal-row-icon"><Dog aria-hidden="true" /></span><span><b>Паспорт и привычки</b><small>Порода, характер, правила знакомства</small></span><CaretRight aria-hidden="true" /></button>
+              <button type="button" className="journal-index-row" onClick={() => setSurface('history')}><span className="journal-row-icon"><Heart aria-hidden="true" /></span><span><b>Здоровье и документы</b><small>Всё, что важно помнить</small></span><CaretRight aria-hidden="true" /></button>
+              <button type="button" className="journal-index-row" onClick={props.onOpenCard}><span className="journal-row-icon"><ShieldCheck aria-hidden="true" /></span><span><b>Памятка для близких</b><small>Без доступа к личной истории</small></span><CaretRight aria-hidden="true" /></button>
             </section>
-
-            <section className={styles.domainList} aria-labelledby="care-tools-title">
-              <h2 id="care-tools-title">Дела и доступ</h2>
-              <button type="button" onClick={props.onOpenPlan}><span><CalendarCheck weight="duotone" /></span><div><b>План заботы</b><strong>{activeReminders.length ? `${activeReminders.length} в плане` : 'Добавить первое дело'}</strong><small>Даты, переносы и история выполнения</small></div><CaretRight /></button>
-              <button type="button" onClick={props.onOpenHabits}><span><Pulse weight="duotone" /></span><div><b>Повторяемые привычки</b><strong>Прогулки, кормление и занятия</strong><small>Отдельно от особенностей характера</small></div><CaretRight /></button>
-              <button type="button" data-profile-memory-action="add-document" onClick={(event) => props.onAddDocument(event.currentTarget)}><span><UploadSimple weight="duotone" /></span><div><b>Документы</b><strong>{props.documents.length ? `${props.documents.length} в истории` : 'Добавить первый документ'}</strong><small>Анализы, назначения и вакцинации</small></div><CaretRight /></button>
-              <button type="button" onClick={props.onOpenCard}><span><ShieldCheck weight="duotone" /></span><div><b>Памятка</b><strong>Что увидит другой человек</strong><small>Публично ничего не открывается само</small></div><CaretRight /></button>
-              <button type="button" onClick={props.onOpenSettings}><span><Info weight="duotone" /></span><div><b>Настройки и приватность</b><strong>Аккаунт, данные и поддержка</strong><small>Удаление, правила и помощь</small></div><CaretRight /></button>
+            <section className="journal-recent"><div className="journal-section-title"><h2>Последние записи</h2><button type="button" onClick={() => setSurface('history')}>Все <CaretRight aria-hidden="true" /></button></div>
+              {history.length ? history.slice(0, 2).map((item) => <button type="button" key={item.id} className="journal-recent-row" onClick={() => item.entityKind === 'document' ? props.onOpenDocument(item.entityId) : item.entityKind === 'observation' ? props.onOpenHealth() : props.onOpenPlan()}><time dateTime={item.date}>{new Date(item.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</time><span><b>{item.title}</b><small>{item.entityKind === 'document' ? 'Документы' : item.entityKind === 'observation' ? 'Наблюдение' : 'Уход'}</small></span><CaretRight aria-hidden="true" /></button>) : <p className="journal-empty-copy">Здесь появятся ваши наблюдения, документы и выполненные дела.</p>}
             </section>
-
-            <button type="button" className={styles.tellAction} onClick={() => setSurface('capture')}><span><Microphone weight="bold" /></span><div><b>Рассказать Псё</b><p>Обычная фраза превратится в проверяемые факты, а не в мусор заметок.</p></div><CaretRight /></button>
-          </>}
+            <div className="journal-profile-tools"><button type="button" className="journal-text-link" onClick={props.onOpenPlan}><CalendarCheck aria-hidden="true" />План заботы{activeReminders.length ? ` · ${activeReminders.length}` : ''}</button><button type="button" className="journal-text-link" onClick={props.onOpenSettings}>Настройки и приватность <CaretRight aria-hidden="true" /></button></div>
+          </div>}
 
           {surface === 'character' && <section className={styles.domainSurface}>
             {header('Характер')}
@@ -322,6 +286,7 @@ export function ProfileMemoryWorkspace(props: Props) {
 
           {surface === 'passport' && <section className={styles.domainSurface}>
             {header('Паспорт и внешность')}
+            <div className={styles.domainActions}><button type="button" className={styles.secondaryAction} onClick={() => setSurface('character')}>Характер <CaretRight /></button><button type="button" className={styles.secondaryAction} onClick={() => setSurface('social')}>С окружающими <CaretRight /></button><button type="button" className={styles.secondaryAction} onClick={props.onOpenHabits}>Повторяемые привычки <CaretRight /></button></div>
             <div className={styles.passportIdentity}><button type="button" className={`${styles.passportPhoto} ${styles.passportPhotoButton}`} onClick={openIdentity}>{hasIdentity ? <img src={props.imageUrl} alt={`Фото ${props.profile.dogName}`} /> : <span><PawPrint weight="duotone" />Добавить образ</span>}</button><div><h2>{props.profile.dogName}</h2><p>{props.breedLabel}</p><span>{valueOrEmpty(props.profile.sex, 'Пол не указан')} · {valueOrEmpty(props.profile.lifeStage, 'Возрастная группа не указана')}</span></div></div>
             <section className={styles.passportFacts}><header><h2>Основное</h2><button type="button" onClick={(event) => openEditor('passport', event.currentTarget)}>Редактировать</button></header>
               <div><span>Порода</span><b>{props.breedLabel}</b></div><div><span>Возрастная группа</span><b>{valueOrEmpty(props.profile.lifeStage)}</b></div><div><span>Пол</span><b>{valueOrEmpty(props.profile.sex)}</b></div><div><span>Вес</span><b>{valueOrEmpty(props.profile.weight)}</b></div><div><span>Микрочип</span><b>{valueOrEmpty(props.profile.microchip)}</b></div><div><span>Клиника</span><b>{valueOrEmpty(props.profile.vetClinic)}</b></div>
@@ -331,6 +296,7 @@ export function ProfileMemoryWorkspace(props: Props) {
 
           {surface === 'history' && <section className={styles.domainSurface}>
             {header('История')}
+            <div className={styles.domainActions}><button type="button" className={styles.secondaryAction} onClick={props.onOpenHealth}>Самочувствие и здоровье <CaretRight /></button><button type="button" className={styles.secondaryAction} data-profile-memory-action="add-document" onClick={(event) => props.onAddDocument(event.currentTarget)}><UploadSimple />Добавить документ</button></div>
             {history.length ? <div className={styles.timeline}>{history.map((item) => <article key={item.id}><i className={item.kind === 'health' ? styles.timeline_health : styles.timeline_care} /><time>{readableDate(item.date)}</time><h2>{item.title}</h2><p>{item.detail}</p>{item.entityKind === 'document' && <div className={styles.timelineActions}><button type="button" onClick={() => props.onOpenDocument(item.entityId)}>Открыть</button><button type="button" className={styles.timelineDanger} disabled={props.documentBusyId === item.entityId} onClick={() => props.onDeleteDocument(item.entityId)}>{props.documentBusyId === item.entityId ? 'Удаляю…' : 'Удалить'}</button></div>}</article>)}</div> : <article className={styles.emptyHistory}><ClockCounterClockwise /><h2>История пока пустая</h2><p>Наблюдения, документы и выполненные дела появятся здесь автоматически.</p></article>}
             <button className={styles.primaryAction} type="button" onClick={() => setSurface('capture')}><Microphone /> Рассказать Псё</button>
           </section>}

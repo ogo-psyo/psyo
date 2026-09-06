@@ -1,15 +1,13 @@
-/* THESIS: Daily care in a familiar pocket companion, not a loud editorial poster.
-   OWN-WORLD: System Cyrillic, forest actions, mint/lilac watercolor, soft paper.
-   STORY: Recognize the dog, open real care, choose a scenario, record what changed.
-   FIRST VIEWPORT: Quiet masthead, 30px question, compact identity, calendar action.
-   FORM: User-pinned design-v3 atmosphere; ios-watercolor-v5-20260906.
-   FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md */
+/* User-selected B «Дневник», 2026-09-06.
+   Operate: day -> observation -> chronology; profile -> record -> index -> history.
+   Source of visual truth: design-reviews/pso-v6 B. Replaces rejected v5 hierarchy.
+   Secondary legacy surfaces retain functional compatibility; no API/state changes. */
 :root {
   --font-pouf: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display-cyrillic: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --companion-forest: #245a40;
-  --companion-paper: #f4f6f2;
-  --companion-mist: radial-gradient(ellipse 95% 390px at 0 0, #d8eddf 0%, transparent 72%), radial-gradient(ellipse 75% 340px at 110% 300px, #e9e3f2 0%, transparent 78%), var(--companion-paper);
+  --companion-forest: #405845;
+  --companion-paper: #fdfcf9;
+  --companion-mist: radial-gradient(ellipse 95% 390px at 0 0, #e9efdf 0%, transparent 72%), radial-gradient(ellipse 75% 340px at 110% 300px, #e9e4f4 0%, transparent 78%), var(--companion-paper);
   --companion-shadow: 0 8px 24px rgb(39 73 49 / 7%);
   --pso-primary: var(--companion-forest);
   --pso-primary-hover: #1d4935;
@@ -21,8 +19,8 @@ body.companion-app, .companion-app .app-canvas { background: var(--companion-mis
 .companion-app [data-profile-memory], .companion-app .production-journey-screen { background: transparent !important; }
 .companion-app .phone-shell { background: var(--companion-mist) !important; }
 .companion-app :is(h1,h2,h3) { text-wrap: balance; letter-spacing: -.025em !important; }
-.companion-app h1 { font-size: 30px !important; line-height: 1.15 !important; font-weight: 730 !important; }
-.companion-app h2 { font-size: 21px !important; line-height: 1.22 !important; font-weight: 700 !important; }
+.companion-app h1 { font-size: 30px !important; line-height: 1.15 !important; font-weight: 550 !important; }
+.companion-app h2 { font-size: 19px !important; line-height: 1.22 !important; font-weight: 600 !important; }
 .companion-app h3 { font-size: 18px !important; line-height: 1.3 !important; }
 .companion-app :is(input,textarea,select) { font-size: 16px !important; }
 .companion-app button { font-weight: 600; }
@@ -31,23 +29,6 @@ body.companion-app, .companion-app .app-canvas { background: var(--companion-mis
 .companion-app .production-journey-screen { padding: 18px 20px calc(105px + env(safe-area-inset-bottom)) !important; }
 .companion-app .v3-all { display: flex !important; flex-direction: column; gap: 24px !important; }
 .companion-app .all-profile { padding: 0 !important; border: 0 !important; background: transparent !important; }
-.companion-masthead { display: flex; justify-content: space-between; align-items: center; min-height: 44px; margin-bottom: 22px; }
-.companion-brand { display: inline-flex; align-items: center; gap: 8px; font-size: 25px; font-weight: 750; letter-spacing: -.5px; }
-.companion-brand svg { width: 27px; height: 27px; }
-.companion-masthead button { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; color: var(--companion-forest); background: rgb(255 254 250 / 70%); border: 0; border-radius: 14px; font-size: 14px; }
-.companion-masthead button svg { width: 20px; height: 20px; }
-.companion-greeting { margin: 0 0 20px !important; max-width: 18ch; }
-.companion-app .all-profile > button { min-height: 96px !important; grid-template-columns: 66px minmax(0,1fr) 20px !important; gap: 14px !important; padding: 14px !important; border: 0 !important; border-radius: 18px !important; background: linear-gradient(115deg, #d9eddf, #e7f0e6 65%, #eae6f2) !important; box-shadow: none !important; }
-.companion-app .all-profile .v3-dog-avatar { width: 66px !important; height: 68px !important; border-radius: 15px !important; border: 0 !important; }
-.companion-app .all-profile-name { font-family: var(--font-pouf) !important; font-size: 20px !important; font-weight: 700 !important; line-height: 1.2 !important; }
-.companion-app .all-profile-copy b { margin-top: 4px; font-size: 14px; font-weight: 500; }
-.companion-app .all-profile-copy small { margin-top: 4px; color: #506454; font-size: 12px; font-weight: 400; }
-.companion-app .all-profile-action { grid-column: auto !important; min-height: 32px !important; padding: 0 !important; background: transparent !important; border: 0 !important; }
-.companion-care > button { width: 100%; min-height: 100px; display: grid; grid-template-columns: 42px minmax(0,1fr) 20px; align-items: center; gap: 12px; padding: 18px; border: 0; border-radius: 18px; background: linear-gradient(125deg, #2a654a, #214f3a); color: #fffefa; text-align: left; box-shadow: 0 10px 24px rgb(36 90 64 / 14%); }
-.companion-care-icon { display: grid; place-items: center; width: 42px; height: 46px; border-radius: 12px; background: rgb(255 255 255 / 12%); }
-.companion-care-icon svg { width: 27px; height: 27px; }
-.companion-care b { font-weight: 650 !important; display: block; font-size: 19px; line-height: 1.25; }
-.companion-care small { display: block; margin-top: 6px; font-size: 13px; line-height: 1.4; color: #e1eee5; font-weight: 400; }
 .companion-app .all-scenarios, .companion-app .all-observation-trends { padding: 0 !important; border: 0 !important; background: transparent !important; }
 .companion-app .all-scenarios > header { margin-bottom: 14px; }
 .companion-app .all-scenarios > header p { font-size: 14px; line-height: 1.45; font-weight: 400; color: #5b685f; }
@@ -57,7 +38,7 @@ body.companion-app, .companion-app .app-canvas { background: var(--companion-mis
 .companion-app .all-scenario-freeform small { color: #5b685f !important; font-size: 12px; font-weight: 400; }
 .companion-app .all-scenario-choices { display: grid; grid-template-columns: 1fr 1fr !important; gap: 0 14px !important; margin-top: 12px; }
 .companion-app .all-scenario-choices > button { min-height: 96px; display: flex; flex-direction: row; align-items: center; gap: 9px; padding: 12px 0 !important; border: 0 !important; border-bottom: 1px solid #d8e0d7 !important; border-radius: 0 !important; background: transparent !important; text-align: left; box-shadow: none !important; }
-.companion-app .all-scenario-choices > button[aria-pressed="true"] { color: #245a40; background: #e1eee3 !important; border-radius: 12px !important; }
+.companion-app .all-scenario-choices > button[aria-pressed="true"] { color: #405845; background: #e1eee3 !important; border-radius: 12px !important; }
 .companion-app .all-scenario-choices svg { width: 22px; min-width: 22px; height: 22px; }
 .companion-app .all-scenario-choices span { font-size: 13px; line-height: 1.35; font-weight: 550; }
 .companion-app .all-scenario-workspace { border: 0 !important; border-radius: 16px !important; background: #fffefa !important; box-shadow: var(--companion-shadow); }
@@ -66,9 +47,9 @@ body.companion-app, .companion-app .app-canvas { background: var(--companion-mis
 .companion-app .production-journey-header small { font-size: 14px !important; font-weight: 400 !important; }
 .companion-app .production-journey-header > div:first-child { gap: 7px !important; }
 .companion-app .production-journey-header h1 { max-width: none !important; }
-.companion-app [data-profile-memory] { --forest: #245a40 !important; --cobalt: #245a40 !important; --cobalt-soft: #e0eee3 !important; --pouf-dark: var(--companion-shadow); --pouf-light: var(--companion-shadow); font-family: var(--font-pouf); }
-.companion-app [data-profile-memory] h1 { font-size: 30px !important; font-weight: 730 !important; }
-.companion-app [data-profile-memory] h2 { font-size: 21px !important; font-weight: 700 !important; }
+.companion-app [data-profile-memory] { --forest: #405845 !important; --cobalt: #405845 !important; --cobalt-soft: #e0eee3 !important; --pouf-dark: var(--companion-shadow); --pouf-light: var(--companion-shadow); font-family: var(--font-pouf); }
+.companion-app [data-profile-memory] h1 { font-size: 30px !important; font-weight: 550 !important; }
+.companion-app [data-profile-memory] h2 { font-size: 19px !important; font-weight: 600 !important; }
 .companion-app .v3-things-hero { border: 0 !important; border-radius: 20px !important; background: linear-gradient(120deg,#f4e9ce,#f5eee0) !important; box-shadow: none !important; }
 .companion-app .v3-food-pack { border: 0 !important; background: #e3d1a4 !important; box-shadow: none !important; transform: rotate(-5deg) !important; }
 .companion-app .production-journey-shelf .thing { border: 0 !important; border-radius: 16px !important; box-shadow: none !important; }
@@ -81,7 +62,7 @@ body.companion-app, .companion-app .app-canvas { background: var(--companion-mis
 .companion-app :is(.watercolor-card,.care-calendar,.care-calendar-month,.form-section) { border-color: #d8e0d7 !important; border-radius: 16px !important; box-shadow: none !important; }
 .companion-app .app-tabs button { text-transform: none !important; }
 .companion-app .app-tabs .ui-button-content > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap !important; }
-.companion-app .app-tabs button.active { background: #e0eee3 !important; color: #245a40 !important; }
+.companion-app .app-tabs button.active { background: transparent !important; color: #405845 !important; }
 .companion-app .app-tab-icon { color: inherit !important; }
 @media (max-width: 759px) {
   .companion-app .app-tabs { transform: none !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; padding: 8px 6px calc(8px + env(safe-area-inset-bottom)) !important; min-height: 74px !important; border: 0 !important; border-top: 1px solid #d8e0d7 !important; border-radius: 0 !important; background: rgb(251 252 248 / 96%) !important; box-shadow: 0 -5px 22px rgb(39 73 49 / 4%) !important; backdrop-filter: blur(14px) !important; }
@@ -133,8 +114,8 @@ body.companion-app, .companion-app .app-canvas { background: var(--companion-mis
 .companion-app .woof-map-await, .companion-app .woof-map-status { background: var(--companion-mist) !important; }
 .companion-app .woof-meet-feed { background: var(--companion-mist) !important; }
 .companion-app :is(.woof-topbar > button,.woof-mode-switch,.woof-live-filters,.woof-empty-live,.woof-signal-card,.woof-incoming-invite,.woof-candidate-card) { background: #fffefa !important; border: 0 !important; border-radius: 16px !important; box-shadow: var(--companion-shadow) !important; }
-.companion-app .woof-live-filters > button { background: #e0eee3 !important; color: #245a40 !important; }
-.companion-app :is(.woof-give-button,.woof-primary,.woof-mode-switch button[aria-pressed="true"]) { background: #245a40 !important; color: #fffefa !important; font-weight: 650 !important; box-shadow: 0 6px 18px rgb(36 90 64 / 12%) !important; }
+.companion-app .woof-live-filters > button { background: #e0eee3 !important; color: #405845 !important; }
+.companion-app :is(.woof-give-button,.woof-primary,.woof-mode-switch button[aria-pressed="true"]) { background: #405845 !important; color: #fffefa !important; font-weight: 650 !important; box-shadow: 0 6px 18px rgb(36 90 64 / 12%) !important; }
 .companion-app .woof-give-button svg { color: #e0eee3 !important; }
 .companion-app .woof-live-filters :is(label,select), .companion-app .woof-mode-switch button { font-weight: 550 !important; }
 .companion-app .woof-live-heading { background: #fffefa !important; color: #5b685f !important; }
@@ -152,6 +133,172 @@ body.companion-app, .companion-app .app-canvas { background: var(--companion-mis
 .companion-app .production-assistant-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .companion-app .production-assistant-composer { position: relative !important; bottom: auto !important; flex: 0 0 auto; margin: 12px 0 0 !important; padding: 0 !important; background: transparent !important; }
 .companion-app .v3-assistant-context { background: #e0eee3 !important; color: #233b30 !important; border-radius: 16px; }
-.companion-app .v3-assistant-mark { background: #245a40 !important; color: #e0eee3 !important; }
+.companion-app .v3-assistant-mark { background: #405845 !important; color: #e0eee3 !important; }
 .companion-app .v3-sheet-handle { flex: 0 0 4px; background: #b9c9bd !important; }
-.companion-app .production-assistant-composer button { background: #245a40 !important; color: #fffefa !important; }
+.companion-app .production-assistant-composer button { background: #405845 !important; color: #fffefa !important; }
+
+/* B journal composition: explicit new structure, shared by home and profile. */
+.companion-app .journal-screen,.companion-app [data-profile-memory] { color:#253b34; }
+.companion-app .journal-screen { display:block; padding:0 24px calc(100px + env(safe-area-inset-bottom)) !important; max-width:760px; margin-inline:auto; }
+.journal-masthead { height:70px; display:flex; align-items:center; justify-content:space-between; padding-top:10px; gap:16px; }
+.journal-wordmark { font-size:27px; font-weight:650; letter-spacing:-1px; }
+.journal-masthead button { min-height:44px; border:0; box-shadow:none; background:none; }
+.journal-dog-switch { display:flex; align-items:center; gap:7px; padding:0; font-size:12px; min-width:0; }
+.journal-dog-switch>span:nth-child(2) { max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.journal-dog-switch>svg { width:12px; height:12px; flex:none; }
+.journal-switch-avatar { display:block; width:29px; height:29px; border-radius:50%; overflow:hidden; flex:none; background:#e6ece1; }
+.companion-app .journal-switch-avatar .generated-avatar { width:29px !important; height:29px !important; min-height:0 !important; border:0 !important; box-shadow:none !important; border-radius:50% !important; background:transparent !important; }
+.companion-app .journal-switch-avatar .avatar-image { position:static; width:100%; height:100%; object-fit:cover; }
+.journal-switch-avatar :is(.avatar-aura,.avatar-chip,.avatar-placeholder b,.avatar-placeholder svg) { display:none !important; }
+.companion-app .journal-switch-avatar .avatar-placeholder { min-height:0; width:29px; height:29px; padding:0; display:grid; place-items:center; }
+.companion-app .journal-switch-avatar .avatar-monogram { font:600 17px/1 var(--font-pouf); letter-spacing:0; }
+.journal-quiet { display:inline-flex; align-items:center; gap:7px; font-size:14px; padding:0; min-height:44px; color:#496051; background:none; border:0; }
+.journal-quiet svg { width:18px; height:18px; }
+.journal-title { padding:27px 0 18px; }
+.companion-app .journal-title h1 { font-size:36px !important; line-height:1.12 !important; font-weight:550 !important; margin:0; letter-spacing:-.033em !important; }
+.journal-title p { font-size:12px; color:#586d5e; margin:8px 0 0; line-height:1.5; }
+.journal-title p::first-letter { text-transform:uppercase; }
+.journal-status { padding:18px 20px 14px; border-radius:22px; background:linear-gradient(125deg,#ece9f5,#f2f0f4 75%); }
+.journal-status-line { display:flex; align-items:center; gap:8px; }
+.journal-status-line>svg { width:18px; height:18px; flex:none; color:#72627b; }
+.companion-app .journal-status h2 { font-size:16px !important; line-height:1.35 !important; font-weight:600 !important; margin:0; }
+.journal-status>p { margin:12px 0 17px; color:#706676; font-size:13px; line-height:1.55; }
+.companion-app .journal-primary { width:100%; min-height:49px; padding:12px 14px; display:flex; align-items:center; justify-content:center; gap:10px; border:0; border-radius:15px; background:#405845; color:#fff; box-shadow:0 2px 3px #203d3210; font-size:14px; font-weight:550; }
+.journal-primary svg { width:20px; height:20px; flex:none; }
+.journal-status-history { display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:6px 0 0; min-height:44px; color:#706676; font-size:11px; font-weight:400 !important; background:none; border:0; }
+.journal-status-history svg { width:12px; height:12px; }
+.journal-day { padding-top:13px; }
+.journal-section-title { display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:44px; }
+.companion-app .journal-section-title h2 { margin:0; font-size:17px !important; font-weight:600 !important; line-height:1.35 !important; }
+.journal-section-title button { min-height:44px; min-width:44px; display:flex; align-items:center; justify-content:flex-end; gap:4px; padding:0; color:#42604e; font-size:12px; background:none; border:0; }
+.journal-section-title button svg { width:17px; height:17px; }
+.journal-entries { list-style:none; padding:0; margin:13px 0 0; }
+.journal-entry { display:grid; grid-template-columns:40px 28px minmax(0,1fr); gap:10px; position:relative; padding-bottom:17px; }
+.journal-entry:not(:last-child)::before { content:""; position:absolute; left:63px; top:28px; bottom:0; width:1px; background:#dfe5dc; }
+.journal-entry time { font-size:12px; color:#69766d; line-height:28px; font-variant-numeric:tabular-nums; }
+.journal-point { height:28px; display:flex; align-items:center; justify-content:center; border:1px solid #dce4d6; background:#fdfcf9; border-radius:50%; color:#66735d; }
+.journal-point.done { background:#e7eee0; border-color:#e7eee0; }
+.journal-point svg { width:15px; height:15px; }
+.journal-entry button { display:block; min-width:0; min-height:44px; padding:0; text-align:left; color:inherit; background:none; border:0; }
+.journal-entry b { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:14px; line-height:1.5; font-weight:600; }
+.journal-entry small { display:block; font-size:12px; line-height:1.5; color:#617067; margin-top:3px; }
+.journal-empty { padding:10px 0 12px; }
+.journal-empty p,.journal-empty-copy { color:#617067; font-size:13px; line-height:1.5; margin:0; }
+.journal-text-link { display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:0; color:#375c49; font-size:12px; font-weight:500 !important; text-align:left; border:0; background:none; }
+.journal-text-link svg { width:15px; height:15px; flex:none; }
+.journal-ask { display:flex; align-items:center; gap:12px; width:100%; padding:15px 0; margin:4px 0 0; border:0; border-top:1px solid #38534016; text-align:left; background:none; color:inherit; }
+.journal-ask>svg:first-child { width:22px; height:22px; color:#758163; }
+.journal-ask>svg:last-child { width:13px; height:13px; }
+.journal-ask>span { flex:1; min-width:0; }
+.journal-ask b { display:block; font-size:14px; font-weight:600; }
+.journal-ask small { display:block; margin-top:4px; font-size:12px; color:#617067; font-weight:400; }
+.journal-next-care { margin:22px 0 18px; }
+.journal-next-care>button { width:100%; min-height:70px; display:flex; align-items:center; gap:12px; padding:14px; border:0; border-radius:16px; background:#eaf0e7; text-align:left; }
+.journal-next-care>button>span { flex:1; }
+.journal-next-care svg { width:20px; height:20px; flex:none; }
+.journal-next-care>button>svg:last-child { width:13px; height:13px; }
+.journal-next-care b { display:block; font-size:14px; font-weight:600; }
+.journal-next-care small { display:block; font-size:12px; line-height:1.5; margin-top:5px; color:#617067; font-weight:400; }
+.journal-disclosure { border:0; border-bottom:1px solid #38534016; margin-top:12px; }
+.journal-disclosure>summary { list-style:none; min-height:52px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-size:15px; font-weight:600; }
+.journal-disclosure>summary::-webkit-details-marker { display:none; }
+.journal-disclosure>summary>svg { width:16px; height:16px; }
+.journal-disclosure[open]>summary>svg { transform:rotate(90deg); }
+.journal-disclosure>.all-scenarios>header { display:none; }
+.journal-disclosure .all-scenarios { padding-bottom:16px !important; }
+.journal-status .all-observation-capture { scroll-margin-top:16px; margin-top:10px; padding:0; background:transparent; border:0; }
+.journal-status:has(.all-observation-capture) { padding:16px 12px; }
+.journal-profile { padding:0 24px; max-width:760px; margin-inline:auto; }
+.journal-passport { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:26px 0 19px; }
+.journal-passport>div { min-width:0; flex:1; }
+.companion-app .journal-passport h1 { font-size:34px !important; font-weight:550 !important; margin:0; line-height:1.12 !important; overflow-wrap:anywhere; }
+.journal-passport p { margin:9px 0 0; font-size:12px; color:#586d5e; line-height:1.5; }
+.journal-portrait { width:88px; height:100px; padding:0; border:0; border-radius:50px 50px 24px 24px; overflow:hidden; flex:none; background:#e8eddf; }
+.journal-portrait img { width:100%; height:100%; object-fit:cover; }
+.journal-monogram { display:grid; place-items:center; height:100%; font-size:38px; font-weight:550; color:#405845; }
+.journal-record { padding:18px 20px; background:#edeaf4; border-radius:20px; margin-bottom:20px; }
+.companion-app .journal-record h2 { font-size:21px !important; font-weight:550 !important; line-height:1.35 !important; margin:0; }
+.journal-record p { font-size:13px; line-height:1.5; color:#706676; margin:8px 0 15px; }
+.companion-app .journal-profile-index>h2 { font-size:16px !important; line-height:1.35 !important; font-weight:600 !important; margin:0 0 3px; }
+.journal-index-row { display:flex; align-items:center; gap:10px; width:100%; padding:14px 0; min-height:69px; border:0; border-bottom:1px solid #38534016; text-align:left; color:inherit; background:none; }
+.journal-row-icon { width:36px; height:36px; border-radius:11px; flex:none; display:grid; place-items:center; background:#eeecf3; color:#766786; }
+.journal-row-icon svg { width:20px; height:20px; }
+.journal-index-row:nth-of-type(2) .journal-row-icon { background:#f3eee5; color:#887447; }
+.journal-index-row:nth-of-type(3) .journal-row-icon { background:#e8eef0; color:#607781; }
+.journal-index-row>span:nth-child(2) { flex:1; min-width:0; }
+.journal-index-row b { display:block; font-size:14px; font-weight:600; line-height:1.35; }
+.journal-index-row small { display:block; font-size:11px; line-height:1.4; color:#647167; font-weight:400; margin-top:4px; }
+.journal-index-row>svg { width:13px; height:13px; flex:none; color:#738172; }
+.journal-recent { margin-top:14px; }
+.companion-app .journal-recent h2 { font-size:16px !important; }
+.journal-recent-row { display:flex; align-items:center; gap:11px; width:100%; min-height:66px; padding:13px 0; text-align:left; background:none; color:inherit; border:0; border-bottom:1px solid #38534012; }
+.journal-recent-row time { width:39px; flex:none; font-size:11px; line-height:1.4; color:#647167; font-weight:400; }
+.journal-recent-row>span { flex:1; min-width:0; }
+.journal-recent-row b { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:12px; font-weight:600; line-height:1.4; }
+.journal-recent-row small { display:block; font-size:11px; font-weight:400; color:#647167; margin-top:3px; }
+.journal-recent-row>svg { width:13px; height:13px; flex:none; }
+.journal-profile-tools { display:flex; flex-wrap:wrap; justify-content:space-between; gap:0 14px; margin-top:14px; }
+.companion-app .app-tabs button.active .app-tab-icon { background:#dce9d9; border-radius:8px; }
+.companion-app .app-tabs .app-tab-icon { padding:4px; width:30px !important; height:30px !important; }
+.companion-app .app-tabs .app-tab-icon svg { width:22px; height:22px; }
+.companion-app .app-tabs .ui-button-content>span:last-child { font-size:10px !important; font-weight:400; }
+.companion-app .app-tabs button.active .ui-button-content>span:last-child { font-weight:600; }
+.companion-app :is(.journal-screen,.journal-profile) :is(button,summary):focus-visible { outline:3px solid #4c6eaf; outline-offset:3px; }
+@media(min-width:760px) {
+  .companion-app .journal-screen { padding:0 32px 50px !important; }
+  .journal-profile { padding:0 32px 48px; }
+  .journal-masthead { height:80px; }
+  .journal-title,.journal-passport { padding-top:28px; }
+  .journal-day { padding-top:20px; }
+  .journal-entries { margin-top:18px; }
+  .journal-entry { padding-bottom:22px; }
+  .journal-status { margin-top:8px; }
+}
+@media(max-width:359px) {
+  .companion-app .journal-screen { padding-inline:19px !important; }
+  .journal-profile { padding-inline:19px; }
+  .journal-masthead { height:64px; }
+  .journal-title { padding-top:23px; }
+  .journal-status { padding:17px 15px 14px; }
+  .companion-app .journal-status h2 { font-size:14px !important; }
+  .journal-status>p { font-size:12px; }
+  .companion-app .journal-primary { font-size:13px; }
+  .journal-entry { column-gap:8px; }
+  .journal-entry:not(:last-child)::before { left:61px; }
+  .journal-entry b { font-size:13px; }
+  .journal-entry small { font-size:11px; }
+  .journal-passport { padding-top:22px; }
+  .journal-passport p { font-size:11px; }
+  .journal-portrait { width:73px; height:91px; }
+  .journal-record { padding:19px 17px; }
+  .journal-index-row b { font-size:13px; }
+  .journal-index-row small { font-size:10px; }
+  .journal-recent-row b { font-size:11px; }
+}
+
+/* Batched fidelity correction: override only surviving incumbent geometry. */
+body.companion-app .journal-screen { display:block !important; }
+body.companion-app .journal-entry small { font-weight:400; }
+body.companion-app .journal-dog-switch { font-weight:400; }
+body.companion-app .journal-index-row,body.companion-app .journal-recent-row { border-radius:0 !important; box-shadow:none !important; }
+body.companion-app .journal-portrait { border-radius:50px 50px 24px 24px !important; box-shadow:none !important; }
+body.companion-app main.app-canvas nav.app-tabs button[data-route],body.companion-app main.app-canvas nav.app-tabs button[data-route].active { box-shadow:none !important; border:0 !important; background:transparent !important; }
+body.companion-app main.app-canvas nav.app-tabs button.active .app-tab-icon { background:#dce9d9 !important; }
+body.companion-app main.app-canvas nav.app-tabs .ui-button-content { font-weight:400 !important; }
+body.companion-app .production-map-workspace { background:#edf1e8 !important; }
+body.companion-app :is(.production-map-loading,.production-map-empty,.woof-map-await,.woof-map-status) { background:var(--companion-mist) !important; }
+body.companion-app :is(.production-map-topbar,.production-map-tools,.production-map-dock,.production-map-search,.woof-overlay,.woof-composer,.woof-profile-sheet) { color:#253b34; }
+body.companion-app :is(.production-map-workspace,.production-woof-workspace) :is(b,strong,button) { font-weight:600; }
+body.companion-app :is(.production-map-workspace,.production-woof-workspace) :is(p,small,input,textarea,select) { font-weight:400; }
+body.companion-app .production-journey-shelf.journal-things-list { margin:0; border:0; background:transparent; }
+body.companion-app .journal-things-list .journal-index-row { min-height:74px; }
+
+/* Secondary working surfaces share the journal's type and control weight. */
+body.companion-app .phone-shell :is(.watercolor-screen,.care-calendar,.health-screen,.screen-stack) :is(p,small,label,input,select,textarea) { font-weight:400 !important; }
+body.companion-app .phone-shell :is(.primary,.ui-button-primary,.ui-button-care),body.companion-app .desktop-context-panel .primary { background:#405845 !important; color:#fff !important; border:0 !important; box-shadow:0 2px 3px #203d3210 !important; font-weight:550 !important; }
+body.companion-app .phone-shell :is(.secondary,.care-calendar button,.calendar-composition button,.pet-switcher button) { box-shadow:none !important; font-weight:550 !important; }
+body.companion-app .phone-shell .care-calendar { background:#fbfcf9 !important; }
+body.companion-app .phone-shell .v3-assistant-context p { font-weight:400 !important; line-height:1.5; }
+body.companion-app .phone-shell .production-assistant-suggestions button { font-weight:500 !important; }
+body.companion-app .production-map-workspace :is(.leaflet-container,.production-map-loading) { background:#edf1e8 !important; }
+body.companion-app .production-map-tools>button { min-width:0; font-weight:500; }

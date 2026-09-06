@@ -544,7 +544,7 @@ export function ProductionMapWorkspace({
         <header className="production-map-topbar">
           <button className="production-map-profile" type="button" onClick={onOpenProfile} aria-label={`Открыть профиль ${dogName}`}>
             <span className="production-map-avatar">{avatar}</span>
-            <span><b>Карта {dogName}</b><small>маршруты, места и предупреждения</small></span>
+            <span><b>Карта · {dogName}</b><small>маршруты, места и предупреждения</small></span>
           </button>
           <button className="production-map-locate" type="button" onClick={locateUser} disabled={locating} aria-label="Найти меня">
             <Crosshair weight={userLocation ? 'fill' : 'regular'} aria-hidden="true" />

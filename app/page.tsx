@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDow
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { PaperSheet, WatercolorScreen } from '@/components/watercolor';
 import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
+import { journalDayEntries } from '@/lib/journal';
 import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
 import { VoiceObservationCapture, type PrivateVoiceNoteInput } from '@/components/journey/VoiceObservationCapture';
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
@@ -4147,6 +4148,7 @@ export default function Home() {
           dogName={profile.dogName}
           breedLabel={breedLabel}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
+          dayEntries={journalDayEntries(reminders, observations, new Date())}
           careTitle={todayCare.title}
           careDetail={todayCare.detail}
           careActionLabel={todayCare.state === 'empty' ? 'Добавить первое дело' : todayCare.actionLabel}
@@ -4204,7 +4206,7 @@ export default function Home() {
           key={profile.backendPetId || activePetId}
           profile={profile}
           breedLabel={breedLabel}
-          imageUrl={generatedAvatarUrl || profile.avatarImageUrl}
+          imageUrl={generatedAvatarUrl || profile.avatarImageUrl || (demoMode ? '/demo-avatar.png' : '')}
           observations={observations.map((item) => ({ id: item.id, createdAt: item.createdAt, mood: item.mood, appetite: item.appetite, stool: item.stool, energy: item.energy, note: item.note }))}
           documents={documents}
           reminders={reminders}

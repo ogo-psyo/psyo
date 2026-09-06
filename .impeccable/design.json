@@ -1,435 +1,391 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-06T10:56:04.482095+00:00",
-  "title": "Design System: Псё",
+  "generatedAt": "2026-09-06T12:28:04.245715+00:00",
+  "title": "Design System: Псё — Дневник",
   "extensions": {
     "colorMeta": {
       "forest": {
-        "role": "primary",
         "displayName": "Forest",
+        "role": "primary",
         "tonalRamp": [
-          "oklch(15% 0.0725 159.96)",
-          "oklch(26.43% 0.0725 159.96)",
-          "oklch(37.86% 0.0725 159.96)",
-          "oklch(49.29% 0.0725 159.96)",
-          "oklch(60.71% 0.0725 159.96)",
-          "oklch(72.14% 0.0725 159.96)",
-          "oklch(83.57% 0.0725 159.96)",
-          "oklch(95% 0.0725 159.96)"
+          "oklch(15.00% 0.0427 150.69)",
+          "oklch(26.43% 0.0427 150.69)",
+          "oklch(37.86% 0.0427 150.69)",
+          "oklch(49.29% 0.0427 150.69)",
+          "oklch(60.71% 0.0427 150.69)",
+          "oklch(72.14% 0.0427 150.69)",
+          "oklch(83.57% 0.0427 150.69)",
+          "oklch(95.00% 0.0427 150.69)"
         ]
       },
       "ink": {
-        "role": "neutral",
         "displayName": "Ink",
+        "role": "neutral",
         "tonalRamp": [
-          "oklch(15% 0.0360 163.86)",
-          "oklch(26.43% 0.0360 163.86)",
-          "oklch(37.86% 0.0360 163.86)",
-          "oklch(49.29% 0.0360 163.86)",
-          "oklch(60.71% 0.0360 163.86)",
-          "oklch(72.14% 0.0360 163.86)",
-          "oklch(83.57% 0.0360 163.86)",
-          "oklch(95% 0.0360 163.86)"
+          "oklch(15.00% 0.0306 172.44)",
+          "oklch(26.43% 0.0306 172.44)",
+          "oklch(37.86% 0.0306 172.44)",
+          "oklch(49.29% 0.0306 172.44)",
+          "oklch(60.71% 0.0306 172.44)",
+          "oklch(72.14% 0.0306 172.44)",
+          "oklch(83.57% 0.0306 172.44)",
+          "oklch(95.00% 0.0306 172.44)"
         ]
       },
       "ink-soft": {
-        "role": "neutral",
         "displayName": "Ink Soft",
+        "role": "neutral",
         "tonalRamp": [
-          "oklch(15% 0.0212 155.34)",
-          "oklch(26.43% 0.0212 155.34)",
-          "oklch(37.86% 0.0212 155.34)",
-          "oklch(49.29% 0.0212 155.34)",
-          "oklch(60.71% 0.0212 155.34)",
-          "oklch(72.14% 0.0212 155.34)",
-          "oklch(83.57% 0.0212 155.34)",
-          "oklch(95% 0.0212 155.34)"
+          "oklch(15.00% 0.0228 159.21)",
+          "oklch(26.43% 0.0228 159.21)",
+          "oklch(37.86% 0.0228 159.21)",
+          "oklch(49.29% 0.0228 159.21)",
+          "oklch(60.71% 0.0228 159.21)",
+          "oklch(72.14% 0.0228 159.21)",
+          "oklch(83.57% 0.0228 159.21)",
+          "oklch(95.00% 0.0228 159.21)"
         ]
       },
       "paper": {
-        "role": "neutral",
         "displayName": "Paper",
+        "role": "neutral",
         "tonalRamp": [
-          "oklch(15% 0.0057 128.53)",
-          "oklch(26.43% 0.0057 128.53)",
-          "oklch(37.86% 0.0057 128.53)",
-          "oklch(49.29% 0.0057 128.53)",
-          "oklch(60.71% 0.0057 128.53)",
-          "oklch(72.14% 0.0057 128.53)",
-          "oklch(83.57% 0.0057 128.53)",
-          "oklch(95% 0.0057 128.53)"
+          "oklch(15.00% 0.0041 91.45)",
+          "oklch(26.43% 0.0041 91.45)",
+          "oklch(37.86% 0.0041 91.45)",
+          "oklch(49.29% 0.0041 91.45)",
+          "oklch(60.71% 0.0041 91.45)",
+          "oklch(72.14% 0.0041 91.45)",
+          "oklch(83.57% 0.0041 91.45)",
+          "oklch(95.00% 0.0041 91.45)"
         ]
       },
       "paper-raised": {
-        "role": "neutral",
         "displayName": "Paper Raised",
+        "role": "neutral",
         "tonalRamp": [
-          "oklch(15% 0.0054 95.10)",
+          "oklch(15.00% 0.0054 95.10)",
           "oklch(26.43% 0.0054 95.10)",
           "oklch(37.86% 0.0054 95.10)",
           "oklch(49.29% 0.0054 95.10)",
           "oklch(60.71% 0.0054 95.10)",
           "oklch(72.14% 0.0054 95.10)",
           "oklch(83.57% 0.0054 95.10)",
-          "oklch(95% 0.0054 95.10)"
+          "oklch(95.00% 0.0054 95.10)"
+        ]
+      },
+      "lilac": {
+        "displayName": "Lilac",
+        "role": "secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0137 299.79)",
+          "oklch(26.43% 0.0137 299.79)",
+          "oklch(37.86% 0.0137 299.79)",
+          "oklch(49.29% 0.0137 299.79)",
+          "oklch(60.71% 0.0137 299.79)",
+          "oklch(72.14% 0.0137 299.79)",
+          "oklch(83.57% 0.0137 299.79)",
+          "oklch(95.00% 0.0137 299.79)"
+        ]
+      },
+      "lilac-ink": {
+        "displayName": "Lilac Ink",
+        "role": "secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0275 312.96)",
+          "oklch(26.43% 0.0275 312.96)",
+          "oklch(37.86% 0.0275 312.96)",
+          "oklch(49.29% 0.0275 312.96)",
+          "oklch(60.71% 0.0275 312.96)",
+          "oklch(72.14% 0.0275 312.96)",
+          "oklch(83.57% 0.0275 312.96)",
+          "oklch(95.00% 0.0275 312.96)"
+        ]
+      },
+      "mint": {
+        "displayName": "Mint",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0200 128.70)",
+          "oklch(26.43% 0.0200 128.70)",
+          "oklch(37.86% 0.0200 128.70)",
+          "oklch(49.29% 0.0200 128.70)",
+          "oklch(60.71% 0.0200 128.70)",
+          "oklch(72.14% 0.0200 128.70)",
+          "oklch(83.57% 0.0200 128.70)",
+          "oklch(95.00% 0.0200 128.70)"
+        ]
+      },
+      "nav-mint": {
+        "displayName": "Nav Mint",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0255 139.83)",
+          "oklch(26.43% 0.0255 139.83)",
+          "oklch(37.86% 0.0255 139.83)",
+          "oklch(49.29% 0.0255 139.83)",
+          "oklch(60.71% 0.0255 139.83)",
+          "oklch(72.14% 0.0255 139.83)",
+          "oklch(83.57% 0.0255 139.83)",
+          "oklch(95.00% 0.0255 139.83)"
         ]
       },
       "line": {
-        "role": "neutral",
         "displayName": "Line",
+        "role": "neutral",
         "tonalRamp": [
-          "oklch(15% 0.0148 142.22)",
+          "oklch(15.00% 0.0136 134.90)",
+          "oklch(26.43% 0.0136 134.90)",
+          "oklch(37.86% 0.0136 134.90)",
+          "oklch(49.29% 0.0136 134.90)",
+          "oklch(60.71% 0.0136 134.90)",
+          "oklch(72.14% 0.0136 134.90)",
+          "oklch(83.57% 0.0136 134.90)",
+          "oklch(95.00% 0.0136 134.90)"
+        ]
+      },
+      "control-ink": {
+        "displayName": "Control Ink",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0360 163.86)",
+          "oklch(26.43% 0.0360 163.86)",
+          "oklch(37.86% 0.0360 163.86)",
+          "oklch(49.29% 0.0360 163.86)",
+          "oklch(60.71% 0.0360 163.86)",
+          "oklch(72.14% 0.0360 163.86)",
+          "oklch(83.57% 0.0360 163.86)",
+          "oklch(95.00% 0.0360 163.86)"
+        ]
+      },
+      "control-line": {
+        "displayName": "Control Line",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0148 142.22)",
           "oklch(26.43% 0.0148 142.22)",
           "oklch(37.86% 0.0148 142.22)",
           "oklch(49.29% 0.0148 142.22)",
           "oklch(60.71% 0.0148 142.22)",
           "oklch(72.14% 0.0148 142.22)",
           "oklch(83.57% 0.0148 142.22)",
-          "oklch(95% 0.0148 142.22)"
-        ]
-      },
-      "line-strong": {
-        "role": "neutral",
-        "displayName": "Line Strong",
-        "tonalRamp": [
-          "oklch(15% 0.0477 157.12)",
-          "oklch(26.43% 0.0477 157.12)",
-          "oklch(37.86% 0.0477 157.12)",
-          "oklch(49.29% 0.0477 157.12)",
-          "oklch(60.71% 0.0477 157.12)",
-          "oklch(72.14% 0.0477 157.12)",
-          "oklch(83.57% 0.0477 157.12)",
-          "oklch(95% 0.0477 157.12)"
-        ]
-      },
-      "mint": {
-        "role": "primary",
-        "displayName": "Mint",
-        "tonalRamp": [
-          "oklch(15% 0.0209 152.18)",
-          "oklch(26.43% 0.0209 152.18)",
-          "oklch(37.86% 0.0209 152.18)",
-          "oklch(49.29% 0.0209 152.18)",
-          "oklch(60.71% 0.0209 152.18)",
-          "oklch(72.14% 0.0209 152.18)",
-          "oklch(83.57% 0.0209 152.18)",
-          "oklch(95% 0.0209 152.18)"
-        ]
-      },
-      "moss": {
-        "role": "secondary",
-        "displayName": "Moss",
-        "tonalRamp": [
-          "oklch(15% 0.0570 157.61)",
-          "oklch(26.43% 0.0570 157.61)",
-          "oklch(37.86% 0.0570 157.61)",
-          "oklch(49.29% 0.0570 157.61)",
-          "oklch(60.71% 0.0570 157.61)",
-          "oklch(72.14% 0.0570 157.61)",
-          "oklch(83.57% 0.0570 157.61)",
-          "oklch(95% 0.0570 157.61)"
-        ]
-      },
-      "blue": {
-        "role": "secondary",
-        "displayName": "Blue",
-        "tonalRamp": [
-          "oklch(15% 0.0165 211.04)",
-          "oklch(26.43% 0.0165 211.04)",
-          "oklch(37.86% 0.0165 211.04)",
-          "oklch(49.29% 0.0165 211.04)",
-          "oklch(60.71% 0.0165 211.04)",
-          "oklch(72.14% 0.0165 211.04)",
-          "oklch(83.57% 0.0165 211.04)",
-          "oklch(95% 0.0165 211.04)"
-        ]
-      },
-      "lilac": {
-        "role": "secondary",
-        "displayName": "Lilac",
-        "tonalRamp": [
-          "oklch(15% 0.0221 300.19)",
-          "oklch(26.43% 0.0221 300.19)",
-          "oklch(37.86% 0.0221 300.19)",
-          "oklch(49.29% 0.0221 300.19)",
-          "oklch(60.71% 0.0221 300.19)",
-          "oklch(72.14% 0.0221 300.19)",
-          "oklch(83.57% 0.0221 300.19)",
-          "oklch(95% 0.0221 300.19)"
-        ]
-      },
-      "danger": {
-        "role": "secondary",
-        "displayName": "Danger",
-        "tonalRamp": [
-          "oklch(15% 0.1365 23.25)",
-          "oklch(26.43% 0.1365 23.25)",
-          "oklch(37.86% 0.1365 23.25)",
-          "oklch(49.29% 0.1365 23.25)",
-          "oklch(60.71% 0.1365 23.25)",
-          "oklch(72.14% 0.1365 23.25)",
-          "oklch(83.57% 0.1365 23.25)",
-          "oklch(95% 0.1365 23.25)"
-        ]
-      },
-      "yellow": {
-        "role": "secondary",
-        "displayName": "Yellow",
-        "tonalRamp": [
-          "oklch(15% 0.0476 91.33)",
-          "oklch(26.43% 0.0476 91.33)",
-          "oklch(37.86% 0.0476 91.33)",
-          "oklch(49.29% 0.0476 91.33)",
-          "oklch(60.71% 0.0476 91.33)",
-          "oklch(72.14% 0.0476 91.33)",
-          "oklch(83.57% 0.0476 91.33)",
-          "oklch(95% 0.0476 91.33)"
-        ]
-      },
-      "pink": {
-        "role": "secondary",
-        "displayName": "Pink",
-        "tonalRamp": [
-          "oklch(15% 0.0212 355.25)",
-          "oklch(26.43% 0.0212 355.25)",
-          "oklch(37.86% 0.0212 355.25)",
-          "oklch(49.29% 0.0212 355.25)",
-          "oklch(60.71% 0.0212 355.25)",
-          "oklch(72.14% 0.0212 355.25)",
-          "oklch(83.57% 0.0212 355.25)",
-          "oklch(95% 0.0212 355.25)"
+          "oklch(95.00% 0.0148 142.22)"
         ]
       },
       "focus-blue": {
-        "role": "neutral",
         "displayName": "Focus Blue",
+        "role": "neutral",
         "tonalRamp": [
-          "oklch(15% 0.1288 259.83)",
+          "oklch(15.00% 0.1288 259.83)",
           "oklch(26.43% 0.1288 259.83)",
           "oklch(37.86% 0.1288 259.83)",
           "oklch(49.29% 0.1288 259.83)",
           "oklch(60.71% 0.1288 259.83)",
           "oklch(72.14% 0.1288 259.83)",
           "oklch(83.57% 0.1288 259.83)",
-          "oklch(95% 0.1288 259.83)"
+          "oklch(95.00% 0.1288 259.83)"
+        ]
+      },
+      "danger": {
+        "displayName": "Danger",
+        "role": "secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.1365 23.25)",
+          "oklch(26.43% 0.1365 23.25)",
+          "oklch(37.86% 0.1365 23.25)",
+          "oklch(49.29% 0.1365 23.25)",
+          "oklch(60.71% 0.1365 23.25)",
+          "oklch(72.14% 0.1365 23.25)",
+          "oklch(83.57% 0.1365 23.25)",
+          "oklch(95.00% 0.1365 23.25)"
         ]
       }
     },
     "typographyMeta": {
       "display": {
-        "displayName": "Display",
-        "purpose": "Compact route headings; responsive exceptions described in DESIGN.md."
+        "displayName": "Journal page title",
+        "purpose": "Today and things; profile uses a nearby smaller identity variant."
       },
-      "headline": {
-        "displayName": "Headline",
-        "purpose": "Shared headline role."
-      },
-      "title": {
-        "displayName": "Title",
-        "purpose": "Shared title role."
-      },
-      "body": {
-        "displayName": "Body",
-        "purpose": "Supporting explanatory copy, not a forced global record size."
-      },
-      "label": {
-        "displayName": "Label",
-        "purpose": "Shared label role."
-      },
-      "control": {
-        "displayName": "Control",
-        "purpose": "Shared control role."
-      },
-      "navigation-mobile": {
-        "displayName": "Navigation Mobile",
-        "purpose": "Phone route labels with truncation."
+      "row-title": {
+        "displayName": "Record title",
+        "purpose": "Readable working hierarchy within flat rows."
       }
     },
     "shadows": [
       {
+        "name": "journal-action",
+        "value": "0 2px 3px #203d3210",
+        "purpose": "The small lift beneath the decisive journal action."
+      },
+      {
         "name": "ambient-paper",
         "value": "0 8px 24px rgb(39 73 49 / 7%)",
-        "purpose": "Actionable paper surfaces and social controls."
-      },
-      {
-        "name": "primary-action",
-        "value": "0 4px 12px rgb(36 90 64 / 10%)",
-        "purpose": "Primary and care variant buttons."
-      },
-      {
-        "name": "care-action",
-        "value": "0 10px 24px rgb(36 90 64 / 14%)",
-        "purpose": "Nearest-care action."
+        "purpose": "Floating social controls and opened scenario workspace."
       },
       {
         "name": "sheet",
         "value": "0 -12px 48px rgb(25 50 37 / 16%)",
-        "purpose": "Temporary bottom sheets."
+        "purpose": "Temporary working sheets."
       },
       {
         "name": "dock",
         "value": "0 -5px 22px rgb(39 73 49 / 4%)",
-        "purpose": "Mobile dock separation."
+        "purpose": "Quiet upper mobile dock boundary."
       }
     ],
     "motion": [
       {
-        "name": "state-transition",
-        "value": "160ms cubic-bezier(.16, 1, .3, 1)",
-        "purpose": "Background, text, border, and transform state changes."
+        "name": "control-transition",
+        "value": "160ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "Color, background, border and transform state changes; disabled by reduced motion."
       },
       {
         "name": "scenario-reveal",
         "value": "200ms cubic-bezier(.16,1,.3,1)",
-        "purpose": "Opacity .7→1 and translateY(5px)→0, only without reduced motion."
+        "purpose": "Opacity .7 to 1 and translateY(5px) to 0; no reduced-motion animation."
       }
     ],
     "breakpoints": [
       {
-        "name": "narrow-phone",
-        "value": "360px"
+        "name": "compact-max",
+        "value": "359px"
       },
       {
-        "name": "desktop",
+        "name": "desktop-min",
         "value": "760px"
       },
       {
-        "name": "context-rail",
+        "name": "compact-desktop-max",
         "value": "1100px"
       }
     ],
-    "backgrounds": [
+    "materials": [
       {
-        "name": "companion-mist",
-        "value": "radial-gradient(ellipse 95% 390px at 0 0, #d8eddf 0%, transparent 72%), radial-gradient(ellipse 75% 340px at 110% 300px, #e9e3f2 0%, transparent 78%), var(--companion-paper)",
-        "purpose": "Shared watercolor canvas; source token --companion-mist."
+        "name": "watercolor-canvas",
+        "value": "radial-gradient(ellipse 95% 390px at 0 0, #e9efdf 0%, transparent 72%), radial-gradient(ellipse 75% 340px at 110% 300px, #e9e4f4 0%, transparent 78%), var(--companion-paper)",
+        "purpose": "Static shared canvas, not animated ornament."
       },
       {
-        "name": "dog-identity",
-        "value": "linear-gradient(115deg, #d9eddf, #e7f0e6 65%, #eae6f2)",
-        "purpose": "Compact identity wash."
-      },
-      {
-        "name": "care-action",
-        "value": "linear-gradient(125deg, #2a654a, #214f3a)",
-        "purpose": "Nearest-care forest surface."
+        "name": "status-lilac",
+        "value": "linear-gradient(125deg,#ece9f5,#f2f0f4 75%)",
+        "purpose": "Home status capture panel."
       }
-    ]
+    ],
+    "tonalRampPolicy": "Synthesized OKLCH strips are preview metadata only, not additional source tokens.",
+    "scope": "Local journal v6 build; not deployed."
   },
   "components": [
     {
-      "name": "Button Primary",
+      "name": "Journal primary action",
       "kind": "button",
-      "refersTo": "button-primary",
-      "description": "Implemented shared button-primary variant.",
-      "html": "<button class=\"ds-button-primary\">Сохранить</button>",
-      "css": ".ds-button-primary{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:48px;padding:0 16px;border:1px solid transparent;border-radius:var(--kit-radius-control,14px);background:var(--companion-forest,#245a40);color:var(--kit-paper-raised,#fffefa);font-size:15px;font-weight:600;line-height:1;transition:transform 160ms cubic-bezier(.16,1,.3,1);box-shadow:0 4px 12px rgb(36 90 64 / 10%);}.ds-button-primary:hover:not(:disabled){transform:translateY(-2px)}.ds-button-primary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-button-primary:active:not(:disabled){transform:translateY(1px) scale(.985)}.ds-button-primary:disabled{box-shadow:none;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button-primary{transition:none}}"
+      "description": "The decisive action inside a capture field.",
+      "html": "<button class=\"ds-primary\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>Добавить запись</button>",
+      "css": ".ds-primary{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;width:100%;min-height:49px;padding:12px 14px;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:15px;background:var(--companion-forest,#405845);color:#fff;box-shadow:0 2px 3px #203d3210;font-size:14px;font-weight:550;transition:transform 160ms cubic-bezier(.16,1,.3,1)}.ds-primary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-primary:active{transform:translateY(1px)}.ds-primary:disabled{opacity:.58;box-shadow:none}.ds-primary:hover{cursor:pointer}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none;transform:none}}",
+      "refersTo": "button-primary"
     },
     {
-      "name": "Button Care",
+      "name": "Secondary action",
       "kind": "button",
-      "refersTo": "button-care",
-      "description": "Implemented shared button-care variant.",
-      "html": "<button class=\"ds-button-care\">Открыть уход</button>",
-      "css": ".ds-button-care{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:48px;padding:0 16px;border:1px solid transparent;border-radius:var(--kit-radius-control,14px);background:var(--companion-forest,#245a40);color:var(--kit-paper-raised,#fffefa);font-size:15px;font-weight:600;line-height:1;transition:transform 160ms cubic-bezier(.16,1,.3,1);box-shadow:0 4px 12px rgb(36 90 64 / 10%);}.ds-button-care:hover:not(:disabled){transform:translateY(-2px)}.ds-button-care:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-button-care:active:not(:disabled){transform:translateY(1px) scale(.985)}.ds-button-care:disabled{box-shadow:none;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button-care{transition:none}}"
+      "description": "A supporting control without a competing filled field.",
+      "html": "<button class=\"ds-secondary\">Изменить данные</button>",
+      "css": ".ds-secondary{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:48px;padding:0 16px;border:1px solid var(--kit-ink,#233b30);border-radius:14px;background:transparent;color:var(--kit-ink,#233b30);font-size:15px;font-weight:600}.ds-secondary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-secondary:hover{cursor:pointer}.ds-secondary:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-secondary:active{transform:none}}",
+      "refersTo": "button-secondary"
     },
     {
-      "name": "Button Secondary",
+      "name": "Ghost action",
       "kind": "button",
-      "refersTo": "button-secondary",
-      "description": "Implemented shared button-secondary variant.",
-      "html": "<button class=\"ds-button-secondary\">Отмена</button>",
-      "css": ".ds-button-secondary{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:48px;padding:0 16px;border:1px solid var(--kit-ink,#233b30);border-radius:var(--kit-radius-control,14px);background:transparent;color:var(--kit-ink,#233b30);font-size:15px;font-weight:600;line-height:1;transition:transform 160ms cubic-bezier(.16,1,.3,1);box-shadow:none;}.ds-button-secondary:hover:not(:disabled){transform:translateY(-2px)}.ds-button-secondary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-button-secondary:active:not(:disabled){transform:translateY(1px) scale(.985)}.ds-button-secondary:disabled{box-shadow:none;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button-secondary{transition:none}}"
-    },
-    {
-      "name": "Button Ghost",
-      "kind": "button",
-      "refersTo": "button-ghost",
-      "description": "Implemented shared button-ghost variant.",
-      "html": "<button class=\"ds-button-ghost\">Подробнее</button>",
-      "css": ".ds-button-ghost{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:48px;padding:0 16px;border:1px solid transparent;border-radius:var(--kit-radius-control,14px);background:transparent;color:var(--kit-ink,#233b30);font-size:15px;font-weight:600;line-height:1;transition:transform 160ms cubic-bezier(.16,1,.3,1);box-shadow:none;}.ds-button-ghost:hover:not(:disabled){transform:translateY(-2px)}.ds-button-ghost:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-button-ghost:active:not(:disabled){transform:translateY(1px) scale(.985)}.ds-button-ghost:disabled{box-shadow:none;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button-ghost{transition:none}}"
-    },
-    {
-      "name": "Button Danger",
-      "kind": "button",
-      "refersTo": "button-danger",
-      "description": "Implemented shared button-danger variant.",
-      "html": "<button class=\"ds-button-danger\">Удалить</button>",
-      "css": ".ds-button-danger{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:48px;padding:0 16px;border:1px solid var(--kit-coral,#a63f3f);border-radius:var(--kit-radius-control,14px);background:transparent;color:var(--kit-coral,#a63f3f);font-size:15px;font-weight:600;line-height:1;transition:transform 160ms cubic-bezier(.16,1,.3,1);box-shadow:none;}.ds-button-danger:hover:not(:disabled){transform:translateY(-2px)}.ds-button-danger:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-button-danger:active:not(:disabled){transform:translateY(1px) scale(.985)}.ds-button-danger:disabled{box-shadow:none;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button-danger{transition:none}}"
+      "description": "A supporting control without a competing filled field.",
+      "html": "<button class=\"ds-secondary\">Изменить данные</button>",
+      "css": ".ds-secondary{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:48px;padding:0 16px;border:1px solid transparent;border-radius:14px;background:transparent;color:var(--kit-ink,#233b30);font-size:15px;font-weight:600}.ds-secondary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-secondary:hover{cursor:pointer}.ds-secondary:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-secondary:active{transform:none}}",
+      "refersTo": "button-ghost"
     },
     {
       "name": "Labeled field",
       "kind": "input",
-      "refersTo": "field",
-      "description": "Readable native-size field with visible label and keyboard focus.",
-      "html": "<label class=\"ds-field-label\">Имя собаки<input class=\"ds-field\" value=\"Боня\" /></label>",
-      "css": ".ds-field-label{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);display:grid;gap:7px;font-size:12px;font-weight:700;color:var(--kit-ink,#233b30)}.ds-field{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:48px;padding:11px 13px;border:1px solid var(--kit-line,#d8e0d7);border-radius:var(--kit-radius-control,14px);background:var(--kit-paper-raised,#fffefa);color:var(--kit-ink,#233b30);font-size:16px}.ds-field:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}"
+      "description": "A working field, not a decorative capture mockup.",
+      "html": "<label class=\"ds-field-label\">Имя собаки<input class=\"ds-field\" value=\"Плутон\" /></label>",
+      "css": ".ds-field-label{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;display:grid;gap:7px;font-size:12px;color:var(--kit-ink,#233b30)}.ds-field{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:48px;width:100%;padding:11px 13px;border:1px solid var(--kit-line,#d8e0d7);border-radius:14px;color:var(--kit-ink,#233b30);background:var(--kit-paper-raised,#fffefa);font-size:16px}.ds-field:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-field:hover{cursor:text}",
+      "refersTo": "field"
     },
     {
-      "name": "Raised surface",
+      "name": "Lilac capture field",
       "kind": "card",
-      "refersTo": "surface-raised",
-      "description": "Flat paper container; not every card receives elevation.",
-      "html": "<section class=\"ds-surface\"><h2>Наблюдения</h2><p>Записи о самочувствии собаки</p></section>",
-      "css": ".ds-surface{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);border:1px solid var(--kit-line,#d8e0d7);border-radius:var(--kit-radius-surface,20px);background:var(--kit-paper-raised,#fffefa);color:var(--kit-ink,#233b30);box-shadow:none}.ds-surface h2{font-size:21px;font-weight:700;line-height:1.22;letter-spacing:-.025em}.ds-surface p{font-size:14px;line-height:1.45;color:var(--kit-ink-soft,#5b685f)}"
+      "description": "Recurring tonal grouping for recording an observation or item.",
+      "html": "<section class=\"ds-record\"><h2>Его история — здесь</h2><p>Наблюдения и события по дням.</p></section>",
+      "css": ".ds-record{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;padding:18px 20px;background:#edeaf4;border-radius:20px;color:#253b34}.ds-record h2{margin:0;font-size:21px;font-weight:550;line-height:1.35;letter-spacing:-.025em}.ds-record p{margin:8px 0 15px;font-size:13px;line-height:1.5;color:#706676}",
+      "refersTo": "record"
     },
     {
-      "name": "Social filter action",
+      "name": "Social filter",
       "kind": "chip",
-      "refersTo": "filter-action",
-      "description": "Mint action within the social filters.",
-      "html": "<button class=\"ds-filter\">Показать рядом</button>",
-      "css": ".ds-filter{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:44px;display:flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:14px;background:var(--kit-sage,#e0eee3);color:var(--companion-forest,#245a40);font-size:12px;font-weight:600;transition:transform 160ms cubic-bezier(.16,1,.3,1)}.ds-filter:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-filter:active{transform:translateY(1px)}.ds-filter:hover{background:var(--kit-sage,#e0eee3)}@media(prefers-reduced-motion:reduce){.ds-filter{transition:none}}"
+      "description": "An existing mint filter action with explicit pressed state.",
+      "html": "<button class=\"ds-filter\" aria-pressed=\"false\">Рядом</button>",
+      "css": ".ds-filter{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:44px;padding:8px 13px;border:0;border-radius:14px;background:#e0eee3;color:var(--companion-forest,#405845);font-size:13px;font-weight:550}.ds-filter[aria-pressed=true]{background:var(--companion-forest,#405845);color:#fffefa}.ds-filter:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-filter:hover{cursor:pointer}.ds-filter:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-filter:active{transform:none}}"
     },
     {
-      "name": "Five-route mobile dock",
+      "name": "Mobile route selection",
       "kind": "nav",
-      "refersTo": "navigation-active-mobile",
-      "description": "Dog-name route, stacked icon and label, mint current state. Static preview does not navigate.",
-      "html": "<nav class=\"ds-nav\" aria-label=\"Основные разделы\"><button aria-current=\"page\"><svg viewBox=\"0 0 48 48\" aria-hidden=\"true\"><path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\" d=\"M26.815 4.16c7.235 3.211 12.719 7.43 15.554 9.867 1.433 1.232 2.232 3.005 2.33 4.892C44.836 21.51 45 25.565 45 30c0 3.412-.097 6.706-.204 9.293a5.69 5.69 0 0 1-5.512 5.47C35.824 44.882 30.689 45 24 45S12.177 44.882 8.716 44.764a5.69 5.69 0 0 1-5.512-5.47A230 230 0 0 1 3 30c0-4.435.165-8.49.3-11.081.1-1.887.898-3.66 2.331-4.892 2.835-2.438 8.32-6.656 15.554-9.867a6.94 6.94 0 0 1 5.63 0M16 38h16\"/></svg><span>Главная</span></button><button><svg viewBox=\"0 0 48 48\" aria-hidden=\"true\"><path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\" d=\"M24 20c-6.334 0-11.686 5.531-13.414 12.635-.76 3.124.386 6.44 3.199 7.998C16.015 41.868 19.332 43 24 43s7.986-1.132 10.216-2.367c2.813-1.558 3.958-4.874 3.198-7.998C35.686 25.53 30.334 20 24 20M3 18.444C3 21.206 4.79 24 7 24s4-2.794 4-5.556S9.21 14 7 14s-4 1.683-4 4.444m42 0C45 21.206 43.21 24 41 24s-4-2.794-4-5.556S38.79 14 41 14s4 1.683 4 4.444m-31.5-9c0 2.762 1.79 5.556 4 5.556s4-2.794 4-5.556S19.71 5 17.5 5s-4 1.683-4 4.444m21 0c0 2.762-1.79 5.556-4 5.556s-4-2.794-4-5.556S28.29 5 30.5 5s4 1.683 4 4.444\"/></svg><span>Боня</span></button><button><svg viewBox=\"0 0 48 48\" aria-hidden=\"true\"><path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\" d=\"M16.84 5c-4.587.609-8.783 1.998-11.205 2.917-1.349.512-2.229 1.77-2.305 3.21C3.19 13.781 3 18.706 3 25.9c0 6.878.174 11.682.312 14.41.067 1.341 1.427 2.189 2.694 1.744C12.036 39.936 16.84 39.2 16.84 39.2 24 40.15 31.159 43 31.159 43c4.588-.609 8.784-1.998 11.206-2.917 1.349-.512 2.229-1.77 2.305-3.21.14-2.655.33-7.579.33-14.773 0-6.878-.174-11.682-.312-14.41-.067-1.341-1.427-2.189-2.694-1.744C35.964 8.064 31.16 8.8 31.16 8.8 24 5.95 16.841 5 16.841 5Zm-.19 34.151V5.126m14.7 3.724v34.025\"/></svg><span>Карта</span></button><button><svg viewBox=\"0 0 48 48\" aria-hidden=\"true\"><g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\"><path d=\"M42 21c0 12.919-13.35 22.128-17.056 24.436a1.77 1.77 0 0 1-1.888 0C19.351 43.128 6 33.919 6 21c0-9.941 8.059-18 18-18s18 8.059 18 18\" /><path d=\"M32.942 23.822a7.2 7.2 0 0 0 .873-5.38c-.911-4.163-5.957-5.864-9.1-3.074-.249.22-.47.473-.715.725-.245-.252-.466-.506-.715-.725-3.143-2.79-8.189-1.089-9.1 3.074a7.2 7.2 0 0 0 .873 5.38c1.592 2.58 4.09 4.63 6.597 6.48a3.96 3.96 0 0 0 4.69 0c2.508-1.85 5.005-3.9 6.597-6.48\" /></g></svg><span>Гав</span></button><button><svg viewBox=\"0 0 48 48\" aria-hidden=\"true\"><g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\"><path d=\"M14.823 3.653C13.744 3.824 13 4.766 13 5.86a7.14 7.14 0 0 0 4.37 6.583C9.581 15.882 4 24.837 4 32.25 4 41.639 12.954 45 24 45s20-3.361 20-12.75c0-7.413-5.583-16.368-13.37-19.808A7.14 7.14 0 0 0 35 5.859c0-1.093-.744-2.035-1.823-2.206C31.357 3.364 28.225 3 24 3s-7.358.364-9.177.653\" /><path d=\"M17 12.5s3 .5 7 .5 7-.5 7-.5\" /></g></svg><span>Вещи</span></button></nav>",
-      "css": ".ds-nav{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:8px 6px;border-top:1px solid var(--kit-line,#d8e0d7);background:rgb(251 252 248 / 96%);box-shadow:0 -5px 22px rgb(39 73 49 / 4%);backdrop-filter:blur(14px)}.ds-nav button{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:54px;padding:4px 2px;border:0;border-radius:12px;background:transparent;color:var(--kit-ink-soft,#5b685f);transition:transform 160ms cubic-bezier(.16,1,.3,1)}.ds-nav button[aria-current]{background:var(--kit-sage,#e0eee3);color:var(--companion-forest,#245a40)}.ds-nav svg{width:23px;height:23px}.ds-nav span{display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:14px;font-weight:600;text-align:center}.ds-nav button:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-nav button:active{transform:translateY(1px)}.ds-nav button:hover{color:var(--kit-ink,#233b30)}@media(prefers-reduced-motion:reduce){.ds-nav button{transition:none}}"
+      "description": "Mint belongs to the icon tile, never the entire active route.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Основные разделы\"><button aria-current=\"page\"><span class=\"ds-nav-icon\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M3 10 12 3l9 7v11h-6v-7H9v7H3Z\"/></svg></span><span>Главная</span></button><button><span class=\"ds-nav-icon\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg></span><span>Вещи</span></button></nav>",
+      "css": ".ds-nav{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;display:flex;gap:6px;padding:8px 6px;background:rgb(251 252 248 / 96%);border-top:1px solid #d8e0d7}.ds-nav button{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:54px;padding:4px 2px;border:0;border-radius:12px;background:transparent;color:#617067;font-size:10px;font-weight:400;line-height:14px}.ds-nav-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:8px}.ds-nav button[aria-current=page]{color:#405845;font-weight:600}.ds-nav button[aria-current=page] .ds-nav-icon{background:#dce9d9}.ds-nav button:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-nav button:hover{cursor:pointer}.ds-nav button:active{opacity:.8}",
+      "refersTo": "navigation-active-icon"
+    },
+    {
+      "name": "Flat domain row",
+      "kind": "custom",
+      "description": "A full-width index row with a straight divider.",
+      "html": "<button class=\"ds-row\"><span class=\"ds-row-icon\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M3 10 12 3l9 7v11h-6v-7H9v7H3Z\"/></svg></span><span><b>Паспорт и привычки</b><small>Порода, характер, правила знакомства</small></span></button>",
+      "css": ".ds-row{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;display:flex;align-items:center;gap:10px;width:100%;min-height:69px;padding:14px 0;border:0;border-bottom:1px solid #38534016;border-radius:0;background:transparent;color:#253b34;text-align:left;box-shadow:none}.ds-row-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:#eeecf3;color:#766786;flex:none}.ds-row b{display:block;font-size:14px;font-weight:600;line-height:1.35}.ds-row small{display:block;margin-top:4px;font-size:11px;font-weight:400;line-height:1.4;color:#647167}.ds-row:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-row:hover{cursor:pointer}.ds-row:active{opacity:.8}",
+      "refersTo": "domain-row"
+    },
+    {
+      "name": "Arched dog identity",
+      "kind": "custom",
+      "description": "Honest monogram fallback inside the reusable arched portrait.",
+      "html": "<button class=\"ds-portrait\" aria-label=\"Изменить фото собаки\">П</button>",
+      "css": ".ds-portrait{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;width:88px;height:100px;border:0;border-radius:50px 50px 24px 24px;overflow:hidden;background:#e8eddf;color:#405845;font-size:38px;font-weight:550;box-shadow:none}.ds-portrait:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-portrait:hover{cursor:pointer}.ds-portrait:active{opacity:.8}"
     }
   ],
   "narrative": {
-    "northStar": "A Familiar Pocket Companion",
-    "overview": "Псё is a warm, precise, protective companion for daily life with one dog. Its owner-approved iOS watercolor world uses familiar system Cyrillic, calm forest actions, soft paper, and diffuse mint–lilac light. The dog remains the personal anchor; typography and usable controls carry the hierarchy.\n\nThis document records the local iOS watercolor v5 implementation, not a production-release claim. It refreshes the superseded Living Field Guide direction using app/companion.css, the current shared stylesheet cascade, and implemented route components. PRODUCT.md remains authoritative for privacy, honest state feedback, and accessible interaction; the first-screen composition and verification status stay in artifacts/design-v5/BRIEF.md.",
+    "northStar": "Дневник",
+    "overview": "Псё is a warm, precise, protective journal for daily life with a dog. The selected B «Дневник» world gives chronology and one observation action visual priority: native Cyrillic system type, muted forest controls, lilac capture fields, and a near-white paper canvas with a mild watercolor wash. The dog is a personal identity anchor, not decorative dashboard imagery.\n\nThis records the locally built journal v6, not a deployment. The owner selected B on 2026-09-06; that explicit choice supersedes the rejected v5 visual system. Evidence is app/companion.css, the active stylesheet cascade, and the implemented journal/profile components. PRODUCT.md still governs privacy, honest state feedback, and accessible interaction; surface composition and verification evidence belong in artifacts/design-v6/BRIEF.md.",
     "keyCharacteristics": [
-      "System typography throughout the active companion shell, with compact sentence-case headings.",
-      "Forest primary actions and readable green-black text over soft paper.",
-      "Mint–lilac background washes, quiet dividers, and selective ambient depth.",
-      "Five personal routes with a safe-area-aware mobile dock and responsive desktop rails.",
-      "Real map-first Гав, with paper controls and existing consent-aware social states."
+      "Native system typography with light display emphasis and clear working labels.",
+      "Muted forest actions inside restrained lilac and paper fields.",
+      "Flat chronological and domain rows with quiet straight dividers.",
+      "A compact wordmark, real dog identity, and an arched profile portrait.",
+      "Five persistent destinations, a safe-area-aware dock, and a responsive desktop workspace."
     ],
     "rules": [
       {
         "name": "The Forest Action Rule",
-        "body": "Forest carries the primary action; pale mint supports selection. Lilac and other pastel fields provide atmosphere or context, never a substitute for a readable label.",
+        "body": "Forest identifies the decisive action; lilac groups capture and reflection, while mint marks a quiet selected or completed state. None replaces a readable label.",
         "section": "colors"
       },
       {
         "name": "The Familiar Type Rule",
-        "body": "Use the owner-approved system stack for both headings and working text; do not restore the superseded Unbounded/Manrope display pairing.",
+        "body": "Use the owner-pinned native system stack for both headings and working text; do not restore the superseded custom display pairing.",
         "section": "typography"
       },
       {
-        "name": "The Quiet Depth Rule",
-        "body": "Use diffuse shadows for actionable paper surfaces and temporary sheets; keep ordinary records and structural containers flat.",
+        "name": "The Quiet Paper Rule",
+        "body": "Chronology and indexes stay flat. Use a small ambient shadow for an action or floating working surface, not for every record.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do keep Псё as the product name and use the selected dog’s actual name for the profile route.",
-      "Do preserve the existing five routes, real map interactions, and explicit privacy and consent states.",
-      "Do use forest actions, soft-paper surfaces, and mint–lilac atmosphere together.",
-      "Do retain visible focus, readable text, safe-area spacing, and reduced-motion behavior.",
-      "Do ground new surfaces in the current stylesheet cascade and actual states rather than historical screenshots."
+      "Do keep Псё as the product name and use the selected dog’s actual name for the profile destination.",
+      "Do pair forest actions with lilac capture fields, paper, and mild watercolor atmosphere.",
+      "Do preserve straight row dividers, the arched identity portrait, and real chronological labels.",
+      "Do keep all five routes, real map interactions, explicit privacy states, visible focus, and device safe-area spacing.",
+      "Do show actual records and honest empty, loading, error, disabled, and permission states."
     ],
     "donts": [
       "Don’t restore neon lime primary actions, heavy black framing, or oversized editorial display typography.",
-      "Don’t turn the watercolor atmosphere into decorative cards that compete with the next useful action.",
-      "Don’t substitute a fake map or discovery teaser for the functioning Гав workspace.",
-      "Don’t hide permission, loading, error, empty, or disabled states behind decorative certainty.",
-      "Don’t promote leftover legacy styles or one-off flourishes into reusable design tokens."
+      "Don’t turn ordinary timeline and index rows into a grid of elevated cards.",
+      "Don’t use the approved comp’s illustrative dog, dates, or records as fabricated product data.",
+      "Don’t replace a functioning map with a decorative imitation or conceal sharing and consent boundaries.",
+      "Don’t promote leftover compatibility styles or one-off flourishes into new system rules."
     ]
   }
 }

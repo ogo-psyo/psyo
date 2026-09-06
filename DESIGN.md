@@ -1,270 +1,261 @@
 ---
-name: "Псё"
-description: "A calm iOS-like dog companion with system typography, forest actions, and mint–lilac watercolor light."
+name: "Псё — Дневник"
+description: "A daily dog journal in native system type, muted forest, lilac paper, and quiet chronology."
 colors:
-  forest: "#245a40"
-  ink: "#233b30"
-  ink-soft: "#5b685f"
-  paper: "#f4f6f2"
+  forest: "#405845"
+  ink: "#253b34"
+  ink-soft: "#617067"
+  paper: "#fdfcf9"
   paper-raised: "#fffefa"
-  line: "#d8e0d7"
-  line-strong: "#456451"
-  mint: "#e0eee3"
-  moss: "#365c46"
-  blue: "#deedf0"
-  lilac: "#e8e3f3"
-  danger: "#a63f3f"
-  yellow: "#f5e9c6"
-  pink: "#efdde3"
+  lilac: "#edeaf4"
+  lilac-ink: "#706676"
+  mint: "#e7eee0"
+  nav-mint: "#dce9d9"
+  line: "#dfe5dc"
+  control-ink: "#233b30"
+  control-line: "#d8e0d7"
   focus-blue: "#315ea8"
+  danger: "#a63f3f"
 typography:
   display:
-    fontFamily: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
-    fontSize: "30px"
-    fontWeight: 730
-    lineHeight: 1.15
-    letterSpacing: "-0.025em"
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontSize: "36px"
+    fontWeight: 550
+    lineHeight: 1.12
+    letterSpacing: "-0.033em"
   headline:
-    fontFamily: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
     fontSize: "21px"
-    fontWeight: 700
-    lineHeight: 1.22
+    fontWeight: 550
+    lineHeight: 1.35
     letterSpacing: "-0.025em"
   title:
-    fontFamily: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
-    fontSize: "18px"
-    lineHeight: 1.3
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontSize: "17px"
+    fontWeight: 600
+    lineHeight: 1.35
     letterSpacing: "-0.025em"
   body:
-    fontFamily: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
-    fontSize: "14px"
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontSize: "13px"
     fontWeight: 400
-    lineHeight: 1.45
+    lineHeight: 1.5
+  row-title:
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontSize: "14px"
+    fontWeight: 600
+    lineHeight: 1.35
   label:
-    fontFamily: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
     fontSize: "12px"
-    fontWeight: 700
+    fontWeight: 400
+    lineHeight: 1.5
   control:
-    fontFamily: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
-    fontSize: "15px"
-    fontWeight: 600
-    lineHeight: 1
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontSize: "14px"
+    fontWeight: 550
   navigation-mobile:
-    fontFamily: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
-    fontSize: "11px"
-    fontWeight: 600
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontSize: "10px"
+    fontWeight: 400
     lineHeight: "14px"
 rounded:
-  compact: "12px"
+  nav-icon: "8px"
+  row-icon: "11px"
   control: "14px"
+  journal-action: "15px"
   card: "16px"
-  identity: "18px"
-  surface: "20px"
+  record: "20px"
+  status: "22px"
   sheet: "24px"
 spacing:
   compact: "8px"
+  row-gap: "10px"
   control-gap: "12px"
   card-inset: "14px"
-  section-inset: "16px"
-  page-inset: "20px"
-  section-gap: "24px"
+  section-inset: "20px"
+  page-inset: "24px"
+  desktop-inset: "32px"
 components:
   button-primary:
     backgroundColor: "{colors.forest}"
-    textColor: "{colors.paper-raised}"
+    textColor: "#fff"
     typography: "{typography.control}"
-    rounded: "{rounded.control}"
-    height: "48px"
-    padding: "0 16px"
-  button-care:
-    backgroundColor: "{colors.forest}"
-    textColor: "{colors.paper-raised}"
-    typography: "{typography.control}"
-    rounded: "{rounded.control}"
-    height: "48px"
-    padding: "0 16px"
+    rounded: "{rounded.journal-action}"
+    height: "49px"
+    padding: "12px 14px"
+    width: "100%"
   button-secondary:
     backgroundColor: "transparent"
-    textColor: "{colors.ink}"
-    typography: "{typography.control}"
+    textColor: "{colors.control-ink}"
     rounded: "{rounded.control}"
     height: "48px"
-    padding: "0 16px"
   button-ghost:
     backgroundColor: "transparent"
-    textColor: "{colors.ink}"
-    typography: "{typography.control}"
+    textColor: "{colors.control-ink}"
     rounded: "{rounded.control}"
     height: "48px"
-    padding: "0 16px"
-  button-danger:
-    backgroundColor: "transparent"
-    textColor: "{colors.danger}"
-    typography: "{typography.control}"
-    rounded: "{rounded.control}"
-    height: "48px"
-    padding: "0 16px"
   field:
     backgroundColor: "{colors.paper-raised}"
-    textColor: "{colors.ink}"
+    textColor: "{colors.control-ink}"
     rounded: "{rounded.control}"
     height: "48px"
     padding: "11px 13px"
-  surface-raised:
-    backgroundColor: "{colors.paper-raised}"
-    rounded: "{rounded.surface}"
-  surface-flat:
-    backgroundColor: "{colors.mint}"
-    rounded: "{rounded.surface}"
-  navigation-active-mobile:
-    backgroundColor: "{colors.mint}"
+  record:
+    backgroundColor: "{colors.lilac}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.record}"
+    padding: "18px 20px"
+  domain-row:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    height: "69px"
+    padding: "14px 0"
+  navigation-active-icon:
+    backgroundColor: "{colors.nav-mint}"
     textColor: "{colors.forest}"
-    typography: "{typography.navigation-mobile}"
-    rounded: "{rounded.compact}"
-    height: "54px"
-  filter-action:
-    backgroundColor: "{colors.mint}"
-    textColor: "{colors.forest}"
-    rounded: "{rounded.control}"
-    height: "44px"
+    rounded: "{rounded.nav-icon}"
+    size: "30px"
 ---
 
-# Design System: Псё
+# Design System: Псё — Дневник
 
 ## Overview
 
-**Creative North Star: "A Familiar Pocket Companion"**
+**Creative North Star: "Дневник"**
 
-Псё is a warm, precise, protective companion for daily life with one dog. Its owner-approved iOS watercolor world uses familiar system Cyrillic, calm forest actions, soft paper, and diffuse mint–lilac light. The dog remains the personal anchor; typography and usable controls carry the hierarchy.
+Псё is a warm, precise, protective journal for daily life with a dog. The selected B «Дневник» world gives chronology and one observation action visual priority: native Cyrillic system type, muted forest controls, lilac capture fields, and a near-white paper canvas with a mild watercolor wash. The dog is a personal identity anchor, not decorative dashboard imagery.
 
-This document records the local iOS watercolor v5 implementation, not a production-release claim. It refreshes the superseded Living Field Guide direction using app/companion.css, the current shared stylesheet cascade, and implemented route components. PRODUCT.md remains authoritative for privacy, honest state feedback, and accessible interaction; the first-screen composition and verification status stay in artifacts/design-v5/BRIEF.md.
+This records the locally built journal v6, not a deployment. The owner selected B on 2026-09-06; that explicit choice supersedes the rejected v5 visual system. Evidence is app/companion.css, the active stylesheet cascade, and the implemented journal/profile components. PRODUCT.md still governs privacy, honest state feedback, and accessible interaction; surface composition and verification evidence belong in artifacts/design-v6/BRIEF.md.
 
 **Key Characteristics:**
 
-- System typography throughout the active companion shell, with compact sentence-case headings.
-- Forest primary actions and readable green-black text over soft paper.
-- Mint–lilac background washes, quiet dividers, and selective ambient depth.
-- Five personal routes with a safe-area-aware mobile dock and responsive desktop rails.
-- Real map-first Гав, with paper controls and existing consent-aware social states.
+- Native system typography with light display emphasis and clear working labels.
+- Muted forest actions inside restrained lilac and paper fields.
+- Flat chronological and domain rows with quiet straight dividers.
+- A compact wordmark, real dog identity, and an arched profile portrait.
+- Five persistent destinations, a safe-area-aware dock, and a responsive desktop workspace.
 
 ## Colors
 
-Muted botanical neutrals support a restrained forest action color and pastel contextual fields. The frontmatter owns the exact reusable values; gradient recipes remain in the sidecar.
+Muted forest sits within botanical paper and soft lilac, with low-chroma contextual accents. The frontmatter owns exact reusable colors; the sidecar carries gradient recipes and preview-only tonal ramps.
 
 ### Primary
 
-- **Forest:** Primary and care buttons, social actions, and selected mobile navigation text.
-- **Mint:** Selected mobile route backgrounds, quiet supporting surfaces, and social filter actions.
+- **Forest:** Main capture and care actions, selected navigation text, and supporting action links.
+- **Mint / navigation mint:** Completed chronology points and the selected navigation icon tile, respectively. The whole active navigation button stays transparent.
 
 ### Secondary
 
-- **Moss:** Supporting botanical iconography.
-- **Spatial blue:** Existing spatial and care context fields.
-- **Lilac:** A soft contextual field alongside the mint–lilac atmospheric background.
-- **Pale yellow and pink:** Supporting things and utility surfaces, not competing primary actions.
-- **Danger:** Explicit destructive controls; never infer danger from color without text.
+- **Lilac / lilac ink:** The reusable capture field and its supporting copy. The home status panel uses a related pale lilac gradient.
+- **Danger:** Explicit destructive controls with a written label. Existing pale blue and ochre domain icon fields remain contextual, not primary actions.
 
 ### Neutral
 
-- **Ink / soft ink:** Primary text and secondary explanation respectively.
-- **Paper / raised paper:** Continuous canvas and readable working surfaces.
-- **Line / strong line:** Quiet dividers and stronger control boundaries.
-- **Focus blue:** Keyboard focus, not a route or brand accent.
+- **Ink / soft ink:** Journal foreground and secondary record copy.
+- **Paper / raised paper:** Continuous reading canvas and working fields.
+- **Line:** Timeline connectors; list dividers are lower-opacity forest strokes.
+- **Control ink / control line:** Shared secondary controls and editors preserve these slightly different incumbent values.
+- **Focus blue:** Inherited visible keyboard focus, separate from the forest action role.
 
-**The Forest Action Rule.** Forest carries the primary action; pale mint supports selection. Lilac and other pastel fields provide atmosphere or context, never a substitute for a readable label.
+**The Forest Action Rule.** Forest identifies the decisive action; lilac groups capture and reflection, while mint marks a quiet selected or completed state. None replaces a readable label.
 
 ## Typography
 
 **Display Font:** Native system sans (Apple system, BlinkMacSystemFont, Segoe UI, sans-serif).
 **Body Font:** The same stack.
 
-The explicit owner-approved system face takes precedence over generic custom-display-font guidance. Headings are sentence case with balanced wrapping and slight negative tracking. Working copy is lighter than headings; buttons use medium emphasis rather than poster-like weight.
+The user explicitly pinned system typography; that decision overrides generic custom-display advice. Sentence-case headings use modest negative tracking and balanced wrapping. Weight, spacing, and chronological alignment do more work than a large type-scale jump.
 
 ### Hierarchy
 
-- **Display:** Standard route headings use the frontmatter display role; narrow screens below 360px reduce them to 28px. The desktop home greeting is 34px.
-- **Headline:** Section headings use the headline role.
-- **Title:** Tertiary headings use the title role; the compact dog identity has a distinct 20px, 700-weight name.
-- **Body:** Supporting explanatory copy uses the body role; existing detailed records retain their contextual sizes.
-- **Label:** Field labels use the label role. Mobile route labels use the separate navigation role and truncate long dog names.
-- **Control:** Shared buttons use the control role. Inputs, selects, and textareas remain 16px for phone readability and native zoom behavior.
+- **Display:** The reusable page-title role in the frontmatter. Profile identity is a nearby (34px) variant; ordinary secondary route headings use (30px).
+- **Headline:** The record invitation heading; no oversized promotional hero.
+- **Title:** The journal section heading. Compact status, profile index, and recent-history headings use (16px).
+- **Body:** Supporting capture and empty-state copy. Timeline titles use the row-title size with a looser (1.5) line height.
+- **Label:** Dates, descriptions, and quiet links; tighter profile metadata uses (11px). Time columns use tabular numerals.
+- **Control:** Journal capture actions. Shared secondary controls retain their existing (15px) text; editable inputs remain (16px).
+- **Navigation:** Compact mobile labels; active text increases to (600) weight without enlarging the entire button.
 
-**The Familiar Type Rule.** Use the owner-approved system stack for both headings and working text; do not restore the superseded Unbounded/Manrope display pairing.
+**The Familiar Type Rule.** Use the owner-pinned native system stack for both headings and working text; do not restore the superseded custom display pairing.
 
 ## Layout
 
-The phone is primary. Standard journey pages use 20px horizontal insets and 24px section gaps; below 360px the inset becomes 16px. The page reserves bottom space for the dock and device safe area. Scenario choices form a two-column row system, not a grid of competing hero cards.
+The journal is a continuous reading column, not a second phone inside the app. Home and profile share a maximum width of (760px), standard phone insets from the frontmatter, and a dock clearance of (100px) plus bottom safe area. Below (360px), horizontal insets become (19px), the masthead shortens from (70px) to (64px), and compact row copy steps down. At desktop width, the masthead is (80px) and the reading column uses the desktop inset.
 
-The mobile dock spans the viewport edge to edge, with five equal destinations, icon above label, 54px route targets, a quiet top divider, and safe-area padding. Its routes are **Главная → dog name (Профиль fallback) → Карта → Гав → Вещи**. The full dog name remains the control’s accessible text even when visually truncated.
+Home expresses day/status → journal → assistant; profile expresses identity → capture → domains → recent history. These are the approved surfaces, not a requirement to copy identical composition onto maps or editors. Chronology uses a time column (40px), a circular point column (28px), then fluid text; long record titles clamp to two lines while the existing destination opens their context. Domain and recent-history rows have straight, full-width dividers, no card frame, and flexible text.
 
-At 760px the shell becomes a desktop workspace: 190px navigation, fluid content, and a 260px context rail. Between 760px and 1100px the context rail is hidden and navigation narrows to 168px. Journey content uses 32px horizontal padding; the home content has an 800px maximum width and 26px section gaps. Desktop navigation uses horizontal icon–label rows, not the mobile stacked arrangement.
+Below (760px), the fixed full-width dock has five equal icon-and-label destinations: Главная → dog name (Профиль fallback) → Карта → Гав → Вещи. It reserves safe-area padding and uses route targets at least (54px) high. The dog name may truncate visually but remains the control’s accessible text.
+
+At (760px), the shell becomes a desktop workspace with (190px) navigation and a (260px) context rail around fluid content. Between (760px) and (1100px), the context rail is hidden and navigation narrows to (168px). Desktop route rows are horizontal. The separate assistant CTA retains its dark treatment; transparent route resets apply only to destination buttons.
 
 ## Elevation & Depth
 
-Depth is hybrid: diffuse mint–lilac radial washes establish the canvas; ordinary records stay flat; selected paper actions receive a low ambient shadow. Identity surfaces use a pale linear wash without a shadow. The dark care action and temporary bottom sheets receive stronger but soft elevation. The mobile dock uses a translucent paper surface, subtle upper shadow, and backdrop blur.
+Depth is restrained and material-led. Static botanical and lilac radial washes sit behind paper; capture panels use tonal grouping; ordinary journal rows and profile portrait stay shadowless. Primary journal actions have a very small soft shadow. Floating social controls and scenario workspaces retain a low ambient shadow; temporary sheets use stronger upward separation. The dock is translucent paper with a quiet upper shadow and blur.
 
 ### Shadow Vocabulary
 
-- **Ambient paper:** Shared low shadow for freeform scenarios, scenario workspaces, and social controls.
-- **Primary action:** Small forest-tinted button shadow.
-- **Care action:** More pronounced ambient depth for the nearest-care action.
-- **Sheet:** Upward diffuse shadow separates temporary assistant, document, and create-dog sheets.
-- **Dock:** Very light upper shadow supports the bottom navigation boundary.
+- **Journal action:** A tiny forest-tinted lift beneath the decisive action.
+- **Ambient paper:** Floating social controls and opened scenario workspaces.
+- **Sheet:** Soft upward separation for temporary document, assistant, and create-dog sheets.
+- **Dock:** Subtle upper boundary; not a floating pill.
 
-Exact shadow and gradient values are recorded in the sidecar rather than duplicated as primitive tokens.
+Exact recipes live in the sidecar.
 
-**The Quiet Depth Rule.** Use diffuse shadows for actionable paper surfaces and temporary sheets; keep ordinary records and structural containers flat.
+**The Quiet Paper Rule.** Chronology and indexes stay flat. Use a small ambient shadow for an action or floating working surface, not for every record.
 
-Motion uses brief state transitions and a small scenario-workspace reveal. Reduced-motion mode removes animation, transitions, and smooth scrolling; whole-screen watercolor animation is disabled.
+Controls inherit short (160ms) color/border/transform transitions. Scenario reveal is a small (200ms) movement, not page choreography. Reduced-motion mode removes animation, transitions, and smooth scrolling; the watercolor canvas is static.
 
 ## Shapes
 
-Controls have gently rounded corners; cards and identity surfaces use successively softer radii. Larger bottom sheets round only their top corners. Quiet one-pixel dividers separate rows, while actionable cards can omit borders. The phone shell and mobile dock remain full-width with no artificial device-frame rounding. Map workspaces clip to a rounded boundary without replacing real map geometry with illustration.
+Capture panels have soft rounded corners; journal actions are slightly tighter. Domain icon tiles are compact rounded squares. Timeline points and the masthead dog avatar are circular. The profile portrait is a distinct arch with rounded lower corners (50px 50px 24px 24px), normally (88px × 100px), narrowing to (73px × 91px) below (360px). Preserve this silhouette when replacing its real photo or monogram.
+
+Index and recent-history rows have zero corner radius and straight dividers. The mobile dock and shell are full-width with no simulated device-frame rounding. Temporary sheets round their top corners only. Maps retain their real geometry within a gently rounded workspace.
 
 ## Components
 
 ### Buttons
 
-Forest primary and care variants share paper-colored text and restrained elevation. Shared buttons have a 48px minimum height; their frontmatter height describes the baseline, not a fixed cap. Secondary buttons are transparent with an ink outline; legacy secondary controls can use raised paper. Ghost buttons remove the visible boundary; danger buttons use a danger outline and text. Preserve disabled and busy behavior from the shared Button component. Pointer hover and press provide small movement; focus uses a 3px blue outline with 3px offset.
+The journal primary action is full width, forest with white text, an inline SVG, and the frontmatter’s (49px) baseline minimum height; it can grow with content. Shared primary/care controls carry the same muted forest language. Secondary controls use transparent paper-facing surfaces with a quiet or ink outline; ghost controls remove that outline. Danger uses explicit destructive text and border. Preserve shared disabled/busy behavior. Keyboard focus is a visible blue outline (3px) with offset (3px); existing pointer feedback is brief and removed in reduced-motion mode.
 
 ### Chips / Filter Actions
 
-Social filter actions use mint with forest text, 14px corners, and a 44px minimum target. Selected social mode buttons use forest with paper text. Labels continue to explain the state instead of relying on the fill alone.
+Social filters use pale mint and forest text with touch-sized controls; selected social modes use forest and raised-paper text. Labels and pressed state communicate selection. Do not borrow the legacy glossy badge treatment as a journal primitive.
 
 ### Cards / Containers
 
-Working paper and social cards commonly use 16px corners and the shared ambient shadow only where actionable or floating. Shared Surface containers retain 20px corners and remain flat; raised and outlined variants use the quiet line. Identity and care actions use 18px corners. Plain scenario rows use bottom dividers and a pale selected state.
+Lilac is the recurring capture container on profile and things; the home status panel is a related gradient with a slightly softer radius. Keep one primary action inside the capture field. Ordinary history stays outside card frames. Raised-paper working surfaces remain available for editors, scenarios, and floating map controls.
 
 ### Inputs / Fields
 
-Fields use raised paper, ink text, quiet borders, 14px corners, 16px input text, and a 48px minimum height. The shared field inset is 11px vertically and 13px horizontally. Keep visible labels, hints, and blue keyboard focus; errors and disabled states remain functional source states, not new decorative variants.
+Inputs, selects, and textareas use raised paper, readable ink, quiet borders, the shared control radius, and visible labels/hints. Shared fields have a (48px) baseline minimum height with the frontmatter inset; text is (16px). Existing validation, confirmation, source errors, and disabled states remain functional states, not decorative variants.
 
 ### Navigation
 
-The mobile active route has a mint background and forest text; all five destinations retain inline SVG icons and text. On desktop the dock becomes a left rail with horizontal icon–label rows. Assistant entry is available from the home masthead and desktop navigation; a floating assistant does not cover the mobile dock.
+Only the active icon tile receives pale mint; its route background remains transparent and shadowless. Inline SVG icons accompany labels. Preserve the five-route model, real dog name, active-page semantics, and mobile safe area. Assistant entry is available in the journal/profile and desktop rail without covering the mobile dock.
 
-### Compact Dog Identity and Care Action
+### Journal Chronology and Profile Index
 
-The dog identity is a compact avatar, real dog name, breed, and short factual line on a pale mint–lilac wash. It opens the dog profile. A separate forest care action uses a calendar icon and real care text and opens existing care/calendar behavior. The brand is always Псё, not the dog’s name.
+A vertical hairline connects circular event markers beside a tabular time column. Completed points use pale mint and a check; titles and descriptions explain the event. Index rows use a contextual icon tile, two-line hierarchy, and a quiet chevron. Recent history uses a compact date column. Every row opens an existing record flow; empty history is written plainly rather than filled with invented events.
 
-### Map-first Гав
+### Dog Identity and Map-first Гав
 
-Гав opens the live social-map workspace directly. Its existing map, location-dependent state, filters, social mode switch, and consent-aware cards remain real interactive surfaces. Raised paper overlays and forest actions share the same visual vocabulary as the other routes. Approximate location, contact release, invitations, and empty states must not be visually disguised.
+The masthead keeps the product name distinct from the selected dog. The profile arch is an edit control with a real identity image or honest monogram fallback. Гав remains the live social-map workspace: location, filters, invitations, contact release, and consent-aware states stay explicit. Its overlays share paper, forest, and restrained ambient depth; they are not substitutes for the map.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- Do keep Псё as the product name and use the selected dog’s actual name for the profile route.
-- Do preserve the existing five routes, real map interactions, and explicit privacy and consent states.
-- Do use forest actions, soft-paper surfaces, and mint–lilac atmosphere together.
-- Do retain visible focus, readable text, safe-area spacing, and reduced-motion behavior.
-- Do ground new surfaces in the current stylesheet cascade and actual states rather than historical screenshots.
+- Do keep Псё as the product name and use the selected dog’s actual name for the profile destination.
+- Do pair forest actions with lilac capture fields, paper, and mild watercolor atmosphere.
+- Do preserve straight row dividers, the arched identity portrait, and real chronological labels.
+- Do keep all five routes, real map interactions, explicit privacy states, visible focus, and device safe-area spacing.
+- Do show actual records and honest empty, loading, error, disabled, and permission states.
 
 ### Don't:
 
 - Don’t restore neon lime primary actions, heavy black framing, or oversized editorial display typography.
-- Don’t turn the watercolor atmosphere into decorative cards that compete with the next useful action.
-- Don’t substitute a fake map or discovery teaser for the functioning Гав workspace.
-- Don’t hide permission, loading, error, empty, or disabled states behind decorative certainty.
-- Don’t promote leftover legacy styles or one-off flourishes into reusable design tokens.
+- Don’t turn ordinary timeline and index rows into a grid of elevated cards.
+- Don’t use the approved comp’s illustrative dog, dates, or records as fabricated product data.
+- Don’t replace a functioning map with a decorative imitation or conceal sharing and consent boundaries.
+- Don’t promote leftover compatibility styles or one-off flourishes into new system rules.
