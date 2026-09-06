@@ -1,0 +1,38 @@
+{
+  "ok": true,
+  "release": "ad4265b05ef5394b38e534bec91636c399dc0b43",
+  "privateApiGuards": [
+    {
+      "path": "/api/map/library?petId=57000000-0000-4000-8000-000000000001",
+      "method": "GET",
+      "status": 401
+    },
+    {
+      "path": "/api/map/library",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/social/requests/57000000-0000-4000-8000-000000000001/meeting",
+      "method": "GET",
+      "status": 401
+    },
+    {
+      "path": "/api/social/requests/57000000-0000-4000-8000-000000000001/meeting",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/map/features",
+      "method": "POST",
+      "status": 401
+    }
+  ],
+  "search": {
+    "status": 200,
+    "resultCount": 1,
+    "allInBounds": true,
+    "stableSourceIds": true
+  },
+  "mutations": "unauthenticated requests only; rejected before write"
+}

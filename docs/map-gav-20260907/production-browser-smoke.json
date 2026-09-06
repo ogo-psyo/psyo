@@ -1,0 +1,66 @@
+{
+  "base": "https://pso-mvp.vercel.app",
+  "results": [
+    {
+      "engine": "chromium",
+      "width": 320,
+      "height": 740,
+      "realTileResponses": 30,
+      "homeAfterMapScroll": true,
+      "gavAttributionInViewport": true,
+      "pageErrors": 0,
+      "mutations": "none; guest demo view only"
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "height": 844,
+      "realTileResponses": 32,
+      "homeAfterMapScroll": true,
+      "gavAttributionInViewport": true,
+      "pageErrors": 0,
+      "mutations": "none; guest demo view only"
+    },
+    {
+      "engine": "chromium",
+      "width": 1280,
+      "height": 720,
+      "realTileResponses": 35,
+      "homeAfterMapScroll": true,
+      "gavAttributionInViewport": true,
+      "pageErrors": 0,
+      "mutations": "none; guest demo view only"
+    },
+    {
+      "engine": "webkit",
+      "width": 320,
+      "height": 740,
+      "realTileResponses": 30,
+      "homeAfterMapScroll": true,
+      "gavAttributionInViewport": true,
+      "pageErrors": 0,
+      "mutations": "none; guest demo view only"
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "height": 844,
+      "realTileResponses": 32,
+      "homeAfterMapScroll": true,
+      "gavAttributionInViewport": true,
+      "pageErrors": 0,
+      "mutations": "none; guest demo view only"
+    },
+    {
+      "engine": "webkit",
+      "width": 1280,
+      "height": 720,
+      "realTileResponses": 35,
+      "homeAfterMapScroll": true,
+      "gavAttributionInViewport": true,
+      "pageErrors": 0,
+      "mutations": "none; guest demo view only"
+    }
+  ],
+  "limits": "Guest production UI only; no authenticated writes, GPS background or physical Telegram claim"
+}

@@ -60,7 +60,7 @@ if (page.includes('nearbyDogs.map')) {
 for (const state of ["props.state === 'loading'", "props.state === 'error'"]) {
   if (!woof.includes(state)) failures.push(`nearby route missing honest state: ${state}`);
 }
-if (!page.includes("state={socialLoadedPet===profile.backendPetId?nearbyState:'loading'}")) failures.push('nearby route does not pass its state to the active workspace');
+if (!page.includes("state={!hasConnectedAccount || !profile.backendPetId ? 'idle' : socialLoadedPet===profile.backendPetId?nearbyState:'loading'}")) failures.push('nearby route does not pass its state to the active workspace');
 
 if (failures.length) {
   console.error(failures.map((failure) => `- ${failure}`).join('\n'));

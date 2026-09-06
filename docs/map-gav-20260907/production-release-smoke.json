@@ -1,0 +1,73 @@
+{
+  "ok": true,
+  "evidence": {
+    "baseUrl": "https://pso-mvp.vercel.app",
+    "strictProd": true,
+    "checks": {
+      "home": {
+        "status": 200,
+        "hasBrand": true,
+        "hasCareCopy": true
+      },
+      "health": {
+        "status": 200,
+        "environment": "production",
+        "release": "ad4265b05ef5394b38e534bec91636c399dc0b43",
+        "identityServiceReady": true,
+        "betterAuthConfigured": false,
+        "flags": {
+          "billing_enabled": false,
+          "plus_paywall_enabled": false,
+          "founder_price_enabled": false,
+          "weekly_summary_enabled": false,
+          "caregiver_invites_enabled": false,
+          "pdf_export_enabled": true,
+          "browser_qa_enabled": false,
+          "lost_mode_enabled": false,
+          "ai_qa_enabled": false,
+          "telegram_notifications_enabled": false,
+          "new_invoices_enabled": false,
+          "public_sharing_enabled": true,
+          "uploads_enabled": true,
+          "avatar_generation_enabled": true
+        }
+      },
+      "entitlements": {
+        "status": 200,
+        "readiness": "blocked",
+        "billingEnabled": false,
+        "paywallEnabled": false
+      },
+      "bootstrap": {
+        "status": 200,
+        "mode": "supabase",
+        "empty": true,
+        "hasPet": false,
+        "hasUser": false
+      },
+      "/legal/privacy": {
+        "status": 200,
+        "bytes": 17091
+      },
+      "/legal/terms": {
+        "status": 200,
+        "bytes": 13473
+      },
+      "/support": {
+        "status": 200,
+        "bytes": 12884
+      },
+      "publicDogCard": {
+        "status": 200,
+        "hasName": true,
+        "hasAllowlistedArea": true
+      },
+      "missingPublicDogCard": {
+        "status": 404
+      },
+      "telegramWebhookWithoutSecret": {
+        "status": 401
+      }
+    }
+  }
+}

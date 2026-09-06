@@ -21,6 +21,7 @@ export type WoofRecommendationEntry = {
 type Props = {
   petId: string;
   error?: string;
+  accessMessage?: string;
   routes:OwnerRouteView[];
   authHeaders:()=>Record<string,string>;
   dogName: string;
@@ -366,7 +367,7 @@ export function ProductionWoofWorkspace(props: Props) {
         <label><span>Темп</span><select value={livePace} onChange={(event) => setLivePace(event.target.value as typeof livePace)}><option value="all">Любой</option><option value="calm">Спокойно</option><option value="balanced">Обычный</option><option value="active">Активно</option></select></label>
         <button type="button" onClick={props.onLocateViewer} disabled={props.locating}><Crosshair />{props.locating ? 'Определяю район…' : props.viewerLocation ? 'Обновить местоположение' : 'Определить местоположение'}</button>
       </section></details>
-      <div className="woof-live-heading" role="status" aria-live="polite"><span className="woof-live-dot" />{props.locating || props.state === 'loading' ? 'Ищу ваш район…' : props.state === 'error' ? 'Не удалось обновить выдачу' : !props.viewerLocation ? 'Укажите область поиска' : `Других Гав поблизости: ${filteredLiveSignals.filter((signal) => !signal.isMine).length}`}</div></div>
+      <div className="woof-live-heading" role="status" aria-live="polite"><span className="woof-live-dot" />{props.accessMessage ? 'Знакомства доступны после входа' : props.locating || props.state === 'loading' ? 'Ищу ваш район…' : props.state === 'error' ? 'Не удалось обновить выдачу' : !props.viewerLocation ? 'Укажите область поиска' : `Других Гав поблизости: ${filteredLiveSignals.filter((signal) => !signal.isMine).length}`}</div></div>
       {selectedSignal && <article className="woof-signal-card" aria-live="polite">
         <div className="woof-signal-main">
           <DogPortrait candidate={{ name: selectedSignal.name, avatarUrl: selectedSignal.avatarUrl }} />
@@ -379,11 +380,11 @@ export function ProductionWoofWorkspace(props: Props) {
           <button type="button" disabled={props.busyId === 'signal'} onClick={() => props.onCloseSignal('completed')}>Завершить</button>
         </div> : <button className="woof-primary" type="button" disabled={props.busyId === selectedSignal.petId} onClick={() => props.onRequest(selectedSignal.petId, 'walk', selectedSignal.id)}>Откликнуться</button>}
       </article>}
-      {props.state === 'error' ? <article className="woof-empty-live woof-error-state" role="alert"><PawPrint /><b>Район не загрузился</b><p>Проверьте соединение — Псё не будет выдавать ошибку за отсутствие собак.</p><button type="button" onClick={() => props.onRetry()}>Повторить</button></article>
+      {props.accessMessage ? <article className="woof-empty-live woof-access-state" role="status"><PawPrint /><b>Познакомимся в Telegram</b><p>{props.accessMessage}</p></article> : props.state === 'error' ? <article className="woof-empty-live woof-error-state" role="alert"><PawPrint /><b>Район не загрузился</b><p>Проверьте соединение — Псё не будет выдавать ошибку за отсутствие собак.</p><button type="button" onClick={() => props.onRetry()}>Повторить</button></article>
         : props.signalReason === 'CITY_NOT_SUPPORTED' ? <article className="woof-empty-live"><PawPrint /><b>Здесь Гав ещё не работает</b><p>Сейчас живые сигналы доступны в Москве и Санкт-Петербурге.</p></article>
           : props.signalReason === 'VIEWER_LOCATION_REQUIRED' ? <article className="woof-empty-live woof-location-state"><Crosshair /><b>Покажите район рядом</b><p>Точная точка не сохраняется — для поиска используется округлённая зона.</p><button type="button" onClick={props.onLocateViewer} disabled={props.locating}>{props.locating ? 'Определяю…' : 'Показать рядом'}</button></article>
             : !selectedSignal && props.state !== 'loading' && <article className="woof-empty-live"><PawPrint /><b>{props.signals.some((signal) => !signal.isMine) ? 'Под эти фильтры пока тихо' : `В радиусе ${props.viewerRadiusKm} км пока тихо`}</b><p>{props.signals.some((signal) => !signal.isMine) ? 'Выберите любое время и темп или расширьте радиус.' : 'Ваш Гав станет первой живой точкой района.'}</p>{props.signals.some((signal) => !signal.isMine) && <button type="button" onClick={() => { setLiveWhen('all'); setLivePace('all'); props.onChangeViewerRadius(15); }}>Показать всех</button>}</article>}
-      {props.signalReason !== 'CITY_NOT_SUPPORTED' && <button ref={composerTriggerRef} className="woof-give-button" type="button" onClick={openSignalComposer}>{ownSignal ? 'Изменить Гав' : 'Дать Гав'}<PawPrint weight="fill" /></button>}
+      {!props.accessMessage && props.signalReason !== 'CITY_NOT_SUPPORTED' && <button ref={composerTriggerRef} className="woof-give-button" type="button" onClick={openSignalComposer}>{ownSignal ? 'Изменить Гав' : 'Дать Гав'}<PawPrint weight="fill" /></button>}
     </>}
 
     {mode === 'meet' && <main ref={feedRef} onScroll={event=>{try{sessionStorage.setItem(`${viewKey}:scroll`,String(event.currentTarget.scrollTop));}catch{/* preference only */}}} className="woof-meet-feed">
@@ -401,7 +402,7 @@ export function ProductionWoofWorkspace(props: Props) {
         <label><span>Ритм</span><select value={meetEnergy} onChange={(event) => setMeetEnergy(event.target.value as typeof meetEnergy)}><option value="all">Любой</option><option value="calm">Спокойный</option><option value="balanced">Уравновешенный</option><option value="active">Активный</option></select></label>
         <p>{props.profile?.coarseLocation ? `Поиск считается от вашего примерного района. Точная точка не показывается.` : 'Разрешите геолокацию или укажите район в анкете — точная точка не сохраняется.'}</p>
       </section>}
-      {props.state === 'error' ? <article className="woof-empty-meet" role="alert"><PawPrint /><h2>Анкеты не загрузились</h2><p>Это сбой соединения, а не пустой поиск.</p><button className="woof-primary" type="button" onClick={() => props.onRetry()}>Повторить</button></article>
+      {props.accessMessage ? <article className="woof-empty-meet" role="status"><PawPrint /><h2>Познакомимся в Telegram</h2><p>{props.accessMessage}</p></article> : props.state === 'error' ? <article className="woof-empty-meet" role="alert"><PawPrint /><h2>Анкеты не загрузились</h2><p>Это сбой соединения, а не пустой поиск.</p><button className="woof-primary" type="button" onClick={() => props.onRetry()}>Повторить</button></article>
       : props.state === 'loading' ? <p role="status">Обновляю анкеты…</p> : filteredCandidates.length > 0 ? <div className="woof-candidate-grid">{filteredCandidates.map((candidate) => <button className="woof-candidate-card" type="button" key={candidate.petId} onClick={() => setSelectedCandidateId(candidate.petId)}>
         <DogPortrait candidate={candidate} />
         <span><b>{candidate.name}</b><small>{[readable(candidate.lifeStage), readable(candidate.temperament), candidate.distance || candidate.district].filter(Boolean).join(' · ')}</small><em>{candidate.reasons.slice(0, 2).join(' · ')}</em></span>

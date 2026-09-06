@@ -46,3 +46,5 @@
 12. Gav mandatory attribution fell under bottom navigation → moved to a dedicated top lane, verified on final A/B screenshot.
 
 Final local/browser evidence is recorded in LEDGER.md; production release evidence will be separate.
+
+13. Guest-only production traversal showed indefinite loading before area choice and generic network failure after a 401. Access prerequisites now take precedence in both modes; guest manual-area browsing does not call authenticated social endpoints. An explicit guest regression is added alongside the two-user test.
