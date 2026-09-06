@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CoarseLocation, SocialCity, SocialProfile, SocialScenario } from '@/lib/socialCore';
 
 const scenarioOptions: Array<{ value: SocialScenario; label: string }> = [
   { value: 'meet', label: 'Знакомство' },
   { value: 'walk', label: 'Прогулка' },
   { value: 'socialize', label: 'Социализация' },
+  { value: 'mating', label: 'Случка' },
 ];
 
 const districtOptions: Record<SocialCity, string[]> = {
@@ -24,6 +25,7 @@ const blankProfile: Omit<SocialProfile, 'petId'> = {
 
 export function SocialProfileSheet({
   dogName,
+  petId,
   profile,
   busy,
   locating,
@@ -32,10 +34,11 @@ export function SocialProfileSheet({
   onLocate,
 }: {
   dogName: string;
+  petId?: string;
   profile: SocialProfile | null;
   busy: boolean;
   locating: boolean;
-  onSave: (draft: Omit<SocialProfile, 'petId'>) => void;
+  onSave: (draft: Omit<SocialProfile, 'petId'>) => boolean | void | Promise<boolean | void>;
   onHide: () => void;
   onLocate: (onReady: (location: CoarseLocation) => void) => void;
 }) {
@@ -47,15 +50,38 @@ export function SocialProfileSheet({
     scenarios: profile.scenarios,
   } : blankProfile);
 
+  const dirtyRef = useRef(false);
+  const hydratedRef = useRef(false);
+  const storageKey = `pso.gav.profile-draft.v1:${petId || profile?.petId || 'guest'}`;
+  const [result, setResult] = useState('');
   useEffect(() => {
-    setDraft(profile ? {
-      discoverable: profile.discoverable,
-      city: profile.city,
-      district: profile.district,
-      coarseLocation: profile.coarseLocation,
-      scenarios: profile.scenarios,
-    } : blankProfile);
+    try {
+      const raw = sessionStorage.getItem(storageKey);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (['moscow', 'saint_petersburg'].includes(saved.city) && Array.isArray(saved.scenarios)) {
+          setDraft(saved); dirtyRef.current = true;
+        }
+      }
+    } catch { /* The form remains usable when session storage is unavailable. */ }
+    hydratedRef.current = true;
+  }, [storageKey]);
+  useEffect(() => {
+    if (!dirtyRef.current && profile) setDraft({ ...profile });
   }, [profile]);
+  useEffect(() => {
+    if (!hydratedRef.current || !dirtyRef.current) return;
+    try { sessionStorage.setItem(storageKey, JSON.stringify(draft)); } catch { /* Keep the live draft. */ }
+  }, [draft, storageKey]);
+  async function save(discoverable: boolean) {
+    setResult('');
+    const confirmed = await onSave({ ...draft, discoverable });
+    if (confirmed === true) {
+      dirtyRef.current = false;
+      try { sessionStorage.removeItem(storageKey); } catch { /* No remote effect. */ }
+      setResult(discoverable ? 'Анкета опубликована' : 'Анкета сохранена скрытой');
+    }
+  }
 
   function toggleScenario(scenario: SocialScenario) {
     setDraft((current) => ({
@@ -69,7 +95,7 @@ export function SocialProfileSheet({
   const canPublish = draft.scenarios.length > 0;
 
   return (
-    <section className="social-profile-sheet" aria-labelledby="social-profile-title">
+    <section onChangeCapture={() => { dirtyRef.current = true; setResult(''); }} className="social-profile-sheet" aria-labelledby="social-profile-title">
       <div className="social-section-heading">
         <div>
           <h3 id="social-profile-title">Анкета {dogName}</h3>
@@ -85,7 +111,7 @@ export function SocialProfileSheet({
           Город
           <select
             value={draft.city}
-            onChange={(event) => setDraft((current) => ({ ...current, city: event.target.value as SocialCity, district: null }))}
+            onChange={(event) => setDraft((current) => ({ ...current, city: event.target.value as SocialCity, district: null, coarseLocation: null }))}
           >
             <option value="moscow">Москва</option>
             <option value="saint_petersburg">Санкт-Петербург</option>
@@ -123,7 +149,7 @@ export function SocialProfileSheet({
         className="social-location-button"
         type="button"
         disabled={locating}
-        onClick={() => onLocate((coarseLocation) => setDraft((current) => ({ ...current, coarseLocation })))}
+        onClick={() => onLocate((coarseLocation) => { dirtyRef.current = true; setDraft((current) => ({ ...current, coarseLocation })); })}
       >
         {locating ? 'Определяю район…' : draft.coarseLocation ? 'Местоположение учтено' : 'Искать ближе ко мне'}
       </button>
@@ -134,14 +160,16 @@ export function SocialProfileSheet({
           className="primary"
           type="button"
           disabled={busy || !canPublish}
-          onClick={() => onSave({ ...draft, discoverable: true })}
+          onClick={() => save(true)}
         >
-          {busy ? 'Сохраняю…' : profile?.discoverable ? 'Сохранить анкету' : 'Показать собаку'}
+          {busy ? 'Сохраняю…' : profile?.discoverable ? 'Сохранить опубликованную' : 'Опубликовать анкету'}
         </button>
+        <button className="secondary" type="button" disabled={busy} onClick={() => save(false)}>Сохранить скрытой</button>
         {profile?.discoverable && (
           <button className="secondary" type="button" disabled={busy} onClick={onHide}>Скрыть анкету</button>
         )}
       </div>
+      {result && <p role="status">{result}</p>}
       {!canPublish && <p className="social-inline-hint">Выбери хотя бы один сценарий.</p>}
     </section>
   );

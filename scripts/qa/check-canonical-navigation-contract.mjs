@@ -31,7 +31,8 @@ for (const forbidden of ["id: 'calendar'", "id: 'card'", "id: 'assistant'", "lab
 
 for (const route of ['today', 'profile', 'map', 'nearby', 'things']) {
   const surface = new RegExp(`\\{(?:hasDog\\s*&&\\s*)?tab\\s*===\\s*['\"]${route}['\"]`);
-  if (!surface.test(page)) failures.push(`primary route has no reachable surface: ${route}`);
+  const persistentMap = route === 'map' && page.includes("(tab === 'map' || mapVisited)") && page.includes("hidden={tab !== 'map'}");
+  if (!surface.test(page) && !persistentMap) failures.push(`primary route has no reachable surface: ${route}`);
 }
 
 for (const route of ['calendar', 'card']) {
@@ -59,7 +60,7 @@ if (page.includes('nearbyDogs.map')) {
 for (const state of ["props.state === 'loading'", "props.state === 'error'"]) {
   if (!woof.includes(state)) failures.push(`nearby route missing honest state: ${state}`);
 }
-if (!page.includes('state={nearbyState}')) failures.push('nearby route does not pass its state to the active workspace');
+if (!page.includes("state={socialLoadedPet===profile.backendPetId?nearbyState:'loading'}")) failures.push('nearby route does not pass its state to the active workspace');
 
 if (failures.length) {
   console.error(failures.map((failure) => `- ${failure}`).join('\n'));

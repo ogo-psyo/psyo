@@ -28,7 +28,7 @@ assert.match(workspace, /примерная зона|точное место с�
 assert.match(workspace, /Хочу познакомиться/);
 assert.match(workspace, /Контакт откроется только после взаимного согласия/);
 assert.doesNotMatch(workspace, /score|свайп|лайк|сердечк/i);
-assert.doesNotMatch(profile, /случк/i, 'рискованный сценарий не должен предлагаться в MVP');
+assert.match(profile, /value: 'mating', label: 'Случка'/, 'GAV-02 preserves every current goal, including mating');
 assert.doesNotMatch(profile, /telegramUsername|telegram_username/);
 assert.match(requests, /Заблокировать/);
 assert.match(requests, /Пожаловаться/);

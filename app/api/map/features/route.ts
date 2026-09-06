@@ -1,3 +1,6 @@
+import { measuredMapOperation } from '@/lib/server/mapMetrics';
+import { createHash } from 'node:crypto';
+import { validRouteGaps, routeEwkt, storedRoutePoints } from '@/lib/routeGeometry';
 import { NextResponse } from 'next/server';
 import { blurPublicZoneInput, isValidGeoPoint } from '@/lib/geo';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
@@ -22,18 +25,7 @@ function safeVisibility(value: unknown) {
   return visibilityModes.has(value as string) ? value as 'private' | 'shared' | 'public' : 'private';
 }
 
-function ewktLineString(path: unknown) {
-  if (!Array.isArray(path) || path.length < 2) return null;
-  const points = path.map((point) => {
-    if (!Array.isArray(point) || point.length < 2) return null;
-    const lng = Number(point[0]);
-    const lat = Number(point[1]);
-    if (!isValidGeoPoint({ lat, lng })) return null;
-    return `${lng} ${lat}`;
-  });
-  if (points.some((point) => !point)) return null;
-  return `SRID=4326;LINESTRING(${points.join(', ')})`;
-}
+const ewktLineString = routeEwkt;
 
 function shareUrl(request: Request, id: string) {
   const origin = new URL(request.url).origin;
@@ -68,7 +60,8 @@ export async function GET(request: Request) {
   return NextResponse.json({ features: data ?? [], mode: 'supabase' });
 }
 
-export async function POST(request: Request) {
+export async function POST(request:Request){return measuredMapOperation('route_save',request,()=>measuredMutation(request));}
+async function measuredMutation(request:Request){
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
   const supabase = getSupabaseAdmin();
@@ -131,7 +124,14 @@ export async function POST(request: Request) {
     const durationSeconds = nonNegativeInteger(body.durationSeconds, 60 * 60 * 24);
     const distanceMeters = nonNegativeInteger(body.distanceMeters, 500_000);
 
-    const { data, error } = await supabase.from('map_routes').insert({
+    const retryKey=request.headers.get('idempotency-key');
+    if(retryKey&&retryKey.length>128)return NextResponse.json({error:'INVALID_IDEMPOTENCY_KEY'},{status:400});
+    const hex=retryKey?createHash('sha256').update(`${ownerId}:${retryKey}`).digest('hex'):null;
+    const routeId=hex?`${hex.slice(0,8)}-${hex.slice(8,12)}-4${hex.slice(13,16)}-a${hex.slice(17,20)}-${hex.slice(20,32)}`:crypto.randomUUID();
+    const fingerprint=createHash('sha256').update(JSON.stringify({petId:body.petId,title:body.title.trim(),path:body.path,visibility,description:body.description,routeSource,startedAt,durationSeconds,distanceMeters,pathGaps:body.pathGaps})).digest('hex');
+    const { data:inserted, error } = await supabase.from('map_routes').insert({
+      id:routeId,
+      request_fingerprint:fingerprint,
       owner_id: ownerId,
       pet_id: body.petId || null,
       title: body.title.trim(),
@@ -142,12 +142,19 @@ export async function POST(request: Request) {
       path: lineString,
       share_token: visibility === 'shared' ? crypto.randomUUID() : null,
       route_source: routeSource,
+      path_gaps: validRouteGaps(body.pathGaps, body.path.length),
       started_at: startedAt,
       duration_seconds: durationSeconds,
       distance_meters: distanceMeters,
     }).select('*').single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    let data=inserted;
+    if(error?.code==='23505'&&retryKey){
+      const replay=await supabase.from('map_routes').select('*').eq('id',routeId).eq('owner_id',ownerId).maybeSingle();
+      if(replay.error||replay.data?.request_fingerprint!==fingerprint)return NextResponse.json({error:'IDEMPOTENCY_CONFLICT'},{status:409});
+      data=replay.data;
+    }else if(error)return NextResponse.json({error:'ROUTE_SAVE_FAILED'},{status:500});
+    if(!data)return NextResponse.json({error:'ROUTE_SAVE_FAILED'},{status:500});
     const recommendationId = typeof body.recommendationId === 'string' ? body.recommendationId.trim() : '';
     const recommendationOutcome = recommendationId && process.env.RECOMMENDATIONS_FOUNDATION_ENABLED === 'true'
       ? await linkRecommendationOutcome({
@@ -157,7 +164,8 @@ export async function POST(request: Request) {
       })
       : undefined;
     return NextResponse.json({
-      feature: data,
+      replayed:error?.code==='23505',
+      feature: {...data,path:{type:'LineString',coordinates:storedRoutePoints(data.path)||body.path}},
       shareUrl: visibility === 'shared' ? shareUrl(request, data.share_token) : null,
       ...(recommendationOutcome ? { recommendationOutcome } : {}),
     }, { status: 201 });

@@ -16,6 +16,9 @@ export type ZoneFeature = {
 export type MapFeature = {
   id: string;
   type: 'point' | 'route';
+  pathGaps?: number[];
+  pointKind?: 'ownerPlace'|'area';
+  radiusMeters?:number;
   title: string;
   lat?: number | string | null;
   lng?: number | string | null;
@@ -27,6 +30,7 @@ export type MapFeature = {
 export type MapLayerFilter = 'all' | 'routes' | 'places' | 'risks';
 export type MapUserLocation = { lat: number; lng: number; accuracy?: number };
 export type MapFocusPoint = { lat: number; lng: number; token: number };
+export type MapBounds = {south:number;west:number;north:number;east:number};
 export type MapSearchPoint = { lat: number; lng: number; title: string; detail?: string };
 
 export type LiveMapProps = {
@@ -35,11 +39,16 @@ export type LiveMapProps = {
   picked?: { lat: number; lng: number } | null;
   drawMode?: 'none' | 'point' | 'route';
   routePoints?: number[][];
+  routeGaps?: number[];
   onPick?: (point: { lat: number; lng: number }) => void;
   onMapClick?: (event: { latlng: { lat: number; lng: number } }) => void;
+  searchBounds?:MapBounds|null;
+  onBoundsChange?:(bounds:MapBounds)=>void;
   onCenterChange?: (point: { lat: number; lng: number }) => void;
   onRouteDraw?: (points: { lat: number; lng: number }[]) => void;
   filter?: MapLayerFilter;
+  selectedFeatureId?: string|null;
+  onSelectFeature?: (id:string)=>void;
   userLocation?: MapUserLocation | null;
   focusPoint?: MapFocusPoint | null;
   searchPoint?: MapSearchPoint | null;

@@ -1,3 +1,4 @@
+import { measuredMapOperation } from '@/lib/server/mapMetrics';
 import { NextResponse } from 'next/server';
 import { latestActiveRequestsByPetPair, socialScenarios, validateSocialContactBoundary, type SocialScenario } from '@/lib/socialCore';
 import { readIdempotencyKey, socialRequestContext, socialStorageError } from '@/lib/server/socialHttp';
@@ -50,9 +51,10 @@ function compactRequest(
   };
 }
 
-export async function POST(request: Request) {
+export async function POST(request: Request) { return measuredMapOperation('gav_response',request,()=>measuredMutation(request)); }
+async function measuredMutation(request: Request) {
   const context = await socialRequestContext(request);
-  if ('response' in context) return context.response;
+  if ('response' in context) return context.response!;
   const body = await request.json().catch(() => null);
   const boundary = validateSocialContactBoundary(body);
   if (!boundary.ok) return NextResponse.json({ error: boundary.code, field: boundary.field }, { status: 400 });
@@ -172,7 +174,7 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   const context = await socialRequestContext(request);
-  if ('response' in context) return context.response;
+  if ('response' in context) return context.response!;
   const petId = new URL(request.url).searchParams.get('petId');
   if (!petId) return NextResponse.json({ error: 'PET_ID_REQUIRED' }, { status: 400 });
   try {

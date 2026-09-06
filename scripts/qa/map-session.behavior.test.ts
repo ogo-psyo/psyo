@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import { readRouteSession, closeRouteLoop, moveRoutePoint } from '../../lib/mapSession';
+const draft={version:3,petId:'one',flow:'planning',elapsedSeconds:0,points:[],updatedAt:1};
+assert.equal(readRouteSession(JSON.stringify(draft),'one'),null);
+assert.equal(readRouteSession(JSON.stringify({...draft,points:[[37,55]]}),'two'),null);
+assert.equal(readRouteSession(JSON.stringify({...draft,points:[[NaN,55]]}),'one'),null);
+assert.ok(readRouteSession(JSON.stringify({...draft,title:'Названный черновик'}),'one'));
+assert.ok(readRouteSession(JSON.stringify({...draft,flow:'paused',elapsedSeconds:10}),'one'));
+const points=[[37,55],[37.1,55.1],[37.2,55.2]];
+assert.deepEqual(moveRoutePoint(points,2,0),[points[2],points[0],points[1]]);
+assert.deepEqual(points,[[37,55],[37.1,55.1],[37.2,55.2]]);
+assert.equal(closeRouteLoop(closeRouteLoop(points)).length,4);
+console.log('Route restoration: empty, named, recorded, invalid geometry, pet isolation and waypoint changes PASS');

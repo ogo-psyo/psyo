@@ -1,3 +1,4 @@
+import { routeEwkt,validRouteGaps,storedRoutePoints,measuredRouteDistance } from '@/lib/routeGeometry';
 import { NextResponse } from 'next/server';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { getRequestAuth } from '@/lib/server/auth';
@@ -41,6 +42,12 @@ export async function PATCH(request: Request, ctx: Ctx) {
     visibility: 'private',
     share_token: null,
   };
+  if ('path' in body) {
+    const path=routeEwkt(body.path);
+    if(!path)return NextResponse.json({error:'INVALID_ROUTE_GEOMETRY'},{status:400});
+    patch.path=path;patch.path_gaps=validRouteGaps(body.pathGaps,body.path.length);
+    patch.distance_meters=Math.round(measuredRouteDistance(body.path,patch.path_gaps as number[]));
+  }
   if (typeof body.title === 'string' && body.title.trim()) patch.title = body.title.trim();
   if (typeof body.description === 'string') patch.description = body.description.trim() || null;
   if (typeof body.color === 'string' && body.color.trim()) patch.color = body.color.trim();
@@ -55,13 +62,13 @@ export async function PATCH(request: Request, ctx: Ctx) {
     .update(patch)
     .eq('id', id)
     .eq('owner_id', ownerId)
-    .select('id, owner_id, pet_id, title, description, color, visibility, moderation_status, share_token, route_source, started_at, duration_seconds, distance_meters, created_at, updated_at')
+    .select('*')
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const origin = new URL(request.url).origin;
   return NextResponse.json({
-    feature: data,
+    feature: {...data,path:{type:'LineString',coordinates:storedRoutePoints(data.path)||body.path}},
     shareUrl: data.visibility === 'shared' && data.share_token
       ? `${origin}/map/share/${data.share_token}`
       : null,

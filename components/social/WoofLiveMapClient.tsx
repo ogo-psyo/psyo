@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import { AttributionControl, Circle, CircleMarker, MapContainer, Marker, useMap } from 'react-leaflet';
 import type { WoofLiveMapProps } from './WoofLiveMap';
@@ -15,7 +15,10 @@ function escapeHtml(value: string) {
 
 function Viewport({ signals, viewerLocation }: Pick<WoofLiveMapProps, 'signals' | 'viewerLocation'>) {
   const map = useMap();
+  const positionedFor = useRef<string|null>(null);
   useEffect(() => {
+    const area=viewerLocation?`${viewerLocation.lat}:${viewerLocation.lng}`:'none';
+    if(positionedFor.current===area)return;positionedFor.current=area;
     map.invalidateSize({ animate: false });
     if (signals.length === 0) {
       if (viewerLocation) map.setView([viewerLocation.lat, viewerLocation.lng], 15, { animate: false });
@@ -32,6 +35,8 @@ function Viewport({ signals, viewerLocation }: Pick<WoofLiveMapProps, 'signals' 
 }
 
 export function WoofLiveMapClient({ signals, viewerLocation, viewerRadiusMeters, selectedId, onSelect }: WoofLiveMapProps) {
+  const [tileState,setTileState] = useState<'loading'|'ready'|'error'>('loading');
+  const [tileRevision,setTileRevision] = useState(0);
   const icons = useMemo(() => new Map(signals.map((signal) => {
     const content = signal.avatarUrl
       ? `<img src="${escapeHtml(signal.avatarUrl)}" alt="" />`
@@ -46,17 +51,18 @@ export function WoofLiveMapClient({ signals, viewerLocation, viewerRadiusMeters,
 
   return <MapContainer center={defaultCenter} zoom={12} className="woof-live-map" zoomControl attributionControl={false} aria-label="Карта активных Гав-сигналов поблизости">
     <AttributionControl prefix={false} />
-    <OpenFreeMapLayer />
+<OpenFreeMapLayer key={tileRevision} onLoad={()=>setTileState('ready')} onError={()=>setTileState('error')} />
+    {tileState!=='ready'&&<div className="woof-map-load-state" role={tileState==='error'?'alert':'status'}>{tileState==='loading'?'Карта загружается…':<>Подложка карты не загрузилась. Сигналы сохранены. <button type="button" onClick={()=>{setTileState('loading');setTileRevision(v=>v+1);}}>Повторить</button></>}</div>}
     <Viewport signals={signals} viewerLocation={viewerLocation} />
     {viewerLocation && <>
-      <Circle center={[viewerLocation.lat, viewerLocation.lng]} radius={viewerRadiusMeters} pathOptions={{ color: '#07814d', fillColor: '#98df73', fillOpacity: 0.055, weight: 1, dashArray: '6 8' }} interactive={false} />
-      <CircleMarker center={[viewerLocation.lat, viewerLocation.lng]} radius={7} pathOptions={{ color: '#f7fff9', fillColor: '#07814d', fillOpacity: 1, weight: 3 }} interactive={false} />
+      <Circle center={[viewerLocation.lat, viewerLocation.lng]} radius={viewerRadiusMeters} pathOptions={{ color: '#4d7057', fillColor: '#c4d4b8', fillOpacity: 0.055, weight: 1, dashArray: '6 8' }} interactive={false} />
+      <CircleMarker center={[viewerLocation.lat, viewerLocation.lng]} radius={7} pathOptions={{ color: '#f7fff9', fillColor: '#4d7057', fillOpacity: 1, weight: 3 }} interactive={false} />
     </>}
     {signals.map((signal) => <Circle
       key={`${signal.id}:privacy`}
       center={[signal.approximateLocation.lat, signal.approximateLocation.lng]}
       radius={signal.privacyRadiusMeters}
-      pathOptions={{ color: signal.isMine ? '#07814d' : '#dd617c', fillColor: signal.isMine ? '#3df881' : '#dd617c', fillOpacity: signal.id === selectedId ? 0.18 : 0.08, weight: signal.id === selectedId ? 2 : 1 }}
+      pathOptions={{ color: signal.isMine ? '#4d7057' : '#ae7978', fillColor: signal.isMine ? '#aec9aa' : '#ae7978', fillOpacity: signal.id === selectedId ? 0.18 : 0.08, weight: signal.id === selectedId ? 2 : 1 }}
       interactive={false}
     />)}
     {signals.map((signal) => <Marker

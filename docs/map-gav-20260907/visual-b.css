@@ -1,0 +1,4 @@
+/* VIS-01 comparison-only alternative. Not imported by the application. */
+body.companion-app :is(.production-map-snap-sheet,.production-route-controller,.woof-composer,.woof-overlay),body.companion-app .map-place-panel { background: linear-gradient(120deg,#fbf1e4,#f3eee6 55%,#e7ede6) !important; box-shadow: 0 8px 28px #66514019 !important; }
+body.companion-app :is(.woof-search-panel,.production-map-profile,.woof-mode-switch,.woof-signal-card) { background: linear-gradient(130deg,#f7eee4,#ecede6) !important; }
+body.companion-app :is(.woof-primary,.woof-give-button),body.companion-app .production-map-workspace .production-route-start { background: linear-gradient(130deg,#7b7054,#656c4d) !important; }

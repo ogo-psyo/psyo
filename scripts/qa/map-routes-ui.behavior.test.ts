@@ -24,6 +24,7 @@ assert.deepEqual(restored[0], {
   path: { type: 'LineString', coordinates: [[37.61, 55.75], [37.62, 55.76]] },
   visibility: 'private',
   routeSource: 'planned',
+  pathGaps: [],
 });
 
 const recorded = normalizeOwnerRoutes([{

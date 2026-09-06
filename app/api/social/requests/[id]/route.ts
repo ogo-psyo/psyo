@@ -1,3 +1,4 @@
+import { measuredMapOperation } from '@/lib/server/mapMetrics';
 import { NextResponse } from 'next/server';
 import { transitionSocialRequest, type SocialRequestAction } from '@/lib/socialCore';
 import { readIdempotencyKey, socialRequestContext, socialStorageError } from '@/lib/server/socialHttp';
@@ -8,9 +9,10 @@ export const runtime = 'nodejs';
 
 const requestActions = new Set<SocialRequestAction>(['accept', 'reject', 'cancel', 'close', 'block']);
 
-export async function PATCH(request: Request, routeContext: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: Request, routeContext: { params: Promise<{ id: string }> }) { return measuredMapOperation('gav_response',request,()=>measuredMutation(request,routeContext)); }
+async function measuredMutation(request: Request, routeContext: { params: Promise<{ id: string }> }) {
   const context = await socialRequestContext(request);
-  if ('response' in context) return context.response;
+  if ('response' in context) return context.response!;
   const { id } = await routeContext.params;
   const body = await request.json().catch(() => null);
   const action = typeof body?.action === 'string' ? body.action : '';
