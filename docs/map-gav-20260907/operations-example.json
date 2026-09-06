@@ -1,0 +1,33 @@
+{
+  "baseline": "Not yet measured in production",
+  "window": "provided log export",
+  "thresholds": {
+    "minimumRequests": 20,
+    "maxErrorRatio": 0.05,
+    "searchP95Ms": 5000,
+    "mutationP95Ms": 2000,
+    "paidProviderBudget": 0
+  },
+  "operations": [
+    {
+      "operation": "library_change",
+      "requests": 3,
+      "confirmed": 1,
+      "replays": 1,
+      "serverErrors": 0,
+      "quotaResponses": 0,
+      "p95Ms": 2,
+      "stopRelease": false
+    },
+    {
+      "operation": "meeting_send",
+      "requests": 1,
+      "confirmed": 0,
+      "replays": 0,
+      "serverErrors": 0,
+      "quotaResponses": 0,
+      "p95Ms": 1,
+      "stopRelease": false
+    }
+  ]
+}

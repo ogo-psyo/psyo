@@ -42,3 +42,7 @@
 9. Keeping the recording component mounted exposed a broad `:has(map)` scroll selector on Home. CSS now scopes only to a visible map wrapper; browser suite checks content scrolling after leaving Map.
 10. Intermittent WebKit test stuck at “Обновляю анкеты…” revealed GPS was awaited before fetching discovery. Profile/candidates/signals load first; optional GPS refinement is independent and time-bounded in UI. The fixture deliberately supplies no GPS callback for discovery, so this does not pass by timing luck.
 11. Old Gav markers retained neon fill → scoped matte marker/circle palette; periodic social polling no longer refits the camera. Missing basemap is a labelled loading/error/retry state.
+
+12. Gav mandatory attribution fell under bottom navigation → moved to a dedicated top lane, verified on final A/B screenshot.
+
+Final local/browser evidence is recorded in LEDGER.md; production release evidence will be separate.

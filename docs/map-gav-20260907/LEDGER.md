@@ -34,7 +34,7 @@ All checkboxes in the supplied backlog are acceptance requirements, not evidence
 | UX-01 | Chromium/WebKit, 320/390/1280, keyboard/focus/labels/reduced motion; physical Telegram not claimed tested | Verified locally; release pending |
 | OPS-01 | Safe terminal event logs/replay distinction, report and stop thresholds, shared free-provider budget gate; Yandex cost controls deferred | Verified locally; release pending |
 | REL-01 | Additive transactional release SQL, local rollback tests, source review, production preflight; deployment and production smoke pending | Prepared; release pending |
-| GEO-15 | Implemented bounded selection from recorded local loops: start within 150 m, closure within 40 m, time tolerance min(20%, 5 min), no GPS gaps, no provider requests. Arbitrary new-area network routing remains Yandex-deferred. | In progress |
+| GEO-15 | Implemented bounded selection from recorded local loops: start within 150 m, closure within 40 m, time tolerance min(20%, 5 min), no GPS gaps, no provider requests. Arbitrary new-area network routing remains Yandex-deferred. | Verified locally; partial scope (recorded-loop selection) |
 
 ## Verified source inventory
 
@@ -66,3 +66,13 @@ All checkboxes in the supplied backlog are acceptance requirements, not evidence
 - Gav browser reliability: Chromium PASS. WebKit exposed no-location composer race and click-trigger focus restoration; fixes added, repeat pending. No real signals or messages sent; two-user fixtures only.
 - Supabase cached CLI 2.116.0 works without install. `projects list` and read-only `db query --linked --project-ref cnqcwchseefwqgjgnmyn` succeeded through existing login. No secret was retrieved or printed. Production schema untouched. QA remote project inactive; local Docker transaction tests remain primary SQL evidence.
 - Local compiled server http://127.0.0.1:3232; restart after ongoing rebuild before next browser run. Worktree changes remain uncommitted. No production deployment yet.
+
+## Release candidate checkpoint 02:15 MSK
+
+- Source commit 714f825 pushed to draft PR https://github.com/ogo-psyo/psyo/pull/21 against production/telegram-miniapp; both GitHub quality gates passed.
+- Full local gate passed: 117 tests / 8 files, build, lint (0 errors, 220 warnings within existing budget), source contracts. Exact four-migration release transaction passed 11 pgTAP checks and rolled back locally.
+- Final compiled-app Map suite: all six Chromium/WebKit × 320/390/1280 runs passed. Final Gav suite: both engines passed retained failed input, retry identity, mutual response, focus and all three widths.
+- Discovery fixture deliberately leaves geolocation unresolved. Background multi-context WebKit test pages are explicitly brought to foreground before interaction; no production timing workaround is used for that fixture issue.
+- Same-state visual comparisons/PDF sent to owner before release. Matte A is the implementation; B is comparison-only. Gav provider attribution is visibly above the search panel and outside bottom navigation.
+- Production read-only preflight: one existing route / one unique ID. No migration or deployment yet at this checkpoint.
+- GEO-15 is a bounded current-stack alternative, not full arbitrary-area pedestrian route generation. Physical Telegram/lock-screen GPS and production authenticated two-party integration remain unverified; browser fixtures are not presented as that evidence.

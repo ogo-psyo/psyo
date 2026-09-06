@@ -19,6 +19,7 @@ async function makeUser(browser, { ownerId, pet, location }) {
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
   });
   const page = await context.newPage();
+  await page.bringToFront();
   await page.route('**/api/v1/session/telegram', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ mode: 'telegram', session: { psyoUserId: ownerId, ownerId, firstName: pet.name, username: ownerId } }) }));
   await page.route('**/api/app/bootstrap**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ mode: 'owner', pet, pets: [pet], profile: appProfile(pet), activePetId: pet.id, reminders: [], wishlist: [], zones: [], routes: [], observations: [], documents: [] }) }));
   await page.route('**/api/social/profile**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ profile: null }) }));
@@ -77,7 +78,8 @@ try{
  await userA.page.screenshot({path:`docs/map-gav-20260907/screens/gav-active-${engine}-390.png`});
  const alt=await userA.page.addStyleTag({content:await readFile('docs/map-gav-20260907/visual-b.css','utf8')});await userA.page.screenshot({path:`docs/map-gav-20260907/screens/gav-active-${engine}-390-b.png`});await alt.evaluate(el=>el.remove());
  const userB=await makeUser(browser,{ownerId:'owner-b',pet:{id:'pet-b',name:'Луна',owner_id:'owner-b'},location:{latitude:55.761,longitude:37.621}});
- await userB.page.getByRole('button',{name:'Откликнуться',exact:true}).click();
+ await userB.page.getByRole('button',{name:'Откликнуться',exact:true}).click().catch(async e=>{console.log('RECEIVER FAILURE',engine,JSON.stringify(activeSignal),await userB.page.locator('.production-woof-workspace').innerText());await userB.page.screenshot({path:`/tmp/gav-receiver-${engine}.png`});throw e;});
+ await userA.page.bringToFront();
  await userA.page.evaluate(()=>window.dispatchEvent(new Event('focus')));
  await userA.page.getByRole('button',{name:'Отклики и связи: 1',exact:true}).click();
  failAction=true;

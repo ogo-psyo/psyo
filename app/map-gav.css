@@ -116,3 +116,6 @@ body.companion-app .woof-avatar-marker.is-selected > div { outline: 2px solid #5
 body.companion-app .woof-give-button svg { color: #d2e1c9; }
 .woof-map-load-state { position: absolute; z-index: 500; top: 43%; left: 10px; max-width: calc(100% - 20px); border-radius: 12px; padding: 8px 12px; color: #405a48; background: #fbfaf4; font: 12px/1.4 system-ui; }
 .woof-map-load-state button { min-height: 44px; border: 0; border-radius: 8px; background: #e4edde; color: #31513b; }
+/* Keep required map credit above overlays/navigation in live Gav. */
+body.companion-app .woof-live-map .leaflet-bottom.leaflet-right { top: calc(66px + env(safe-area-inset-top)); right: 10px; bottom: auto; }
+body.companion-app .woof-search-panel { top: calc(90px + env(safe-area-inset-top)); }
