@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, type FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, CopySimple, FilePdf, Files, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning, ShoppingBag, Sparkle, TextT, Trash, UploadSimple } from '@phosphor-icons/react';
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { PaperSheet, WatercolorScreen } from '@/components/watercolor';
@@ -540,6 +540,8 @@ export default function Home() {
   const [suggestedHabitDraft, setSuggestedHabitDraft] = useState<HabitDraft | null>(null);
   const [dogSummary, setDogSummary] = useState<DogModuleSummary | null>(null);
   const [moduleErrors, setModuleErrors] = useState<{ habits?: string; health?: string }>({});
+  const [socialResult, setSocialResult] = useState('');
+  const [socialLoadedPet,setSocialLoadedPet] = useState<string|null>(null);
   const [socialProfile, setSocialProfile] = useState<SocialProfile | null>(null);
   const [socialCandidates, setSocialCandidates] = useState<CandidateGroup>({ nearby: [], city: [] });
   const [socialRequests, setSocialRequests] = useState<SocialRequestView[]>([]);
@@ -574,6 +576,14 @@ export default function Home() {
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => dateInputValue(new Date()));
   const calendarAutoSelectedPetRef = useRef<string | null>(null);
   const [careView, setCareView] = useState<'active' | 'history'>('active');
+  const [mapVisited, setMapVisited] = useState(false);
+  const [mapActivity, setMapActivity] = useState<'recording'|'paused'|null>(null);
+  useEffect(() => {if (tab === 'map') setMapVisited(true);}, [tab]);
+  const [routeEditSeed,setRouteEditSeed] = useState<{token:number;points:number[][]}|null>(null);
+  const [editingRouteGeometryId,setEditingRouteGeometryId] = useState<string|null>(null);
+  const [mapSavedRevision, setMapSavedRevision] = useState(0);
+  const mapSaveLockRef = useRef(false);
+  const mapAttemptRef = useRef<{fingerprint:string;key:string}|null>(null);
   const [newZoneTitle, setNewZoneTitle] = useState('');
   const [newZoneNote, setNewZoneNote] = useState('');
   const [newZoneType, setNewZoneType] = useState('safe_place');
@@ -651,6 +661,13 @@ export default function Home() {
   const demoSeededRef = useRef(false);
   const addDogKeyRef = useRef<string | null>(null);
   const socialRequestKeysRef = useRef<Record<string, string>>({});
+  const socialMutationRef = useRef(false);
+  const reportAttemptRef = useRef<{signature:string;key:string}|null>(null);
+  const socialLoadSequenceRef = useRef(0);
+  const socialPollSequenceRef = useRef(0);
+  const currentSocialPetRef = useRef(profile.backendPetId);
+  useLayoutEffect(()=>{currentSocialPetRef.current = profile.backendPetId;},[profile.backendPetId]);
+  const signalAttemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const careMutationKeysRef = useRef(new Map<string, string>());
   const careMutationTimesRef = useRef(new Map<string, string>());
 
@@ -776,28 +793,33 @@ export default function Home() {
     }
 
     const controller = new AbortController();
+    let locationTimer: ReturnType<typeof setTimeout> | undefined;
     const bootstrap = async () => {
-      let viewerLocation = socialViewerLocation;
-      if (!viewerLocation && navigator.geolocation) {
-        setSocialLocating(true);
-        viewerLocation = await new Promise<CoarseLocation | null>((resolve) => navigator.geolocation.getCurrentPosition(
-          (position) => resolve({ lat: position.coords.latitude, lng: position.coords.longitude }),
-          () => resolve(null),
-          { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
-        ));
+      // Discovery/profile must not wait for browser geolocation (which may stall in a background WebView).
+      await loadSocialSurface(controller.signal, socialViewerLocation);
+      if (controller.signal.aborted || socialViewerLocation || !navigator.geolocation) return;
+      setSocialLocating(true);
+      locationTimer = setTimeout(() => { if (!controller.signal.aborted) setSocialLocating(false); }, 11000);
+      navigator.geolocation.getCurrentPosition((position) => {
+        clearTimeout(locationTimer);
+        if (controller.signal.aborted) return;
         setSocialLocating(false);
-        if (viewerLocation) setSocialViewerLocation(viewerLocation);
-      }
-      await loadSocialSurface(controller.signal, viewerLocation);
+        const next = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setSocialViewerLocation(next);
+        void loadSocialSurface(controller.signal, next).catch(() => { if (!controller.signal.aborted) setNearbyState('error'); });
+      }, () => { clearTimeout(locationTimer); if (!controller.signal.aborted) setSocialLocating(false); },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 });
     };
     bootstrap().catch((lookupError) => {
+      if (controller.signal.aborted) return;
       if (lookupError instanceof DOMException && lookupError.name === 'AbortError') return;
+      setSocialLoadedPet(profile.backendPetId!);
+      setSocialProfile(null); setWalkSignals([]); setSocialRequests([]);
       setSocialCandidates({ nearby: [], city: [] });
       setNearbyReason('NEARBY_LOOKUP_FAILED');
       setNearbyState('error');
     });
-
-    return () => controller.abort();
+    return () => { controller.abort(); clearTimeout(locationTimer); };
   }, [profile.backendPetId, session?.access_token, tab, telegramSession.ownerId]);
 
   useEffect(() => {
@@ -971,11 +993,13 @@ export default function Home() {
   async function loadSocialSurface(signal?: AbortSignal, viewerLocationOverride?: CoarseLocation | null, radiusKmOverride?: number) {
     const petId = profile.backendPetId;
     if (!petId) return;
+    const sequence = ++socialLoadSequenceRef.current;
+    ++socialPollSequenceRef.current;
     setNearbyState('loading');
     setNearbyReason('');
     setWalkSignalReason('');
     const requestOptions = { headers: authHeaders(), credentials: 'include' as const, signal };
-    const viewerLocation = viewerLocationOverride ?? socialViewerLocation;
+    const viewerLocation = viewerLocationOverride === undefined ? socialViewerLocation : viewerLocationOverride;
     const radiusKm = radiusKmOverride ?? socialViewerRadiusKm;
     const signalParams = new URLSearchParams({ petId });
     signalParams.set('radiusKm', String(radiusKm));
@@ -995,6 +1019,8 @@ export default function Home() {
       requestsResponse.json().catch(() => ({})),
       signalsResponse.json().catch(() => ({})),
     ]);
+    if (signal?.aborted || sequence !== socialLoadSequenceRef.current || petId !== currentSocialPetRef.current) return;
+    setSocialLoadedPet(petId);
     if (!profileResponse.ok || !requestsResponse.ok) throw new Error('SOCIAL_SURFACE_FAILED');
     setSocialProfile(profilePayload.profile ?? null);
     setSocialRequests(Array.isArray(requestsPayload.requests) ? requestsPayload.requests : []);
@@ -1030,6 +1056,8 @@ export default function Home() {
   async function refreshLiveSocial(signal?: AbortSignal, radiusKmOverride?: number) {
     const petId = profile.backendPetId;
     if (!petId) return;
+    const sequence = ++socialPollSequenceRef.current;
+    const surfaceSequence = socialLoadSequenceRef.current;
     const signalParams = new URLSearchParams({ petId });
     signalParams.set('radiusKm', String(radiusKmOverride ?? socialViewerRadiusKm));
     if (socialViewerLocation) {
@@ -1045,6 +1073,8 @@ export default function Home() {
       signalsResponse.json().catch(() => ({})),
       requestsResponse.json().catch(() => ({})),
     ]);
+    if (signal?.aborted || sequence !== socialPollSequenceRef.current || surfaceSequence !== socialLoadSequenceRef.current || petId !== currentSocialPetRef.current) return;
+    if (!signalsResponse.ok || !requestsResponse.ok) { setNearbyState('error'); return; }
     if (signalsResponse.ok) {
       setWalkSignals(Array.isArray(signalsPayload.signals) ? signalsPayload.signals : []);
       setWalkSignalReason('');
@@ -1062,7 +1092,10 @@ export default function Home() {
   }
 
   async function saveSocialProfile(draft: Omit<SocialProfile, 'petId'>) {
-    if (!profile.backendPetId || socialBusyId) return;
+    if (!profile.backendPetId || socialBusyId || socialMutationRef.current) return false;
+    socialMutationRef.current = true;
+    const mutationPet = profile.backendPetId;
+    setError('');
     setSocialBusyId('profile');
     setError('');
     try {
@@ -1074,31 +1107,45 @@ export default function Home() {
       });
       if (!response.ok) {
         setError('Не получилось сохранить анкету. Проверь поля и попробуй ещё раз.');
-        return;
+        return false;
       }
-      await loadSocialSurface();
+      if (mutationPet !== currentSocialPetRef.current) return false;
+      await loadSocialSurface().catch(() => setNearbyState('error'));
+      return true;
+    } catch {
+      setError('Не удалось подтвердить сохранение. Ввод остался в форме — попробуй ещё раз.');
+      return false;
     } finally {
+      socialMutationRef.current = false;
       setSocialBusyId(null);
     }
   }
 
   async function hideSocialProfile() {
-    if (!profile.backendPetId || socialBusyId) return;
-    setSocialBusyId('profile');
-    try {
-      const response = await fetch(`/api/social/profile?petId=${encodeURIComponent(profile.backendPetId)}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: authHeaders(),
+    return runSocialMutation('profile', 'Не получилось скрыть анкету. Попробуй ещё раз.', async () => {
+      const response = await fetch(`/api/social/profile?petId=${encodeURIComponent(profile.backendPetId!)}`, {
+        method: 'DELETE', credentials: 'include', headers: authHeaders(),
       });
-      if (!response.ok) {
-        setError('Не получилось скрыть анкету. Попробуй ещё раз.');
-        return;
-      }
-      await loadSocialSurface();
-    } finally {
-      setSocialBusyId(null);
-    }
+      return response.ok;
+    }, 'Анкета скрыта. Сохранённые данные и связи остались.');
+  }
+
+  async function runSocialMutation(id: string, failure: string, request: () => Promise<boolean>, success: string) {
+    if (!profile.backendPetId || socialBusyId || socialMutationRef.current) return false;
+    const mutationPet = profile.backendPetId;
+    socialMutationRef.current = true;
+    setSocialBusyId(id); setError(''); setSocialResult('');
+    try {
+      const confirmed = await request();
+      if (mutationPet !== currentSocialPetRef.current) return false;
+      if (!confirmed) { setError(failure); return false; }
+      setSocialResult(success);
+      await loadSocialSurface().catch(() => setNearbyState('error'));
+      return true;
+    } catch {
+      if (mutationPet === currentSocialPetRef.current) setError('Ответ не получен. Результат пока не подтверждён — обнови состояние или повтори действие.');
+      return false;
+    } finally { socialMutationRef.current = false; setSocialBusyId(null); }
   }
 
   function locateForSocial(onReady: (location: CoarseLocation) => void) {
@@ -1148,41 +1195,31 @@ export default function Home() {
   }
 
   async function sendSocialRequest(candidatePetId: string, scenario: SocialScenario, signalId?: string) {
-    if (!profile.backendPetId || socialBusyId) return;
-    const keyId = `${candidatePetId}:${scenario}:${signalId ?? 'profile'}`;
+    const keyId = `${profile.backendPetId}:${candidatePetId}:${scenario}:${signalId ?? 'profile'}`;
     const idempotencyKey = socialRequestKeysRef.current[keyId] ?? `social-request:${crypto.randomUUID()}`;
     socialRequestKeysRef.current[keyId] = idempotencyKey;
-    setSocialBusyId(candidatePetId);
     const recommendationId = signalId ? acceptedGavRecommendationId('live_signal', signalId) : undefined;
-    try {
+    const confirmed = await runSocialMutation(candidatePetId, 'Отклик не отправлен. Обнови список: сигнал или доступность участника могли измениться.', async () => {
       const response = await fetch('/api/social/requests', {
-        method: 'POST',
-        credentials: 'include',
+        method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey, ...authHeaders() },
-        body: JSON.stringify({
-          senderPetId: profile.backendPetId,
-          recipientPetId: candidatePetId,
-          scenario,
-          signalId,
-          recommendationId,
-          idempotencyKey,
-        }),
+        body: JSON.stringify({ senderPetId: profile.backendPetId, recipientPetId: candidatePetId, scenario, signalId, recommendationId, idempotencyKey }),
       });
-      if (!response.ok && response.status !== 409) {
-        setError('Не получилось отправить запрос. Попробуй ещё раз.');
-        return;
-      }
-      delete socialRequestKeysRef.current[keyId];
-      await loadSocialSurface();
-      if (response.ok) finishRecommendationOutcome(recommendationId);
-    } finally {
-      setSocialBusyId(null);
-    }
+      return response.ok;
+    }, 'Отклик отправлен. Его статус — в «Откликах и связях».');
+    if (confirmed) { delete socialRequestKeysRef.current[keyId]; finishRecommendationOutcome(recommendationId); }
+    return confirmed;
   }
 
   async function saveWalkSignal(draft: { startsAt: string; pace: WalkPace; note: string; location: CoarseLocation }) {
-    if (!profile.backendPetId || socialBusyId) return;
-    const idempotencyKey = `walk-signal:${crypto.randomUUID()}`;
+    if (!profile.backendPetId || socialBusyId || socialMutationRef.current) return false;
+    const mutationPet = profile.backendPetId;
+    const fingerprint = JSON.stringify({ petId: mutationPet, ...draft });
+    if (signalAttemptRef.current?.fingerprint !== fingerprint) {
+      signalAttemptRef.current = { fingerprint, key: `walk-signal:${crypto.randomUUID()}` };
+    }
+    const idempotencyKey = signalAttemptRef.current.key;
+    socialMutationRef.current = true;
     setSocialBusyId('signal');
     setSocialViewerLocation(draft.location);
     setError('');
@@ -1205,52 +1242,51 @@ export default function Home() {
       });
       if (!response.ok) {
         setError('Не получилось дать Гав. Проверь время и попробуй ещё раз.');
-        return;
+        return false;
       }
-      await loadSocialSurface();
+      if (mutationPet !== currentSocialPetRef.current) return false;
+      signalAttemptRef.current = null;
+      await loadSocialSurface().catch(() => setNearbyState('error'));
       finishRecommendationOutcome(recommendationId);
-    } finally { setSocialBusyId(null); }
+      return true;
+    } catch {
+      setError('Ответ не получен. Черновик сохранён в форме. Повтор проверит тот же запрос и не создаст второй Гав.');
+      return false;
+    } finally { socialMutationRef.current = false; setSocialBusyId(null); }
   }
 
   async function closeWalkSignal(status: 'completed' | 'cancelled') {
-    if (!profile.backendPetId || socialBusyId) return;
-    setSocialBusyId('signal');
-    try {
+    return runSocialMutation('signal', 'Не получилось завершить Гав. Попробуй ещё раз.', async () => {
       const response = await fetch('/api/social/signals', {
-        method: 'DELETE', credentials: 'include',
-        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        method: 'DELETE', credentials: 'include', headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ petId: profile.backendPetId, status }),
       });
-      if (!response.ok) { setError('Не получилось завершить Гав. Попробуй ещё раз.'); return; }
-      await loadSocialSurface();
-    } finally { setSocialBusyId(null); }
+      return response.ok;
+    }, status === 'completed' ? 'Гав завершён.' : 'Гав отменён.');
   }
 
   async function updateSocialRequest(id: string, action: 'accept' | 'reject' | 'cancel' | 'close' | 'block') {
-    if (socialBusyId) return;
-    setSocialBusyId(id);
     const recommendationId = action === 'accept' ? acceptedGavRecommendationId('requests', id) : undefined;
-    try {
+    const messages = { accept: 'Отклик принят. Связь доступна ниже.', reject: 'Отклик отклонён.', cancel: 'Запрос отменён.', close: 'Знакомство завершено.', block: 'Пользователь заблокирован.' };
+    const confirmed = await runSocialMutation(id, 'Не получилось изменить запрос. Обнови состояние: другая сторона могла уже ответить.', async () => {
       const response = await fetch(`/api/social/requests/${encodeURIComponent(id)}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ action, recommendationId }),
       });
-      if (!response.ok) {
-        setError(action === 'block' ? 'Не получилось заблокировать пользователя.' : 'Не получилось изменить запрос.');
-        return;
-      }
-      await loadSocialSurface();
-      finishRecommendationOutcome(recommendationId);
-    } finally {
-      setSocialBusyId(null);
-    }
+      return response.ok;
+    }, messages[action]);
+    if (confirmed) finishRecommendationOutcome(recommendationId);
+    return confirmed;
   }
 
   async function reportSocialRequest(id: string, reason: string) {
-    if (socialBusyId) return;
-    const idempotencyKey = `social-report:${crypto.randomUUID()}`;
+    if (socialBusyId || socialMutationRef.current) return false;
+    const signature=JSON.stringify({petId:profile.backendPetId,id,reason});
+    if(reportAttemptRef.current?.signature!==signature)reportAttemptRef.current={signature,key:`social-report:${crypto.randomUUID()}`};
+    const idempotencyKey=reportAttemptRef.current.key;
+    socialMutationRef.current = true;
+    const mutationPet = profile.backendPetId;
+    setError('');
     setSocialBusyId(id);
     try {
       const response = await fetch(`/api/social/requests/${encodeURIComponent(id)}`, {
@@ -1261,10 +1297,17 @@ export default function Home() {
       });
       if (!response.ok) {
         setError('Не получилось отправить жалобу. Попробуй ещё раз.');
-        return;
+        return false;
       }
-      await loadSocialSurface();
+      if (mutationPet !== currentSocialPetRef.current) return false;
+      await loadSocialSurface().catch(() => setNearbyState('error'));
+      reportAttemptRef.current=null;
+      return true;
+    } catch {
+      setError('Не удалось подтвердить сохранение. Ввод остался в форме — попробуй ещё раз.');
+      return false;
     } finally {
+      socialMutationRef.current = false;
       setSocialBusyId(null);
     }
   }
@@ -2924,6 +2967,14 @@ export default function Home() {
     handleMapPick(event.latlng);
   }
 
+  function planSavedRoute(route:OwnerRouteView,edit:boolean) {
+    if(routePoints.length || mapActivity) {setError('Сначала сохраните или удалите текущий черновик маршрута.');return;}
+    setEditingRouteGeometryId(edit?route.id:null);
+    setNewZoneTitle(edit?route.title:`${route.title} · новая прогулка`);
+    setNewZoneNote(route.description||'');setMapSaveMode('private');
+    setRouteEditSeed({token:Date.now(),points:route.path.coordinates.map(p=>[...p])});
+    setProductionMapMode('route');
+  }
   async function createMapFeature(visibility: 'private' | 'shared') {
     if (drawMode === 'route' && routePoints.length < 2) return setError('Для маршрута нужны хотя бы две точки.');
     if (drawMode !== 'route' && !pickedZonePoint) return setError('Сначала коснись карты, чтобы выбрать точку.');
@@ -2933,7 +2984,7 @@ export default function Home() {
       if (visibility === 'shared') return setError('Чтобы открыть ссылку, запусти Псё внутри Telegram. Личную запись можно сохранить уже сейчас.');
       if (drawMode === 'route') {
         setOwnerRoutes((current) => upsertOwnerRoute(current, {
-          id: guestId('route'),
+          id: editingRouteGeometryId || guestId('route'),
           petId: ensureGuestPetId(),
           type: 'route',
           title,
@@ -2943,8 +2994,12 @@ export default function Home() {
           routeSource: mapRouteMeta?.routeSource || 'planned',
           startedAt: mapRouteMeta?.startedAt,
           durationSeconds: mapRouteMeta?.durationSeconds,
+          pathGaps: mapRouteMeta?.pathGaps,
           distanceMeters: mapRouteMeta?.distanceMeters,
         }));
+        setEditingRouteGeometryId(null);setRouteEditSeed(null);
+        mapAttemptRef.current=null;
+        setMapSavedRevision(value => value+1);
         setNotice('mapSaved');
         setPickedZonePoint(null);
         setRoutePoints([]);
@@ -2962,12 +3017,14 @@ export default function Home() {
 
     const recommendationId = drawMode === 'route' ? acceptedRecommendationId('plan_walk') : undefined;
     const body = drawMode === 'route'
-      ? { type: 'route', title, petId: profile.backendPetId, path: routePoints, visibility, description: newZoneNote || null, routeSource: mapRouteMeta?.routeSource || 'planned', startedAt: mapRouteMeta?.startedAt, durationSeconds: mapRouteMeta?.durationSeconds ?? 0, distanceMeters: mapRouteMeta?.distanceMeters ?? 0, recommendationId }
+      ? { type: 'route', title, petId: profile.backendPetId, path: routePoints, visibility, description: newZoneNote || null, routeSource: mapRouteMeta?.routeSource || 'planned', pathGaps: mapRouteMeta?.pathGaps, startedAt: mapRouteMeta?.startedAt, durationSeconds: mapRouteMeta?.durationSeconds ?? 0, distanceMeters: mapRouteMeta?.distanceMeters ?? 0, recommendationId }
       : { type: 'point', title, petId: profile.backendPetId, lat: pickedZonePoint?.lat, lng: pickedZonePoint?.lng, zone_type: newZoneType, visibility, description: newZoneNote || null };
 
-    const response = await fetch('/api/map/features', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    const fingerprint=JSON.stringify(body);
+    if(mapAttemptRef.current?.fingerprint!==fingerprint)mapAttemptRef.current={fingerprint,key:crypto.randomUUID()};
+    const response = await fetch(editingRouteGeometryId?`/api/map/features/${encodeURIComponent(editingRouteGeometryId)}`:'/api/map/features', {
+      method: editingRouteGeometryId?'PATCH':'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key':mapAttemptRef.current.key, ...authHeaders() },
       body: JSON.stringify(body),
     });
     const result = await response.json().catch(() => ({}));
@@ -2978,6 +3035,8 @@ export default function Home() {
       if (createdRoute) setOwnerRoutes((current) => upsertOwnerRoute(current, createdRoute));
       finishRecommendationOutcome(recommendationId);
     }
+    setEditingRouteGeometryId(null);setRouteEditSeed(null);mapAttemptRef.current=null;
+    setMapSavedRevision(value => value+1);
     setNotice(visibility === 'shared' ? 'sharing' : 'mapSaved');
     setPickedZonePoint(null);
     setRoutePoints([]);
@@ -2987,8 +3046,8 @@ export default function Home() {
     setMapSaveMode('private');
     setMapRouteMeta(null);
     if (visibility === 'shared' && result.shareUrl) {
-      await navigator.clipboard?.writeText(result.shareUrl).catch(() => undefined);
-      setNotice('copied');
+      const copied=await navigator.clipboard?.writeText(result.shareUrl).then(()=>true).catch(()=>false);
+      if(copied)setNotice('copied');else setError('Маршрут сохранён, но скопировать ссылку не получилось. Повторите «Поделиться» в сохранённых маршрутах.');
     }
     await loadBootstrap();
   }
@@ -2997,9 +3056,7 @@ export default function Home() {
     setError('');
     if (mode !== 'view') setNotice('idle');
     setPickedZonePoint(null);
-    setRoutePoints([]);
-    setMapSaveMode('private');
-    if (mode !== 'route') setMapRouteMeta(null);
+    // Folding a route must not reset its privacy choice or metadata.
     if (mode === 'route') {
       setDrawMode('route');
       setNewZoneType('walk_route');
@@ -3014,13 +3071,17 @@ export default function Home() {
   }
 
   async function saveProductionMapDraft() {
-    if (mapDraftSaving) return;
+    if (mapDraftSaving || mapSaveLockRef.current) return;
+    mapSaveLockRef.current = true;
     setMapDraftSaving(true);
     setError('');
     try {
       if (drawMode === 'route' || mapSaveMode === 'shared') await createMapFeature(mapSaveMode);
       else await createZone();
+    } catch {
+      setError('Не удалось подтвердить сохранение. Черновик остался на месте.');
     } finally {
+      mapSaveLockRef.current = false;
       setMapDraftSaving(false);
     }
   }
@@ -3072,7 +3133,8 @@ export default function Home() {
     }
     const result = await updateOwnerRoute(route.id, { visibility: 'shared' });
     if (result?.shareUrl) {
-      await navigator.clipboard?.writeText(result.shareUrl).catch(() => undefined);
+      const copied=await navigator.clipboard?.writeText(result.shareUrl).then(()=>true).catch(()=>false);
+      if(!copied){setError('Ссылка создана, но не скопирована. Разрешите доступ к буферу и повторите.');return;}
       setNotice('copied');
     }
   }
@@ -4057,7 +4119,7 @@ export default function Home() {
       <button type="button" className={mapSaveMode === 'shared' ? 'active' : ''} onClick={() => setMapSaveMode('shared')} aria-pressed={mapSaveMode === 'shared'}><b>По ссылке</b><span>можно закрыть позже</span></button>
     </section>
     <div className="production-map-composer-actions">
-      <button type="button" className="secondary" onClick={() => setProductionMapMode('view')}>{productionMapMode === 'route' ? 'Отменить маршрут' : 'Отменить'}</button>
+      <button type="button" className="secondary" onClick={() => setProductionMapMode('view')}>{productionMapMode === 'route' ? 'Свернуть маршрут' : 'Отменить'}</button>
       {productionMapMode === 'route' && routePoints.length > 0 && <button type="button" className="secondary" onClick={() => setRoutePoints([])}>Очистить</button>}
       <button type="button" className="primary" disabled={!mapDraftReady || mapDraftSaving} onClick={() => void saveProductionMapDraft()}>{mapDraftSaving ? 'Сохраняю…' : !mapDraftReady ? productionMapMode === 'route' ? 'Отметьте две точки' : 'Коснитесь карты' : mapSaveMode === 'shared' ? 'Сохранить и скопировать ссылку' : 'Сохранить лично'}</button>
     </div>
@@ -4070,7 +4132,7 @@ export default function Home() {
     </article>)}
     {ownerRoutes.map((route) => <article key={route.id} className="production-map-saved-row route">
       <span className="production-map-saved-mark" aria-hidden="true"><MapPin weight="fill" /></span>
-      {editingRouteId === route.id ? <div className="production-map-route-edit"><input value={routeTitleDraft} onChange={(event) => setRouteTitleDraft(event.target.value)} aria-label="Название маршрута" /><input value={routeDescriptionDraft} onChange={(event) => setRouteDescriptionDraft(event.target.value)} aria-label="Заметка о маршруте" /><span><button type="button" disabled={Boolean(routeMutationBusy) || !routeTitleDraft.trim()} onClick={() => updateOwnerRoute(route.id, { title: routeTitleDraft.trim(), description: routeDescriptionDraft.trim() })}>Сохранить</button><button type="button" onClick={() => setEditingRouteId(null)}>Отмена</button></span></div> : <><div><b>{route.title}</b><p>{route.routeSource === 'recorded' ? `${route.startedAt ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(new Date(route.startedAt)) + ' · ' : ''}${route.durationSeconds !== undefined ? `${Math.floor(route.durationSeconds / 60)} мин · ` : ''}${route.distanceMeters !== undefined ? route.distanceMeters < 1000 ? `${route.distanceMeters} м` : `${(route.distanceMeters / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} км` : 'Записанная прогулка'}` : route.description || 'Маршрут построен заранее'} · {route.visibility === 'shared' ? 'по ссылке' : 'только вам'}</p></div><div className="production-map-row-actions"><button type="button" onClick={() => beginOwnerRouteEdit(route)}>Изменить</button><button type="button" onClick={() => route.visibility === 'shared' ? revokeOwnerRouteShare(route) : shareOwnerRoute(route)}>{route.visibility === 'shared' ? 'Закрыть ссылку' : 'Поделиться'}</button><button type="button" className="danger-action" onClick={() => setPendingRouteDeletion(route)}>Убрать</button></div></>}
+      {editingRouteId === route.id ? <div className="production-map-route-edit"><input value={routeTitleDraft} onChange={(event) => setRouteTitleDraft(event.target.value)} aria-label="Название маршрута" /><input value={routeDescriptionDraft} onChange={(event) => setRouteDescriptionDraft(event.target.value)} aria-label="Заметка о маршруте" /><span><button type="button" disabled={Boolean(routeMutationBusy) || !routeTitleDraft.trim()} onClick={() => updateOwnerRoute(route.id, { title: routeTitleDraft.trim(), description: routeDescriptionDraft.trim() })}>Сохранить</button><button type="button" onClick={() => setEditingRouteId(null)}>Отмена</button></span></div> : <><div><b>{route.title}</b><p>{route.routeSource === 'recorded' ? `${route.startedAt ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(new Date(route.startedAt)) + ' · ' : ''}${route.durationSeconds !== undefined ? `${Math.floor(route.durationSeconds / 60)} мин · ` : ''}${route.distanceMeters !== undefined ? route.distanceMeters < 1000 ? `${route.distanceMeters} м` : `${(route.distanceMeters / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} км` : 'Записанная прогулка'}` : route.description || 'Маршрут построен заранее'} · {route.visibility === 'shared' ? 'по ссылке' : 'только вам'}</p></div><div className="production-map-row-actions"><button type="button" onClick={() => planSavedRoute(route,false)}>Повторить маршрут</button>{route.routeSource==='planned'&&<button type="button" onClick={() => planSavedRoute(route,true)}>Изменить путь</button>}<button type="button" onClick={() => beginOwnerRouteEdit(route)}>Изменить</button><button type="button" onClick={() => route.visibility === 'shared' ? revokeOwnerRouteShare(route) : shareOwnerRoute(route)}>{route.visibility === 'shared' ? 'Закрыть ссылку' : 'Поделиться'}</button><button type="button" className="danger-action" onClick={() => setPendingRouteDeletion(route)}>Убрать</button></div></>}
     </article>)}
     {removedZone && <div className="restore-notice" role="status"><span>Место убрано</span><button type="button" onClick={restoreZone}>Вернуть</button></div>}
   </section>;
@@ -4262,20 +4324,32 @@ export default function Home() {
           </form>
         </ProductionDocumentSheet>}
 
-        {hasDog && tab === 'map' && <ProductionJourney route="map"
+        {hasDog && mapActivity && tab !== 'map' && <button type="button" className="map-global-activity" onClick={() => setTab('map')}>{mapActivity==='recording'?'Прогулка записывается':'Прогулка на паузе'} · Вернуться к карте</button>}
+        {hasDog && (tab === 'map' || mapVisited) && <div hidden={tab !== 'map'} className="map-persistent-workspace"><ProductionJourney route="map"
           dogName={profile.dogName}
           breedLabel={breedLabel}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
           mapWorkspace={<ProductionMapWorkspace
             key={profile.backendPetId || activePetId}
             petId={profile.backendPetId || activePetId}
+            guest={isGuestMode()}
+            authHeaders={authHeaders}
             dogName={profile.dogName}
             avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
             zones={zones}
             features={ownerRoutes}
+            recordedRoutes={ownerRoutes}
             mode={productionMapMode}
             pickedPoint={pickedZonePoint}
             routePoints={routePoints}
+            draftTitle={newZoneTitle}
+            draftNote={newZoneNote}
+            savedRevision={mapSavedRevision}
+            routeEditSeed={routeEditSeed}
+            editingRouteId={editingRouteGeometryId}
+            onActivityChange={setMapActivity}
+            onReuseRoute={id=>{const route=ownerRoutes.find(r=>r.id===id);if(route)planSavedRoute(route,false);}}
+            onRestoreDraftText={(title,note,id) => { setNewZoneTitle(title);setNewZoneNote(note);setEditingRouteGeometryId(id||null); }}
             composer={mapComposerContent}
             savedContent={mapSavedContent}
             onOpenProfile={() => { setJourneyDetail(null); setTab('profile'); }}
@@ -4283,14 +4357,14 @@ export default function Home() {
             onMapClick={handleMapClick}
             onAppendRoutePoint={(point) => setRoutePoints((current) => [...current, point])}
             onReplaceRoutePoints={setRoutePoints}
-            onClearDraft={() => { setRoutePoints([]); setPickedZonePoint(null); }}
+            onClearDraft={() => { setRoutePoints([]); setPickedZonePoint(null);setNewZoneTitle('');setNewZoneNote('');setEditingRouteGeometryId(null);setRouteEditSeed(null); }}
             onSaveDraft={() => void saveProductionMapDraft()}
             canSaveDraft={mapDraftReady}
             savingDraft={mapDraftSaving}
             onRouteMetaChange={setMapRouteMeta}
           />}
           onNavigate={(route) => { setJourneyDetail(null); setTab(route); }}
-        />}
+        /></div>}
 
         {hasDog && tab === 'things' && journeyDetail !== 'things' && <ProductionJourney route="things"
           dogName={profile.dogName}
@@ -4365,18 +4439,22 @@ export default function Home() {
         />}
 
         {hasDog && tab === 'nearby' && <ProductionWoofWorkspace
-          key={woofRecommendationEntry?.key ?? 'woof-workspace'}
+          key={`${profile.backendPetId || activePetId}:${woofRecommendationEntry?.key ?? 'woof-workspace'}`}
+          petId={profile.backendPetId || activePetId}
+          error={error}
+          routes={ownerRoutes}
+          authHeaders={authHeaders}
           dogName={profile.dogName || 'Собака'}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" fill />}
-          profile={socialProfile}
-          signals={walkSignals}
+          profile={socialLoadedPet===profile.backendPetId?socialProfile:null}
+          signals={socialLoadedPet===profile.backendPetId?walkSignals:[]}
           viewerLocation={socialViewerLocation}
           viewerRadiusKm={socialViewerRadiusKm}
           viewerRadiusMeters={socialViewerRadiusMeters}
           signalReason={walkSignalReason}
-          candidates={socialCandidates}
-          requests={socialRequests}
-          state={nearbyState}
+          candidates={socialLoadedPet===profile.backendPetId?socialCandidates:{nearby:[],city:[]}}
+          requests={socialLoadedPet===profile.backendPetId?socialRequests:[]}
+          state={socialLoadedPet===profile.backendPetId?nearbyState:'loading'}
           busyId={socialBusyId}
           locating={socialLocating}
           missingTelegramUsernameAction={missingTelegramUsernameAction}
@@ -4386,8 +4464,10 @@ export default function Home() {
           onAcceptInvite={acceptSocialInvite}
           onDismissInvite={dismissSocialInvite}
           onSaveProfile={saveSocialProfile}
+          result={socialLoadedPet===profile.backendPetId?socialResult:''}
           onHideProfile={hideSocialProfile}
           onLocateProfile={locateForSocial}
+          onChooseViewerLocation={(location) => {setSocialViewerLocation(location);loadSocialSurface(undefined,location).catch(()=>setNearbyState('error'));}}
           onLocateViewer={locateForWalkSignals}
           onChangeViewerRadius={changeWalkSignalRadius}
           onSaveSignal={saveWalkSignal}

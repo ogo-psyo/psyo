@@ -7,6 +7,7 @@ import './pouf.css';
 import './editorial.css';
 import './companion.css';
 import './motion.css';
+import './map-gav.css';
 
 export const metadata: Metadata = {
   title: 'Псё — ассистент владельца собаки',

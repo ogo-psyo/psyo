@@ -2585,7 +2585,7 @@
   background: #07814d;
 }
 
-.phone-shell.journey-active:has(.production-map-workspace.route-focus) .app-tabs {
+.phone-shell.journey-active:has(.map-persistent-workspace:not([hidden]) .production-map-workspace.route-focus) .app-tabs {
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
@@ -2610,8 +2610,8 @@
   .production-route-controller-actions.gps-error .text-action {
     grid-column: auto;
   }
-  .phone-shell.journey-active:has(.production-map-workspace.route-focus) + .app-tabs,
-  .app-canvas:has(.production-map-workspace.route-focus) > .app-tabs {
+  .phone-shell.journey-active:has(.map-persistent-workspace:not([hidden]) .production-map-workspace.route-focus) + .app-tabs,
+  .app-canvas:has(.map-persistent-workspace:not([hidden]) .production-map-workspace.route-focus) > .app-tabs {
     visibility: hidden;
     opacity: 0;
     pointer-events: none;

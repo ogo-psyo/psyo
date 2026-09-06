@@ -121,7 +121,7 @@ for (const token of ["'generating'", "'reveal'", 'launch-next-grid']) {
   if (files.page.includes(token)) failures.push(`onboarding must not restore a bypass route: ${token}`);
 }
 
-const mapStart = files.page.indexOf("{hasDog && tab === 'map'");
+const mapStart = files.page.indexOf("{hasDog && (tab === 'map' || mapVisited)");
 const mapEnd = files.page.indexOf("{error &&", mapStart);
 const mapBlock = mapStart >= 0 && mapEnd > mapStart ? files.page.slice(mapStart, mapEnd) : '';
 if (!mapBlock) failures.push('map tab block missing');

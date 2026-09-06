@@ -1,0 +1,7 @@
+// Reads exported structured function logs from stdin. It never prints raw log lines.
+let input='';for await(const chunk of process.stdin)input+=chunk;
+const events=[];for(const line of input.split('\n')){try{const start=line.indexOf('{');if(start<0)continue;const item=JSON.parse(line.slice(start));if(item.channel==='pso.map-gav'&&['success','error','replay'].includes(item.stage))events.push(item);}catch{/* ignore unrelated log lines */}}
+const unique=[...new Map(events.map(e=>[e.eventId,e])).values()];
+const report={baseline:'Not yet measured in production',window:'provided log export',thresholds:{minimumRequests:20,maxErrorRatio:.05,searchP95Ms:5000,mutationP95Ms:2000,paidProviderBudget:0},operations:[]};
+for(const operation of [...new Set(unique.map(e=>e.operation))]){const rows=unique.filter(e=>e.operation===operation);const durations=rows.map(e=>e.durationMs).filter(Number.isFinite).sort((a,b)=>a-b);const p95=durations[Math.max(0,Math.ceil(durations.length*.95)-1)]||0;const errors=rows.filter(e=>e.status>=500).length;const limit=operation==='map_search'?5000:2000;report.operations.push({operation,requests:rows.length,confirmed:rows.filter(e=>e.stage==='success').length,replays:rows.filter(e=>e.stage==='replay').length,serverErrors:errors,quotaResponses:rows.filter(e=>e.status===429).length,p95Ms:p95,stopRelease:rows.length>=20&&(errors/rows.length>.05||p95>limit)});}
+console.log(JSON.stringify(report,null,2));

@@ -1,3 +1,4 @@
+import { validRouteGaps, storedRoutePoints } from './routeGeometry';
 export type OwnerRouteView = {
   id: string;
   petId?: string;
@@ -9,6 +10,7 @@ export type OwnerRouteView = {
   routeSource: 'recorded' | 'planned';
   startedAt?: string;
   durationSeconds?: number;
+  pathGaps?: number[];
   distanceMeters?: number;
 };
 
@@ -18,15 +20,8 @@ function finiteNonNegative(value: unknown) {
 }
 
 function routePath(value: unknown): OwnerRouteView['path'] | null {
-  if (!value || typeof value !== 'object') return null;
-  const candidate = value as { type?: unknown; coordinates?: unknown };
-  if (!Array.isArray(candidate.coordinates) || candidate.coordinates.length < 2) return null;
-  const coordinates = candidate.coordinates
-    .filter((point): point is unknown[] => Array.isArray(point) && point.length >= 2)
-    .map((point) => [Number(point[0]), Number(point[1])])
-    .filter((point) => point.every(Number.isFinite));
-  if (coordinates.length < 2) return null;
-  return { type: 'LineString', coordinates };
+  const coordinates = storedRoutePoints(value);
+  return coordinates ? {type:'LineString',coordinates} : null;
 }
 
 export function normalizeOwnerRoutes(value: unknown): OwnerRouteView[] {
@@ -47,6 +42,7 @@ export function normalizeOwnerRoutes(value: unknown): OwnerRouteView[] {
       title: typeof source.title === 'string' && source.title.trim() ? source.title.trim() : 'Маршрут прогулки',
       description: typeof source.description === 'string' && source.description.trim() ? source.description.trim() : undefined,
       path,
+      pathGaps: validRouteGaps(source.path_gaps ?? source.pathGaps, path.coordinates.length),
       visibility: source.visibility === 'shared' ? 'shared' : 'private',
       routeSource: source.route_source === 'recorded' || source.routeSource === 'recorded' ? 'recorded' : 'planned',
       ...(startedAt ? { startedAt } : {}),

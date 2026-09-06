@@ -1,0 +1,9 @@
+import {chromium} from 'playwright';
+import {readFile,writeFile} from 'node:fs/promises';
+const root='docs/map-gav-20260907';
+const states=[['place','Место на карте'],['route','Записанная прогулка'],['gav-active','Активный Гав'],['gav-empty','Первый вход в знакомства'],['gav-candidates','Карточки собак']];
+const sections=[];
+for(const [key,title] of states){const src=async suffix=>'data:image/png;base64,'+(await readFile(`${root}/screens/${key}-chromium-390${suffix}.png`)).toString('base64');sections.push(`<section><h1>${title}</h1><p>Рабочие компоненты · одинаковые вымышленные данные · production пока не изменён</p><div class="pair"><article><h2>A · Матовый шалфей</h2><img src="${await src('')}" /></article><article><h2>B · Тёплый песок</h2><img src="${await src('-b')}" /></article></div></section>`);}
+const html=`<!doctype html><meta charset="utf-8"><style>*{box-sizing:border-box}body{margin:0;background:#eeeee8;color:#263d30;font-family:system-ui}section{padding:20px;width:840px;break-after:page}h1{font-size:24px;margin:0 0 4px}p{font-size:12px;margin:0 0 12px;color:#58685e}.pair{display:flex;gap:20px}article{width:390px}h2{font-size:16px;margin:0 0 8px}img{display:block;width:390px;border-radius:16px}@page{size:840px 958px;margin:0}</style>${sections.join('')}`;
+await writeFile(`${root}/comparison.html`,html);
+const browser=await chromium.launch();const page=await browser.newPage({viewport:{width:840,height:958}});await page.setContent(html);await page.locator('img').evaluateAll(imgs=>Promise.all(imgs.map(i=>i.decode())));await page.locator('section').first().screenshot({path:`${root}/comparison-place.png`});await page.locator('section').nth(2).screenshot({path:`${root}/comparison-gav.png`});await page.pdf({path:`${root}/map-gav-details.pdf`,printBackground:true,preferCSSPageSize:true});await browser.close();

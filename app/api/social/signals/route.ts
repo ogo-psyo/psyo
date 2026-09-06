@@ -1,3 +1,4 @@
+import { measuredMapOperation } from '@/lib/server/mapMetrics';
 import { NextResponse } from 'next/server';
 import { closeWalkSignal, listWalkSignals, normalizeWalkSignalInput, saveWalkSignal } from '@/lib/server/socialService';
 import { socialRequestContext, socialStorageError } from '@/lib/server/socialHttp';
@@ -13,7 +14,7 @@ function idempotencyKey(request: Request, body: any) {
 
 export async function GET(request: Request) {
   const context = await socialRequestContext(request);
-  if ('response' in context) return context.response;
+  if ('response' in context) return context.response!;
   const url = new URL(request.url);
   const petId = url.searchParams.get('petId');
   const viewerLocation = parseWalkSignalViewerSearch(url.searchParams);
@@ -31,9 +32,10 @@ export async function GET(request: Request) {
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request:Request){return measuredMapOperation('gav_publish',request,()=>measuredMutation(request));}
+async function measuredMutation(request:Request){
   const context = await socialRequestContext(request);
-  if ('response' in context) return context.response;
+  if ('response' in context) return context.response!;
   const body = await request.json().catch(() => null);
   const key = idempotencyKey(request, body);
   if (key.length < 8 || key.length > 128) return NextResponse.json({ error: 'IDEMPOTENCY_KEY_REQUIRED' }, { status: 400 });
@@ -58,7 +60,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   const context = await socialRequestContext(request);
-  if ('response' in context) return context.response;
+  if ('response' in context) return context.response!;
   const body = await request.json().catch(() => null);
   const petId = typeof body?.petId === 'string' ? body.petId : '';
   const status = body?.status === 'completed' ? 'completed' : body?.status === 'cancelled' ? 'cancelled' : null;

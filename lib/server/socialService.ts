@@ -45,8 +45,8 @@ export function contactForAcceptedRequest(input: {
 }
 
 export function mapSocialProfile(row: any): SocialProfile {
-  const lat = Number(row.coarse_lat);
-  const lng = Number(row.coarse_lng);
+  const lat = row.coarse_lat == null ? NaN : Number(row.coarse_lat);
+  const lng = row.coarse_lng == null ? NaN : Number(row.coarse_lng);
   return {
     petId: row.pet_id,
     discoverable: Boolean(row.discoverable),

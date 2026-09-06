@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 
+const session = fs.readFileSync('lib/mapSession.ts', 'utf8');
+if(!session.includes('pso.map.active-route.v3:${petId}'))throw new Error('Pet-scoped map storage missing');
 const workspace = fs.readFileSync('components/journey/ProductionMapWorkspace.tsx', 'utf8');
 const journey = fs.readFileSync('components/journey/ProductionJourney.tsx', 'utf8');
 const liveMap = fs.readFileSync('components/LiveMapClient.tsx', 'utf8');
@@ -17,7 +19,6 @@ for (const requirement of [
   'navigator.geolocation.watchPosition',
   'navigator.geolocation.clearWatch',
   'routeSessionKey',
-  'pso.map.active-route.v3:${petId}',
   'Прогулка восстановлена и поставлена на паузу',
   'Попробовать снова',
   'Добавить точку',

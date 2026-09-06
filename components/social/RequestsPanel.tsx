@@ -8,6 +8,7 @@ export type SocialRequestView = {
   senderPetId: string;
   recipientPetId: string;
   scenario: SocialScenario;
+  source?: 'signal' | 'organic' | 'invite';
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'blocked';
   telegramContactUrl: string | null;
   otherDog: { name: string; avatarUrl: string | null } | null;
@@ -36,14 +37,16 @@ export function RequestsPanel({
   onAction,
   onReport,
   onOpenChat,
+  onMeeting,
 }: {
   petId: string;
   requests: SocialRequestView[];
   busyId: string | null;
   missingTelegramUsernameAction: string | null;
-  onAction: (id: string, action: 'accept' | 'reject' | 'cancel' | 'close' | 'block') => void;
-  onReport: (id: string, reason: string) => void;
+  onAction: (id: string, action: 'accept' | 'reject' | 'cancel' | 'close' | 'block') => void | Promise<boolean | void>;
+  onReport: (id: string, reason: string) => Promise<boolean>;
   onOpenChat: (url: string) => void;
+  onMeeting?: (id:string)=>void;
 }) {
   const [reportingId, setReportingId] = useState<string | null>(null);
   const [blockingId, setBlockingId] = useState<string | null>(null);
@@ -56,7 +59,7 @@ export function RequestsPanel({
     <section className="social-requests-panel" aria-labelledby="social-requests-title">
       <div className="social-section-heading">
         <div>
-          <h3 id="social-requests-title">Запросы</h3>
+          <h3 id="social-requests-title">Отклики и связи</h3>
           <p>Контакт откроется только после взаимного согласия.</p>
         </div>
       </div>
@@ -69,7 +72,7 @@ export function RequestsPanel({
               <div>
                 <b>{request.otherDog?.name ?? 'Другая собака'}</b>
                 <p>{incoming ? `Вас зовут на ${scenarioLabels[request.scenario]}` : `Ваш запрос на ${scenarioLabels[request.scenario]}`}</p>
-                <p>{statusLabels[request.status]}</p>
+                <p>{request.source === "signal" ? "Отклик на Гав" : request.source === "invite" ? "По приглашению" : "Знакомство по анкете"} · {statusLabels[request.status]}</p>
               </div>
 
               {request.status === 'pending' && incoming && (
@@ -82,6 +85,7 @@ export function RequestsPanel({
                 <button type="button" disabled={busy} onClick={() => onAction(request.id, 'cancel')}>Отменить запрос</button>
               )}
               {request.status === 'accepted' && <div className="social-request-actions">
+                {onMeeting&&<button type="button" onClick={()=>onMeeting(request.id)}>Место встречи</button>}
                 {request.telegramContactUrl && <button className="primary" type="button" onClick={() => onOpenChat(request.telegramContactUrl!)}>Открыть чат</button>}
                 <button type="button" disabled={busy} onClick={() => onAction(request.id, 'close')}>Завершить знакомство</button>
               </div>}
@@ -97,10 +101,10 @@ export function RequestsPanel({
               )}
 
               {reportingId === request.id && (
-                <form onSubmit={(event) => {
+                <form onSubmit={async (event) => {
                   event.preventDefault();
                   if (reason.trim().length < 3) return;
-                  onReport(request.id, reason.trim());
+                  if (!await onReport(request.id, reason.trim())) return;
                   setReportingId(null);
                   setReason('');
                 }}>
@@ -114,10 +118,10 @@ export function RequestsPanel({
                   </div>
                 </form>
               )}
-              {blockingId === request.id && <div className="social-block-confirm" role="dialog" aria-modal="true" aria-label="Подтвердить блокировку">
+              {blockingId === request.id && <div className="social-block-confirm" role="group" aria-label="Подтвердить блокировку">
                 <p>Скрыть владельца и все его запросы? Это действие можно будет отменить только через поддержку.</p>
                 <div className="social-request-actions">
-                  <button type="button" disabled={busy} onClick={() => { setBlockingId(null); onAction(request.id, 'block'); }}>Заблокировать</button>
+                  <button type="button" disabled={busy} onClick={async () => { if (await onAction(request.id, 'block')) setBlockingId(null); }}>Заблокировать</button>
                   <button type="button" onClick={() => setBlockingId(null)}>Отмена</button>
                 </div>
               </div>}
