@@ -446,3 +446,19 @@ body.companion-app [data-surface="capture"] .voice-capture-send { background:#40
 body.companion-app [data-surface="capture"] .voice-capture-send:disabled { background:#dce5d9 !important; color:#617067 !important; opacity:1; }
 body.companion-app .share-page .share-card .share-hero { border:0 !important; border-radius:0 !important; box-shadow:none !important; background:transparent !important; }
 body.companion-app .share-avatar-monogram { display:grid; width:100%; height:100%; place-items:center; font-size:40px; font-weight:500; color:#405845; }
+
+/* Content screens scroll in the app shell; map gestures keep their own viewport. */
+body.companion-app .app-canvas > .phone-shell.journal-shell:not(:has(.production-map-workspace,.production-woof-workspace)) {
+  height:100dvh !important;
+  min-height:0 !important;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+}
+body.companion-app .phone-shell.journal-shell > .journal-screen {
+  position:relative;
+  inset:auto;
+  height:auto;
+  min-height:100%;
+}
