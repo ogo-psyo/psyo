@@ -17,9 +17,10 @@ const shell = source('components/journey/ProductionJourney.tsx');
 const profileMemory = source('components/profile/ProfileMemoryWorkspace.tsx');
 const css = source('components/journey/production-journey.css');
 const globals = source('app/globals.css');
+requireText(page, "tab === 'nearby' && <ProductionWoofWorkspace", 'Gav opens the real map workspace directly');
 
 requireText(page, "from '@/components/journey/ProductionJourney'", 'production root');
-for (const route of ['today', 'map', 'nearby', 'things']) {
+for (const route of ['today', 'map', 'things']) {
   requireText(page, `<ProductionJourney route="${route}"`, `production route ${route}`);
 }
 requireText(page, '<ProfileMemoryWorkspace', 'production profile memory route');

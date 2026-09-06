@@ -4299,26 +4299,6 @@ export default function Home() {
           onNavigate={(route) => { setJourneyDetail(null); setTab(route); }}
         />}
 
-        {hasDog && tab === 'nearby' && journeyDetail !== 'nearby' && <ProductionJourney route="nearby"
-          dogName={profile.dogName}
-          breedLabel={breedLabel}
-          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
-          discoverable={socialProfile?.discoverable}
-          candidates={[...socialCandidates.nearby, ...socialCandidates.city].slice(0, 2).map((candidate) => ({
-            id: candidate.petId,
-            name: candidate.name,
-            distance: candidate.distance || candidate.district || 'в вашем городе',
-            availability: candidate.sharedScenarios.includes('walk') ? 'готовы к прогулке' : 'готовы познакомиться',
-            note: candidate.reasons.slice(0, 2).join(' · ') || 'Контакт откроется только по согласию',
-            onOpen: () => openJourneyDetail('nearby'),
-          }))}
-          onOpenSocial={() => openJourneyDetail('nearby')}
-          onNavigate={(route) => {
-            if (route === 'nearby') openJourneyDetail('nearby');
-            else { setJourneyDetail(null); setTab(route); }
-          }}
-        />}
-
         {hasDog && tab === 'things' && journeyDetail !== 'things' && <ProductionJourney route="things"
           dogName={profile.dogName}
           breedLabel={breedLabel}
@@ -4391,7 +4371,7 @@ export default function Home() {
           onSaveFacts={async () => { await savePrivateProfile(); }}
         />}
 
-        {hasDog && tab === 'nearby' && journeyDetail === 'nearby' && <ProductionWoofWorkspace
+        {hasDog && tab === 'nearby' && <ProductionWoofWorkspace
           key={woofRecommendationEntry?.key ?? 'woof-workspace'}
           dogName={profile.dogName || 'Собака'}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" fill />}
@@ -4741,7 +4721,7 @@ export default function Home() {
         {notice !== 'idle' && <div className="toast" role="status" aria-live="polite">{notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
       </section>
 
-      {hasDog && !(tab === 'map' && productionMapMode !== 'view') && <AppNavigation active={activePrimaryRoute} onAskAssistant={openAssistantSheet} onNavigate={(route) => {
+      {hasDog && !(tab === 'map' && productionMapMode !== 'view') && <AppNavigation dogName={profile.dogName} active={activePrimaryRoute} onAskAssistant={openAssistantSheet} onNavigate={(route) => {
         setJourneyDetail(null);
         setAssistantOpen(false);
         setTab(route);

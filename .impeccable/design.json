@@ -1,82 +1,435 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-28T15:40:00+03:00",
-  "title": "Design System: Псё Living Field Guide",
+  "generatedAt": "2026-09-06T10:56:04.482095+00:00",
+  "title": "Design System: Псё",
   "extensions": {
     "colorMeta": {
-      "ink": { "role": "primary", "displayName": "Field Ink", "canonical": "#171814", "tonalRamp": ["#171814", "#30312c", "#4e5149", "#73766e", "#999c94", "#bec0b9", "#dedfd9", "#f4f4ef"] },
-      "signal-lime": { "role": "secondary", "displayName": "Care Signal", "canonical": "#D8FF72", "tonalRamp": ["#263400", "#425700", "#617b00", "#82a400", "#a8cf27", "#c4ec52", "#d8ff72", "#f0ffc3"] },
-      "sage": { "role": "secondary", "displayName": "Quiet Sage", "canonical": "#DDE3D2", "tonalRamp": ["#252b20", "#424a3b", "#626c58", "#849079", "#a8b49e", "#c6cebc", "#dde3d2", "#f2f5ed"] },
-      "spatial-blue": { "role": "tertiary", "displayName": "Spatial Blue", "canonical": "#A9C7C9", "tonalRamp": ["#183033", "#2d5054", "#467277", "#60959a", "#82aeb2", "#a9c7c9", "#c9ddde", "#edf5f5"] },
-      "social-lilac": { "role": "tertiary", "displayName": "Social Lilac", "canonical": "#C6A9E6", "tonalRamp": ["#2d1c3b", "#4e3264", "#70498d", "#9165b5", "#ad86d0", "#c6a9e6", "#ddcef0", "#f4edfa"] },
-      "danger-coral": { "role": "tertiary", "displayName": "Caution Coral", "canonical": "#F05A3D", "tonalRamp": ["#3d1009", "#6a1d10", "#982b1b", "#c43e27", "#f05a3d", "#f6836f", "#fbb0a1", "#fde3dd"] },
-      "utility-yellow": { "role": "tertiary", "displayName": "Utility Yellow", "canonical": "#F3DF64", "tonalRamp": ["#352e05", "#5d5009", "#87750e", "#b19a20", "#d7be3c", "#f3df64", "#f9ec9a", "#fff8d2"] },
-      "warm-pink": { "role": "tertiary", "displayName": "Warm Pink", "canonical": "#EBA4BF", "tonalRamp": ["#3b1d28", "#633244", "#8d4a62", "#b76582", "#d984a2", "#eba4bf", "#f3c6d6", "#fbeaf0"] },
-      "canvas": { "role": "neutral", "displayName": "Warm Paper", "canonical": "#F7F6F0", "tonalRamp": ["#252520", "#484741", "#6c6b64", "#929189", "#b8b7af", "#d8d7d0", "#f7f6f0", "#fffef9"] },
-      "paper": { "role": "neutral", "displayName": "Raised Paper", "canonical": "#FFFDF8", "tonalRamp": ["#292824", "#4d4b46", "#72706a", "#98968f", "#bebcb5", "#dedcd6", "#fffdf8", "#ffffff"] },
-      "line": { "role": "neutral", "displayName": "Pencil Line", "canonical": "#CBCBC2", "tonalRamp": ["#282824", "#494943", "#6b6b64", "#8e8e86", "#b1b1a8", "#cbcbc2", "#e2e2dc", "#f6f6f2"] }
+      "forest": {
+        "role": "primary",
+        "displayName": "Forest",
+        "tonalRamp": [
+          "oklch(15% 0.0725 159.96)",
+          "oklch(26.43% 0.0725 159.96)",
+          "oklch(37.86% 0.0725 159.96)",
+          "oklch(49.29% 0.0725 159.96)",
+          "oklch(60.71% 0.0725 159.96)",
+          "oklch(72.14% 0.0725 159.96)",
+          "oklch(83.57% 0.0725 159.96)",
+          "oklch(95% 0.0725 159.96)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0360 163.86)",
+          "oklch(26.43% 0.0360 163.86)",
+          "oklch(37.86% 0.0360 163.86)",
+          "oklch(49.29% 0.0360 163.86)",
+          "oklch(60.71% 0.0360 163.86)",
+          "oklch(72.14% 0.0360 163.86)",
+          "oklch(83.57% 0.0360 163.86)",
+          "oklch(95% 0.0360 163.86)"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Ink Soft",
+        "tonalRamp": [
+          "oklch(15% 0.0212 155.34)",
+          "oklch(26.43% 0.0212 155.34)",
+          "oklch(37.86% 0.0212 155.34)",
+          "oklch(49.29% 0.0212 155.34)",
+          "oklch(60.71% 0.0212 155.34)",
+          "oklch(72.14% 0.0212 155.34)",
+          "oklch(83.57% 0.0212 155.34)",
+          "oklch(95% 0.0212 155.34)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "tonalRamp": [
+          "oklch(15% 0.0057 128.53)",
+          "oklch(26.43% 0.0057 128.53)",
+          "oklch(37.86% 0.0057 128.53)",
+          "oklch(49.29% 0.0057 128.53)",
+          "oklch(60.71% 0.0057 128.53)",
+          "oklch(72.14% 0.0057 128.53)",
+          "oklch(83.57% 0.0057 128.53)",
+          "oklch(95% 0.0057 128.53)"
+        ]
+      },
+      "paper-raised": {
+        "role": "neutral",
+        "displayName": "Paper Raised",
+        "tonalRamp": [
+          "oklch(15% 0.0054 95.10)",
+          "oklch(26.43% 0.0054 95.10)",
+          "oklch(37.86% 0.0054 95.10)",
+          "oklch(49.29% 0.0054 95.10)",
+          "oklch(60.71% 0.0054 95.10)",
+          "oklch(72.14% 0.0054 95.10)",
+          "oklch(83.57% 0.0054 95.10)",
+          "oklch(95% 0.0054 95.10)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "tonalRamp": [
+          "oklch(15% 0.0148 142.22)",
+          "oklch(26.43% 0.0148 142.22)",
+          "oklch(37.86% 0.0148 142.22)",
+          "oklch(49.29% 0.0148 142.22)",
+          "oklch(60.71% 0.0148 142.22)",
+          "oklch(72.14% 0.0148 142.22)",
+          "oklch(83.57% 0.0148 142.22)",
+          "oklch(95% 0.0148 142.22)"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Line Strong",
+        "tonalRamp": [
+          "oklch(15% 0.0477 157.12)",
+          "oklch(26.43% 0.0477 157.12)",
+          "oklch(37.86% 0.0477 157.12)",
+          "oklch(49.29% 0.0477 157.12)",
+          "oklch(60.71% 0.0477 157.12)",
+          "oklch(72.14% 0.0477 157.12)",
+          "oklch(83.57% 0.0477 157.12)",
+          "oklch(95% 0.0477 157.12)"
+        ]
+      },
+      "mint": {
+        "role": "primary",
+        "displayName": "Mint",
+        "tonalRamp": [
+          "oklch(15% 0.0209 152.18)",
+          "oklch(26.43% 0.0209 152.18)",
+          "oklch(37.86% 0.0209 152.18)",
+          "oklch(49.29% 0.0209 152.18)",
+          "oklch(60.71% 0.0209 152.18)",
+          "oklch(72.14% 0.0209 152.18)",
+          "oklch(83.57% 0.0209 152.18)",
+          "oklch(95% 0.0209 152.18)"
+        ]
+      },
+      "moss": {
+        "role": "secondary",
+        "displayName": "Moss",
+        "tonalRamp": [
+          "oklch(15% 0.0570 157.61)",
+          "oklch(26.43% 0.0570 157.61)",
+          "oklch(37.86% 0.0570 157.61)",
+          "oklch(49.29% 0.0570 157.61)",
+          "oklch(60.71% 0.0570 157.61)",
+          "oklch(72.14% 0.0570 157.61)",
+          "oklch(83.57% 0.0570 157.61)",
+          "oklch(95% 0.0570 157.61)"
+        ]
+      },
+      "blue": {
+        "role": "secondary",
+        "displayName": "Blue",
+        "tonalRamp": [
+          "oklch(15% 0.0165 211.04)",
+          "oklch(26.43% 0.0165 211.04)",
+          "oklch(37.86% 0.0165 211.04)",
+          "oklch(49.29% 0.0165 211.04)",
+          "oklch(60.71% 0.0165 211.04)",
+          "oklch(72.14% 0.0165 211.04)",
+          "oklch(83.57% 0.0165 211.04)",
+          "oklch(95% 0.0165 211.04)"
+        ]
+      },
+      "lilac": {
+        "role": "secondary",
+        "displayName": "Lilac",
+        "tonalRamp": [
+          "oklch(15% 0.0221 300.19)",
+          "oklch(26.43% 0.0221 300.19)",
+          "oklch(37.86% 0.0221 300.19)",
+          "oklch(49.29% 0.0221 300.19)",
+          "oklch(60.71% 0.0221 300.19)",
+          "oklch(72.14% 0.0221 300.19)",
+          "oklch(83.57% 0.0221 300.19)",
+          "oklch(95% 0.0221 300.19)"
+        ]
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Danger",
+        "tonalRamp": [
+          "oklch(15% 0.1365 23.25)",
+          "oklch(26.43% 0.1365 23.25)",
+          "oklch(37.86% 0.1365 23.25)",
+          "oklch(49.29% 0.1365 23.25)",
+          "oklch(60.71% 0.1365 23.25)",
+          "oklch(72.14% 0.1365 23.25)",
+          "oklch(83.57% 0.1365 23.25)",
+          "oklch(95% 0.1365 23.25)"
+        ]
+      },
+      "yellow": {
+        "role": "secondary",
+        "displayName": "Yellow",
+        "tonalRamp": [
+          "oklch(15% 0.0476 91.33)",
+          "oklch(26.43% 0.0476 91.33)",
+          "oklch(37.86% 0.0476 91.33)",
+          "oklch(49.29% 0.0476 91.33)",
+          "oklch(60.71% 0.0476 91.33)",
+          "oklch(72.14% 0.0476 91.33)",
+          "oklch(83.57% 0.0476 91.33)",
+          "oklch(95% 0.0476 91.33)"
+        ]
+      },
+      "pink": {
+        "role": "secondary",
+        "displayName": "Pink",
+        "tonalRamp": [
+          "oklch(15% 0.0212 355.25)",
+          "oklch(26.43% 0.0212 355.25)",
+          "oklch(37.86% 0.0212 355.25)",
+          "oklch(49.29% 0.0212 355.25)",
+          "oklch(60.71% 0.0212 355.25)",
+          "oklch(72.14% 0.0212 355.25)",
+          "oklch(83.57% 0.0212 355.25)",
+          "oklch(95% 0.0212 355.25)"
+        ]
+      },
+      "focus-blue": {
+        "role": "neutral",
+        "displayName": "Focus Blue",
+        "tonalRamp": [
+          "oklch(15% 0.1288 259.83)",
+          "oklch(26.43% 0.1288 259.83)",
+          "oklch(37.86% 0.1288 259.83)",
+          "oklch(49.29% 0.1288 259.83)",
+          "oklch(60.71% 0.1288 259.83)",
+          "oklch(72.14% 0.1288 259.83)",
+          "oklch(83.57% 0.1288 259.83)",
+          "oklch(95% 0.1288 259.83)"
+        ]
+      }
     },
     "typographyMeta": {
-      "display": { "displayName": "Editorial Display", "purpose": "Псё signature and selected focal headings." },
-      "title": { "displayName": "Dense Title", "purpose": "Route titles and decisive care actions." },
-      "body": { "displayName": "Working Copy", "purpose": "Controls, records and explanatory Russian text." },
-      "label": { "displayName": "Utility Label", "purpose": "Compact metadata and navigation labels." }
+      "display": {
+        "displayName": "Display",
+        "purpose": "Compact route headings; responsive exceptions described in DESIGN.md."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Shared headline role."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Shared title role."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Supporting explanatory copy, not a forced global record size."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Shared label role."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Shared control role."
+      },
+      "navigation-mobile": {
+        "displayName": "Navigation Mobile",
+        "purpose": "Phone route labels with truncation."
+      }
     },
     "shadows": [
-      { "name": "mobile-dock", "value": "0 14px 34px rgb(23 24 20 / 12%)", "purpose": "Separate the fixed mobile dock from scrolling paper." },
-      { "name": "temporary-overlay", "value": "0 18px 44px rgb(23 24 20 / 18%)", "purpose": "Dialogs and temporary sheets only." }
+      {
+        "name": "ambient-paper",
+        "value": "0 8px 24px rgb(39 73 49 / 7%)",
+        "purpose": "Actionable paper surfaces and social controls."
+      },
+      {
+        "name": "primary-action",
+        "value": "0 4px 12px rgb(36 90 64 / 10%)",
+        "purpose": "Primary and care variant buttons."
+      },
+      {
+        "name": "care-action",
+        "value": "0 10px 24px rgb(36 90 64 / 14%)",
+        "purpose": "Nearest-care action."
+      },
+      {
+        "name": "sheet",
+        "value": "0 -12px 48px rgb(25 50 37 / 16%)",
+        "purpose": "Temporary bottom sheets."
+      },
+      {
+        "name": "dock",
+        "value": "0 -5px 22px rgb(39 73 49 / 4%)",
+        "purpose": "Mobile dock separation."
+      }
     ],
     "motion": [
-      { "name": "state-ease", "value": "160ms cubic-bezier(.16, 1, .3, 1)", "purpose": "Color, border and restrained press feedback." }
+      {
+        "name": "state-transition",
+        "value": "160ms cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Background, text, border, and transform state changes."
+      },
+      {
+        "name": "scenario-reveal",
+        "value": "200ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "Opacity .7→1 and translateY(5px)→0, only without reduced motion."
+      }
     ],
     "breakpoints": [
-      { "name": "desk-start", "value": "760px" },
-      { "name": "wide-desk", "value": "1180px" }
+      {
+        "name": "narrow-phone",
+        "value": "360px"
+      },
+      {
+        "name": "desktop",
+        "value": "760px"
+      },
+      {
+        "name": "context-rail",
+        "value": "1100px"
+      }
+    ],
+    "backgrounds": [
+      {
+        "name": "companion-mist",
+        "value": "radial-gradient(ellipse 95% 390px at 0 0, #d8eddf 0%, transparent 72%), radial-gradient(ellipse 75% 340px at 110% 300px, #e9e3f2 0%, transparent 78%), var(--companion-paper)",
+        "purpose": "Shared watercolor canvas; source token --companion-mist."
+      },
+      {
+        "name": "dog-identity",
+        "value": "linear-gradient(115deg, #d9eddf, #e7f0e6 65%, #eae6f2)",
+        "purpose": "Compact identity wash."
+      },
+      {
+        "name": "care-action",
+        "value": "linear-gradient(125deg, #2a654a, #214f3a)",
+        "purpose": "Nearest-care forest surface."
+      }
     ]
   },
   "components": [
     {
-      "name": "Primary Care Button",
+      "name": "Button Primary",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The one decisive mutation or confirmation on a surface.",
-      "html": "<button class=\"ds-care-button\">Готово</button>",
-      "css": ".ds-care-button{min-height:48px;padding:0 16px;border:1px solid #171814;border-radius:14px;background:#171814;color:#fffdf8;font:800 14px Manrope,system-ui,sans-serif;transition:background-color 160ms cubic-bezier(.16,1,.3,1),transform 160ms cubic-bezier(.16,1,.3,1)}.ds-care-button:hover{background:#30312c}.ds-care-button:focus-visible{outline:3px solid #315ea8;outline-offset:3px}.ds-care-button:active{transform:translateY(1px)}"
+      "description": "Implemented shared button-primary variant.",
+      "html": "<button class=\"ds-button-primary\">Сохранить</button>",
+      "css": ".ds-button-primary{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:48px;padding:0 16px;border:1px solid transparent;border-radius:var(--kit-radius-control,14px);background:var(--companion-forest,#245a40);color:var(--kit-paper-raised,#fffefa);font-size:15px;font-weight:600;line-height:1;transition:transform 160ms cubic-bezier(.16,1,.3,1);box-shadow:0 4px 12px rgb(36 90 64 / 10%);}.ds-button-primary:hover:not(:disabled){transform:translateY(-2px)}.ds-button-primary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-button-primary:active:not(:disabled){transform:translateY(1px) scale(.985)}.ds-button-primary:disabled{box-shadow:none;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button-primary{transition:none}}"
     },
     {
-      "name": "Care Signal Field",
-      "kind": "card",
-      "refersTo": "button-signal",
-      "description": "A large semantic lime field for the nearest useful action.",
-      "html": "<article class=\"ds-care-field\"><h2>Поставить дату обработки</h2><p>Запланировано на сегодня.</p><button>Готово</button></article>",
-      "css": ".ds-care-field{display:grid;gap:12px;min-height:240px;padding:28px;border:1px solid #171814;border-radius:28px;background:#d8ff72;color:#171814;font-family:Manrope,system-ui,sans-serif}.ds-care-field h2{max-width:10ch;margin:0;font-size:38px;line-height:.94;letter-spacing:-.04em}.ds-care-field p{margin:0;font-weight:700}.ds-care-field button{justify-self:start;min-height:46px;padding:0 16px;border:1px solid #171814;border-radius:14px;background:#171814;color:#fffdf8;font-weight:800}.ds-care-field button:focus-visible{outline:3px solid #315ea8;outline-offset:3px}"
+      "name": "Button Care",
+      "kind": "button",
+      "refersTo": "button-care",
+      "description": "Implemented shared button-care variant.",
+      "html": "<button class=\"ds-button-care\">Открыть уход</button>",
+      "css": ".ds-button-care{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:48px;padding:0 16px;border:1px solid transparent;border-radius:var(--kit-radius-control,14px);background:var(--companion-forest,#245a40);color:var(--kit-paper-raised,#fffefa);font-size:15px;font-weight:600;line-height:1;transition:transform 160ms cubic-bezier(.16,1,.3,1);box-shadow:0 4px 12px rgb(36 90 64 / 10%);}.ds-button-care:hover:not(:disabled){transform:translateY(-2px)}.ds-button-care:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-button-care:active:not(:disabled){transform:translateY(1px) scale(.985)}.ds-button-care:disabled{box-shadow:none;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button-care{transition:none}}"
     },
     {
-      "name": "Observation Field",
+      "name": "Button Secondary",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Implemented shared button-secondary variant.",
+      "html": "<button class=\"ds-button-secondary\">Отмена</button>",
+      "css": ".ds-button-secondary{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:48px;padding:0 16px;border:1px solid var(--kit-ink,#233b30);border-radius:var(--kit-radius-control,14px);background:transparent;color:var(--kit-ink,#233b30);font-size:15px;font-weight:600;line-height:1;transition:transform 160ms cubic-bezier(.16,1,.3,1);box-shadow:none;}.ds-button-secondary:hover:not(:disabled){transform:translateY(-2px)}.ds-button-secondary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-button-secondary:active:not(:disabled){transform:translateY(1px) scale(.985)}.ds-button-secondary:disabled{box-shadow:none;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button-secondary{transition:none}}"
+    },
+    {
+      "name": "Button Ghost",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Implemented shared button-ghost variant.",
+      "html": "<button class=\"ds-button-ghost\">Подробнее</button>",
+      "css": ".ds-button-ghost{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:48px;padding:0 16px;border:1px solid transparent;border-radius:var(--kit-radius-control,14px);background:transparent;color:var(--kit-ink,#233b30);font-size:15px;font-weight:600;line-height:1;transition:transform 160ms cubic-bezier(.16,1,.3,1);box-shadow:none;}.ds-button-ghost:hover:not(:disabled){transform:translateY(-2px)}.ds-button-ghost:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-button-ghost:active:not(:disabled){transform:translateY(1px) scale(.985)}.ds-button-ghost:disabled{box-shadow:none;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button-ghost{transition:none}}"
+    },
+    {
+      "name": "Button Danger",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Implemented shared button-danger variant.",
+      "html": "<button class=\"ds-button-danger\">Удалить</button>",
+      "css": ".ds-button-danger{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:48px;padding:0 16px;border:1px solid var(--kit-coral,#a63f3f);border-radius:var(--kit-radius-control,14px);background:transparent;color:var(--kit-coral,#a63f3f);font-size:15px;font-weight:600;line-height:1;transition:transform 160ms cubic-bezier(.16,1,.3,1);box-shadow:none;}.ds-button-danger:hover:not(:disabled){transform:translateY(-2px)}.ds-button-danger:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-button-danger:active:not(:disabled){transform:translateY(1px) scale(.985)}.ds-button-danger:disabled{box-shadow:none;cursor:default}@media(prefers-reduced-motion:reduce){.ds-button-danger{transition:none}}"
+    },
+    {
+      "name": "Labeled field",
       "kind": "input",
       "refersTo": "field",
-      "description": "Owner-authored daily observation capture on raised paper.",
-      "html": "<textarea class=\"ds-observation\" placeholder=\"Мята сегодня…\"></textarea>",
-      "css": ".ds-observation{min-height:86px;padding:13px 14px;border:1px solid #171814;border-radius:14px;background:#fffdf8;color:#171814;font:700 16px/1.45 Manrope,system-ui,sans-serif}.ds-observation::placeholder{color:#4e5149}.ds-observation:focus-visible{outline:3px solid #315ea8;outline-offset:2px}"
+      "description": "Readable native-size field with visible label and keyboard focus.",
+      "html": "<label class=\"ds-field-label\">Имя собаки<input class=\"ds-field\" value=\"Боня\" /></label>",
+      "css": ".ds-field-label{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);display:grid;gap:7px;font-size:12px;font-weight:700;color:var(--kit-ink,#233b30)}.ds-field{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:48px;padding:11px 13px;border:1px solid var(--kit-line,#d8e0d7);border-radius:var(--kit-radius-control,14px);background:var(--kit-paper-raised,#fffefa);color:var(--kit-ink,#233b30);font-size:16px}.ds-field:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}"
     },
     {
-      "name": "Canonical Navigation",
+      "name": "Raised surface",
+      "kind": "card",
+      "refersTo": "surface-raised",
+      "description": "Flat paper container; not every card receives elevation.",
+      "html": "<section class=\"ds-surface\"><h2>Наблюдения</h2><p>Записи о самочувствии собаки</p></section>",
+      "css": ".ds-surface{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);border:1px solid var(--kit-line,#d8e0d7);border-radius:var(--kit-radius-surface,20px);background:var(--kit-paper-raised,#fffefa);color:var(--kit-ink,#233b30);box-shadow:none}.ds-surface h2{font-size:21px;font-weight:700;line-height:1.22;letter-spacing:-.025em}.ds-surface p{font-size:14px;line-height:1.45;color:var(--kit-ink-soft,#5b685f)}"
+    },
+    {
+      "name": "Social filter action",
+      "kind": "chip",
+      "refersTo": "filter-action",
+      "description": "Mint action within the social filters.",
+      "html": "<button class=\"ds-filter\">Показать рядом</button>",
+      "css": ".ds-filter{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);min-height:44px;display:flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:14px;background:var(--kit-sage,#e0eee3);color:var(--companion-forest,#245a40);font-size:12px;font-weight:600;transition:transform 160ms cubic-bezier(.16,1,.3,1)}.ds-filter:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-filter:active{transform:translateY(1px)}.ds-filter:hover{background:var(--kit-sage,#e0eee3)}@media(prefers-reduced-motion:reduce){.ds-filter{transition:none}}"
+    },
+    {
+      "name": "Five-route mobile dock",
       "kind": "nav",
-      "refersTo": "navigation-active",
-      "description": "Five stable routes: mobile dock and desktop contents rail.",
-      "html": "<nav class=\"ds-nav\"><button class=\"active\">Всё</button><button>Псё</button><button>Карта</button><button>Гав</button><button>Вещи</button></nav>",
-      "css": ".ds-nav{display:flex;gap:4px;padding:7px;border:1px solid #cbcbc2;border-radius:22px;background:#fffdf8}.ds-nav button{min-height:48px;border:0;border-radius:14px;padding:0 12px;background:transparent;color:#4e5149;font:800 13px Manrope,system-ui,sans-serif}.ds-nav button.active{background:#d8ff72;color:#171814}.ds-nav button:focus-visible{outline:3px solid #315ea8;outline-offset:2px}"
+      "refersTo": "navigation-active-mobile",
+      "description": "Dog-name route, stacked icon and label, mint current state. Static preview does not navigate.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Основные разделы\"><button aria-current=\"page\"><svg viewBox=\"0 0 48 48\" aria-hidden=\"true\"><path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\" d=\"M26.815 4.16c7.235 3.211 12.719 7.43 15.554 9.867 1.433 1.232 2.232 3.005 2.33 4.892C44.836 21.51 45 25.565 45 30c0 3.412-.097 6.706-.204 9.293a5.69 5.69 0 0 1-5.512 5.47C35.824 44.882 30.689 45 24 45S12.177 44.882 8.716 44.764a5.69 5.69 0 0 1-5.512-5.47A230 230 0 0 1 3 30c0-4.435.165-8.49.3-11.081.1-1.887.898-3.66 2.331-4.892 2.835-2.438 8.32-6.656 15.554-9.867a6.94 6.94 0 0 1 5.63 0M16 38h16\"/></svg><span>Главная</span></button><button><svg viewBox=\"0 0 48 48\" aria-hidden=\"true\"><path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\" d=\"M24 20c-6.334 0-11.686 5.531-13.414 12.635-.76 3.124.386 6.44 3.199 7.998C16.015 41.868 19.332 43 24 43s7.986-1.132 10.216-2.367c2.813-1.558 3.958-4.874 3.198-7.998C35.686 25.53 30.334 20 24 20M3 18.444C3 21.206 4.79 24 7 24s4-2.794 4-5.556S9.21 14 7 14s-4 1.683-4 4.444m42 0C45 21.206 43.21 24 41 24s-4-2.794-4-5.556S38.79 14 41 14s4 1.683 4 4.444m-31.5-9c0 2.762 1.79 5.556 4 5.556s4-2.794 4-5.556S19.71 5 17.5 5s-4 1.683-4 4.444m21 0c0 2.762-1.79 5.556-4 5.556s-4-2.794-4-5.556S28.29 5 30.5 5s4 1.683 4 4.444\"/></svg><span>Боня</span></button><button><svg viewBox=\"0 0 48 48\" aria-hidden=\"true\"><path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\" d=\"M16.84 5c-4.587.609-8.783 1.998-11.205 2.917-1.349.512-2.229 1.77-2.305 3.21C3.19 13.781 3 18.706 3 25.9c0 6.878.174 11.682.312 14.41.067 1.341 1.427 2.189 2.694 1.744C12.036 39.936 16.84 39.2 16.84 39.2 24 40.15 31.159 43 31.159 43c4.588-.609 8.784-1.998 11.206-2.917 1.349-.512 2.229-1.77 2.305-3.21.14-2.655.33-7.579.33-14.773 0-6.878-.174-11.682-.312-14.41-.067-1.341-1.427-2.189-2.694-1.744C35.964 8.064 31.16 8.8 31.16 8.8 24 5.95 16.841 5 16.841 5Zm-.19 34.151V5.126m14.7 3.724v34.025\"/></svg><span>Карта</span></button><button><svg viewBox=\"0 0 48 48\" aria-hidden=\"true\"><g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\"><path d=\"M42 21c0 12.919-13.35 22.128-17.056 24.436a1.77 1.77 0 0 1-1.888 0C19.351 43.128 6 33.919 6 21c0-9.941 8.059-18 18-18s18 8.059 18 18\" /><path d=\"M32.942 23.822a7.2 7.2 0 0 0 .873-5.38c-.911-4.163-5.957-5.864-9.1-3.074-.249.22-.47.473-.715.725-.245-.252-.466-.506-.715-.725-3.143-2.79-8.189-1.089-9.1 3.074a7.2 7.2 0 0 0 .873 5.38c1.592 2.58 4.09 4.63 6.597 6.48a3.96 3.96 0 0 0 4.69 0c2.508-1.85 5.005-3.9 6.597-6.48\" /></g></svg><span>Гав</span></button><button><svg viewBox=\"0 0 48 48\" aria-hidden=\"true\"><g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\"><path d=\"M14.823 3.653C13.744 3.824 13 4.766 13 5.86a7.14 7.14 0 0 0 4.37 6.583C9.581 15.882 4 24.837 4 32.25 4 41.639 12.954 45 24 45s20-3.361 20-12.75c0-7.413-5.583-16.368-13.37-19.808A7.14 7.14 0 0 0 35 5.859c0-1.093-.744-2.035-1.823-2.206C31.357 3.364 28.225 3 24 3s-7.358.364-9.177.653\" /><path d=\"M17 12.5s3 .5 7 .5 7-.5 7-.5\" /></g></svg><span>Вещи</span></button></nav>",
+      "css": ".ds-nav{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:8px 6px;border-top:1px solid var(--kit-line,#d8e0d7);background:rgb(251 252 248 / 96%);box-shadow:0 -5px 22px rgb(39 73 49 / 4%);backdrop-filter:blur(14px)}.ds-nav button{font-family:var(--font-pouf,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:54px;padding:4px 2px;border:0;border-radius:12px;background:transparent;color:var(--kit-ink-soft,#5b685f);transition:transform 160ms cubic-bezier(.16,1,.3,1)}.ds-nav button[aria-current]{background:var(--kit-sage,#e0eee3);color:var(--companion-forest,#245a40)}.ds-nav svg{width:23px;height:23px}.ds-nav span{display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:14px;font-weight:600;text-align:center}.ds-nav button:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-nav button:active{transform:translateY(1px)}.ds-nav button:hover{color:var(--kit-ink,#233b30)}@media(prefers-reduced-motion:reduce){.ds-nav button{transition:none}}"
     }
   ],
   "narrative": {
-    "northStar": "The Living Field Guide",
-    "overview": "Псё is one working notebook for life with a dog: identify the dog, see the nearest care action, record what changed, then move into history. It combines pet-first warmth, typographic confidence, spatial air and semantic color without copying any reference literally.",
-    "keyCharacteristics": ["Connected desktop field guide", "Large semantic color fields", "Black linework and warm paper", "Authored dog identity", "Stable five-route navigation"],
-    "rules": [
-      { "name": "The Field Rule", "body": "Color owns a meaningful region rather than appearing as scattered decoration.", "section": "colors" },
-      { "name": "The Flat-By-Default Rule", "body": "Permanent surfaces use tone and line; shadows belong to the mobile dock and temporary overlays.", "section": "elevation" }
+    "northStar": "A Familiar Pocket Companion",
+    "overview": "Псё is a warm, precise, protective companion for daily life with one dog. Its owner-approved iOS watercolor world uses familiar system Cyrillic, calm forest actions, soft paper, and diffuse mint–lilac light. The dog remains the personal anchor; typography and usable controls carry the hierarchy.\n\nThis document records the local iOS watercolor v5 implementation, not a production-release claim. It refreshes the superseded Living Field Guide direction using app/companion.css, the current shared stylesheet cascade, and implemented route components. PRODUCT.md remains authoritative for privacy, honest state feedback, and accessible interaction; the first-screen composition and verification status stay in artifacts/design-v5/BRIEF.md.",
+    "keyCharacteristics": [
+      "System typography throughout the active companion shell, with compact sentence-case headings.",
+      "Forest primary actions and readable green-black text over soft paper.",
+      "Mint–lilac background washes, quiet dividers, and selective ambient depth.",
+      "Five personal routes with a safe-area-aware mobile dock and responsive desktop rails.",
+      "Real map-first Гав, with paper controls and existing consent-aware social states."
     ],
-    "dos": ["Use the whole desktop viewport as one working spread.", "Keep privacy and recovery copy beside its action.", "Use the dog's monogram and line mark when real imagery is absent."],
-    "donts": ["Do not frame the product as a phone mockup.", "Do not float the assistant over content.", "Do not use gradients or persistent shadows in place of authored structure."]
+    "rules": [
+      {
+        "name": "The Forest Action Rule",
+        "body": "Forest carries the primary action; pale mint supports selection. Lilac and other pastel fields provide atmosphere or context, never a substitute for a readable label.",
+        "section": "colors"
+      },
+      {
+        "name": "The Familiar Type Rule",
+        "body": "Use the owner-approved system stack for both headings and working text; do not restore the superseded Unbounded/Manrope display pairing.",
+        "section": "typography"
+      },
+      {
+        "name": "The Quiet Depth Rule",
+        "body": "Use diffuse shadows for actionable paper surfaces and temporary sheets; keep ordinary records and structural containers flat.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep Псё as the product name and use the selected dog’s actual name for the profile route.",
+      "Do preserve the existing five routes, real map interactions, and explicit privacy and consent states.",
+      "Do use forest actions, soft-paper surfaces, and mint–lilac atmosphere together.",
+      "Do retain visible focus, readable text, safe-area spacing, and reduced-motion behavior.",
+      "Do ground new surfaces in the current stylesheet cascade and actual states rather than historical screenshots."
+    ],
+    "donts": [
+      "Don’t restore neon lime primary actions, heavy black framing, or oversized editorial display typography.",
+      "Don’t turn the watercolor atmosphere into decorative cards that compete with the next useful action.",
+      "Don’t substitute a fake map or discovery teaser for the functioning Гав workspace.",
+      "Don’t hide permission, loading, error, empty, or disabled states behind decorative certainty.",
+      "Don’t promote leftover legacy styles or one-off flourishes into reusable design tokens."
+    ]
   }
 }

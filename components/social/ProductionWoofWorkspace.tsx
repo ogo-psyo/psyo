@@ -253,7 +253,7 @@ export function ProductionWoofWorkspace(props: Props) {
     });
   }
 
-  return <section ref={rootRef} className="production-woof-workspace" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
+  return <section ref={rootRef} className="production-woof-workspace" data-production-journey="nearby" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
     <div className="woof-map-layer" aria-hidden={mode !== 'live'}>
       {props.viewerLocation ? <WoofLiveMap signals={filteredLiveSignals} viewerLocation={props.viewerLocation} viewerRadiusMeters={props.viewerRadiusMeters} selectedId={selectedSignal?.id ?? null} onSelect={(id) => setSelectedSignalId(id)} />
         : <div className="woof-map-await" aria-hidden="true" />}

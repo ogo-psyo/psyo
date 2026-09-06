@@ -307,18 +307,26 @@ function TodayScreen(props: ProductionJourneyProps) {
   };
   return <main className="v3-screen v3-all production-journey-screen" data-production-journey="today" title={`${props.dogName} сегодня`}>
     <section className="all-profile" data-all-profile data-parity="production-today-identity" aria-labelledby="all-profile-title">
-      <h1 className="all-profile-wordmark">Псё</h1>
+      <div className="companion-masthead"><span className="companion-brand"><PawPrint aria-hidden="true" weight="regular" />Псё</span><button type="button" onClick={props.onAskAssistant} aria-label="Спросить Псё"><ChatCircleDots aria-hidden="true" /> Спросить</button></div>
+      <h1 className="companion-greeting">Как {props.dogName} сегодня?</h1>
       <button type="button" onClick={() => props.onNavigate('profile')} aria-label={`Открыть профиль ${props.dogName} в Псё`}>
         <DogAvatar avatar={props.avatar} />
         <span className="all-profile-copy"><span className="all-profile-name" id="all-profile-title">{props.dogName}</span><b>{props.breedLabel}</b><small>{(props.profileFacts || []).filter(Boolean).slice(0, 2).join(' · ') || 'Профиль, история и документы'}</small></span>
-        <span className="all-profile-action">Открыть Псё <ArrowRight weight="bold" /></span>
+        <span className="all-profile-action"><CaretRight weight="regular" /></span>
       </button>
     </section>
 
+    <section className="companion-care" aria-label="Ближайший уход">
+      <button type="button" onClick={props.onOpenCare}>
+        <span className="companion-care-icon"><CalendarCheck aria-hidden="true" weight="regular" /></span>
+        <span><b>{props.careTitle || 'План на сегодня'}</b><small>{props.careDetail || 'Ближайшие дела и календарь ухода'}</small></span>
+        <CaretRight aria-hidden="true" />
+      </button>
+    </section>
     {props.recommendationSlot}
 
     <section className="all-scenarios" data-all-scenarios data-parity="production-today-summary" aria-labelledby="all-scenarios-title">
-      <header><h2 id="all-scenarios-title">Что нужно решить?</h2><p>Выберите ситуацию — Псё проведёт по шагам и откроет нужное действие.</p></header>
+      <header><h2 id="all-scenarios-title">Чем помочь?</h2><p>Выберите ситуацию. Нужные шаги уже рядом.</p></header>
       <button type="button" className="all-scenario-freeform" onClick={props.onAskAssistant}><ChatCircleDots weight="duotone" /><span><b>Опишите своими словами</b><small>Псё учтёт профиль и последние записи</small></span><ArrowRight weight="bold" /></button>
       <div className="all-scenario-choices" role="group" aria-label="Быстрые сценарии">
         <button type="button" aria-pressed={activeScenario === 'health'} onClick={() => selectScenario('health')}><FirstAid weight="duotone" /><span>Изменилось самочувствие</span></button>
@@ -437,7 +445,7 @@ function ThingsScreen(props: ProductionJourneyProps) {
   return <main className="v3-screen v3-things production-journey-screen" data-production-journey="things">
     <Header dogName={props.dogName} title={`Вещи ${props.dogName}`} detail="нужное и любимое" avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
     <section className="v3-things-hero">
-      <div><span>{things.length ? 'В списке сейчас' : 'Список свободен'}</span><h2>{things[0]?.title || 'Добавить нужную вещь'}</h2><p>{things[0]?.detail || 'Корм, амуниция, лекарства или услуги'}</p><button type="button" onClick={props.onAddThing}>{things.length ? 'Открыть список' : 'Добавить в список'} <ArrowRight /></button></div>
+      <div><h2>{things[0]?.title || 'Добавить нужную вещь'}</h2><p>{things[0]?.detail || 'Корм, амуниция, лекарства или услуги'}</p><button type="button" onClick={props.onAddThing}>{things.length ? 'Открыть список' : 'Добавить в список'} <ArrowRight /></button></div>
       <div className="v3-food-pack"><PawPrint weight="fill" /><b>{props.dogName.toUpperCase()}</b><small>всё нужное</small></div>
     </section>
     <section className="v3-shelf production-journey-shelf">
@@ -497,7 +505,7 @@ export function ProductionAssistantSheet({
   return <dialog ref={dialogRef} className="v3-assistant-backdrop production-assistant-backdrop" aria-labelledby="production-assistant-title" aria-describedby="production-assistant-description" data-assistant-provider={diagnostic?.provider || 'pending'} data-assistant-mode={diagnostic?.mode || 'pending'} onCancel={(event) => { event.preventDefault(); closeSheet(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSheet(); }}>
     <section className="v3-assistant-sheet">
       <div className="v3-sheet-handle" />
-      <header><div className="v3-assistant-mark"><Sparkle weight="fill" /></div><div><span>контекст: {dogName}</span><h2 id="production-assistant-title">Спросить Псё</h2></div><button type="button" onClick={closeSheet} aria-label="Закрыть"><X weight="bold" /></button></header>
+      <header><div className="v3-assistant-mark"><Sparkle weight="fill" /></div><div><h2 id="production-assistant-title">Спросить Псё</h2></div><button type="button" onClick={closeSheet} aria-label="Закрыть"><X weight="bold" /></button></header>
       <div className="production-assistant-scroll">
         <div className="v3-assistant-context"><DogAvatar avatar={avatar} small /><p id="production-assistant-description">Учту профиль {dogName}, дела, наблюдения, прогулки, документы и этот диалог. Не заменяю ветеринара.</p></div>
         {suggestions.length > 0 && <div className="v3-prompt-list" aria-label="Подсказки для вопроса">{suggestions.slice(0, 3).map((suggestion) => <button key={suggestion} type="button" onClick={() => onAsk(suggestion)}>{suggestion}</button>)}</div>}

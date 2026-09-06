@@ -22,16 +22,16 @@ for (const token of [
 
 for (const token of [
   'living field guide',
-  '--kit-ink: #171814',
-  '--kit-paper: #f7f6f0',
-  '--kit-paper-raised: #fffdf8',
-  '--kit-sage: #dde3d2',
-  '--kit-lime: #d8ff72',
-  '--kit-blue: #a9c7c9',
-  '--kit-lilac: #c6a9e6',
-  '--kit-coral: #f05a3d',
-  '--kit-yellow: #f3df64',
-  '--kit-pink: #eba4bf',
+  '--kit-ink: #233b30',
+  '--kit-paper: #f4f6f2',
+  '--kit-paper-raised: #fffefa',
+  '--kit-sage: #e0eee3',
+  '--kit-lime: #dceee0',
+  '--kit-blue: #deedf0',
+  '--kit-lilac: #e8e3f3',
+  '--kit-coral: #a63f3f',
+  '--kit-yellow: #f5e9c6',
+  '--kit-pink: #efdde3',
   '.production-today-summary',
   '.production-journey-woof',
   '.v3-things-hero',
@@ -54,7 +54,7 @@ for (const token of [
   if (!`${files.page}\n${files.nextCare}\n${files.journey}`.includes(token)) failures.push(`focused experience missing concept copy: ${token}`);
 }
 
-for (const section of ["label: 'всё'", "label: 'псё'", "label: 'карта'", "label: 'гав'", "label: 'вещи'"]) {
+for (const section of ["label: 'Главная'", "label: 'Профиль'", "label: 'Карта'", "label: 'Гав'", "label: 'Вещи'"]) {
   if (!files.navigation.includes(section)) failures.push(`primary nav must keep section: ${section}`);
 }
 

@@ -1,0 +1,157 @@
+/* THESIS: Daily care in a familiar pocket companion, not a loud editorial poster.
+   OWN-WORLD: System Cyrillic, forest actions, mint/lilac watercolor, soft paper.
+   STORY: Recognize the dog, open real care, choose a scenario, record what changed.
+   FIRST VIEWPORT: Quiet masthead, 30px question, compact identity, calendar action.
+   FORM: User-pinned design-v3 atmosphere; ios-watercolor-v5-20260906.
+   FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md */
+:root {
+  --font-pouf: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display-cyrillic: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --companion-forest: #245a40;
+  --companion-paper: #f4f6f2;
+  --companion-mist: radial-gradient(ellipse 95% 390px at 0 0, #d8eddf 0%, transparent 72%), radial-gradient(ellipse 75% 340px at 110% 300px, #e9e3f2 0%, transparent 78%), var(--companion-paper);
+  --companion-shadow: 0 8px 24px rgb(39 73 49 / 7%);
+  --pso-primary: var(--companion-forest);
+  --pso-primary-hover: #1d4935;
+  --pso-border-strong: #456451;
+}
+body.companion-app { font-weight: 400; }
+body.companion-app, .companion-app .app-canvas { background: var(--companion-mist) !important; }
+.companion-app .phone-shell, .companion-app .watercolor-screen,
+.companion-app [data-profile-memory], .companion-app .production-journey-screen { background: transparent !important; }
+.companion-app .phone-shell { background: var(--companion-mist) !important; }
+.companion-app :is(h1,h2,h3) { text-wrap: balance; letter-spacing: -.025em !important; }
+.companion-app h1 { font-size: 30px !important; line-height: 1.15 !important; font-weight: 730 !important; }
+.companion-app h2 { font-size: 21px !important; line-height: 1.22 !important; font-weight: 700 !important; }
+.companion-app h3 { font-size: 18px !important; line-height: 1.3 !important; }
+.companion-app :is(input,textarea,select) { font-size: 16px !important; }
+.companion-app button { font-weight: 600; }
+.companion-app :is(.primary,.ui-button-primary,.ui-button-care) { color: #fffefa !important; background: var(--companion-forest) !important; border-color: transparent !important; box-shadow: 0 4px 12px rgb(36 90 64 / 10%) !important; }
+.companion-app button:disabled { box-shadow: none !important; }
+.companion-app .production-journey-screen { padding: 18px 20px calc(105px + env(safe-area-inset-bottom)) !important; }
+.companion-app .v3-all { display: flex !important; flex-direction: column; gap: 24px !important; }
+.companion-app .all-profile { padding: 0 !important; border: 0 !important; background: transparent !important; }
+.companion-masthead { display: flex; justify-content: space-between; align-items: center; min-height: 44px; margin-bottom: 22px; }
+.companion-brand { display: inline-flex; align-items: center; gap: 8px; font-size: 25px; font-weight: 750; letter-spacing: -.5px; }
+.companion-brand svg { width: 27px; height: 27px; }
+.companion-masthead button { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; color: var(--companion-forest); background: rgb(255 254 250 / 70%); border: 0; border-radius: 14px; font-size: 14px; }
+.companion-masthead button svg { width: 20px; height: 20px; }
+.companion-greeting { margin: 0 0 20px !important; max-width: 18ch; }
+.companion-app .all-profile > button { min-height: 96px !important; grid-template-columns: 66px minmax(0,1fr) 20px !important; gap: 14px !important; padding: 14px !important; border: 0 !important; border-radius: 18px !important; background: linear-gradient(115deg, #d9eddf, #e7f0e6 65%, #eae6f2) !important; box-shadow: none !important; }
+.companion-app .all-profile .v3-dog-avatar { width: 66px !important; height: 68px !important; border-radius: 15px !important; border: 0 !important; }
+.companion-app .all-profile-name { font-family: var(--font-pouf) !important; font-size: 20px !important; font-weight: 700 !important; line-height: 1.2 !important; }
+.companion-app .all-profile-copy b { margin-top: 4px; font-size: 14px; font-weight: 500; }
+.companion-app .all-profile-copy small { margin-top: 4px; color: #506454; font-size: 12px; font-weight: 400; }
+.companion-app .all-profile-action { grid-column: auto !important; min-height: 32px !important; padding: 0 !important; background: transparent !important; border: 0 !important; }
+.companion-care > button { width: 100%; min-height: 100px; display: grid; grid-template-columns: 42px minmax(0,1fr) 20px; align-items: center; gap: 12px; padding: 18px; border: 0; border-radius: 18px; background: linear-gradient(125deg, #2a654a, #214f3a); color: #fffefa; text-align: left; box-shadow: 0 10px 24px rgb(36 90 64 / 14%); }
+.companion-care-icon { display: grid; place-items: center; width: 42px; height: 46px; border-radius: 12px; background: rgb(255 255 255 / 12%); }
+.companion-care-icon svg { width: 27px; height: 27px; }
+.companion-care b { font-weight: 650 !important; display: block; font-size: 19px; line-height: 1.25; }
+.companion-care small { display: block; margin-top: 6px; font-size: 13px; line-height: 1.4; color: #e1eee5; font-weight: 400; }
+.companion-app .all-scenarios, .companion-app .all-observation-trends { padding: 0 !important; border: 0 !important; background: transparent !important; }
+.companion-app .all-scenarios > header { margin-bottom: 14px; }
+.companion-app .all-scenarios > header p { font-size: 14px; line-height: 1.45; font-weight: 400; color: #5b685f; }
+.companion-app .all-scenario-freeform { min-height: 72px !important; padding: 14px !important; color: #233b30 !important; background: #fffefa !important; border: 0 !important; border-radius: 16px !important; box-shadow: var(--companion-shadow) !important; }
+.companion-app .all-scenario-freeform > svg { color: #365c46 !important; background: #e0eee3 !important; border-radius: 12px !important; }
+.companion-app .all-scenario-freeform b { font-size: 16px; font-weight: 650; }
+.companion-app .all-scenario-freeform small { color: #5b685f !important; font-size: 12px; font-weight: 400; }
+.companion-app .all-scenario-choices { display: grid; grid-template-columns: 1fr 1fr !important; gap: 0 14px !important; margin-top: 12px; }
+.companion-app .all-scenario-choices > button { min-height: 96px; display: flex; flex-direction: row; align-items: center; gap: 9px; padding: 12px 0 !important; border: 0 !important; border-bottom: 1px solid #d8e0d7 !important; border-radius: 0 !important; background: transparent !important; text-align: left; box-shadow: none !important; }
+.companion-app .all-scenario-choices > button[aria-pressed="true"] { color: #245a40; background: #e1eee3 !important; border-radius: 12px !important; }
+.companion-app .all-scenario-choices svg { width: 22px; min-width: 22px; height: 22px; }
+.companion-app .all-scenario-choices span { font-size: 13px; line-height: 1.35; font-weight: 550; }
+.companion-app .all-scenario-workspace { border: 0 !important; border-radius: 16px !important; background: #fffefa !important; box-shadow: var(--companion-shadow); }
+.companion-app .all-observation-composer { border-color: #c4d3c7 !important; background: #fffefa !important; border-radius: 16px !important; }
+.companion-app .production-journey-header { min-height: 72px !important; margin-bottom: 22px !important; border: 0 !important; padding-block: 8px !important; }
+.companion-app .production-journey-header small { font-size: 14px !important; font-weight: 400 !important; }
+.companion-app .production-journey-header > div:first-child { gap: 7px !important; }
+.companion-app .production-journey-header h1 { max-width: none !important; }
+.companion-app [data-profile-memory] { --forest: #245a40 !important; --cobalt: #245a40 !important; --cobalt-soft: #e0eee3 !important; --pouf-dark: var(--companion-shadow); --pouf-light: var(--companion-shadow); font-family: var(--font-pouf); }
+.companion-app [data-profile-memory] h1 { font-size: 30px !important; font-weight: 730 !important; }
+.companion-app [data-profile-memory] h2 { font-size: 21px !important; font-weight: 700 !important; }
+.companion-app .v3-things-hero { border: 0 !important; border-radius: 20px !important; background: linear-gradient(120deg,#f4e9ce,#f5eee0) !important; box-shadow: none !important; }
+.companion-app .v3-food-pack { border: 0 !important; background: #e3d1a4 !important; box-shadow: none !important; transform: rotate(-5deg) !important; }
+.companion-app .production-journey-shelf .thing { border: 0 !important; border-radius: 16px !important; box-shadow: none !important; }
+.companion-app .v3-favorites { border: 0 !important; background: transparent !important; }
+.companion-app .v3-favorites > button { background: #fffefa !important; border: 0 !important; border-radius: 16px !important; }
+.companion-app .production-woof-workspace { background: #f4f3f7 !important; }
+.companion-app .production-map-workspace { border-radius: 18px !important; overflow: hidden; }
+.companion-app :is(.production-assistant-sheet,.production-document-sheet,.dog-create-sheet) { background: var(--companion-mist) !important; border: 0 !important; border-radius: 24px 24px 0 0 !important; box-shadow: 0 -12px 48px rgb(25 50 37 / 16%) !important; }
+.companion-app :is(.watercolor-page-hero,.calendar-composition,.things-composition,.health-screen) { background: transparent !important; }
+.companion-app :is(.watercolor-card,.care-calendar,.care-calendar-month,.form-section) { border-color: #d8e0d7 !important; border-radius: 16px !important; box-shadow: none !important; }
+.companion-app .app-tabs button { text-transform: none !important; }
+.companion-app .app-tabs .ui-button-content > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap !important; }
+.companion-app .app-tabs button.active { background: #e0eee3 !important; color: #245a40 !important; }
+.companion-app .app-tab-icon { color: inherit !important; }
+@media (max-width: 759px) {
+  .companion-app .app-tabs { transform: none !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100% !important; padding: 8px 6px calc(8px + env(safe-area-inset-bottom)) !important; min-height: 74px !important; border: 0 !important; border-top: 1px solid #d8e0d7 !important; border-radius: 0 !important; background: rgb(251 252 248 / 96%) !important; box-shadow: 0 -5px 22px rgb(39 73 49 / 4%) !important; backdrop-filter: blur(14px) !important; }
+  .companion-app .app-tabs button { min-height: 54px !important; border-radius: 12px !important; padding: 4px 2px !important; }
+  .companion-app .app-tabs .ui-button-content { gap: 4px !important; width: 100%; }
+  .companion-app .app-tabs .ui-button-content > span:last-child { font-size: 11px !important; line-height: 14px !important; font-weight: 600; }
+  .companion-app .app-tabs .app-tab-icon { width: 23px !important; height: 23px !important; }
+  .companion-app .production-floating-assistant { display: none !important; }
+}
+@media (min-width: 760px) {
+  body.companion-app main.app-canvas { grid-template-columns: 190px minmax(0,1fr) 260px; }
+  body.companion-app main.app-canvas > .phone-shell { background: var(--companion-mist) !important; }
+  body.companion-app main.app-canvas > nav.app-tabs { background: #f7f8f4 !important; border-right-color: #d8e0d7 !important; }
+  .companion-app .desktop-context-panel { background: #f7f8f4 !important; }
+  .companion-app .production-journey-screen { padding: 28px 32px 50px !important; }
+  .companion-app .v3-all { display: grid !important; grid-template-columns: minmax(0,1fr) !important; align-content: start; gap: 26px !important; max-width: 800px; margin-inline: auto; }
+  .companion-app .all-profile, .companion-app .all-scenarios, .companion-app .all-observation-trends { grid-column: 1 !important; grid-row: auto !important; }
+  .companion-app .companion-greeting { max-width: none; font-size: 34px !important; }
+  .companion-app .all-scenario-choices { grid-template-columns: 1fr 1fr !important; }
+  .companion-app .app-tabs button.active::before { display: none !important; }
+}
+@media (min-width:760px) and (max-width:1100px) {
+  body.companion-app main.app-canvas { grid-template-columns: 168px minmax(0,1fr); }
+  .companion-app .desktop-context-panel { display: none !important; }
+}
+@media (max-width:359px) {
+  .companion-app .production-journey-screen { padding-inline: 16px !important; }
+  .companion-app h1 { font-size: 28px !important; }
+  .companion-care > button { padding: 15px; grid-template-columns: 36px minmax(0,1fr) 16px; gap: 10px; }
+  .companion-care-icon { width: 36px; }
+}
+@media (prefers-reduced-motion:no-preference) {
+  .companion-app .all-scenario-workspace { animation: companion-reveal 200ms cubic-bezier(.16,1,.3,1); }
+  @keyframes companion-reveal { from { opacity:.7; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+}
+@media (prefers-reduced-motion:reduce) {
+  .companion-app *, .companion-app *::before, .companion-app *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* Shared controls and secondary surfaces, verified against real narrow-screen flows. */
+.companion-app .companion-care b { font-weight: 650 !important; }
+.companion-app .app-tabs .ui-button-content { display: flex !important; }
+.companion-app .production-journey-screen :is(b,strong) { font-weight: 650; }
+.companion-app .production-journey-shelf .thing.rose { color: #43353b !important; background: #efdee5 !important; }
+.companion-app .production-journey-shelf .thing.green { color: #233b30 !important; background: #e0eee3 !important; }
+.companion-app .v3-food-pack { color: #51482f !important; }
+.companion-app .v3-food-pack :is(svg,small) { color: #51482f !important; }
+.companion-app .v3-food-pack b { color: #51482f !important; }
+.companion-app .woof-map-await, .companion-app .woof-map-status { background: var(--companion-mist) !important; }
+.companion-app .woof-meet-feed { background: var(--companion-mist) !important; }
+.companion-app :is(.woof-topbar > button,.woof-mode-switch,.woof-live-filters,.woof-empty-live,.woof-signal-card,.woof-incoming-invite,.woof-candidate-card) { background: #fffefa !important; border: 0 !important; border-radius: 16px !important; box-shadow: var(--companion-shadow) !important; }
+.companion-app .woof-live-filters > button { background: #e0eee3 !important; color: #245a40 !important; }
+.companion-app :is(.woof-give-button,.woof-primary,.woof-mode-switch button[aria-pressed="true"]) { background: #245a40 !important; color: #fffefa !important; font-weight: 650 !important; box-shadow: 0 6px 18px rgb(36 90 64 / 12%) !important; }
+.companion-app .woof-give-button svg { color: #e0eee3 !important; }
+.companion-app .woof-live-filters :is(label,select), .companion-app .woof-mode-switch button { font-weight: 550 !important; }
+.companion-app .woof-live-heading { background: #fffefa !important; color: #5b685f !important; }
+.companion-app .watercolor-screen { animation: none !important; filter: none !important; }
+.companion-app .desktop-context-panel { color: #233b30 !important; }
+.companion-app .desktop-context-panel :is(b,button) { font-weight: 650 !important; }
+@media (max-width:759px) {
+  .companion-app .app-tabs .ui-button-content { flex-direction: column !important; align-items: center !important; justify-content: center !important; min-width: 0; }
+  .companion-app .app-tabs .ui-button-content > span:last-child { display:block; width:100%; text-align:center; }
+}
+
+/* Finish review: one flexible scroll region keeps the composer above the keyboard. */
+.companion-app .v3-assistant-sheet { display: flex !important; flex-direction: column !important; gap: 0 !important; min-height: 0 !important; max-height: min(88dvh, 720px) !important; padding: 12px 18px max(14px, env(safe-area-inset-bottom)) !important; border: 0 !important; border-radius: 22px 22px 0 0 !important; background: var(--companion-mist) !important; box-shadow: 0 -12px 48px rgb(25 50 37 / 16%) !important; animation: none !important; }
+.companion-app .v3-assistant-sheet > header { flex: 0 0 auto; margin: 10px 0 16px; }
+.companion-app .production-assistant-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.companion-app .production-assistant-composer { position: relative !important; bottom: auto !important; flex: 0 0 auto; margin: 12px 0 0 !important; padding: 0 !important; background: transparent !important; }
+.companion-app .v3-assistant-context { background: #e0eee3 !important; color: #233b30 !important; border-radius: 16px; }
+.companion-app .v3-assistant-mark { background: #245a40 !important; color: #e0eee3 !important; }
+.companion-app .v3-sheet-handle { flex: 0 0 4px; background: #b9c9bd !important; }
+.companion-app .production-assistant-composer button { background: #245a40 !important; color: #fffefa !important; }

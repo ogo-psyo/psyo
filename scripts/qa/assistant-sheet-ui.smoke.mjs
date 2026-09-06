@@ -67,12 +67,12 @@ try {
     if (metrics.top < 0 || metrics.bottom > metrics.viewportHeight + 1 || metrics.composerBottom > metrics.viewportHeight + 1) throw new Error(`${viewport.width}: sheet/composer outside viewport ${JSON.stringify(metrics)}`);
     await page.screenshot({ path: `artifacts/assistant-sheet-ui/review-${viewport.width}.png`, fullPage: false });
     await dialog.getByRole('button', { name: 'Поставить короткую тренировку' }).click();
-    await dialog.getByText('Готово', { exact: true }).waitFor();
+    await dialog.getByText('Действие сохранено', { exact: true }).waitFor();
     await dialog.getByRole('button', { name: 'Открыть' }).click();
     await dialog.waitFor({ state: 'detached' });
     if (!page.url().endsWith('#calendar')) throw new Error(`${viewport.width}: reminder did not navigate to calendar`);
 
-    await page.locator('.app-tabs').getByRole('button', { name: 'всё', exact: true }).click();
+    await page.locator('.app-tabs').getByRole('button', { name: 'Главная', exact: true }).click();
     await page.waitForURL(/#today$/);
     await page.getByRole('button', { name: 'Спросить Псё' }).first().click();
     const routeDialog = page.getByRole('dialog', { name: 'Спросить Псё' });

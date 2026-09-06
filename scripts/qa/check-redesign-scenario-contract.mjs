@@ -23,7 +23,7 @@ const health = source('components/health/HealthTimelineScreen.tsx');
 
 requireText(layout, "import './editorial.css'", 'single active visual system');
 rejectText(layout, "import './redesign.css'", 'retired visual layer');
-requireText(layout, 'living-field-guide-2026-08', 'approved design contract');
+requireText(layout, 'ios-watercolor-v5-20260906', 'approved design contract');
 requireText(journey, "type ScenarioId = 'health' | 'care' | 'social' | 'handoff'", 'guided scenario service');
 requireText(journey, "props.onNavigate('nearby')", 'Gav scenario route');
 requireText(journey, 'data-scenario-workspace', 'scenario workspace');

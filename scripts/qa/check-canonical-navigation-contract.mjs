@@ -7,11 +7,11 @@ const woof = readFileSync('components/social/ProductionWoofWorkspace.tsx', 'utf8
 
 const failures = [];
 const primaryRoutes = [
-  ["id: 'today'", "label: 'всё'"],
-  ["id: 'profile'", "label: 'псё'"],
-  ["id: 'map'", "label: 'карта'"],
-  ["id: 'nearby'", "label: 'гав'"],
-  ["id: 'things'", "label: 'вещи'"],
+  ["id: 'today'", "label: 'Главная'"],
+  ["id: 'profile'", "label: 'Профиль'"],
+  ["id: 'map'", "label: 'Карта'"],
+  ["id: 'nearby'", "label: 'Гав'"],
+  ["id: 'things'", "label: 'Вещи'"],
 ];
 
 let cursor = -1;

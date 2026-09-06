@@ -136,6 +136,7 @@ export function ProfileMemoryWorkspace(props: Props) {
   const [editor, setEditor] = useState<EditorDomain | null>(null);
   const [editorDraft, setEditorDraft] = useState<DogProfile | null>(null);
   const [editorSaving, setEditorSaving] = useState(false);
+  const [breedQuery, setBreedQuery] = useState('');
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const editorDialogRef = useRef<HTMLDialogElement | null>(null);
   const identityTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -381,7 +382,14 @@ export function ProfileMemoryWorkspace(props: Props) {
 
             {editor === 'passport' && <>
               <EditorField label="Имя" value={editorDraft.dogName} onChange={(dogName) => updateEditorProfile({ dogName })} />
-              <label className={styles.editorField}><span>Порода</span><select value={editorDraft.breedId} onChange={(event) => { const breed = breedCatalog.find((item) => item.id === event.target.value); if (breed) updateEditorProfile({ breedId: breed.id, breedGroupId: breed.groupId }); }}>{breedCatalog.map((breed) => <option key={breed.id} value={breed.id}>{breed.title}</option>)}</select></label>
+              <div className={styles.editorField}>
+                <label htmlFor="profile-breed-search">Поиск породы</label>
+                <input id="profile-breed-search" type="search" value={breedQuery} onChange={(event) => setBreedQuery(event.target.value)} placeholder="Название или английское имя" />
+                <label htmlFor="profile-breed-choice">Порода</label>
+                <select id="profile-breed-choice" value={editorDraft.breedId} onChange={(event) => { const breed = breedCatalog.find((item) => item.id === event.target.value); if (breed) updateEditorProfile({ breedId: breed.id, breedGroupId: breed.groupId }); }}>
+                  {breedCatalog.filter((breed) => breed.id === editorDraft.breedId || ['custom', 'unknown'].includes(breed.id) || [breed.title, breed.id, ...(breed.aliases || [])].join(' ').toLocaleLowerCase('ru').includes(breedQuery.trim().toLocaleLowerCase('ru'))).map((breed) => <option key={breed.id} value={breed.id}>{breed.title}</option>)}
+                </select>
+              </div>
               {editorDraft.breedId === 'custom' && <EditorField label="Своя порода или тип" value={editorDraft.breedCustom} onChange={(breedCustom) => updateEditorProfile({ breedCustom })} placeholder="Как вы называете породу" />}
               <EditorSelect label="Возрастная группа" value={editorDraft.lifeStage} options={[...lifeStageOptions]} onChange={(lifeStage) => updateEditorProfile({ lifeStage })} />
               <EditorSelect label="Пол" value={editorDraft.sex} options={[...sexOptions]} onChange={(sex) => updateEditorProfile({ sex })} />
