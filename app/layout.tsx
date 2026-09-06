@@ -1,23 +1,10 @@
 import type { Metadata, Viewport } from 'next';
-import { Manrope, Unbounded } from 'next/font/google';
 import { ReleaseFreshnessGuard } from '@/components/ReleaseFreshnessGuard';
 import './globals.css';
 import './refinement.css';
 import './pouf.css';
 import './editorial.css';
-
-const manrope = Manrope({
-  subsets: ['cyrillic', 'latin'],
-  display: 'swap',
-  variable: '--font-pouf',
-});
-
-const unbounded = Unbounded({
-  subsets: ['cyrillic', 'latin'],
-  weight: ['600', '700'],
-  display: 'swap',
-  variable: '--font-display-cyrillic',
-});
+import './companion.css';
 
 export const metadata: Metadata = {
   title: 'Псё — ассистент владельца собаки',
@@ -43,14 +30,14 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#f7f6f0',
+  themeColor: '#fdfcf9',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body className={`${manrope.variable} ${unbounded.variable}`}>
-        <span hidden aria-hidden="true" data-psyo-design-contract="living-field-guide-2026-08" />
+      <body className="companion-app">
+        <span hidden aria-hidden="true" data-psyo-design-contract="journal-v6-20260906" />
         <script src="https://telegram.org/js/telegram-web-app.js" async />
         <ReleaseFreshnessGuard />
         {children}

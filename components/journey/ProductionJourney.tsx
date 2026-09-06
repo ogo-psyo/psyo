@@ -1,18 +1,19 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { JournalMasthead } from '@/components/journal/JournalMasthead';
+import type { JournalEntry } from '@/lib/journal';
 import { wellbeingValue, type WellbeingMetric } from '@/lib/wellbeingScoring';
 import {
   ArrowRight,
   CalendarCheck,
+  Check,
   CaretRight,
   ChatCircleDots,
   FileArrowUp,
   FirstAid,
   Heart,
   MapTrifold,
-  Microphone,
-  Package,
   PaperPlaneTilt,
   PawPrint,
   PencilSimple,
@@ -73,6 +74,7 @@ type BaseProps = {
 };
 
 type ProductionJourneyProps = BaseProps & {
+  dayEntries?: JournalEntry[];
   careTitle?: string;
   careDetail?: string;
   careActionLabel?: string;
@@ -262,19 +264,14 @@ function ObservationTimelineRow({ metric, points }: { metric: WellbeingMetric; p
   </article>;
 }
 
-function AllObservationTrends({ dogName, points, captureOpen, voiceCapture, onToggleCapture }: { dogName: string; points: JourneyObservationPoint[]; captureOpen: boolean; voiceCapture?: ReactNode; onToggleCapture: () => void }) {
+function AllObservationTrends({ dogName, points }: { dogName: string; points: JourneyObservationPoint[] }) {
   const ordered = [...points].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).slice(-7);
   const copy = observationTimelineCopy(ordered);
   const firstDate = ordered[0] ? new Date(ordered[0].createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : null;
   const lastDate = ordered.at(-1) ? new Date(ordered.at(-1)!.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : null;
   const recordsLabel = ordered.length === 1 ? '1 запись' : ordered.length > 1 && ordered.length < 5 ? `${ordered.length} записи` : `${ordered.length} записей`;
-  return <section className="all-observation-trends" data-all-observation-trends data-parity="production-today-history" aria-labelledby="all-observation-title">
+  return <section className="all-observation-trends" data-parity="production-today-history" aria-labelledby="all-observation-title">
     <header><div><h2 id="all-observation-title">Наблюдения</h2><p>{ordered.length ? `${recordsLabel} · ${firstDate}${firstDate !== lastDate ? ` — ${lastDate}` : ''}` : `Начните с первой записи о ${dogName}`}</p></div></header>
-    {!captureOpen && <button className="all-observation-composer" data-observation-composer type="button" aria-label={`Рассказать о состоянии ${dogName}`} aria-expanded="false" aria-controls="all-observation-capture" onClick={onToggleCapture}>
-      <span><b>Как {dogName} сегодня?</b><small>Написать или надиктовать</small></span>
-      <span className="all-observation-composer-mic" aria-hidden="true"><Microphone weight="regular" /></span>
-    </button>}
-    {captureOpen && <div className="all-observation-capture" id="all-observation-capture">{voiceCapture}</div>}
     <div className="all-observation-summary"><b>{copy.title}</b><p>{copy.detail}</p></div>
     <div className="all-observation-timeline" data-observation-timeline>
       <div className="all-observation-scale" aria-hidden="true"><span>показатель</span><span>обычное состояние</span></div>
@@ -300,25 +297,35 @@ function TodayScreen(props: ProductionJourneyProps) {
   const openObservationCapture = () => {
     setActiveScenario(null);
     setObservationCaptureOpen(true);
+    requestAnimationFrame(() => document.getElementById('all-observation-capture')?.scrollIntoView({ block: 'start' }));
   };
   const selectScenario = (scenario: ScenarioId) => {
     setActiveScenario(scenario);
     if (scenario !== 'health') setObservationCaptureOpen(false);
   };
-  return <main className="v3-screen v3-all production-journey-screen" data-production-journey="today" title={`${props.dogName} сегодня`}>
-    <section className="all-profile" data-all-profile data-parity="production-today-identity" aria-labelledby="all-profile-title">
-      <h1 className="all-profile-wordmark">Псё</h1>
-      <button type="button" onClick={() => props.onNavigate('profile')} aria-label={`Открыть профиль ${props.dogName} в Псё`}>
-        <DogAvatar avatar={props.avatar} />
-        <span className="all-profile-copy"><span className="all-profile-name" id="all-profile-title">{props.dogName}</span><b>{props.breedLabel}</b><small>{(props.profileFacts || []).filter(Boolean).slice(0, 2).join(' · ') || 'Профиль, история и документы'}</small></span>
-        <span className="all-profile-action">Открыть Псё <ArrowRight weight="bold" /></span>
-      </button>
+  const entries = props.dayEntries || [];
+  const date = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+  return <main className="production-journey-screen journal-screen" data-production-journey="today" title={`${props.dogName} сегодня`}>
+    <div data-all-profile data-parity="production-today-identity"><JournalMasthead dogName={props.dogName} avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} /></div>
+    <div className="journal-title"><h1>Сегодня</h1><p>{date}</p></div>
+    <section className="journal-status" data-all-observation-trends aria-label="Самочувствие">
+      <div className="journal-status-line"><Heart aria-hidden="true" /><h2>Начнём с самочувствия</h2></div>
+      <p>Как сегодня чувствует себя {props.dogName}?<br />Ваши заметки помогут видеть изменения.</p>
+      {!observationCaptureOpen && <button type="button" className="journal-primary" data-observation-composer aria-label={`Рассказать о состоянии ${props.dogName}`} aria-expanded="false" aria-controls="all-observation-capture" onClick={openObservationCapture}><PencilSimple aria-hidden="true" />Записать наблюдение</button>}
+      {observationCaptureOpen && <div id="all-observation-capture" className="all-observation-capture"><button type="button" className="journal-quiet" onClick={() => setObservationCaptureOpen(false)}>Закрыть запись <X aria-hidden="true" /></button>{props.voiceCapture}</div>}
+      <button type="button" className="journal-status-history" onClick={() => props.onNavigate('health')}>Посмотреть прошлые записи <CaretRight aria-hidden="true" /></button>
     </section>
-
+    <section className="journal-day" aria-labelledby="journal-day-title">
+      <div className="journal-section-title"><h2 id="journal-day-title">День по порядку</h2><button type="button" aria-label="Открыть план ухода" onClick={props.onOpenCare}><CalendarCheck aria-hidden="true" /></button></div>
+      {entries.length ? <ol className="journal-entries">{entries.slice(0, 4).map((entry) => <li key={entry.id} className="journal-entry"><time dateTime={entry.at}>{new Date(entry.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</time><span className={`journal-point${entry.completed ? ' done' : ''}`}>{entry.completed ? <Check aria-hidden="true" /> : <CalendarCheck aria-hidden="true" />}</span><button type="button" onClick={() => entry.kind === 'observation' ? props.onNavigate('health') : props.onOpenCare?.()}><b>{entry.title}</b><small>{entry.detail}</small></button></li>)}</ol> : <div className="journal-empty"><p>На сегодня пока нет записей и дел.</p><button type="button" className="journal-text-link" onClick={props.onOpenCare}>Открыть план ухода <CaretRight aria-hidden="true" /></button></div>}
+      {entries.length > 4 && <button type="button" className="journal-text-link" onClick={props.onOpenCare}>Весь план <CaretRight aria-hidden="true" /></button>}
+    </section>
+    <button type="button" className="journal-ask" onClick={props.onAskAssistant}><Sparkle aria-hidden="true" /><span><b>Есть вопрос о собаке?</b><small>Спросите Псё</small></span><CaretRight aria-hidden="true" /></button>
+    <section className="journal-next-care" aria-label="Ближайший уход"><button type="button" onClick={props.onOpenCare}><CalendarCheck aria-hidden="true" /><span><b>{careTitle}</b><small>{props.careDetail || 'Ближайшие дела и календарь ухода'}</small></span><CaretRight aria-hidden="true" /></button></section>
     {props.recommendationSlot}
-
+    <details className="journal-disclosure"><summary>Чем помочь? <CaretRight aria-hidden="true" /></summary>
     <section className="all-scenarios" data-all-scenarios data-parity="production-today-summary" aria-labelledby="all-scenarios-title">
-      <header><h2 id="all-scenarios-title">Что нужно решить?</h2><p>Выберите ситуацию — Псё проведёт по шагам и откроет нужное действие.</p></header>
+      <header><h2 id="all-scenarios-title">Чем помочь?</h2><p>Выберите ситуацию. Нужные шаги уже рядом.</p></header>
       <button type="button" className="all-scenario-freeform" onClick={props.onAskAssistant}><ChatCircleDots weight="duotone" /><span><b>Опишите своими словами</b><small>Псё учтёт профиль и последние записи</small></span><ArrowRight weight="bold" /></button>
       <div className="all-scenario-choices" role="group" aria-label="Быстрые сценарии">
         <button type="button" aria-pressed={activeScenario === 'health'} onClick={() => selectScenario('health')}><FirstAid weight="duotone" /><span>Изменилось самочувствие</span></button>
@@ -348,7 +355,8 @@ function TodayScreen(props: ProductionJourneyProps) {
       </article>}
     </section>
 
-    <AllObservationTrends dogName={props.dogName} points={props.observationPoints || []} captureOpen={observationCaptureOpen} voiceCapture={props.voiceCapture} onToggleCapture={() => setObservationCaptureOpen((open) => !open)} />
+    </details>
+    <details className="journal-disclosure"><summary>Динамика наблюдений <CaretRight aria-hidden="true" /></summary><AllObservationTrends dogName={props.dogName} points={props.observationPoints || []} /></details>
     {props.children}
   </main>;
 }
@@ -433,23 +441,18 @@ function NearbyScreen(props: ProductionJourneyProps) {
 }
 
 function ThingsScreen(props: ProductionJourneyProps) {
-  const things = props.things?.slice(0, 3) || [];
-  return <main className="v3-screen v3-things production-journey-screen" data-production-journey="things">
-    <Header dogName={props.dogName} title={`Вещи ${props.dogName}`} detail="нужное и любимое" avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
-    <section className="v3-things-hero">
-      <div><span>{things.length ? 'В списке сейчас' : 'Список свободен'}</span><h2>{things[0]?.title || 'Добавить нужную вещь'}</h2><p>{things[0]?.detail || 'Корм, амуниция, лекарства или услуги'}</p><button type="button" onClick={props.onAddThing}>{things.length ? 'Открыть список' : 'Добавить в список'} <ArrowRight /></button></div>
-      <div className="v3-food-pack"><PawPrint weight="fill" /><b>{props.dogName.toUpperCase()}</b><small>всё нужное</small></div>
+  const things = props.things || [];
+  return <main className="production-journey-screen journal-screen journal-things" data-production-journey="things">
+    <JournalMasthead dogName={props.dogName} avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
+    <div className="journal-title"><h1>Вещи</h1><p>Нужное и любимое — в одном списке.</p></div>
+    <section className="journal-record"><h2>Ничего не забыть</h2><p>Корм, амуниция, лекарства или услуги.</p><button type="button" className="journal-primary" onClick={props.onAddThing}><Plus aria-hidden="true" />Добавить в список</button></section>
+    <section className="production-journey-shelf journal-things-list"><div className="journal-section-title"><h2>Нужно купить</h2><button type="button" onClick={props.onAddThing}>Весь список <CaretRight aria-hidden="true" /></button></div>
+      {things.length ? things.map((thing) => <button type="button" className="journal-index-row" key={thing.id} onClick={props.onAddThing}><span className="journal-row-icon"><ShoppingBag aria-hidden="true" /></span><span><b>{thing.title}</b><small>{thing.detail}</small></span><CaretRight aria-hidden="true" /></button>) : <div className="journal-empty"><p>Список пока пуст. Добавьте то, что нужно купить или пополнить.</p></div>}
     </section>
-    <section className="v3-shelf production-journey-shelf">
-      <header><h2>Нужно купить</h2><button type="button" onClick={props.onAddThing}><Plus weight="bold" /> Добавить</button></header>
-      <div className="v3-shelf-track">
-        {things.length === 0 && <article className="thing mint"><div><ShoppingBag weight="duotone" /></div><b>Пока пусто</b><span>Добавь первую позицию</span></article>}
-        {things.map((thing) => <article className={`thing ${thing.tone}`} key={thing.id}><div>{thing.tone === 'rose' ? <FirstAid weight="duotone" /> : <Package weight="duotone" />}</div><b>{thing.title}</b><span>{thing.detail}</span></article>)}
-      </div>
-    </section>
-    <section className="v3-favorites"><h2>Любимое {props.dogName}</h2><button type="button" onClick={props.onAddThing}><Heart weight="fill" /><span><b>Добавить любимую вещь</b><small>То, что всегда берёте с собой</small></span><CaretRight /></button></section>
+    <button type="button" className="journal-ask" onClick={props.onAddThing}><Heart aria-hidden="true" /><span><b>Любимые вещи</b><small>То, что всегда берёте с собой</small></span><CaretRight aria-hidden="true" /></button>
     {props.children && <section className="production-journey-details">{props.children}</section>}
   </main>;
+
 }
 
 export function ProductionJourney(props: ProductionJourneyProps) {
@@ -497,7 +500,7 @@ export function ProductionAssistantSheet({
   return <dialog ref={dialogRef} className="v3-assistant-backdrop production-assistant-backdrop" aria-labelledby="production-assistant-title" aria-describedby="production-assistant-description" data-assistant-provider={diagnostic?.provider || 'pending'} data-assistant-mode={diagnostic?.mode || 'pending'} onCancel={(event) => { event.preventDefault(); closeSheet(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSheet(); }}>
     <section className="v3-assistant-sheet">
       <div className="v3-sheet-handle" />
-      <header><div className="v3-assistant-mark"><Sparkle weight="fill" /></div><div><span>контекст: {dogName}</span><h2 id="production-assistant-title">Спросить Псё</h2></div><button type="button" onClick={closeSheet} aria-label="Закрыть"><X weight="bold" /></button></header>
+      <header><div className="v3-assistant-mark"><Sparkle weight="fill" /></div><div><h2 id="production-assistant-title">Спросить Псё</h2></div><button type="button" onClick={closeSheet} aria-label="Закрыть"><X weight="bold" /></button></header>
       <div className="production-assistant-scroll">
         <div className="v3-assistant-context"><DogAvatar avatar={avatar} small /><p id="production-assistant-description">Учту профиль {dogName}, дела, наблюдения, прогулки, документы и этот диалог. Не заменяю ветеринара.</p></div>
         {suggestions.length > 0 && <div className="v3-prompt-list" aria-label="Подсказки для вопроса">{suggestions.slice(0, 3).map((suggestion) => <button key={suggestion} type="button" onClick={() => onAsk(suggestion)}>{suggestion}</button>)}</div>}

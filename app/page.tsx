@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDow
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { PaperSheet, WatercolorScreen } from '@/components/watercolor';
 import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
+import { journalDayEntries } from '@/lib/journal';
 import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
 import { VoiceObservationCapture, type PrivateVoiceNoteInput } from '@/components/journey/VoiceObservationCapture';
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
@@ -230,15 +231,6 @@ function ObservationChoice({ label, value, options, onChange }: { label: string;
 
 function TaskCard({ emoji, title, caption, action, onClick }: { emoji: string; title: string; caption: string; action: string; onClick?: () => void }) {
   return <article className="task-card"><span>{emoji}</span><div><b>{title}</b><p>{caption}</p></div><button onClick={onClick}>{action}</button></article>;
-}
-
-function SecondaryFlowHeader({ label, onBack }: { label: string; onBack: () => void }) {
-  return (
-    <button className="secondary-flow-back" type="button" onClick={onBack}>
-      <ArrowLeft weight="bold" aria-hidden="true" />
-      <span>{label}</span>
-    </button>
-  );
 }
 
 type AssistantActionStatus = { state: 'idle' | 'loading' | 'success' | 'error'; message?: string; plannedFor?: string };
@@ -4085,7 +4077,7 @@ export default function Home() {
 
   return (
     <main className="app-canvas">
-      <section ref={phoneShellRef} className={`phone-shell tab-${tab}${hasDog && (isJourneyRoute || journeyDetail === 'nearby') ? ' journey-active' : ''}`}>
+      <section ref={phoneShellRef} className={`phone-shell${hasDog ? ' journal-shell' : ''} tab-${tab}${hasDog && (isJourneyRoute || journeyDetail === 'nearby') ? ' journey-active' : ''}`}>
         <header className="app-header">
           <div className="app-wordmark">
             <p>план ухода и памятка</p>
@@ -4147,6 +4139,7 @@ export default function Home() {
           dogName={profile.dogName}
           breedLabel={breedLabel}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
+          dayEntries={journalDayEntries(reminders, observations, new Date())}
           careTitle={todayCare.title}
           careDetail={todayCare.detail}
           careActionLabel={todayCare.state === 'empty' ? 'Добавить первое дело' : todayCare.actionLabel}
@@ -4204,7 +4197,7 @@ export default function Home() {
           key={profile.backendPetId || activePetId}
           profile={profile}
           breedLabel={breedLabel}
-          imageUrl={generatedAvatarUrl || profile.avatarImageUrl}
+          imageUrl={generatedAvatarUrl || profile.avatarImageUrl || (demoMode ? '/demo-avatar.png' : '')}
           observations={observations.map((item) => ({ id: item.id, createdAt: item.createdAt, mood: item.mood, appetite: item.appetite, stool: item.stool, energy: item.energy, note: item.note }))}
           documents={documents}
           reminders={reminders}
@@ -4299,26 +4292,6 @@ export default function Home() {
           onNavigate={(route) => { setJourneyDetail(null); setTab(route); }}
         />}
 
-        {hasDog && tab === 'nearby' && journeyDetail !== 'nearby' && <ProductionJourney route="nearby"
-          dogName={profile.dogName}
-          breedLabel={breedLabel}
-          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
-          discoverable={socialProfile?.discoverable}
-          candidates={[...socialCandidates.nearby, ...socialCandidates.city].slice(0, 2).map((candidate) => ({
-            id: candidate.petId,
-            name: candidate.name,
-            distance: candidate.distance || candidate.district || 'в вашем городе',
-            availability: candidate.sharedScenarios.includes('walk') ? 'готовы к прогулке' : 'готовы познакомиться',
-            note: candidate.reasons.slice(0, 2).join(' · ') || 'Контакт откроется только по согласию',
-            onOpen: () => openJourneyDetail('nearby'),
-          }))}
-          onOpenSocial={() => openJourneyDetail('nearby')}
-          onNavigate={(route) => {
-            if (route === 'nearby') openJourneyDetail('nearby');
-            else { setJourneyDetail(null); setTab(route); }
-          }}
-        />}
-
         {hasDog && tab === 'things' && journeyDetail !== 'things' && <ProductionJourney route="things"
           dogName={profile.dogName}
           breedLabel={breedLabel}
@@ -4391,7 +4364,7 @@ export default function Home() {
           onSaveFacts={async () => { await savePrivateProfile(); }}
         />}
 
-        {hasDog && tab === 'nearby' && journeyDetail === 'nearby' && <ProductionWoofWorkspace
+        {hasDog && tab === 'nearby' && <ProductionWoofWorkspace
           key={woofRecommendationEntry?.key ?? 'woof-workspace'}
           dogName={profile.dogName || 'Собака'}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" fill />}
@@ -4427,8 +4400,7 @@ export default function Home() {
           onRetry={() => loadSocialSurface().catch(() => setNearbyState('error'))}
         />}
 
-        {hasDog && tab === 'calendar' && <WatercolorScreen className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Выбери день и работай только с тем, что относится к этой дате." aside={<CalendarDots className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
-          <SecondaryFlowHeader label="Назад во Всё" onBack={() => closeSecondaryFlow('today')} />
+        {hasDog && tab === 'calendar' && <WatercolorScreen onBack={() => closeSecondaryFlow('today')} backLabel="На главную" className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Дела, напоминания и история ухода." aside={<CalendarDots className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
           <section className="care-workbench" aria-label="Дела ухода">
             <div className="care-workbench-head">
               <div><span className="eyebrow">сейчас в плане</span><h3>{activeReminders.length ? formatCount(activeReminders.length, ['активное дело', 'активных дела', 'активных дел']) : 'Добавь первое дело'}</h3></div>
@@ -4551,7 +4523,7 @@ export default function Home() {
             </div>
             <div className="quick-add today-quick-add">
               <input value={newReminderTitle} onChange={(event) => setNewReminderTitle(event.target.value)} placeholder="Например: обработка от клещей" />
-              <button aria-label="Добавить дело" onClick={() => createReminder()}>+</button>
+              <button aria-label="Добавить дело" onClick={() => createReminder()}><Plus aria-hidden="true" /></button>
             </div>
             <div className="care-form-row">
               <select value={newReminderType} onChange={(event) => setNewReminderType(event.target.value)} aria-label="Тип дела">{careTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
@@ -4570,8 +4542,7 @@ export default function Home() {
           </article>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'card' && <WatercolorScreen className="public-card-screen" tone="gold" eyebrow="" title="Публичная карточка" caption="Одна безопасная ссылка для догситтера, грумера, друга или человека во дворе. Ты решаешь, что показать и когда закрыть доступ." aside={<PawPrint className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
-          <SecondaryFlowHeader label="Назад в Псё" onBack={() => closeSecondaryFlow('profile')} />
+        {hasDog && tab === 'card' && <WatercolorScreen onBack={() => closeSecondaryFlow('profile')} backLabel="В профиль" className="public-card-screen" tone="gold" eyebrow="" title="Публичная карточка" caption="Одна безопасная ссылка для догситтера, грумера, друга или человека во дворе. Ты решаешь, что показать и когда закрыть доступ." aside={<PawPrint className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
 
           <section className={`public-card-lifecycle ${publicCardPublished ? 'is-published' : 'is-draft'} ${publicCardHasChanges ? 'has-changes' : ''}`} aria-live="polite">
             <div className="public-card-lifecycle-icon" aria-hidden="true">{publicCardPublished ? <CheckCircle weight="fill" /> : <LinkSimple weight="duotone" />}</div>
@@ -4590,7 +4561,6 @@ export default function Home() {
           <section className="public-card-review" aria-label="Предпросмотр памятки собаки">
             <article className="public-card-preview-panel">
               <div className="public-card-preview-head">
-                <span>памятка</span>
                 <b>{publicCardPublished ? publicCardHasChanges ? 'есть изменения' : 'опубликована' : publicCardReady ? 'готова к публикации' : 'черновик'}</b>
               </div>
               <div className="public-card-preview-dog">
@@ -4651,8 +4621,8 @@ export default function Home() {
           </article>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'profile' && journeyDetail === 'profile' && <WatercolorScreen className="profile-settings-screen" tone="green" eyebrow="настройки" title="Данные и доступ" caption="Профиль собаки редактируется в одном месте. Здесь — только доступ, документы сервиса и удаление данных.">
-          <SecondaryFlowHeader label="Назад в Псё" onBack={closeJourneyDetail} />
+        {hasDog && tab === 'profile' && journeyDetail === 'profile' && <WatercolorScreen onBack={closeJourneyDetail} backLabel="В профиль" className="profile-settings-screen" tone="green" eyebrow="настройки" title="Данные и доступ" caption="Аккаунт, приватность и помощь.">
+          {session && <section className="journal-account"><p>Вы вошли в аккаунт Псё.</p><button type="button" className="secondary" onClick={signOut}>Выйти из аккаунта</button></section>}
 
           <section className="profile-settings-links" aria-label="Настройки и документы">
             <button type="button" onClick={() => setTab('card')}><span><b>Памятка для других</b><small>Проверить поля и ссылку перед отправкой</small></span><ArrowRight weight="bold" aria-hidden="true" /></button>
@@ -4674,7 +4644,7 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'things' && journeyDetail === 'things' && <WatercolorScreen className="things-composition" tone="gold" eyebrow="вещи" title={`Что нужно ${petNameDatv}`} caption="Личный список покупок и того, что заканчивается." aside={<ShoppingBag className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'things' && journeyDetail === 'things' && <WatercolorScreen onBack={closeJourneyDetail} backLabel="К вещам" className="things-composition" tone="gold" eyebrow="вещи" title={`Что нужно ${petNameDatv}`} caption="Личный список покупок и того, что заканчивается." aside={<ShoppingBag className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
           <div className="screen-primary-action">
             <button className="primary" type="button" aria-expanded={thingCaptureOpen} onClick={() => setThingCaptureOpen((open) => !open)}>
               {thingCaptureOpen ? 'Закрыть добавление' : 'Добавить вещь'}
@@ -4741,7 +4711,7 @@ export default function Home() {
         {notice !== 'idle' && <div className="toast" role="status" aria-live="polite">{notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
       </section>
 
-      {hasDog && !(tab === 'map' && productionMapMode !== 'view') && <AppNavigation active={activePrimaryRoute} onAskAssistant={openAssistantSheet} onNavigate={(route) => {
+      {hasDog && !(tab === 'map' && productionMapMode !== 'view') && <AppNavigation dogName={profile.dogName} active={activePrimaryRoute} onAskAssistant={openAssistantSheet} onNavigate={(route) => {
         setJourneyDetail(null);
         setAssistantOpen(false);
         setTab(route);

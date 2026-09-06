@@ -6,16 +6,19 @@ export function PageHeader({
   description,
   aside,
   className,
+  headingLevel = 2,
 }: {
   title: string;
   description?: string;
   aside?: ReactNode;
   className?: string;
+  headingLevel?: 1 | 2;
 }) {
+  const Heading = headingLevel === 1 ? 'h1' : 'h2';
   return (
     <header className={cx('ui-page-header', className)}>
       <div>
-        <h2>{title}</h2>
+        <Heading>{title}</Heading>
         {description && <p>{description}</p>}
       </div>
       {aside && <div className="ui-page-header-aside">{aside}</div>}

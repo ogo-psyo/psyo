@@ -141,10 +141,10 @@ export function HealthTimelineScreen({
 
   return (
     <section className="module-screen health-screen" aria-labelledby="health-screen-title">
-      <button className="secondary-flow-back" type="button" onClick={onBack}><ArrowLeft weight="bold" aria-hidden="true" /> Назад во Всё</button>
+      <button className="journal-screen-back" type="button" onClick={onBack}><ArrowLeft weight="bold" aria-hidden="true" /> На главную</button>
       <header className="module-screen-heading">
         <span className="module-screen-icon"><Heartbeat weight="duotone" aria-hidden="true" /></span>
-        <div><h2 id="health-screen-title">Здоровье {dogName}</h2><p>{entries.length ? `${observationCountLabel(entries.length)} владельца` : 'Наблюдений пока нет'}</p></div>
+        <div><h1 id="health-screen-title">Здоровье {dogName}</h1><p>{entries.length ? `${observationCountLabel(entries.length)} владельца` : 'Наблюдений пока нет'}</p></div>
       </header>
 
       {error && <div className="module-error" role="alert"><b>История не загрузилась</b><p>{error}</p><button type="button" onClick={() => void onRetry()}>Повторить</button></div>}

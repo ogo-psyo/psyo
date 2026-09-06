@@ -1,0 +1,6 @@
+import fs from 'node:fs/promises';import {chromium} from 'playwright';
+const sets=[['journal','Главная','../design-v6/today-390.png','Профиль','../design-v6/profile-390.png'],['care','План заботы','calendar-390.png','Здоровье','health-390.png'],['social','Вещи','../design-v6/things-390.png','Гав · прогулка','gav-390.png']];
+const b=await chromium.launch();try{for(const [name,a,ap,c,cp] of sets){
+ let html=`<!doctype html><html lang="ru"><meta charset="utf-8"><style>*{box-sizing:border-box}body{margin:0;padding:16px;background:#e9eee5;font:500 18px -apple-system,BlinkMacSystemFont,sans-serif;color:#253b34}main{display:grid;grid-template-columns:390px 390px;gap:16px}h2{font-size:18px;font-weight:500;margin:0 0 12px}img{display:block;width:390px;height:844px;object-fit:cover;border-radius:18px}</style><main><section><h2>${a}</h2><img src="${ap}"></section><section><h2>${c}</h2><img src="${cp}"></section></main></html>`;
+ let file=`artifacts/design-v6-all/board-${name}.html`;await fs.writeFile(file,html);let p=await b.newPage({viewport:{width:828,height:910},deviceScaleFactor:1});await p.goto('file://'+process.cwd()+'/'+file);await p.screenshot({path:`artifacts/design-v6-all/board-${name}.png`,fullPage:true});await p.close();
+}}finally{await b.close()}

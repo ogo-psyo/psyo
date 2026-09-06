@@ -1,82 +1,400 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-28T15:40:00+03:00",
-  "title": "Design System: Псё Living Field Guide",
+  "generatedAt": "2026-09-06T12:51:43.238166+00:00",
+  "title": "Design System: Псё — Дневник",
   "extensions": {
     "colorMeta": {
-      "ink": { "role": "primary", "displayName": "Field Ink", "canonical": "#171814", "tonalRamp": ["#171814", "#30312c", "#4e5149", "#73766e", "#999c94", "#bec0b9", "#dedfd9", "#f4f4ef"] },
-      "signal-lime": { "role": "secondary", "displayName": "Care Signal", "canonical": "#D8FF72", "tonalRamp": ["#263400", "#425700", "#617b00", "#82a400", "#a8cf27", "#c4ec52", "#d8ff72", "#f0ffc3"] },
-      "sage": { "role": "secondary", "displayName": "Quiet Sage", "canonical": "#DDE3D2", "tonalRamp": ["#252b20", "#424a3b", "#626c58", "#849079", "#a8b49e", "#c6cebc", "#dde3d2", "#f2f5ed"] },
-      "spatial-blue": { "role": "tertiary", "displayName": "Spatial Blue", "canonical": "#A9C7C9", "tonalRamp": ["#183033", "#2d5054", "#467277", "#60959a", "#82aeb2", "#a9c7c9", "#c9ddde", "#edf5f5"] },
-      "social-lilac": { "role": "tertiary", "displayName": "Social Lilac", "canonical": "#C6A9E6", "tonalRamp": ["#2d1c3b", "#4e3264", "#70498d", "#9165b5", "#ad86d0", "#c6a9e6", "#ddcef0", "#f4edfa"] },
-      "danger-coral": { "role": "tertiary", "displayName": "Caution Coral", "canonical": "#F05A3D", "tonalRamp": ["#3d1009", "#6a1d10", "#982b1b", "#c43e27", "#f05a3d", "#f6836f", "#fbb0a1", "#fde3dd"] },
-      "utility-yellow": { "role": "tertiary", "displayName": "Utility Yellow", "canonical": "#F3DF64", "tonalRamp": ["#352e05", "#5d5009", "#87750e", "#b19a20", "#d7be3c", "#f3df64", "#f9ec9a", "#fff8d2"] },
-      "warm-pink": { "role": "tertiary", "displayName": "Warm Pink", "canonical": "#EBA4BF", "tonalRamp": ["#3b1d28", "#633244", "#8d4a62", "#b76582", "#d984a2", "#eba4bf", "#f3c6d6", "#fbeaf0"] },
-      "canvas": { "role": "neutral", "displayName": "Warm Paper", "canonical": "#F7F6F0", "tonalRamp": ["#252520", "#484741", "#6c6b64", "#929189", "#b8b7af", "#d8d7d0", "#f7f6f0", "#fffef9"] },
-      "paper": { "role": "neutral", "displayName": "Raised Paper", "canonical": "#FFFDF8", "tonalRamp": ["#292824", "#4d4b46", "#72706a", "#98968f", "#bebcb5", "#dedcd6", "#fffdf8", "#ffffff"] },
-      "line": { "role": "neutral", "displayName": "Pencil Line", "canonical": "#CBCBC2", "tonalRamp": ["#282824", "#494943", "#6b6b64", "#8e8e86", "#b1b1a8", "#cbcbc2", "#e2e2dc", "#f6f6f2"] }
+      "forest": {
+        "displayName": "Forest",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0427 150.69)",
+          "oklch(26.43% 0.0427 150.69)",
+          "oklch(37.86% 0.0427 150.69)",
+          "oklch(49.29% 0.0427 150.69)",
+          "oklch(60.71% 0.0427 150.69)",
+          "oklch(72.14% 0.0427 150.69)",
+          "oklch(83.57% 0.0427 150.69)",
+          "oklch(95.00% 0.0427 150.69)"
+        ]
+      },
+      "ink": {
+        "displayName": "Ink",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0306 172.44)",
+          "oklch(26.43% 0.0306 172.44)",
+          "oklch(37.86% 0.0306 172.44)",
+          "oklch(49.29% 0.0306 172.44)",
+          "oklch(60.71% 0.0306 172.44)",
+          "oklch(72.14% 0.0306 172.44)",
+          "oklch(83.57% 0.0306 172.44)",
+          "oklch(95.00% 0.0306 172.44)"
+        ]
+      },
+      "ink-soft": {
+        "displayName": "Ink Soft",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0228 159.21)",
+          "oklch(26.43% 0.0228 159.21)",
+          "oklch(37.86% 0.0228 159.21)",
+          "oklch(49.29% 0.0228 159.21)",
+          "oklch(60.71% 0.0228 159.21)",
+          "oklch(72.14% 0.0228 159.21)",
+          "oklch(83.57% 0.0228 159.21)",
+          "oklch(95.00% 0.0228 159.21)"
+        ]
+      },
+      "paper": {
+        "displayName": "Paper",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0041 91.45)",
+          "oklch(26.43% 0.0041 91.45)",
+          "oklch(37.86% 0.0041 91.45)",
+          "oklch(49.29% 0.0041 91.45)",
+          "oklch(60.71% 0.0041 91.45)",
+          "oklch(72.14% 0.0041 91.45)",
+          "oklch(83.57% 0.0041 91.45)",
+          "oklch(95.00% 0.0041 91.45)"
+        ]
+      },
+      "paper-raised": {
+        "displayName": "Paper Raised",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0054 95.10)",
+          "oklch(26.43% 0.0054 95.10)",
+          "oklch(37.86% 0.0054 95.10)",
+          "oklch(49.29% 0.0054 95.10)",
+          "oklch(60.71% 0.0054 95.10)",
+          "oklch(72.14% 0.0054 95.10)",
+          "oklch(83.57% 0.0054 95.10)",
+          "oklch(95.00% 0.0054 95.10)"
+        ]
+      },
+      "lilac": {
+        "displayName": "Lilac",
+        "role": "secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0137 299.79)",
+          "oklch(26.43% 0.0137 299.79)",
+          "oklch(37.86% 0.0137 299.79)",
+          "oklch(49.29% 0.0137 299.79)",
+          "oklch(60.71% 0.0137 299.79)",
+          "oklch(72.14% 0.0137 299.79)",
+          "oklch(83.57% 0.0137 299.79)",
+          "oklch(95.00% 0.0137 299.79)"
+        ]
+      },
+      "lilac-ink": {
+        "displayName": "Lilac Ink",
+        "role": "secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0275 312.96)",
+          "oklch(26.43% 0.0275 312.96)",
+          "oklch(37.86% 0.0275 312.96)",
+          "oklch(49.29% 0.0275 312.96)",
+          "oklch(60.71% 0.0275 312.96)",
+          "oklch(72.14% 0.0275 312.96)",
+          "oklch(83.57% 0.0275 312.96)",
+          "oklch(95.00% 0.0275 312.96)"
+        ]
+      },
+      "mint": {
+        "displayName": "Mint",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0200 128.70)",
+          "oklch(26.43% 0.0200 128.70)",
+          "oklch(37.86% 0.0200 128.70)",
+          "oklch(49.29% 0.0200 128.70)",
+          "oklch(60.71% 0.0200 128.70)",
+          "oklch(72.14% 0.0200 128.70)",
+          "oklch(83.57% 0.0200 128.70)",
+          "oklch(95.00% 0.0200 128.70)"
+        ]
+      },
+      "nav-mint": {
+        "displayName": "Nav Mint",
+        "role": "primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0255 139.83)",
+          "oklch(26.43% 0.0255 139.83)",
+          "oklch(37.86% 0.0255 139.83)",
+          "oklch(49.29% 0.0255 139.83)",
+          "oklch(60.71% 0.0255 139.83)",
+          "oklch(72.14% 0.0255 139.83)",
+          "oklch(83.57% 0.0255 139.83)",
+          "oklch(95.00% 0.0255 139.83)"
+        ]
+      },
+      "line": {
+        "displayName": "Line",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.0136 134.90)",
+          "oklch(26.43% 0.0136 134.90)",
+          "oklch(37.86% 0.0136 134.90)",
+          "oklch(49.29% 0.0136 134.90)",
+          "oklch(60.71% 0.0136 134.90)",
+          "oklch(72.14% 0.0136 134.90)",
+          "oklch(83.57% 0.0136 134.90)",
+          "oklch(95.00% 0.0136 134.90)"
+        ]
+      },
+      "focus-blue": {
+        "displayName": "Focus Blue",
+        "role": "neutral",
+        "tonalRamp": [
+          "oklch(15.00% 0.1288 259.83)",
+          "oklch(26.43% 0.1288 259.83)",
+          "oklch(37.86% 0.1288 259.83)",
+          "oklch(49.29% 0.1288 259.83)",
+          "oklch(60.71% 0.1288 259.83)",
+          "oklch(72.14% 0.1288 259.83)",
+          "oklch(83.57% 0.1288 259.83)",
+          "oklch(95.00% 0.1288 259.83)"
+        ]
+      },
+      "danger": {
+        "displayName": "Danger",
+        "role": "secondary",
+        "tonalRamp": [
+          "oklch(15.00% 0.1365 23.25)",
+          "oklch(26.43% 0.1365 23.25)",
+          "oklch(37.86% 0.1365 23.25)",
+          "oklch(49.29% 0.1365 23.25)",
+          "oklch(60.71% 0.1365 23.25)",
+          "oklch(72.14% 0.1365 23.25)",
+          "oklch(83.57% 0.1365 23.25)",
+          "oklch(95.00% 0.1365 23.25)"
+        ]
+      }
     },
     "typographyMeta": {
-      "display": { "displayName": "Editorial Display", "purpose": "Псё signature and selected focal headings." },
-      "title": { "displayName": "Dense Title", "purpose": "Route titles and decisive care actions." },
-      "body": { "displayName": "Working Copy", "purpose": "Controls, records and explanatory Russian text." },
-      "label": { "displayName": "Utility Label", "purpose": "Compact metadata and navigation labels." }
+      "display": {
+        "displayName": "Journal page title",
+        "purpose": "Today and things; profile uses a nearby smaller identity variant."
+      },
+      "row-title": {
+        "displayName": "Record title",
+        "purpose": "Readable working hierarchy within flat rows."
+      },
+      "page-heading": {
+        "displayName": "Working page heading",
+        "purpose": "Semantic h1 on secondary pages; 28px below 360px."
+      },
+      "field": {
+        "displayName": "Working field",
+        "purpose": "Regular 16px text inside paper inputs, selects and textareas."
+      }
     },
     "shadows": [
-      { "name": "mobile-dock", "value": "0 14px 34px rgb(23 24 20 / 12%)", "purpose": "Separate the fixed mobile dock from scrolling paper." },
-      { "name": "temporary-overlay", "value": "0 18px 44px rgb(23 24 20 / 18%)", "purpose": "Dialogs and temporary sheets only." }
+      {
+        "name": "journal-action",
+        "value": "0 2px 3px #203d3210",
+        "purpose": "The small lift beneath the decisive journal action."
+      },
+      {
+        "name": "ambient-paper",
+        "value": "0 8px 24px rgb(39 73 49 / 7%)",
+        "purpose": "Floating social controls and opened scenario workspace."
+      },
+      {
+        "name": "sheet",
+        "value": "0 -12px 48px rgb(25 50 37 / 16%)",
+        "purpose": "Temporary working sheets."
+      },
+      {
+        "name": "dock",
+        "value": "0 -5px 22px rgb(39 73 49 / 4%)",
+        "purpose": "Quiet upper mobile dock boundary."
+      },
+      {
+        "name": "modal",
+        "value": "0 20px 60px rgb(35 59 48 / 18%)",
+        "purpose": "Opaque profile/identity editors and social modal sheets."
+      },
+      {
+        "name": "social-modal-backdrop",
+        "value": "0 0 0 100vmax rgb(24 40 31 / 36%)",
+        "purpose": "Dim the surrounding scene behind detached social modal sheets."
+      },
+      {
+        "name": "map-sheet",
+        "value": "0 -5px 24px rgb(35 59 48 / 9%)",
+        "purpose": "Map detail snap sheet."
+      },
+      {
+        "name": "segment-selected",
+        "value": "0 1px 3px rgb(35 59 48 / 8%)",
+        "purpose": "Selected raised-paper segment inside the care view toggle."
+      }
     ],
     "motion": [
-      { "name": "state-ease", "value": "160ms cubic-bezier(.16, 1, .3, 1)", "purpose": "Color, border and restrained press feedback." }
+      {
+        "name": "control-transition",
+        "value": "160ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "Color, background, border and transform state changes; disabled by reduced motion."
+      },
+      {
+        "name": "scenario-reveal",
+        "value": "200ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "Opacity .7 to 1 and translateY(5px) to 0; no reduced-motion animation."
+      }
     ],
     "breakpoints": [
-      { "name": "desk-start", "value": "760px" },
-      { "name": "wide-desk", "value": "1180px" }
-    ]
+      {
+        "name": "compact-max",
+        "value": "359px"
+      },
+      {
+        "name": "desktop-min",
+        "value": "760px"
+      },
+      {
+        "name": "compact-desktop-max",
+        "value": "1100px"
+      }
+    ],
+    "materials": [
+      {
+        "name": "watercolor-canvas",
+        "value": "radial-gradient(ellipse 95% 390px at 0 0, #e9efdf 0%, transparent 72%), radial-gradient(ellipse 75% 340px at 110% 300px, #e9e4f4 0%, transparent 78%), var(--companion-paper)",
+        "purpose": "Static shared canvas, not animated ornament."
+      },
+      {
+        "name": "status-lilac",
+        "value": "linear-gradient(125deg,#ece9f5,#f2f0f4 75%)",
+        "purpose": "Home status capture panel."
+      }
+    ],
+    "tonalRampPolicy": "Synthesized OKLCH strips are preview metadata only, not additional source tokens.",
+    "scope": "Local journal v6 including all-surfaces and final publication/capture fidelity changes; not deployed. Functional gates and fresh finish review are tracked outside this design snapshot."
   },
   "components": [
     {
-      "name": "Primary Care Button",
+      "name": "Journal primary action",
       "kind": "button",
-      "refersTo": "button-primary",
-      "description": "The one decisive mutation or confirmation on a surface.",
-      "html": "<button class=\"ds-care-button\">Готово</button>",
-      "css": ".ds-care-button{min-height:48px;padding:0 16px;border:1px solid #171814;border-radius:14px;background:#171814;color:#fffdf8;font:800 14px Manrope,system-ui,sans-serif;transition:background-color 160ms cubic-bezier(.16,1,.3,1),transform 160ms cubic-bezier(.16,1,.3,1)}.ds-care-button:hover{background:#30312c}.ds-care-button:focus-visible{outline:3px solid #315ea8;outline-offset:3px}.ds-care-button:active{transform:translateY(1px)}"
+      "description": "The decisive action inside a capture field.",
+      "html": "<button class=\"ds-primary\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>Добавить запись</button>",
+      "css": ".ds-primary{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;width:100%;min-height:49px;padding:12px 14px;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:15px;background:var(--companion-forest,#405845);color:#fff;box-shadow:0 2px 3px #203d3210;font-size:14px;font-weight:550;transition:transform 160ms cubic-bezier(.16,1,.3,1)}.ds-primary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-primary:active{transform:translateY(1px)}.ds-primary:disabled{opacity:.58;box-shadow:none}.ds-primary:hover{cursor:pointer}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none;transform:none}}",
+      "refersTo": "button-primary"
     },
     {
-      "name": "Care Signal Field",
-      "kind": "card",
-      "refersTo": "button-signal",
-      "description": "A large semantic lime field for the nearest useful action.",
-      "html": "<article class=\"ds-care-field\"><h2>Поставить дату обработки</h2><p>Запланировано на сегодня.</p><button>Готово</button></article>",
-      "css": ".ds-care-field{display:grid;gap:12px;min-height:240px;padding:28px;border:1px solid #171814;border-radius:28px;background:#d8ff72;color:#171814;font-family:Manrope,system-ui,sans-serif}.ds-care-field h2{max-width:10ch;margin:0;font-size:38px;line-height:.94;letter-spacing:-.04em}.ds-care-field p{margin:0;font-weight:700}.ds-care-field button{justify-self:start;min-height:46px;padding:0 16px;border:1px solid #171814;border-radius:14px;background:#171814;color:#fffdf8;font-weight:800}.ds-care-field button:focus-visible{outline:3px solid #315ea8;outline-offset:3px}"
+      "name": "Secondary action",
+      "kind": "button",
+      "description": "A supporting control without a competing filled field.",
+      "html": "<button class=\"ds-secondary\">Изменить данные</button>",
+      "css": ".ds-secondary{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:48px;padding:0 16px;border:1px solid var(--kit-ink,#253b34);border-radius:14px;background:transparent;color:var(--kit-ink,#253b34);font-size:15px;font-weight:600}.ds-secondary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-secondary:hover{cursor:pointer}.ds-secondary:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-secondary:active{transform:none}}",
+      "refersTo": "button-secondary"
     },
     {
-      "name": "Observation Field",
+      "name": "Ghost action",
+      "kind": "button",
+      "description": "A supporting control without a competing filled field.",
+      "html": "<button class=\"ds-secondary\">Изменить данные</button>",
+      "css": ".ds-secondary{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:48px;padding:0 16px;border:1px solid transparent;border-radius:14px;background:transparent;color:var(--kit-ink,#253b34);font-size:15px;font-weight:600}.ds-secondary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-secondary:hover{cursor:pointer}.ds-secondary:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-secondary:active{transform:none}}",
+      "refersTo": "button-ghost"
+    },
+    {
+      "name": "Labeled field",
       "kind": "input",
-      "refersTo": "field",
-      "description": "Owner-authored daily observation capture on raised paper.",
-      "html": "<textarea class=\"ds-observation\" placeholder=\"Мята сегодня…\"></textarea>",
-      "css": ".ds-observation{min-height:86px;padding:13px 14px;border:1px solid #171814;border-radius:14px;background:#fffdf8;color:#171814;font:700 16px/1.45 Manrope,system-ui,sans-serif}.ds-observation::placeholder{color:#4e5149}.ds-observation:focus-visible{outline:3px solid #315ea8;outline-offset:2px}"
+      "description": "Flat paper field used throughout the secondary working pages.",
+      "html": "<label class=\"ds-field-label\">Имя собаки<input class=\"ds-field\" value=\"Плутон\" /></label>",
+      "css": ".ds-field-label{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;display:grid;gap:7px;font-size:12px;color:var(--kit-ink,#253b34)}.ds-field{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:48px;width:100%;padding:11px 12px;border:1px solid var(--kit-line,#dfe5dc);border-radius:13px;color:var(--kit-ink,#253b34);background:var(--kit-paper-raised,#fffefa);font-size:16px;font-weight:400;line-height:1.45}.ds-field:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-field:hover{cursor:text}",
+      "refersTo": "field"
     },
     {
-      "name": "Canonical Navigation",
+      "name": "Lilac capture field",
+      "kind": "card",
+      "description": "Recurring borderless tonal grouping for capture and publication lifecycle; preserve explicit state copy.",
+      "html": "<section class=\"ds-record\"><h2>Его история — здесь</h2><p>Наблюдения и события по дням.</p></section>",
+      "css": ".ds-record{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;padding:18px 20px;background:#edeaf4;border-radius:20px;color:#253b34}.ds-record h2{margin:0;font-size:21px;font-weight:550;line-height:1.35;letter-spacing:-.025em}.ds-record p{margin:8px 0 15px;font-size:13px;line-height:1.5;color:#706676}",
+      "refersTo": "record"
+    },
+    {
+      "name": "Social filter",
+      "kind": "chip",
+      "description": "An existing mint filter action with explicit pressed state.",
+      "html": "<button class=\"ds-filter\" aria-pressed=\"false\">Рядом</button>",
+      "css": ".ds-filter{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:44px;padding:8px 13px;border:0;border-radius:14px;background:#e0eee3;color:var(--companion-forest,#405845);font-size:13px;font-weight:550}.ds-filter[aria-pressed=true]{background:var(--companion-forest,#405845);color:#fffefa}.ds-filter:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-filter:hover{cursor:pointer}.ds-filter:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-filter:active{transform:none}}"
+    },
+    {
+      "name": "Mobile route selection",
       "kind": "nav",
-      "refersTo": "navigation-active",
-      "description": "Five stable routes: mobile dock and desktop contents rail.",
-      "html": "<nav class=\"ds-nav\"><button class=\"active\">Всё</button><button>Псё</button><button>Карта</button><button>Гав</button><button>Вещи</button></nav>",
-      "css": ".ds-nav{display:flex;gap:4px;padding:7px;border:1px solid #cbcbc2;border-radius:22px;background:#fffdf8}.ds-nav button{min-height:48px;border:0;border-radius:14px;padding:0 12px;background:transparent;color:#4e5149;font:800 13px Manrope,system-ui,sans-serif}.ds-nav button.active{background:#d8ff72;color:#171814}.ds-nav button:focus-visible{outline:3px solid #315ea8;outline-offset:2px}"
+      "description": "Mint belongs to the icon tile, never the entire active route.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Основные разделы\"><button aria-current=\"page\"><span class=\"ds-nav-icon\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M3 10 12 3l9 7v11h-6v-7H9v7H3Z\"/></svg></span><span>Главная</span></button><button><span class=\"ds-nav-icon\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg></span><span>Вещи</span></button></nav>",
+      "css": ".ds-nav{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;display:flex;gap:6px;padding:8px 6px;background:rgb(251 252 248 / 96%);border-top:1px solid #d8e0d7}.ds-nav button{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:54px;padding:4px 2px;border:0;border-radius:12px;background:transparent;color:#617067;font-size:10px;font-weight:400;line-height:14px}.ds-nav-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:8px}.ds-nav button[aria-current=page]{color:#405845;font-weight:600}.ds-nav button[aria-current=page] .ds-nav-icon{background:#dce9d9}.ds-nav button:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-nav button:hover{cursor:pointer}.ds-nav button:active{opacity:.8}",
+      "refersTo": "navigation-active-icon"
+    },
+    {
+      "name": "Flat domain row",
+      "kind": "custom",
+      "description": "A full-width index row with a straight divider.",
+      "html": "<button class=\"ds-row\"><span class=\"ds-row-icon\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M3 10 12 3l9 7v11h-6v-7H9v7H3Z\"/></svg></span><span><b>Паспорт и привычки</b><small>Порода, характер, правила знакомства</small></span></button>",
+      "css": ".ds-row{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;display:flex;align-items:center;gap:10px;width:100%;min-height:69px;padding:14px 0;border:0;border-bottom:1px solid #38534016;border-radius:0;background:transparent;color:#253b34;text-align:left;box-shadow:none}.ds-row-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:#eeecf3;color:#766786;flex:none}.ds-row b{display:block;font-size:14px;font-weight:600;line-height:1.35}.ds-row small{display:block;margin-top:4px;font-size:11px;font-weight:400;line-height:1.4;color:#647167}.ds-row:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-row:hover{cursor:pointer}.ds-row:active{opacity:.8}",
+      "refersTo": "domain-row"
+    },
+    {
+      "name": "Arched dog identity",
+      "kind": "custom",
+      "description": "Honest image-or-monogram identity convention; public cards share it without implying edit behavior.",
+      "html": "<button class=\"ds-portrait\" aria-label=\"Изменить фото собаки\">П</button>",
+      "css": ".ds-portrait{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;width:88px;height:100px;border:0;border-radius:50px 50px 24px 24px;overflow:hidden;background:#e8eddf;color:#405845;font-size:38px;font-weight:550;box-shadow:none}.ds-portrait:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-portrait:hover{cursor:pointer}.ds-portrait:active{opacity:.8}"
+    },
+    {
+      "name": "Plain working-page back action",
+      "kind": "button",
+      "refersTo": "back-action",
+      "description": "A quiet return action above the semantic page title.",
+      "html": "<button class=\"ds-back\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"m10 5-7 7 7 7M3 12h18\"/></svg>Назад</button>",
+      "css": ".ds-back{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0;border:0;border-radius:0;box-shadow:none;background:transparent;color:var(--companion-forest,#405845);font-size:14px;font-weight:500}.ds-back:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px}.ds-back:hover{cursor:pointer}.ds-back:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-back:active{transform:none}}"
     }
   ],
   "narrative": {
-    "northStar": "The Living Field Guide",
-    "overview": "Псё is one working notebook for life with a dog: identify the dog, see the nearest care action, record what changed, then move into history. It combines pet-first warmth, typographic confidence, spatial air and semantic color without copying any reference literally.",
-    "keyCharacteristics": ["Connected desktop field guide", "Large semantic color fields", "Black linework and warm paper", "Authored dog identity", "Stable five-route navigation"],
-    "rules": [
-      { "name": "The Field Rule", "body": "Color owns a meaningful region rather than appearing as scattered decoration.", "section": "colors" },
-      { "name": "The Flat-By-Default Rule", "body": "Permanent surfaces use tone and line; shadows belong to the mobile dock and temporary overlays.", "section": "elevation" }
+    "northStar": "Дневник",
+    "overview": "Псё is a warm, precise, protective journal for daily life with a dog. The selected B «Дневник» world gives chronology and one observation action visual priority: native Cyrillic system type, muted forest controls, lilac capture fields, and a near-white paper canvas with a mild watercolor wash. The dog is a personal identity anchor, not decorative dashboard imagery.\n\nThis records the locally built journal v6, not a deployment. The owner selected B on 2026-09-06; that explicit choice supersedes the rejected v5 visual system. Following the owner’s «Обнови все» instruction, the same world now extends through secondary care, health, habits, documents, sharing, settings, onboarding, and public/legal surfaces. Evidence is app/companion.css, the active stylesheet cascade, ProfileMemoryWorkspace.module.css, and the shared WatercolorScreen/PageHeader components. This is a source-grounded design snapshot; functional gates and the fresh finish review are tracked separately, not claimed complete here. PRODUCT.md still governs privacy, honest state feedback, and accessible interaction; surface composition and verification evidence belong in artifacts/design-v6/BRIEF.md.",
+    "keyCharacteristics": [
+      "Native system typography with light display emphasis and clear working labels.",
+      "Muted forest actions inside restrained lilac and paper fields.",
+      "Flat chronological and domain rows with quiet straight dividers.",
+      "A compact wordmark, real dog identity, and an arched profile portrait.",
+      "Five persistent destinations, a safe-area-aware dock, and a responsive desktop workspace.",
+      "Consistent plain page headers, paper form fields, flat working lists, and opaque modal sheets."
     ],
-    "dos": ["Use the whole desktop viewport as one working spread.", "Keep privacy and recovery copy beside its action.", "Use the dog's monogram and line mark when real imagery is absent."],
-    "donts": ["Do not frame the product as a phone mockup.", "Do not float the assistant over content.", "Do not use gradients or persistent shadows in place of authored structure."]
+    "rules": [
+      {
+        "name": "The Forest Action Rule",
+        "body": "Forest identifies the decisive action; lilac groups capture and reflection, while mint marks a quiet selected or completed state. None replaces a readable label.",
+        "section": "colors"
+      },
+      {
+        "name": "The Familiar Type Rule",
+        "body": "Use the owner-pinned native system stack for both headings and working text; do not restore the superseded custom display pairing.",
+        "section": "typography"
+      },
+      {
+        "name": "The Quiet Paper Rule",
+        "body": "Chronology and indexes stay flat. Use a small ambient shadow for an action or floating working surface, not for every record.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep Псё as the product name and use the selected dog’s actual name for the profile destination.",
+      "Do pair forest actions with lilac capture fields, paper, and mild watercolor atmosphere.",
+      "Do preserve straight row dividers, the arched identity portrait, and real chronological labels.",
+      "Do keep all five routes, real map interactions, explicit privacy states, visible focus, and device safe-area spacing.",
+      "Do show actual records and honest empty, loading, error, disabled, and permission states."
+    ],
+    "donts": [
+      "Don’t restore neon lime primary actions, heavy black framing, or oversized editorial display typography.",
+      "Don’t turn ordinary timeline and index rows into a grid of elevated cards.",
+      "Don’t use the approved comp’s illustrative dog, dates, or records as fabricated product data.",
+      "Don’t replace a functioning map with a decorative imitation or conceal sharing and consent boundaries.",
+      "Don’t promote leftover compatibility styles or one-off flourishes into new system rules."
+    ]
   }
 }

@@ -8,20 +8,20 @@
  */
 
 :root {
-  --kit-ink: #171814;
-  --kit-ink-soft: #4e5149;
-  --kit-paper: #f7f6f0;
-  --kit-paper-raised: #fffdf8;
-  --kit-line: #cbcbc2;
-  --kit-line-strong: #22231f;
-  --kit-sage: #dde3d2;
-  --kit-moss: #5b6336;
-  --kit-lime: #d8ff72;
-  --kit-blue: #a9c7c9;
-  --kit-lilac: #c6a9e6;
-  --kit-coral: #f05a3d;
-  --kit-yellow: #f3df64;
-  --kit-pink: #eba4bf;
+  --kit-ink: #233b30;
+  --kit-ink-soft: #5b685f;
+  --kit-paper: #f4f6f2;
+  --kit-paper-raised: #fffefa;
+  --kit-line: #d8e0d7;
+  --kit-line-strong: #456451;
+  --kit-sage: #e0eee3;
+  --kit-moss: #365c46;
+  --kit-lime: #dceee0;
+  --kit-blue: #deedf0;
+  --kit-lilac: #e8e3f3;
+  --kit-coral: #a63f3f;
+  --kit-yellow: #f5e9c6;
+  --kit-pink: #efdde3;
   --kit-focus: #315ea8;
   --kit-radius-xs: 8px;
   --kit-radius-control: 14px;
@@ -33,7 +33,7 @@
   --editorial-muted: var(--kit-ink-soft);
   --editorial-line: var(--kit-line);
   --editorial-signal: var(--kit-lime);
-  --editorial-signal-strong: #b8ee51;
+  --editorial-signal-strong: #c9e3d1;
   --editorial-sage: var(--kit-sage);
   --editorial-olive: var(--kit-moss);
   --editorial-coral: var(--kit-coral);

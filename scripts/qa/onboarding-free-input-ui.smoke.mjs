@@ -29,6 +29,7 @@ try {
 
     const dialog = page.getByRole('dialog', { name: 'Профиль собаки' });
     await dialog.waitFor();
+    await page.waitForFunction(() => document.activeElement === document.querySelector('.dog-creation-sheet'));
     assert.equal(await dialog.evaluate((element) => document.activeElement === element), true, 'dialog should receive focus without opening the keyboard');
     assert.equal(await dialog.locator('input').count(), 3);
     assert.equal(await dialog.locator('#dog-creation-age').getAttribute('list'), 'dog-creation-age-options');

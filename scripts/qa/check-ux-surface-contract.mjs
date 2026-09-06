@@ -103,7 +103,7 @@ const navStart = files.navigation.indexOf('<nav className="app-tabs"');
 const navEnd = files.navigation.indexOf('</nav>', navStart);
 const navBlock = navStart >= 0 && navEnd > navStart ? files.navigation.slice(navStart, navEnd) : '';
 if (!navBlock) failures.push('primary app nav missing');
-for (const token of ["label: 'всё'", "label: 'псё'", "label: 'карта'", "label: 'гав'", "label: 'вещи'"]) {
+for (const token of ["label: 'Главная'", "label: 'Профиль'", "label: 'Карта'", "label: 'Гав'", "label: 'Вещи'"]) {
   if (!files.navigation.includes(token)) failures.push(`primary nav missing section: ${token}`);
 }
 for (const token of ["id: 'calendar'", "id: 'card'", "id: 'assistant'"]) {
