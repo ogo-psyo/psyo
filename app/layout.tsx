@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from 'next';
 import { ReleaseFreshnessGuard } from '@/components/ReleaseFreshnessGuard';
+import { InterfaceMotion } from '@/components/app/InterfaceMotion';
 import './globals.css';
 import './refinement.css';
 import './pouf.css';
 import './editorial.css';
 import './companion.css';
+import './motion.css';
 
 export const metadata: Metadata = {
   title: 'Псё — ассистент владельца собаки',
@@ -40,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <span hidden aria-hidden="true" data-psyo-design-contract="journal-v6-20260906" />
         <script src="https://telegram.org/js/telegram-web-app.js" async />
         <ReleaseFreshnessGuard />
+        <InterfaceMotion />
         {children}
       </body>
     </html>

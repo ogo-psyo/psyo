@@ -1,0 +1,92 @@
+/* Journal B: motion explains state; it never owns navigation or persistence. */
+.companion-app {
+  --pso-press: 120ms;
+  --pso-enter: 200ms;
+  --pso-ease: cubic-bezier(.23, 1, .32, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* No entry cascade on page load or on keyboard interaction. */
+  html[data-pso-input="pointer"] .companion-app :is(
+    .journal-screen button, .watercolor-screen button, .v3-assistant-sheet button,
+    .care-delete-dialog button, .woof-composer button, .woof-overlay button,
+    .voice-observation-capture button, .care-action-notice button
+  ):not([data-motion="static"]):not(:disabled):not([aria-disabled="true"]) {
+    transition: scale var(--pso-press) var(--pso-ease);
+  }
+  html[data-pso-input="pointer"] .companion-app :is(
+    .journal-screen button, .watercolor-screen button, .v3-assistant-sheet button,
+    .care-delete-dialog button, .woof-composer button, .woof-overlay button,
+    .voice-observation-capture button, .care-action-notice button
+  ):not([data-motion="static"]):not(:disabled):not([aria-disabled="true"]):active {
+    scale: .96;
+  }
+
+  /* Opacity only on screens: transforms here would re-anchor fixed children. */
+  html[data-pso-input="pointer"] .companion-app :is(.journal-screen, .watercolor-screen) {
+    transition: opacity 150ms var(--pso-ease);
+    @starting-style { opacity: .65; }
+  }
+
+  html[data-pso-input="pointer"] .companion-app :is(
+    .v3-assistant-sheet, .care-delete-dialog, .woof-composer, .woof-overlay,
+    .woof-profile-sheet, .production-route-discard
+  ) {
+    transition: opacity var(--pso-enter) var(--pso-ease), transform var(--pso-enter) var(--pso-ease);
+    @starting-style { opacity: 0; transform: translateY(10px) scale(.98); }
+  }
+
+  html[data-pso-input="pointer"] .companion-app :is(
+    .all-observation-capture, .voice-capture-details, .voice-capture-result,
+    .assistant-action-result, .voice-observation-capture.is-saved > div,
+    .wishlist-list[aria-label="История вещей"] .wishlist-item,
+    .care-action-notice, .restore-notice, .toast
+  ) {
+    transition: opacity 180ms var(--pso-ease);
+    @starting-style { opacity: 0; }
+  }
+
+  html[data-pso-input="pointer"] .companion-app .journal-disclosure > summary svg {
+    transition: transform 180ms var(--pso-ease);
+  }
+  html[data-pso-input="pointer"] .companion-app .journal-disclosure[open] > summary svg { transform: rotate(90deg); }
+
+  /* Native disclosure stays keyboard accessible; older engines open instantly.
+     Only this small, user-triggered region interpolates layout, never a page. */
+  @supports (interpolate-size: allow-keywords) {
+    html[data-pso-input="pointer"] .companion-app .journal-disclosure::details-content {
+      interpolate-size: allow-keywords;
+      block-size: 0;
+      opacity: 0;
+      overflow: clip;
+      transition: block-size var(--pso-enter) var(--pso-ease), opacity var(--pso-enter) var(--pso-ease), content-visibility var(--pso-enter) allow-discrete;
+    }
+    html[data-pso-input="pointer"] .companion-app .journal-disclosure[open]::details-content {
+      block-size: auto;
+      opacity: 1;
+    }
+  }
+
+  .companion-app .voice-capture-recording-status i { animation: pso-recording 1200ms ease-in-out infinite; }
+  .companion-app .production-assistant-composer button[aria-busy="true"] svg { animation: pso-thinking 1600ms linear infinite; }
+}
+
+@keyframes pso-recording { 50% { opacity: .45; transform: scale(.85); } }
+@keyframes pso-thinking { to { transform: rotate(360deg); } }
+
+/* Keep labels, timers and icons as static feedback, including mid-animation. */
+html[data-pso-input="keyboard"] .companion-app *,
+html[data-pso-input="keyboard"] .companion-app *::before,
+html[data-pso-input="keyboard"] .companion-app *::after,
+html[data-pso-input="keyboard"] .companion-app .journal-disclosure::details-content {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .companion-app *, .companion-app *::before, .companion-app *::after,
+  .companion-app .journal-disclosure::details-content {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
