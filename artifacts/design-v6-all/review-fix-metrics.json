@@ -1,0 +1,65 @@
+[
+  {
+    "width": 320,
+    "name": "card",
+    "overflow": false
+  },
+  {
+    "width": 320,
+    "name": "capture",
+    "overflow": false
+  },
+  {
+    "width": 320,
+    "name": "gav_requests",
+    "visibleExit": true,
+    "clickCloses": true
+  },
+  {
+    "width": 320,
+    "name": "public",
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "name": "card",
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "name": "capture",
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "name": "gav_requests",
+    "visibleExit": true,
+    "clickCloses": true
+  },
+  {
+    "width": 390,
+    "name": "public",
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "name": "card",
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "name": "capture",
+    "overflow": false
+  },
+  {
+    "width": 1280,
+    "name": "gav_requests",
+    "visibleExit": true,
+    "clickCloses": true
+  },
+  {
+    "width": 1280,
+    "name": "public",
+    "overflow": false
+  }
+]

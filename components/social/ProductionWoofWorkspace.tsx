@@ -326,7 +326,7 @@ export function ProductionWoofWorkspace(props: Props) {
 
     {signalComposer && <section ref={composerRef} className="woof-composer" role="dialog" aria-modal="true" aria-labelledby="woof-composer-title">
       <button className="woof-sheet-close" type="button" onClick={() => setSignalComposer(false)} aria-label="Закрыть"><X /></button>
-      <p className="woof-kicker">временный сигнал</p><h2 id="woof-composer-title">Когда идём?</h2>
+      <h2 id="woof-composer-title">Когда идём?</h2>
       <div className="woof-choice-row"><button type="button" aria-pressed={when === 'now'} onClick={() => setWhen('now')}>Сейчас</button><button type="button" aria-pressed={when === 'later'} onClick={() => setWhen('later')}>Позже</button></div>
       {when === 'later' && <label className="woof-field"><span>Начало прогулки</span><input type="time" value={laterTime} onChange={(event) => setLaterTime(event.target.value)} /></label>}
       <fieldset className="woof-pace"><legend>Темп</legend>{(['calm', 'balanced', 'active'] as WalkPace[]).map((value) => <button type="button" key={value} aria-pressed={pace === value} onClick={() => setPace(value)}>{paceCopy[value]}</button>)}</fieldset>

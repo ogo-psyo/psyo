@@ -48,7 +48,7 @@ async function makeUser(browser, { ownerId, pet, location }) {
     await page.getByRole('button', { name: /Гав/ }).last().click({ force: true });
   }
   await page.locator('.production-woof-workspace').waitFor();
-  await page.locator('.woof-topbar > button').first().click();
+  await page.getByRole('button', { name: 'Сейчас рядом', exact: true }).click();
   await page.waitForTimeout(500);
   return { context, page };
 }

@@ -1,0 +1,212 @@
+[
+  {
+    "name": "onboarding",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "support",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "privacy",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "public",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "calendar",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "health",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "settings",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "card",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "things",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "passport",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "character",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "social",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "habits",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "history",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "editor",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "identity",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "capture",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "gav",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "gav_profile",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "gav_requests",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "assistant",
+    "width": 320,
+    "overflow": false
+  },
+  {
+    "name": "onboarding",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "support",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "privacy",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "public",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "calendar",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "health",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "settings",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "card",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "things",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "passport",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "character",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "social",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "habits",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "history",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "editor",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "identity",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "capture",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "gav",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "gav_profile",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "gav_requests",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "assistant",
+    "width": 390,
+    "overflow": false
+  }
+]

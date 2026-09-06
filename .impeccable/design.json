@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-06T12:28:04.245715+00:00",
+  "generatedAt": "2026-09-06T12:51:43.238166+00:00",
   "title": "Design System: Псё — Дневник",
   "extensions": {
     "colorMeta": {
@@ -144,34 +144,6 @@
           "oklch(95.00% 0.0136 134.90)"
         ]
       },
-      "control-ink": {
-        "displayName": "Control Ink",
-        "role": "neutral",
-        "tonalRamp": [
-          "oklch(15.00% 0.0360 163.86)",
-          "oklch(26.43% 0.0360 163.86)",
-          "oklch(37.86% 0.0360 163.86)",
-          "oklch(49.29% 0.0360 163.86)",
-          "oklch(60.71% 0.0360 163.86)",
-          "oklch(72.14% 0.0360 163.86)",
-          "oklch(83.57% 0.0360 163.86)",
-          "oklch(95.00% 0.0360 163.86)"
-        ]
-      },
-      "control-line": {
-        "displayName": "Control Line",
-        "role": "neutral",
-        "tonalRamp": [
-          "oklch(15.00% 0.0148 142.22)",
-          "oklch(26.43% 0.0148 142.22)",
-          "oklch(37.86% 0.0148 142.22)",
-          "oklch(49.29% 0.0148 142.22)",
-          "oklch(60.71% 0.0148 142.22)",
-          "oklch(72.14% 0.0148 142.22)",
-          "oklch(83.57% 0.0148 142.22)",
-          "oklch(95.00% 0.0148 142.22)"
-        ]
-      },
       "focus-blue": {
         "displayName": "Focus Blue",
         "role": "neutral",
@@ -209,6 +181,14 @@
       "row-title": {
         "displayName": "Record title",
         "purpose": "Readable working hierarchy within flat rows."
+      },
+      "page-heading": {
+        "displayName": "Working page heading",
+        "purpose": "Semantic h1 on secondary pages; 28px below 360px."
+      },
+      "field": {
+        "displayName": "Working field",
+        "purpose": "Regular 16px text inside paper inputs, selects and textareas."
       }
     },
     "shadows": [
@@ -231,6 +211,26 @@
         "name": "dock",
         "value": "0 -5px 22px rgb(39 73 49 / 4%)",
         "purpose": "Quiet upper mobile dock boundary."
+      },
+      {
+        "name": "modal",
+        "value": "0 20px 60px rgb(35 59 48 / 18%)",
+        "purpose": "Opaque profile/identity editors and social modal sheets."
+      },
+      {
+        "name": "social-modal-backdrop",
+        "value": "0 0 0 100vmax rgb(24 40 31 / 36%)",
+        "purpose": "Dim the surrounding scene behind detached social modal sheets."
+      },
+      {
+        "name": "map-sheet",
+        "value": "0 -5px 24px rgb(35 59 48 / 9%)",
+        "purpose": "Map detail snap sheet."
+      },
+      {
+        "name": "segment-selected",
+        "value": "0 1px 3px rgb(35 59 48 / 8%)",
+        "purpose": "Selected raised-paper segment inside the care view toggle."
       }
     ],
     "motion": [
@@ -272,7 +272,7 @@
       }
     ],
     "tonalRampPolicy": "Synthesized OKLCH strips are preview metadata only, not additional source tokens.",
-    "scope": "Local journal v6 build; not deployed."
+    "scope": "Local journal v6 including all-surfaces and final publication/capture fidelity changes; not deployed. Functional gates and fresh finish review are tracked outside this design snapshot."
   },
   "components": [
     {
@@ -288,7 +288,7 @@
       "kind": "button",
       "description": "A supporting control without a competing filled field.",
       "html": "<button class=\"ds-secondary\">Изменить данные</button>",
-      "css": ".ds-secondary{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:48px;padding:0 16px;border:1px solid var(--kit-ink,#233b30);border-radius:14px;background:transparent;color:var(--kit-ink,#233b30);font-size:15px;font-weight:600}.ds-secondary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-secondary:hover{cursor:pointer}.ds-secondary:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-secondary:active{transform:none}}",
+      "css": ".ds-secondary{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:48px;padding:0 16px;border:1px solid var(--kit-ink,#253b34);border-radius:14px;background:transparent;color:var(--kit-ink,#253b34);font-size:15px;font-weight:600}.ds-secondary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-secondary:hover{cursor:pointer}.ds-secondary:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-secondary:active{transform:none}}",
       "refersTo": "button-secondary"
     },
     {
@@ -296,21 +296,21 @@
       "kind": "button",
       "description": "A supporting control without a competing filled field.",
       "html": "<button class=\"ds-secondary\">Изменить данные</button>",
-      "css": ".ds-secondary{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:48px;padding:0 16px;border:1px solid transparent;border-radius:14px;background:transparent;color:var(--kit-ink,#233b30);font-size:15px;font-weight:600}.ds-secondary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-secondary:hover{cursor:pointer}.ds-secondary:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-secondary:active{transform:none}}",
+      "css": ".ds-secondary{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:48px;padding:0 16px;border:1px solid transparent;border-radius:14px;background:transparent;color:var(--kit-ink,#253b34);font-size:15px;font-weight:600}.ds-secondary:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-secondary:hover{cursor:pointer}.ds-secondary:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-secondary:active{transform:none}}",
       "refersTo": "button-ghost"
     },
     {
       "name": "Labeled field",
       "kind": "input",
-      "description": "A working field, not a decorative capture mockup.",
+      "description": "Flat paper field used throughout the secondary working pages.",
       "html": "<label class=\"ds-field-label\">Имя собаки<input class=\"ds-field\" value=\"Плутон\" /></label>",
-      "css": ".ds-field-label{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;display:grid;gap:7px;font-size:12px;color:var(--kit-ink,#233b30)}.ds-field{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:48px;width:100%;padding:11px 13px;border:1px solid var(--kit-line,#d8e0d7);border-radius:14px;color:var(--kit-ink,#233b30);background:var(--kit-paper-raised,#fffefa);font-size:16px}.ds-field:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-field:hover{cursor:text}",
+      "css": ".ds-field-label{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;display:grid;gap:7px;font-size:12px;color:var(--kit-ink,#253b34)}.ds-field{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;min-height:48px;width:100%;padding:11px 12px;border:1px solid var(--kit-line,#dfe5dc);border-radius:13px;color:var(--kit-ink,#253b34);background:var(--kit-paper-raised,#fffefa);font-size:16px;font-weight:400;line-height:1.45}.ds-field:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-field:hover{cursor:text}",
       "refersTo": "field"
     },
     {
       "name": "Lilac capture field",
       "kind": "card",
-      "description": "Recurring tonal grouping for recording an observation or item.",
+      "description": "Recurring borderless tonal grouping for capture and publication lifecycle; preserve explicit state copy.",
       "html": "<section class=\"ds-record\"><h2>Его история — здесь</h2><p>Наблюдения и события по дням.</p></section>",
       "css": ".ds-record{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;padding:18px 20px;background:#edeaf4;border-radius:20px;color:#253b34}.ds-record h2{margin:0;font-size:21px;font-weight:550;line-height:1.35;letter-spacing:-.025em}.ds-record p{margin:8px 0 15px;font-size:13px;line-height:1.5;color:#706676}",
       "refersTo": "record"
@@ -341,20 +341,29 @@
     {
       "name": "Arched dog identity",
       "kind": "custom",
-      "description": "Honest monogram fallback inside the reusable arched portrait.",
+      "description": "Honest image-or-monogram identity convention; public cards share it without implying edit behavior.",
       "html": "<button class=\"ds-portrait\" aria-label=\"Изменить фото собаки\">П</button>",
       "css": ".ds-portrait{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;width:88px;height:100px;border:0;border-radius:50px 50px 24px 24px;overflow:hidden;background:#e8eddf;color:#405845;font-size:38px;font-weight:550;box-shadow:none}.ds-portrait:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px;}.ds-portrait:hover{cursor:pointer}.ds-portrait:active{opacity:.8}"
+    },
+    {
+      "name": "Plain working-page back action",
+      "kind": "button",
+      "refersTo": "back-action",
+      "description": "A quiet return action above the semantic page title.",
+      "html": "<button class=\"ds-back\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"m10 5-7 7 7 7M3 12h18\"/></svg>Назад</button>",
+      "css": ".ds-back{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0;border:0;border-radius:0;box-shadow:none;background:transparent;color:var(--companion-forest,#405845);font-size:14px;font-weight:500}.ds-back:focus-visible{outline:3px solid var(--kit-focus,#315ea8);outline-offset:3px}.ds-back:hover{cursor:pointer}.ds-back:active{transform:translateY(1px)}@media(prefers-reduced-motion:reduce){.ds-back:active{transform:none}}"
     }
   ],
   "narrative": {
     "northStar": "Дневник",
-    "overview": "Псё is a warm, precise, protective journal for daily life with a dog. The selected B «Дневник» world gives chronology and one observation action visual priority: native Cyrillic system type, muted forest controls, lilac capture fields, and a near-white paper canvas with a mild watercolor wash. The dog is a personal identity anchor, not decorative dashboard imagery.\n\nThis records the locally built journal v6, not a deployment. The owner selected B on 2026-09-06; that explicit choice supersedes the rejected v5 visual system. Evidence is app/companion.css, the active stylesheet cascade, and the implemented journal/profile components. PRODUCT.md still governs privacy, honest state feedback, and accessible interaction; surface composition and verification evidence belong in artifacts/design-v6/BRIEF.md.",
+    "overview": "Псё is a warm, precise, protective journal for daily life with a dog. The selected B «Дневник» world gives chronology and one observation action visual priority: native Cyrillic system type, muted forest controls, lilac capture fields, and a near-white paper canvas with a mild watercolor wash. The dog is a personal identity anchor, not decorative dashboard imagery.\n\nThis records the locally built journal v6, not a deployment. The owner selected B on 2026-09-06; that explicit choice supersedes the rejected v5 visual system. Following the owner’s «Обнови все» instruction, the same world now extends through secondary care, health, habits, documents, sharing, settings, onboarding, and public/legal surfaces. Evidence is app/companion.css, the active stylesheet cascade, ProfileMemoryWorkspace.module.css, and the shared WatercolorScreen/PageHeader components. This is a source-grounded design snapshot; functional gates and the fresh finish review are tracked separately, not claimed complete here. PRODUCT.md still governs privacy, honest state feedback, and accessible interaction; surface composition and verification evidence belong in artifacts/design-v6/BRIEF.md.",
     "keyCharacteristics": [
       "Native system typography with light display emphasis and clear working labels.",
       "Muted forest actions inside restrained lilac and paper fields.",
       "Flat chronological and domain rows with quiet straight dividers.",
       "A compact wordmark, real dog identity, and an arched profile portrait.",
-      "Five persistent destinations, a safe-area-aware dock, and a responsive desktop workspace."
+      "Five persistent destinations, a safe-area-aware dock, and a responsive desktop workspace.",
+      "Consistent plain page headers, paper form fields, flat working lists, and opaque modal sheets."
     ],
     "rules": [
       {

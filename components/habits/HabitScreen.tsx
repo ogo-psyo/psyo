@@ -77,10 +77,10 @@ export function HabitScreen({
 
   return (
     <section className="module-screen habit-screen" aria-labelledby="habit-screen-title">
-      <button className="secondary-flow-back" type="button" onClick={onBack}><ArrowLeft weight="bold" aria-hidden="true" /> Назад во Всё</button>
+      <button className="journal-screen-back" type="button" onClick={onBack}><ArrowLeft weight="bold" aria-hidden="true" /> На главную</button>
       <header className="module-screen-heading">
         <span className="module-screen-icon"><ListChecks weight="duotone" aria-hidden="true" /></span>
-        <div><h2 id="habit-screen-title">Привычки {dogName}</h2><p>{habits.length ? `${completed} отметок в текущем периоде` : 'Регулярные дела появятся здесь'}</p></div>
+        <div><h1 id="habit-screen-title">Привычки {dogName}</h1><p>{habits.length ? `${completed} отметок в текущем периоде` : 'Регулярные дела появятся здесь'}</p></div>
       </header>
 
       {loading ? <div className="module-skeleton" aria-label="Загружаю привычки" /> : error ? (

@@ -94,8 +94,8 @@ export default async function DogCardPage({
         </div>
 
         <div className="share-hero">
-          <div className={`share-avatar ${image ? 'has-image' : ''}`} aria-label={`Фото собаки ${name}`}>
-            {image && <img src={image} alt="" />}
+          <div className={`share-avatar ${image ? 'has-image' : ''}`} aria-label={image ? `Фото собаки ${name}` : `Аватар собаки ${name}`}>
+            {image ? <img src={image} alt="" /> : <span className="share-avatar-monogram" aria-hidden="true">{Array.from(name.trim())[0]?.toLocaleUpperCase('ru-RU') || '?'}</span>}
           </div>
           <div className="share-hero-glass">
             <span>собака</span>

@@ -302,3 +302,147 @@ body.companion-app .phone-shell .v3-assistant-context p { font-weight:400 !impor
 body.companion-app .phone-shell .production-assistant-suggestions button { font-weight:500 !important; }
 body.companion-app .production-map-workspace :is(.leaflet-container,.production-map-loading) { background:#edf1e8 !important; }
 body.companion-app .production-map-tools>button { min-width:0; font-weight:500; }
+
+/* B across the working application: shared aliases, headers, forms and states. */
+:root {
+ --kit-ink:#253b34; --kit-ink-soft:#617067; --kit-paper:#fdfcf9; --kit-paper-raised:#fffefa; --kit-line:#dfe5dc; --kit-line-strong:#849783;
+ --kit-sage:#e7eee0; --kit-moss:#405845; --kit-lime:#e7eee0; --kit-lilac:#edeaf4;
+ --palette-mint-soft:#e7eee0; --palette-green-soft:#dce9d9; --palette-lime-signal:#dce9d9; --palette-emerald:#405845; --palette-coral:#a63f3f;
+ --color-bg-canvas:#fdfcf9; --color-bg-surface:#fffefa; --color-bg-strong:#fff; --color-text-primary:#253b34; --color-text-secondary:#617067;
+ --pouf-cushion:none; --pouf-cushion-small:none; --pouf-float:0 12px 32px rgb(35 59 48 / 12%); --pso-surface-muted:#eaf0e7; --pso-surface-pressed:#dce9d9;
+ --pso-care:#e7eee0; --pso-care-ink:#253b34; --pso-border:#dfe5dc; --pso-danger:#a63f3f;
+}
+body.companion-app .journal-shell>.app-header { display:none !important; }
+body.companion-app .journal-shell>.pet-switcher { display:none !important; }
+body.companion-app .journal-shell:has(.profile-settings-screen)>.pet-switcher { display:block !important; margin:12px 24px; padding:12px 0; border:0; background:transparent; }
+body.companion-app .journal-shell:has(.profile-settings-screen)>.pet-switcher>span { display:block; font-size:14px; font-weight:600; margin-bottom:8px; }
+body.companion-app .journal-shell:has(.profile-settings-screen)>.pet-switcher>p { font-size:12px; font-weight:400; line-height:1.5; }
+body.companion-app .journal-shell>.mode-panel { border:0 !important; background:transparent !important; padding:6px 24px !important; margin:0 !important; border-radius:0 !important; min-height:0 !important; font-size:12px; }
+body.companion-app .journal-shell :is(.watercolor-screen,.module-screen) { padding:12px 24px calc(104px + env(safe-area-inset-bottom)) !important; border:0; max-width:800px; margin-inline:auto; }
+body.companion-app .journal-shell :is(.watercolor-page-hero,.module-screen-heading) { display:block; padding:16px 0 22px !important; margin:0 !important; border:0 !important; background:transparent !important; min-height:0; }
+body.companion-app .journal-shell :is(.watercolor-page-hero,.module-screen-heading) h1 { margin:0; font-size:30px !important; line-height:1.15 !important; font-weight:550 !important; text-align:left; }
+body.companion-app .journal-shell :is(.watercolor-page-hero,.module-screen-heading) p { margin:9px 0 0 !important; max-width:48ch; font-size:14px !important; font-weight:400 !important; line-height:1.5; }
+body.companion-app .journal-shell :is(.ui-page-header-aside,.module-screen-icon) { display:none; }
+body.companion-app .journal-shell :is(.watercolor-screen,.module-screen)>button.journal-screen-back { display:inline-flex !important; align-items:center; gap:8px; min-height:44px; width:auto; margin:0; padding:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; color:#405845 !important; font-size:14px !important; font-weight:500 !important; }
+.journal-screen-back svg { width:20px; height:20px; }
+body.companion-app .journal-shell .watercolor-content { display:grid; gap:24px; }
+body.companion-app .journal-shell .watercolor-content>.screen-primary-action { margin:0; }
+body.companion-app .journal-shell :is(.watercolor-content,.module-screen) :is(h2,h3) { font-size:18px !important; font-weight:600 !important; line-height:1.3 !important; }
+body.companion-app .journal-shell :is(.watercolor-content,.module-screen) :is(b,strong) { font-weight:600 !important; }
+body.companion-app .journal-shell :is(.watercolor-content,.module-screen,.woof-overlay,.woof-composer) :is(label,legend) { font-size:13px; line-height:1.4; font-weight:500 !important; color:#526451; }
+body.companion-app .journal-shell :is(.watercolor-content,.module-screen,.woof-overlay,.woof-composer) :is(input:not([type=checkbox]):not([type=radio]),select,textarea) { min-width:0; min-height:48px; border:1px solid #dfe5dc !important; border-radius:13px !important; padding:11px 12px; color:#253b34 !important; background:#fffefa !important; box-shadow:none !important; font:400 16px/1.45 var(--font-pouf) !important; }
+body.companion-app .journal-shell :is(.watercolor-content,.module-screen) :is(button,a.ui-button) { min-height:44px; font-weight:500 !important; }
+body.companion-app .journal-shell :is(.care-workbench,.care-calendar-panel,.care-task-card,.today-add-care,.paper-sheet,.wishlist-item,.health-capture,.health-timeline-calendar,.habit-list>article,.profile-billing-card,.profile-danger-zone) { box-shadow:none !important; border:0 !important; border-radius:18px !important; }
+body.companion-app .journal-shell .care-workbench { background:transparent !important; padding:0 !important; }
+body.companion-app .journal-shell .care-workbench-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 0 15px; border:0; }
+body.companion-app .journal-shell .care-workbench-head h3 { font-size:15px !important; }
+body.companion-app .journal-shell .care-workbench-head>.primary { width:auto; min-width:0; padding:11px 14px; flex:none; font-size:13px; }
+body.companion-app .journal-shell .care-view-toggle { padding:4px; gap:4px; border:0 !important; border-radius:13px !important; background:#e9eee5 !important; }
+body.companion-app .journal-shell .care-view-toggle button { background:transparent !important; border:0 !important; border-radius:10px !important; color:#526451 !important; }
+body.companion-app .journal-shell .care-view-toggle button.active { background:#fffefa !important; color:#253b34 !important; box-shadow:0 1px 3px rgb(35 59 48 / 8%) !important; }
+body.companion-app .journal-shell .care-calendar-panel { background:transparent !important; padding:18px 0 !important; }
+body.companion-app .journal-shell .care-calendar-grid .calendar-day { border:0 !important; border-radius:12px !important; background:transparent !important; color:#526451 !important; min-height:44px !important; padding:5px 0 !important; font-size:13px; }
+body.companion-app .journal-shell .care-calendar-grid .calendar-day.selected { color:#fff !important; background:#405845 !important; }
+body.companion-app .journal-shell .care-calendar-grid .calendar-day.today:not(.selected) { color:#253b34 !important; background:#e7eee0 !important; }
+body.companion-app .journal-shell .care-calendar-grid .calendar-day b { background:#dce9d9 !important; color:#405845 !important; }
+body.companion-app .journal-shell .care-task-card { padding:16px 0 !important; border-bottom:1px solid #dfe5dc !important; border-radius:0 !important; background:transparent !important; }
+body.companion-app .journal-shell .care-row-actions { gap:8px; flex-wrap:wrap; }
+body.companion-app .journal-shell :is(.care-row-actions,.wishlist-actions) button { border:0 !important; background:#eaf0e7 !important; border-radius:11px !important; padding:9px 12px; }
+body.companion-app .journal-shell :is(.care-row-actions,.wishlist-actions) button.danger-action { color:#9b3e3e !important; background:#f5e9e7 !important; }
+body.companion-app .journal-shell .today-add-care { display:block; padding:18px !important; background:#edeaf4 !important; }
+body.companion-app .journal-shell .today-add-copy b { font-size:18px !important; }
+body.companion-app .journal-shell .today-add-copy p { font-size:13px; margin:8px 0 16px; color:#706676; }
+body.companion-app .journal-shell .today-quick-add { display:grid; grid-template-columns:minmax(0,1fr) 48px; gap:8px; }
+body.companion-app .journal-shell .today-quick-add button { width:48px; padding:0; display:grid; place-items:center; background:#405845 !important; color:#fff !important; border:0 !important; box-shadow:none !important; }
+.today-quick-add button svg { width:20px; height:20px; }
+body.companion-app .journal-shell .health-capture { padding:20px !important; background:#edeaf4 !important; margin-top:0; }
+body.companion-app .journal-shell .health-capture-heading { margin-bottom:18px; }
+body.companion-app .journal-shell .health-capture-heading p { font-size:13px; color:#706676; }
+body.companion-app .journal-shell .health-choice { padding:0; margin:0 0 18px; border:0; }
+body.companion-app .journal-shell .health-choice legend { margin-bottom:8px; }
+body.companion-app .journal-shell .health-choice button { border:1px solid transparent !important; border-radius:11px !important; background:#fffefa !important; box-shadow:none !important; color:#526451 !important; font-size:12px; }
+body.companion-app .journal-shell .health-choice button.active { border-color:#405845 !important; background:#e7eee0 !important; color:#253b34 !important; }
+body.companion-app .journal-shell .health-capture-progress { background:#fffefa !important; color:#706676 !important; border:0 !important; font-weight:500 !important; }
+body.companion-app .journal-shell :is(.health-records>article,.health-selected-day-list>article,.habit-list>article,.wishlist-item) { border-bottom:1px solid #dfe5dc !important; border-radius:0 !important; background:transparent !important; padding:18px 0 !important; }
+body.companion-app .journal-shell :is(.thing-capture,.habit-form) { padding:18px !important; background:#edeaf4 !important; }
+body.companion-app .journal-shell .public-card-screen :is(.public-card-fields,.public-card-composer,.public-card-privacy-note) { box-shadow:none !important; border-radius:16px !important; }
+body.companion-app .journal-shell :is(.profile-billing-card,.profile-danger-zone) { background:#f3f4ef !important; padding:18px !important; }
+body.companion-app .journal-shell .journal-account { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:13px; }
+body.companion-app :is(.woof-composer,.woof-profile-sheet) { position:fixed !important; inset:auto 12px 16px !important; width:auto !important; max-width:430px; margin-inline:auto; padding:24px 20px 20px !important; max-height:calc(100dvh - 32px) !important; border:0 !important; border-radius:24px !important; background:#fdfcf9 !important; color:#253b34 !important; box-shadow:0 20px 60px rgb(35 59 48 / 18%),0 0 0 100vmax rgb(24 40 31 / 36%) !important; isolation:isolate; }
+body.companion-app :is(.woof-composer,.woof-profile-sheet)::before { display:none !important; }
+body.companion-app :is(.woof-composer,.woof-profile-sheet)>h2 { padding-right:32px; margin:0 0 16px; font-size:26px !important; font-weight:550 !important; }
+body.companion-app :is(.woof-choice-row,.woof-pace) button { min-height:46px; border:1px solid #dfe5dc !important; border-radius:12px !important; box-shadow:none !important; background:#fffefa !important; color:#526451 !important; font-weight:500 !important; }
+body.companion-app :is(.woof-choice-row,.woof-pace) button[aria-pressed=true] { background:#e7eee0 !important; border-color:#405845 !important; color:#253b34 !important; }
+body.companion-app .woof-location-button { border:1px solid #dfe5dc !important; background:#eaf0e7 !important; color:#405845 !important; font-weight:500 !important; box-shadow:none !important; }
+body.companion-app :is(.woof-sheet-close,.woof-overlay-x) { background:#eaf0e7 !important; color:#405845 !important; box-shadow:none !important; }
+body.companion-app .woof-overlay { background:#fdfcf9 !important; padding:64px 24px 100px !important; }
+body.companion-app :is(.social-profile-sheet,.social-section-heading,.social-request,.social-candidate,.woof-profile-story) { background:transparent !important; color:#253b34 !important; box-shadow:none !important; }
+body.companion-app .social-form-grid { gap:16px; }
+body.companion-app :is(.woof-primary,.woof-overlay-close) { background:#405845 !important; color:#fff !important; font-weight:550 !important; box-shadow:none !important; }
+body.companion-app .production-map-snap-sheet { border:0 !important; border-radius:20px 20px 0 0 !important; background:#fdfcf9 !important; box-shadow:0 -5px 24px rgb(35 59 48 / 9%) !important; }
+body.companion-app .production-route-launch { display:grid !important; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr); gap:6px; }
+body.companion-app .production-route-launch button { min-width:0; min-height:48px; padding:8px 6px !important; border:0 !important; border-radius:12px !important; box-shadow:none !important; font-size:12px; background:#eaf0e7 !important; }
+body.companion-app .production-route-launch button span { white-space:normal; }
+body.companion-app .production-route-launch .production-route-risk { background:#f5e9e7 !important; color:#9b3e3e !important; }
+body.companion-app :is(.production-route-controller,.production-route-review,.production-map-sheet-body) { color:#253b34; }
+body.companion-app .dog-creation-sheet { background:#fdfcf9 !important; color:#253b34 !important; border:0 !important; border-radius:24px !important; box-shadow:0 20px 60px rgb(35 59 48 / 20%) !important; }
+body.companion-app .dog-creation-sheet h2 { font-size:28px !important; font-weight:550 !important; }
+body.companion-app .dog-creation-sheet :is(label,p,small) { font-weight:400 !important; color:#617067; }
+body.companion-app .dog-creation-sheet :is(input,select) { border:1px solid #dfe5dc !important; background:#fffefa !important; color:#253b34 !important; box-shadow:none !important; font:400 16px/1.5 var(--font-pouf) !important; border-radius:13px !important; }
+body.companion-app :is(.care-delete-dialog,.production-document-sheet) { color:#253b34 !important; background:#fdfcf9 !important; border:0 !important; border-radius:24px !important; }
+body.companion-app :is(.module-error,.profile-life-form-error,.error-banner) { color:#943d3d; background:#f6e9e7; box-shadow:none; }
+@media(max-width:359px) {
+ body.companion-app .journal-shell :is(.watercolor-screen,.module-screen) { padding-inline:19px !important; }
+ body.companion-app .journal-shell :is(.watercolor-page-hero,.module-screen-heading) h1 { font-size:28px !important; }
+ body.companion-app .journal-shell .care-workbench-head { gap:8px; }
+ body.companion-app .journal-shell .care-workbench-head>.primary { font-size:12px; padding:10px; }
+ body.companion-app .journal-shell .health-capture { padding:16px !important; }
+ body.companion-app .woof-composer { padding-inline:16px !important; }
+ body.companion-app .production-route-launch button { font-size:11px; gap:4px; }
+ body.companion-app .production-route-launch svg { width:16px; height:16px; flex:none; }
+}
+@media(min-width:760px) { body.companion-app .journal-shell :is(.watercolor-screen,.module-screen) { padding-inline:32px !important; } }
+body.companion-app .journal-shell>.auth-inline-panel { min-height:0 !important; margin:0 24px !important; padding:8px 0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; }
+body.companion-app .journal-shell>.auth-inline-panel b { font-size:12px !important; font-weight:500 !important; color:#617067; }
+body.companion-app .journal-shell>.auth-inline-panel p { font-size:12px; font-weight:400; }
+body.companion-app .legal-page { max-width:720px; margin-inline:auto; padding:32px 24px 64px; background:var(--companion-mist); color:#253b34; }
+body.companion-app .legal-page>section { border:0; padding:0; background:transparent; box-shadow:none; }
+body.companion-app .legal-page p,body.companion-app .legal-page li { font-size:16px; line-height:1.65; font-weight:400; color:#526451; }
+body.companion-app .legal-page h2 { margin-top:28px; }
+body.companion-app .legal-callout { padding:18px; border:0; border-radius:16px; background:#edeaf4; }
+body.companion-app .share-page { background:var(--companion-mist) !important; color:#253b34; padding:24px 20px; }
+body.companion-app .share-page::before,body.companion-app .share-page::after,body.companion-app .share-card::before { display:none; }
+body.companion-app .share-card { width:min(100%,520px); padding:0; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; }
+body.companion-app .share-hero { display:flex; flex-direction:row-reverse; align-items:center; justify-content:space-between; gap:20px; min-height:0; padding:26px 0; background:none; }
+body.companion-app .share-avatar { position:relative; inset:auto; width:100px; height:120px; flex:none; border-radius:60px 60px 24px 24px; overflow:hidden; background:#e7eee0; }
+body.companion-app .share-avatar::after { display:none; }
+body.companion-app .share-hero-glass { position:static; width:auto; padding:0; border:0; background:transparent; backdrop-filter:none; box-shadow:none; }
+body.companion-app .share-hero-glass>span { display:none; }
+body.companion-app .share-card h1 { margin:0 0 8px; font-size:34px !important; color:#253b34; }
+body.companion-app .share-card p { font-size:14px; line-height:1.5; color:#617067; font-weight:400; }
+body.companion-app .share-safety-stack { display:grid; gap:0; }
+body.companion-app .share-safety-stack>div { padding:18px 0; border:0; border-bottom:1px solid #dfe5dc; border-radius:0; background:transparent; box-shadow:none; }
+body.companion-app .share-safety-stack>.share-approach { background:#edeaf4; border:0; border-radius:18px; padding:20px; margin-bottom:6px; }
+body.companion-app .share-safety-stack b { font-size:18px; line-height:1.35; font-weight:600; color:#253b34; }
+body.companion-app .share-safety-stack span { color:#617067; font-size:12px; letter-spacing:0; text-transform:none; }
+
+/* Lift the entire map stacking context while a modal owns interaction. */
+body.companion-app .production-woof-workspace:has([role="dialog"],.woof-overlay) { z-index:60; }
+body.companion-app .woof-meet-intro .woof-kicker { display:none; }
+
+/* Final cross-surface fidelity pass: publication and standalone capture. */
+body.companion-app .journal-shell .public-card-screen .public-card-lifecycle { background:#edeaf4 !important; border:0 !important; border-radius:20px !important; box-shadow:none !important; color:#253b34 !important; }
+body.companion-app .public-card-lifecycle .public-card-lifecycle-icon { background:#fffefa !important; border:0 !important; color:#405845 !important; box-shadow:none !important; }
+body.companion-app .public-card-lifecycle-copy :is(b,p) { font-weight:400 !important; }
+body.companion-app .public-card-lifecycle-copy b { font-size:18px !important; font-weight:550 !important; }
+body.companion-app .public-card-preview-head { justify-content:flex-end; }
+body.companion-app .journal-shell [data-profile-memory][data-surface="capture"] .voice-observation-capture { padding:18px !important; border:0 !important; border-radius:20px !important; background:#edeaf4 !important; box-shadow:none !important; }
+body.companion-app .journal-shell [data-profile-memory][data-surface="capture"] :is(p,small) { font-weight:400 !important; }
+body.companion-app [data-surface="capture"] .voice-observation-capture h2 { font-size:18px !important; font-weight:550 !important; }
+body.companion-app [data-surface="capture"] .voice-capture-input textarea { margin-top:14px; padding:12px !important; border:1px solid #dfe5dc !important; border-radius:13px !important; font:400 16px/1.45 var(--font-pouf) !important; background:#fffefa !important; }
+body.companion-app [data-surface="capture"] .voice-capture-input textarea::placeholder { font-weight:400 !important; }
+body.companion-app [data-surface="capture"] .voice-capture-mic { background:#405845 !important; color:#fff !important; border:0 !important; border-radius:13px !important; font-weight:500 !important; }
+body.companion-app [data-surface="capture"] .voice-capture-send { background:#405845 !important; color:#fff !important; border:0 !important; border-radius:13px !important; box-shadow:none !important; }
+body.companion-app [data-surface="capture"] .voice-capture-send:disabled { background:#dce5d9 !important; color:#617067 !important; opacity:1; }
+body.companion-app .share-page .share-card .share-hero { border:0 !important; border-radius:0 !important; box-shadow:none !important; background:transparent !important; }
+body.companion-app .share-avatar-monogram { display:grid; width:100%; height:100%; place-items:center; font-size:40px; font-weight:500; color:#405845; }

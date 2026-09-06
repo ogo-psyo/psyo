@@ -17,13 +17,13 @@ const reminders = [
 ];
 
 async function seed(page) {
-  await page.goto(`${base}?demo=1`, { waitUntil: 'domcontentloaded' });
-  await page.evaluate(({ storedProfile, storedReminders }) => {
+  await page.route('**/api/app/bootstrap*', route => route.fulfill({ json: { mode: 'demo', connected: false, empty: true, pets: [] } }));
+  await page.addInitScript(({ storedProfile, storedReminders }) => {
     localStorage.setItem('pso.topapp.onboarding.v1', 'done');
     localStorage.setItem('pso.product.profile.v5', JSON.stringify(storedProfile));
     localStorage.setItem(`pso.product.entities.v1:${storedProfile.backendPetId}`, JSON.stringify({ reminders: storedReminders, wishlist: [], zones: [], routes: [] }));
   }, { storedProfile: profile, storedReminders: reminders });
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.goto(base, { waitUntil: 'networkidle' });
   await page.locator('.app-tabs button[data-route="profile"]').click({ force: true });
   await page.locator('[data-profile-memory]').waitFor();
   await page.getByRole('button', { name: /План заботы/ }).click();
@@ -57,8 +57,9 @@ try {
     await calendar.getByRole('button', { name: 'Следующий месяц' }).click();
     const selectedCell = calendar.locator('[aria-pressed="true"]');
     if (!/^4 сентября/.test(await selectedCell.getAttribute('aria-label') || '')) throw new Error(`${viewport.name}: selected day was lost after month navigation`);
+    await page.waitForFunction(() => { const cell = document.querySelector('[data-care-calendar] .calendar-day.selected'); return cell && getComputedStyle(cell).backgroundColor === 'rgb(64, 88, 69)'; });
     const selectedStyle = await selectedCell.evaluate((element) => ({ className: element.className, background: getComputedStyle(element).backgroundColor }));
-    if (!selectedStyle.className.includes('selected') || selectedStyle.background !== 'rgb(23, 24, 20)') throw new Error(`${viewport.name}: selected day has no visible state (${JSON.stringify(selectedStyle)})`);
+    if (!selectedStyle.className.includes('selected') || selectedStyle.background !== 'rgb(64, 88, 69)') throw new Error(`${viewport.name}: selected day has no visible state (${JSON.stringify(selectedStyle)})`);
 
     const geometry = await page.evaluate(() => ({ viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
     if (geometry.scrollWidth > geometry.viewport) throw new Error(`${viewport.name}: horizontal overflow ${geometry.scrollWidth}/${geometry.viewport}`);
