@@ -1,0 +1,53 @@
+{
+  "baseline": "Not yet measured in production",
+  "window": "provided log export",
+  "thresholds": {
+    "minimumRequests": 20,
+    "maxErrorRatio": 0.05,
+    "searchP95Ms": 5000,
+    "mutationP95Ms": 2000,
+    "paidProviderBudget": 0
+  },
+  "operations": [
+    {
+      "operation": "map_search",
+      "requests": 1,
+      "confirmed": 1,
+      "replays": 0,
+      "serverErrors": 0,
+      "quotaResponses": 0,
+      "p95Ms": 838,
+      "stopRelease": false
+    },
+    {
+      "operation": "route_save",
+      "requests": 1,
+      "confirmed": 0,
+      "replays": 0,
+      "serverErrors": 0,
+      "quotaResponses": 0,
+      "p95Ms": 6,
+      "stopRelease": false
+    },
+    {
+      "operation": "meeting_send",
+      "requests": 1,
+      "confirmed": 0,
+      "replays": 0,
+      "serverErrors": 0,
+      "quotaResponses": 0,
+      "p95Ms": 1,
+      "stopRelease": false
+    },
+    {
+      "operation": "library_change",
+      "requests": 1,
+      "confirmed": 0,
+      "replays": 0,
+      "serverErrors": 0,
+      "quotaResponses": 0,
+      "p95Ms": 7,
+      "stopRelease": false
+    }
+  ]
+}

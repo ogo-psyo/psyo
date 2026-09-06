@@ -6,34 +6,34 @@ All checkboxes in the supplied backlog are acceptance requirements, not evidence
 
 | ID | Disposition / next evidence | Status |
 |---|---|---|
-| GEO-01 | Source preservation matrix and baseline inventory: SCENARIOS.md; existing vs new storage distinguished | Verified locally; release pending |
+| GEO-01 | Source preservation matrix and baseline inventory: SCENARIOS.md; existing vs new storage distinguished | Released in ad4265b; see RELEASE.md for verification limits |
 | GEO-02 | Yandex-specific work deferred by message 16274 | Deferred |
-| GEO-03 | Provider-neutral saved-place identity, source references, geometry decoder, validation and API state separation; Yandex-specific adapters deferred | Verified locally; release pending |
+| GEO-03 | Provider-neutral saved-place identity, source references, geometry decoder, validation and API state separation; Yandex-specific adapters deferred | Released in ad4265b; see RELEASE.md for verification limits |
 | GEO-04 | Yandex-specific work deferred by message 16274 | Deferred |
-| GEO-05 | Existing search retained: explicit submit, frozen bounds, stable OSM refs, stale response cancellation, quota/error state; Yandex service deferred | Verified locally; release pending |
+| GEO-05 | Existing search retained: explicit submit, frozen bounds, stable OSM refs, stale response cancellation, quota/error state; Yandex service deferred | Released in ad4265b; see RELEASE.md for verification limits |
 | GEO-06 | Yandex walking calculation deferred. Current production has manual/GPS LineString only; no incumbent walking calculation found. | Deferred |
-| GEO-07 | No provider migration; additive private collections, unchanged old route/zone/share IDs; preflight and reversible schema plan | Verified locally; release pending |
-| GEO-08 | Optional folded recovery, metadata/target ID preserved, explicit discard vs fold, active recording survives navigation | Verified locally; release pending |
-| GEO-09 | Place/search return, map/list selection, collapsible collections and keyboard-safe panels on current renderer | Verified locally; release pending |
-| GEO-10 | Per-dog layer settings/presets, legend, cluster selection and coarse privacy areas retained | Verified locally; release pending |
-| GEO-11 | Manual click/center points, accessible reorder/delete/undo, loop closure, planned route edit and recorded route reuse; network pedestrian routing deferred | Verified locally; release pending |
-| GEO-12 | Persistent GPS watch, pause/return, explicit gap geometry and measured distance, old PostGIS decoding; physical device caveat in SCENARIOS.md | Verified locally; release pending |
-| GEO-13 | Place source/unknown conditions, selection, chosen-collection save and undo, add to walk; no invented dog suitability | Verified locally; release pending |
-| GEO-14 | Ordered multi-membership collections, notes, non-destructive removal, map selection and copied route construction | Verified locally; release pending |
-| GAV-01 | Explicit search area/radius, manual center selection, separate missing-location/loading/empty/error and stale pet protection | Verified locally; release pending |
-| GAV-02 | Both modes and mating retained; compact filter summary, persisted per-dog values/feed position, modal Back/focus | Verified locally; release pending |
-| GAV-03 | Hidden save/publication/close explicit, draft preserved, confirmed results and mutation lock | Verified locally; release pending |
-| GAV-04 | Own active signal/expiry/management, retained failed draft, stable retry identity, no premature success | Verified locally; release pending |
-| GAV-05 | Real candidate fields and reasons, long-name/no-photo handling, matte scoped detail system | Verified locally; release pending |
-| GAV-06 | Labelled count/source/status; confirmed accept/reject/cancel/close/block; retained failed confirmation; two-user browser fixtures | Verified locally; release pending |
-| VIS-01 | Two same-state detail alternatives in comparison PDF; A carries forward current matte forest direction; typography/main composition retained | Verified locally; release pending |
-| VIS-02 | Exported authored empty-state SVG, rounded category/cluster marker system, selected/focus states; no fake participant portrait | Verified locally; release pending |
-| VIS-03 | Scoped matte surface/button/panel CSS; all interaction/error states and same-content comparisons | Verified locally; release pending |
-| VIS-04 | Existing motion retained, bounded entry/press, reduced motion, server-confirmed state feedback | Verified locally; release pending |
-| LINK-01 | Accepted-connection server preview and explicit confirmed place/route proposal; private notes and endpoint boundary, changed-source suppression | Verified locally; release pending |
-| UX-01 | Chromium/WebKit, 320/390/1280, keyboard/focus/labels/reduced motion; physical Telegram not claimed tested | Verified locally; release pending |
-| OPS-01 | Safe terminal event logs/replay distinction, report and stop thresholds, shared free-provider budget gate; Yandex cost controls deferred | Verified locally; release pending |
-| REL-01 | Additive transactional release SQL, local rollback tests, source review, production preflight; deployment and production smoke pending | Prepared; release pending |
+| GEO-07 | No provider migration; additive private collections, unchanged old route/zone/share IDs; preflight and reversible schema plan | Released in ad4265b; see RELEASE.md for verification limits |
+| GEO-08 | Optional folded recovery, metadata/target ID preserved, explicit discard vs fold, active recording survives navigation | Released in ad4265b; see RELEASE.md for verification limits |
+| GEO-09 | Place/search return, map/list selection, collapsible collections and keyboard-safe panels on current renderer | Released in ad4265b; see RELEASE.md for verification limits |
+| GEO-10 | Per-dog layer settings/presets, legend, cluster selection and coarse privacy areas retained | Released in ad4265b; see RELEASE.md for verification limits |
+| GEO-11 | Manual click/center points, accessible reorder/delete/undo, loop closure, planned route edit and recorded route reuse; network pedestrian routing deferred | Released in ad4265b; see RELEASE.md for verification limits |
+| GEO-12 | Persistent GPS watch, pause/return, explicit gap geometry and measured distance, old PostGIS decoding; physical device caveat in SCENARIOS.md | Released in ad4265b; see RELEASE.md for verification limits |
+| GEO-13 | Place source/unknown conditions, selection, chosen-collection save and undo, add to walk; no invented dog suitability | Released in ad4265b; see RELEASE.md for verification limits |
+| GEO-14 | Ordered multi-membership collections, notes, non-destructive removal, map selection and copied route construction | Released in ad4265b; see RELEASE.md for verification limits |
+| GAV-01 | Explicit search area/radius, manual center selection, separate missing-location/loading/empty/error and stale pet protection | Released in ad4265b; see RELEASE.md for verification limits |
+| GAV-02 | Both modes and mating retained; compact filter summary, persisted per-dog values/feed position, modal Back/focus | Released in ad4265b; see RELEASE.md for verification limits |
+| GAV-03 | Hidden save/publication/close explicit, draft preserved, confirmed results and mutation lock | Released in ad4265b; see RELEASE.md for verification limits |
+| GAV-04 | Own active signal/expiry/management, retained failed draft, stable retry identity, no premature success | Released in ad4265b; see RELEASE.md for verification limits |
+| GAV-05 | Real candidate fields and reasons, long-name/no-photo handling, matte scoped detail system | Released in ad4265b; see RELEASE.md for verification limits |
+| GAV-06 | Labelled count/source/status; confirmed accept/reject/cancel/close/block; retained failed confirmation; two-user browser fixtures | Released in ad4265b; see RELEASE.md for verification limits |
+| VIS-01 | Two same-state detail alternatives in comparison PDF; A carries forward current matte forest direction; typography/main composition retained | Released in ad4265b; see RELEASE.md for verification limits |
+| VIS-02 | Exported authored empty-state SVG, rounded category/cluster marker system, selected/focus states; no fake participant portrait | Released in ad4265b; see RELEASE.md for verification limits |
+| VIS-03 | Scoped matte surface/button/panel CSS; all interaction/error states and same-content comparisons | Released in ad4265b; see RELEASE.md for verification limits |
+| VIS-04 | Existing motion retained, bounded entry/press, reduced motion, server-confirmed state feedback | Released in ad4265b; see RELEASE.md for verification limits |
+| LINK-01 | Accepted-connection server preview and explicit confirmed place/route proposal; private notes and endpoint boundary, changed-source suppression | Released in ad4265b; see RELEASE.md for verification limits |
+| UX-01 | Chromium/WebKit, 320/390/1280, keyboard/focus/labels/reduced motion; physical Telegram not claimed tested | Released in ad4265b; see RELEASE.md for verification limits |
+| OPS-01 | Safe terminal event logs/replay distinction, report and stop thresholds, shared free-provider budget gate; Yandex cost controls deferred | Released in ad4265b; see RELEASE.md for verification limits |
+| REL-01 | Additive transactional release SQL, local rollback tests, source review, production preflight; deployment and production smoke passed (ad4265b), follow-up guest clarification tracked in RELEASE.md | Released; physical-device/live-party acceptance pending |
 | GEO-15 | Implemented bounded selection from recorded local loops: start within 150 m, closure within 40 m, time tolerance min(20%, 5 min), no GPS gaps, no provider requests. Arbitrary new-area network routing remains Yandex-deferred. | Verified locally; partial scope (recorded-loop selection) |
 
 ## Verified source inventory
@@ -76,3 +76,9 @@ All checkboxes in the supplied backlog are acceptance requirements, not evidence
 - Same-state visual comparisons/PDF sent to owner before release. Matte A is the implementation; B is comparison-only. Gav provider attribution is visibly above the search panel and outside bottom navigation.
 - Production read-only preflight: one existing route / one unique ID. No migration or deployment yet at this checkpoint.
 - GEO-15 is a bounded current-stack alternative, not full arbitrary-area pedestrian route generation. Physical Telegram/lock-screen GPS and production authenticated two-party integration remain unverified; browser fixtures are not presented as that evidence.
+
+## Production checkpoint and guest refinement
+
+PR21 and additive migrations released as `ad4265b`; deployment Ready, alias and health SHA agree. Full production smoke, private API guards and bounded real search passed; provider flags match previous deployment. Six production browser passes are in production-browser-smoke.json. This does not promote physical-device or authenticated live-party checks to passed.
+
+Guest inspection found two misleading states: loading despite absent account, and generic network error after choosing an area. Guest access is now explicit in both Gav modes; manual map/area preview remains available without calling authenticated social endpoints. The follow-up is a bounded correction, not a redesign.

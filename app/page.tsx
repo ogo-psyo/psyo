@@ -992,7 +992,11 @@ export default function Home() {
 
   async function loadSocialSurface(signal?: AbortSignal, viewerLocationOverride?: CoarseLocation | null, radiusKmOverride?: number) {
     const petId = profile.backendPetId;
-    if (!petId) return;
+    if (!petId || (!session?.access_token && !telegramSession.ownerId)) {
+      setNearbyState('idle');
+      setNearbyReason('AUTH_OR_PET_REQUIRED');
+      return;
+    }
     const sequence = ++socialLoadSequenceRef.current;
     ++socialPollSequenceRef.current;
     setNearbyState('loading');
@@ -4454,7 +4458,8 @@ export default function Home() {
           signalReason={walkSignalReason}
           candidates={socialLoadedPet===profile.backendPetId?socialCandidates:{nearby:[],city:[]}}
           requests={socialLoadedPet===profile.backendPetId?socialRequests:[]}
-          state={socialLoadedPet===profile.backendPetId?nearbyState:'loading'}
+          state={!hasConnectedAccount || !profile.backendPetId ? 'idle' : socialLoadedPet===profile.backendPetId?nearbyState:'loading'}
+          accessMessage={!hasConnectedAccount ? 'Откройте Псё через кнопку бота в Telegram, чтобы видеть собак рядом и отправлять Гав.' : !profile.backendPetId ? 'Сначала сохраните профиль своей собаки — после этого станут доступны знакомства и Гав.' : undefined}
           busyId={socialBusyId}
           locating={socialLocating}
           missingTelegramUsernameAction={missingTelegramUsernameAction}

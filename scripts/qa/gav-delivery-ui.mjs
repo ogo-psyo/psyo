@@ -109,6 +109,18 @@ try{
  const detail=await userA.page.addStyleTag({content:await readFile('docs/map-gav-20260907/visual-b.css','utf8')});await userA.page.screenshot({path:`docs/map-gav-20260907/screens/gav-candidates-${engine}-390-b.png`});await detail.evaluate(el=>el.remove());
  await userA.page.locator('.woof-candidate-card').click();await userA.page.getByRole('heading',{name:'Сэр Арчибальд Длинное Имя'}).waitFor();
  assert.equal(await userA.page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
- await userA.context.close();await userB.context.close();console.log(engine+': Gav failure/retry/idempotency/mutual response/focus/widths PASS');
+ await userA.context.close();await userB.context.close();
+ const guest=await browser.newContext({viewport:{width:320,height:740}});const guestPage=await guest.newPage();let guestSocialRequests=0;
+ await guestPage.route('**/api/social/**',r=>{guestSocialRequests++;return r.fulfill({status:401,json:{error:'AUTH_REQUIRED'}});});
+ await guestPage.route('**/api/map/search**',r=>r.fulfill({json:{results:[{id:'osm-node-qa',title:'Тестовый район',detail:'пример',point:{lat:55.76,lng:37.62}}]}}));
+ await guestPage.goto(base+'/?demo=1',{waitUntil:'domcontentloaded'});await guestPage.locator('.app-tabs button[data-route="nearby"]').click();
+ await guestPage.locator('.woof-access-state').waitFor();assert.equal(await guestPage.getByRole('button',{name:'Дать Гав',exact:true}).count(),0);
+ await guestPage.getByRole('button',{name:'Выбрать район вручную',exact:true}).click();await guestPage.getByLabel('Район или место',{exact:true}).fill('Тестовый район');
+ await guestPage.getByRole('button',{name:'Найти район',exact:true}).click();await guestPage.locator('.woof-manual-area button').filter({hasText:'Тестовый район'}).click();
+ await guestPage.locator('.woof-live-map').waitFor();await guestPage.locator('.woof-access-state').waitFor();
+ await guestPage.getByRole('button',{name:'Знакомства',exact:true}).click();await guestPage.getByRole('heading',{name:'Познакомимся в Telegram',exact:true}).waitFor();
+ assert.equal(guestSocialRequests,0,'guest browsing and manual area do not retry authenticated endpoints');
+ assert.equal(await guestPage.getByText('Обновляю анкеты…',{exact:true}).count(),0);await guest.close();
+ console.log(engine+': Gav failure/retry/idempotency/mutual response/focus/widths/guest access PASS');
 }finally{await browser.close();}
 }
