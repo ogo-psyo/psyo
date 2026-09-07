@@ -1,0 +1,18 @@
+{
+  "fixture": true,
+  "results": [
+    {
+      "engine": "chromium",
+      "width": 390,
+      "requests": 9,
+      "saves": 3,
+      "accountFixtureSaveRetryDedup": true,
+      "reopen": true,
+      "collectionToNamedStops": true,
+      "draftReload": true,
+      "emptyAndFailure": true,
+      "staleResponseGuard": true,
+      "focusReturn": true
+    }
+  ]
+}

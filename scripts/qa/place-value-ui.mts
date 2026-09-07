@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { applyLibraryCommand, emptyMapLibrary } from '../../lib/mapLibrary';
 const base=process.env.BASE_URL||'http://127.0.0.1:3237';
-const out='docs/map-place-value/evidence';await fs.mkdir(out,{recursive:true});
+const out=process.env.OUT_DIR||'docs/map-place-value/evidence';await fs.mkdir(out,{recursive:true});
 const results=[];
 for(const engine of (process.env.ENGINE?[process.env.ENGINE]:['chromium','webkit'])){
  const browser=await({chromium,webkit}[engine as 'chromium'|'webkit']).launch();
@@ -39,7 +39,7 @@ for(const engine of (process.env.ENGINE?[process.env.ENGINE]:['chromium','webkit
  await page.reload({waitUntil:'commit'});await page.locator('.app-tabs button[data-route="map"]').click();await page.getByRole('button',{name:'Сохранённое',exact:true}).click();
  await page.locator('.map-library-places').getByRole('button',{name:'Контрольный парк Тестовый адрес',exact:true}).click();await page.locator('.map-place-panel').waitFor();await page.screenshot({path:`${out}/reopened-${engine}-${width}.png`});
  await page.getByRole('button',{name:'К подборке',exact:true}).click();await page.locator('.map-library-places input[type="checkbox"]').first().check();
- await page.getByRole('button',{name:'Собрать прогулку · 1',exact:true}).click();await page.locator('.map-waypoint-list li').waitFor();assert.match(await page.locator('.map-waypoint-list').innerText(),/Контрольный парк/);
+ await page.getByRole('button',{name:'Собрать прогулку · 1',exact:true}).click();await page.getByRole('button',{name:'Продолжить',exact:true}).click();await page.locator('.map-waypoint-list li').waitFor();assert.match(await page.locator('.map-waypoint-list').innerText(),/Контрольный парк/);
  await page.reload({waitUntil:'commit'});await page.locator('.app-tabs button[data-route="map"]').click();await page.getByRole('button',{name:'Продолжить',exact:true}).click();assert.match(await page.locator('.map-waypoint-list').innerText(),/Контрольный парк/);
  await page.screenshot({path:`${out}/route-${engine}-${width}.png`});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);results.push({engine,width,requests,saves,accountFixtureSaveRetryDedup:true,reopen:true,collectionToNamedStops:true,draftReload:true,emptyAndFailure:true,staleResponseGuard:true,focusReturn:true});console.log(engine,width,'PASS');

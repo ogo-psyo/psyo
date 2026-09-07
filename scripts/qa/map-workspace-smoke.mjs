@@ -94,6 +94,7 @@ try {
       await page.locator('[data-route-flow="idle"]').waitFor();
       await page.getByRole('button', {name:'Сохранённое',exact:true}).click();
       await page.locator('.production-map-saved-row.route p').getByText(/мин/).waitFor();
+      await page.locator('.map-extra-layers summary').click();
       const savedLayout = await page.evaluate(() => {
         const filters = document.querySelector('.production-map-filters')?.getBoundingClientRect();
         const lastFilter = document.querySelector('.production-map-filters button:last-child')?.getBoundingClientRect();

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { AttributionControl, Circle, CircleMarker, MapContainer, Marker, Polyline, Popup, Tooltip, Rectangle, useMap, useMapEvents } from 'react-leaflet';
+import { AttributionControl, Circle, CircleMarker, MapContainer, Marker, Polyline, Popup, Rectangle, useMap, useMapEvents } from 'react-leaflet';
 import type { LiveMapProps, MapFeature } from './LiveMap';
 import { OpenFreeMapLayer } from './OpenFreeMapLayer';
 import 'leaflet/dist/leaflet.css';
@@ -133,7 +133,10 @@ function MapViewport({ zones, features, userLocation, focusPoint, routePoints, f
     }
     if (focusPoint && focusPoint.token !== focusTokenRef.current) {
       focusTokenRef.current = focusPoint.token;
-      map.setView([focusPoint.lat, focusPoint.lng], focusPoint.zoom ?? 16, { animate: !reducedMotion() });
+      if (focusPoint.bounds) {
+        const b = focusPoint.bounds;
+        map.fitBounds([[b.south,b.west],[b.north,b.east]], {padding:[44,44],maxZoom:16,animate:!reducedMotion()});
+      } else map.setView([focusPoint.lat, focusPoint.lng], focusPoint.zoom ?? 16, { animate: !reducedMotion() });
       return;
     }
     if (userLocation && !orientedRef.current) {
@@ -172,7 +175,7 @@ function FeaturePointMarkers({features,selectedId,onSelect}:{features:MapFeature
   const center:[number,number]=[group.reduce((sum,f)=>sum+Number(f.lat),0)/group.length,group.reduce((sum,f)=>sum+Number(f.lng),0)/group.length];
   if(group.length>1)return <Marker key={group.map(f=>f.id).join(':')} position={center} title={`Мест: ${group.length}. Приблизить`} icon={divIcon({className:'pso-map-cluster',html:`<span>${group.length}</span>`,iconSize:[44,44]})} eventHandlers={{click:()=>map.setView(center,Math.min(zoom+2,map.getMaxZoom()),{animate:!reducedMotion()})}}><Popup>{group.map(f=><button type="button" key={f.id} onClick={()=>onSelect?.(f.id)}>{f.title}</button>)}</Popup></Marker>;
   const f=group[0];const symbol=/clinic|ветклиник/.test(f.zone_type||'')?'+':/shop|магазин/.test(f.zone_type||'')?'▣':/park|парк/.test(f.zone_type||'')?'♧':'●';
-  return <Marker key={f.id} position={center} title={`${f.title} · ${f.zone_type||'место'}`} icon={divIcon({className:`pso-map-marker${selectedId===f.id?' selected':''}`,html:`<span>${symbol}</span>`,iconSize:[44,44]})} eventHandlers={{click:()=>onSelect?.(f.id)}}><Popup><b>{f.title}</b><br/>{f.zone_type||'место'}</Popup></Marker>;
+  return <Marker key={f.id} position={center} title={`${f.title} · ${f.zone_type||'место'}`} icon={divIcon({className:`pso-map-marker${selectedId===f.id?' selected':''}`,html:`<span>${symbol}</span>`,iconSize:[44,44]})} eventHandlers={{click:()=>onSelect?.(f.id)}}>{!onSelect&&<Popup><b>{f.title}</b><br/>{f.zone_type||'место'}</Popup>}</Marker>;
  })}</>;
 }
 
@@ -182,6 +185,7 @@ export function LiveMapClient({
   picked,
   routePoints = [],
   routeStops = [],
+  routeStopIds = [],
   routeGaps = [],
   onPick,
   onMapClick,
@@ -281,7 +285,7 @@ export function LiveMapClient({
         return null;
         })}
 
-        {routeStops.map((p,i)=><CircleMarker key={`stop-${i}`} center={[p[1],p[0]]} radius={13} pathOptions={{color:"#fffdf7",fillColor:"#405e4a",fillOpacity:1,weight:3}}><Tooltip permanent direction="center" className="route-stop-number">{i+1}</Tooltip></CircleMarker>)}
+        {routeStops.map((p,i)=><Marker key={`stop-${i}`} position={[p[1],p[0]]} title={`Остановка ${i+1}`} zIndexOffset={800} icon={divIcon({className:'pso-route-stop-marker',html:`<span>${i+1}</span>`,iconSize:[32,32],iconAnchor:[16,16]})} eventHandlers={{click:()=>{const id=routeStopIds[i];if(id)onSelectFeature?.(id);}}} />)}
         {draftPositions.length > 1 && (
           <Polyline positions={splitRoute(draftPositions, routeGaps) as [number,number][][]} pathOptions={{ color: '#4f7659', weight: 4, dashArray: '6 8' }}>
             <Popup>Новый маршрут</Popup>

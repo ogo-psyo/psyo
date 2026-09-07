@@ -99,3 +99,42 @@ body.companion-app .production-map-workspace:not(.route-focus),body.companion-ap
 body.companion-app .production-map-workspace:not(.route-focus) .map-work-area,body.companion-app .woof-work-area,body.companion-app .production-woof-workspace .woof-meet-feed{padding-bottom:calc(108px + env(safe-area-inset-bottom))!important;scroll-padding-bottom:96px}
 
 body.companion-app .place-category-filters select { font-size:16px; }
+
+/* Task-first collection workspace: browse before library administration. */
+body.companion-app .map-library{padding:0;border:0;font-size:16px}
+body.companion-app .map-library h2{font-size:21px;margin:0 0 12px;font-weight:600}
+body.companion-app .map-library>label{display:grid;gap:6px;font-size:14px}
+body.companion-app .map-library select{font:inherit;border:1px solid #bac7b7;border-radius:12px;padding:10px;background:#fcfcf8;color:#283e34}
+body.companion-app .map-library-places li{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:4px;padding-block:12px}
+body.companion-app .map-library-places li>label{grid-column:1/-1;font-size:13px;margin:0}
+body.companion-app .map-library-places li>button:not(.collection-add-place){grid-column:1;background:transparent;padding-inline:0;min-width:0}
+body.companion-app .map-library-places .collection-add-place{grid-column:2;align-self:center;font-size:14px;white-space:normal}
+body.companion-app .map-library-places li>p,body.companion-app .map-library-places details{grid-column:1/-1}
+body.companion-app .map-collection-caption{font-size:13px;color:#53675b;margin:8px 0}
+body.companion-app :is(.map-library,.map-extra-layers,.place-collection-choice) summary{cursor:pointer;min-height:44px;padding-block:12px;font-size:14px;color:#405e4a;box-sizing:border-box}
+body.companion-app :is(.map-library,.map-extra-layers,.place-collection-choice) summary:focus-visible{outline:2px solid #283e34;outline-offset:2px}
+body.companion-app .map-place-management{font-size:14px}
+body.companion-app .map-resume-draft{position:sticky;top:0;z-index:480;margin-bottom:12px;padding:10px 12px;background:#e6eee0;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+body.companion-app .map-resume-draft span{display:grid;gap:3px;font-size:14px}
+body.companion-app .map-resume-draft small{font-size:13px}
+body.companion-app .place-primary-actions{grid-template-columns:1fr 1fr;align-items:stretch;margin-block:12px}
+body.companion-app .place-primary-actions button{padding:10px 8px;font-size:14px;min-height:48px}
+body.companion-app .place-save-actions{border:0;padding-block:0;margin-block:8px}
+body.companion-app .map-place-panel h2{font-size:21px;margin-block:6px}
+body.companion-app .map-place-panel p{font-size:14px;line-height:1.45}
+@media(max-width:799px){body.companion-app .production-map-workspace:has(.map-library) .production-map-canvas{height:clamp(200px,28dvh,270px)!important;min-height:200px!important}}
+
+body.companion-app .map-library h2{margin:0 0 8px;font-size:19px}
+body.companion-app .map-library-places li{grid-template-columns:32px minmax(0,1fr) 90px;align-items:center;padding-block:10px}
+body.companion-app .map-library-places li>label{grid-column:1;grid-row:1;min-width:32px;min-height:44px;justify-content:center}
+body.companion-app .map-library-places li>button:not(.collection-add-place){grid-column:2;grid-row:1}
+body.companion-app .map-library-places .collection-add-place{grid-column:3;grid-row:1;padding:8px;font-weight:500}
+body.companion-app .map-library-places li>button span{font-size:12px;line-height:1.4;font-weight:400;margin-top:4px}
+body.companion-app .map-library-places li>button b{font-size:15px;line-height:1.3;font-weight:600}
+body.companion-app .map-library-places li>p,body.companion-app .map-place-management{grid-column:1/-1}
+body.companion-app .map-place-management[hidden]{display:none}
+body.companion-app .production-map-workspace:has(.map-resume-draft) .production-map-status{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;overflow:hidden!important;clip-path:inset(50%);white-space:nowrap}
+body.companion-app .map-library-places{margin-block:6px 12px}
+body.companion-app .map-home-tabs{margin-bottom:10px}
+
+.pso-route-stop-marker span{display:grid;place-items:center;width:32px;height:32px;border:3px solid #fffdf7;border-radius:50%;background:#405e4a;color:#fffdf7;font:600 14px/1 system-ui;box-shadow:0 2px 8px #263d3126}

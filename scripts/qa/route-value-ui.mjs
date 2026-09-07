@@ -43,7 +43,7 @@ for(const engine of (process.env.ENGINE?[process.env.ENGINE]:['chromium','webkit
  await page.locator('#production-map-search-input').press('Enter');
  await page.getByRole('option').filter({hasText:'Тестовый парк'}).click();
  await page.getByRole('button',{name:'Добавить в прогулку',exact:true}).click();
- await page.getByRole('button',{name:'Добавить остановку',exact:true}).click();
+ await page.getByRole('button',{name:'Продолжить',exact:true}).click();
  assert.equal(await page.locator('.map-waypoint-list li').count(),2);
  await page.getByRole('button',{name:'Точка 2: выше',exact:true}).click();
  assert.match(await page.locator('.map-waypoint-list li').first().innerText(),/Тестовый парк/);

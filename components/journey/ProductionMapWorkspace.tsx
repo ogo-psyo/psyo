@@ -67,6 +67,7 @@ type ProductionMapWorkspaceProps = {
   editingRouteId?:string|null;
   onRestoreDraftText?: (title: string, note: string, editingRouteId?:string) => void;
   savedRevision?: number;
+  actionNotice?: string;
   routeEditSeed?: {token:number;points:number[][];planning?:RoutePlanning;review?:boolean;pathGaps?:number[];routeSource?:'recorded'|'planned';durationSeconds?:number;startedAt?:string}|null;
   onReuseRoute?: (id:string)=>void;
   onActivityChange?: (status: 'recording'|'paused'|null) => void;
@@ -140,6 +141,7 @@ export function ProductionMapWorkspace({
   petId, guest, authHeaders,
   draftTitle = '', draftNote = '', editingRouteId, onRestoreDraftText, savedRevision = 0, onActivityChange, routeEditSeed, onReuseRoute,
   dogName,
+  actionNotice,
   avatar,
   zones,
   features, recordedRoutes=[],
@@ -161,6 +163,9 @@ export function ProductionMapWorkspace({
 }: ProductionMapWorkspaceProps) {
   const libraryStore = useMapLibrary(petId,guest,authHeaders);
   const [targetCollection,setTargetCollection] = useState('saved');
+  const [collectionId,setCollectionId] = useState('saved');
+  const collection=libraryStore.library.collections.find(c=>c.id===collectionId)||libraryStore.library.collections[0];
+  const collectionPlaces=libraryStore.library.places.filter(p=>collection?.placeIds.includes(p.id));
   const [savedPlaceNotice,setSavedPlaceNotice] = useState('');
   const [placeUndo,setPlaceUndo] = useState<{collectionId:string;placeId:string}|null>(null);
   const [durationOpen,setDurationOpen]=useState(false);
@@ -220,7 +225,7 @@ export function ProductionMapWorkspace({
   const [walkResult,setWalkResult]=useState<WalkResult|null>(null);
   const [calculationError,setCalculationError]=useState('');
   const calculationAbort=useRef<AbortController|null>(null);
-  const activeStops=useMemo(()=>planningMode==='walking'?routeStops:routePoints.map(point=>({point,title:routeStops.find(s=>s.point[0]===point[0]&&s.point[1]===point[1])?.title})),[planningMode,routeStops,routePoints]);
+  const activeStops=useMemo(()=>planningMode==='walking'?routeStops:routePoints.map(point=>({...routeStops.find(s=>s.point[0]===point[0]&&s.point[1]===point[1]),point})),[planningMode,routeStops,routePoints]);
   const activeStopsKey=stopsKey(activeStops);
   const stopKeyRef=useRef(activeStopsKey);
   useLayoutEffect(()=>{stopKeyRef.current=activeStopsKey;},[activeStopsKey]);
@@ -231,6 +236,23 @@ export function ProductionMapWorkspace({
   function editStops(stops:RouteStop[]){calculationAbort.current?.abort();setUndoStops(activeStops);setRouteStops(stops);setCalculationError('');setCalculationState('idle');setWalkResult(null);if(planningMode==='manual')onReplaceRoutePoints(stops.map(s=>s.point));}
   const [undoStops,setUndoStops]=useState<RouteStop[]|null>(null);
   function appendStop(stop:RouteStop){editStops([...activeStops,stop]);setCandidate(null);setSelectedSearchPoint(null);setLocationStatus('Остановка добавлена. Проверьте порядок и рассчитайте путь.');}
+  function appendPlacesToWalk(stops: RouteStop[]) {
+    if (!['idle','planning','plan-review'].includes(routeFlow)) return;
+    const previous=routeFlow==='idle'?[]:activeStops;
+    const additions=stops.filter((stop,index)=>!previous.some(p=>stop.placeId&&p.placeId===stop.placeId)&&!stops.slice(0,index).some(p=>stop.placeId&&p.placeId===stop.placeId));
+    if (!additions.length) {setLocationStatus('Эти места уже в прогулке.');return;}
+    if(routeFlow==='idle'){startPlanning();setRouteStops(additions);}
+    else editStops([...previous,...additions]);
+    setRouteFlow('planning');setFolded(true);onModeChange('view');setCandidate(null);setSelectedSearchPoint(null);setMapSelection(null);setSearchOpen(false);
+    setLocationStatus(`В прогулке ${formatPointCount(previous.length+additions.length)}. Можно добавить ещё места или изменить порядок.`);
+    if(placeOrigin==='library')setSavedExpanded(true);
+  }
+  function openCollection(id:string) {
+    setCollectionId(id);setSelectedSearchPoint(null);setMapSelection(null);setSearchOpen(false);setLayers(v=>({...v,places:true}));
+    const chosen=libraryStore.library.collections.find(c=>c.id===id);
+    const places=libraryStore.library.places.filter(p=>chosen?.placeIds.includes(p.id));
+    if(places.length){const south=Math.min(...places.map(p=>p.point.lat)),north=Math.max(...places.map(p=>p.point.lat)),west=Math.min(...places.map(p=>p.point.lng)),east=Math.max(...places.map(p=>p.point.lng));setFocusPoint({lat:(south+north)/2,lng:(west+east)/2,token:Date.now(),bounds:{south,north,west,east}});}
+  }
   async function calculateWalk(){
     if(guest){setCalculationError('Для расчёта по дорожкам войдите в Псё. Ручной путь можно сохранить и без входа.');return;}
     if(activeStops.length<2)return;
@@ -501,7 +523,7 @@ export function ProductionMapWorkspace({
     const shell=document.querySelector<HTMLElement>('[data-production-map-workspace]');
     placeScrollRef.current={shell:shell?.scrollTop||0,work:shell?.querySelector('.map-work-area')?.scrollTop||0};
     setMapSelection(null);setPlaceOrigin('search');
-    setSavedPlaceNotice('');setPlaceUndo(null);
+    setSavedPlaceNotice('');setPlaceUndo(null);setTargetCollection('saved');
     setLayers(value=>({...value,[result.kind==='route'?'routes':result.kind==='risk'?'risks':'places']:true}));
     if (result.point) setFocusPoint({ ...result.point, token: Date.now() });
     returnCameraRef.current = mapCenter;
@@ -701,19 +723,20 @@ export function ProductionMapWorkspace({
         </div>}
       </>}
 
-      {searchRequest && !selectedSearchPoint && <div className="map-search-area"><span>Поиск в выбранной области · OpenStreetMap</span><button type="button" onClick={searchArea}>Искать в этой области</button></div>}      <div className="production-map-status" role="status" aria-live="polite">{locationStatus}</div></div>
+      {searchRequest && !selectedSearchPoint && <div className="map-search-area"><span>Поиск в выбранной области · OpenStreetMap</span><button type="button" onClick={searchArea}>Искать в этой области</button></div>}      <div className="production-map-status" role="status" aria-live="polite">{actionNotice||locationStatus}</div></div>
     <section className="production-map-canvas" aria-label={`Карта прогулок ${dogName}`}>
       <LiveMap
         zones={zones.filter(z=>isRisk(z.type)?layers.risks:layers.places)}
-        features={[...(layers.places?(discovery.data?.results||[]).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:'ownerPlace' as const,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'public' as const})):[]),...features.filter(f=>f.type==='route'?layers.routes:isRisk(f.zone_type)?layers.risks:layers.places),...(layers.places?libraryStore.library.places.map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:p.accuracyMeters?'area' as const:'ownerPlace' as const,radiusMeters:p.accuracyMeters,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'private' as const})):[])]}
+        features={[...(layers.places?(workspaceTab==='saved'?[]:discovery.data?.results||[]).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:'ownerPlace' as const,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'public' as const})):[]),...features.filter(f=>f.type==='route'?layers.routes:isRisk(f.zone_type)?layers.risks:layers.places&&workspaceTab!=='saved'),...(layers.places?(workspaceTab==='saved'?collectionPlaces:libraryStore.library.places).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:p.accuracyMeters?'area' as const:'ownerPlace' as const,radiusMeters:p.accuracyMeters,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'private' as const})):[])]}
         picked={candidate?{lng:candidate.point[0],lat:candidate.point[1]}:mapSelection||pickedPoint}
         routePoints={calculationState==='preview'&&walkResult?walkResult.path:routePoints}
         routeStops={routeFlow==='planning'||routeFlow==='plan-review'?activeStops.map(s=>s.point):[]}
+        routeStopIds={activeStops.map(s=>s.placeId)}
         routeGaps={pathGaps}
         onMapClick={mode === 'risk' ? onMapClick : routeFlow === 'planning' && !folded ? (event) => setCandidate({point:[event.latlng.lng,event.latlng.lat]}) : mode==='view'&&!routeFocused ? (event)=>{setMapSelection(event.latlng);setSelectedSearchPoint(null);} : undefined}
         onCenterChange={setMapCenter}
         onBoundsChange={setMapBounds}
-        searchBounds={searchRequest?.bounds||discovery.requestedBounds}
+        searchBounds={workspaceTab==='saved'?null:searchRequest?.bounds||discovery.requestedBounds}
         filter="all"
         selectedFeatureId={selectedSearchPoint?.id}
         onSelectFeature={id=>{
@@ -730,7 +753,7 @@ export function ProductionMapWorkspace({
         fitDraftRoute={routeFlow === 'record-review' || routeFlow === 'plan-review'}
         accessibleLabel={routeFlow === 'planning' ? 'Карта для построения маршрута. Перемещайте карту стрелками или коснитесь нужного места.' : routeFlow === 'recording' || routeFlow === 'paused' ? 'Карта записываемой прогулки' : routeFlow === 'record-review' || routeFlow === 'plan-review' ? 'Обзор всего маршрута перед сохранением' : `Карта прогулок ${dogName}`}
       />
-      {routeFlow === 'planning' && <span className="production-map-center-pin" aria-hidden="true"><MapPin weight="fill" /></span>}
+      {routeFlow === 'planning' && !folded && <span className="production-map-center-pin" aria-hidden="true"><MapPin weight="fill" /></span>}
 
 
 
@@ -738,6 +761,8 @@ export function ProductionMapWorkspace({
     </section>
 
 <div className="map-work-area">
+      {folded && <div className="map-resume-draft" role="status"><span><b>{routeFlow==='recording'?'Прогулка записывается':['planning','plan-review'].includes(routeFlow)?'Ваша прогулка':'Есть незавершённый маршрут'}</b><small>{formatPointCount(['planning','plan-review'].includes(routeFlow)?activeStops.length:routePoints.length)}{plannerReady&&routePoints.length>1?` · ${formatDistance(routeDistance)}`:''}</small></span><button type="button" onClick={()=>{setSelectedSearchPoint(null);resumeRoute();}}>Продолжить</button></div>}
+
       {mapSelection&&mode==='view'&&!selectedSearchPoint&&<section className="map-point-actions" aria-label="Выбранная точка">
         <b>Точка на карте</b><p>{mapSelection.lat.toFixed(5)}, {mapSelection.lng.toFixed(5)}</p>
         <button type="button" disabled={routeFlow!=='idle'&&!['planning','plan-review'].includes(routeFlow)} onClick={()=>{const p=mapSelection;startPlanning();setRouteFlow('planning');setCandidate({point:[p.lng,p.lat]});setMapSelection(null);}}>Добавить в маршрут</button>
@@ -753,16 +778,19 @@ export function ProductionMapWorkspace({
         {selectedSearchPoint.privateNote&&<p>Моя заметка: {selectedSearchPoint.privateNote}</p>}
         <div className="place-primary-actions">
           {selectedSearchPoint.point&&selectedSearchPoint.kind!=='route'&&<button type="button" className="primary" disabled={!['idle','planning','plan-review'].includes(routeFlow)} onClick={()=>{
-            const place=selectedSearchPoint;const point=place.point!;startPlanning();setRouteFlow('planning');
+            const place=selectedSearchPoint;const point=place.point!;
+            if(!place.accuracyMeters){appendPlacesToWalk([{point:[point.lng,point.lat],title:place.title,placeId:place.id}]);return;}
+            startPlanning();setRouteFlow('planning');
             if(place.accuracyMeters){setCandidate(null);setLocationStatus('Выберите точную остановку на карте. Сохранённая область не является точкой входа.');}
             else setCandidate({point:[point.lng,point.lat],title:place.title,placeId:place.id});
             setSelectedSearchPoint(null);
           }}>{selectedSearchPoint.accuracyMeters?'Выбрать точку для маршрута':'Добавить в прогулку'}</button>}
+          {selectedSearchPoint.kind!=='route'&&<button type="button" disabled={libraryStore.state!=='ready'||libraryStore.busy} onClick={saveSelectedPlace}>{libraryStore.busy?'Сохраняем…':'Сохранить место'}</button>}
           {selectedSearchPoint.kind==='route'&&<button type="button" onClick={()=>{onReuseRoute?.(selectedSearchPoint.id);setSelectedSearchPoint(null);}}>Повторить маршрут</button>}
         </div>
         {selectedSearchPoint.kind!=='route'&&<section className="place-save-actions" aria-label="Сохранение места">
-          <label>В подборку<select value={targetCollection} onChange={e=>{setTargetCollection(e.target.value);setPlaceUndo(null);setSavedPlaceNotice('');}}>{libraryStore.library.collections.map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select></label>
-          <button type="button" disabled={libraryStore.state!=='ready'||libraryStore.busy} onClick={saveSelectedPlace}>{libraryStore.busy?'Сохраняем…':'Сохранить место'}</button>
+          <details className="place-collection-choice"><summary>Выбрать подборку</summary><label>В подборку<select value={targetCollection} onChange={e=>{setTargetCollection(e.target.value);setPlaceUndo(null);setSavedPlaceNotice('');}}>{libraryStore.library.collections.map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select></label></details>
+
           <p className="place-storage-note">{guest?'Без входа место сохранится только в этом браузере.':'Место сохранится в вашем аккаунте.'}</p>
           {libraryStore.error&&<p role="alert">{libraryStore.error}</p>}
           <p role="status">{savedPlaceNotice}</p>
@@ -841,8 +869,8 @@ export function ProductionMapWorkspace({
       <header className="production-map-simple-heading"><div><b>Предупредить об опасности</b><p>{pickedPoint ? 'Место выбрано · добавьте пояснение' : 'Коснитесь места на карте'}</p></div><button type="button" onClick={() => onModeChange('view')}>Отменить</button></header>
       <div className="production-map-sheet-body">{composer}</div>
     </section> : <section className={`production-map-snap-sheet home-sheet${savedExpanded ? ' expanded' : ''}`} data-map-snap-sheet>
-      {folded && <div className="map-resume-draft" role="status"><span><b>{routeFlow==='recording'?'Прогулка записывается':'Есть незавершённый маршрут'}</b><small>{formatPointCount(routePoints.length)} · {formatDistance(routeDistance)}</small></span><button type="button" onClick={resumeRoute}>Продолжить</button></div>}
-      <nav className="map-home-tabs" aria-label="Работа с картой">{(['places','walks','saved'] as const).map(t=><button key={t} type="button" aria-pressed={workspaceTab===t} onClick={()=>{setWorkspaceTab(t);setSavedExpanded(t==='saved');}}>{t==='places'?'Места':t==='walks'?'Прогулки':'Сохранённое'}</button>)}</nav>
+
+      <nav className="map-home-tabs" aria-label="Работа с картой">{(['places','walks','saved'] as const).map(t=><button key={t} type="button" aria-pressed={workspaceTab===t} onClick={()=>{setWorkspaceTab(t);setSavedExpanded(t==='saved');if(t==='saved')openCollection(collection?.id||'saved');}}>{t==='places'?'Места':t==='walks'?'Прогулки':'Сохранённое'}</button>)}</nav>
       <div hidden={workspaceTab!=='places'}><PlaceDiscoveryPanel discovery={discovery} onChoose={chooseDiscoveredPlace} savedIds={new Set(libraryStore.library.places.map(p=>p.source.id))}/></div>
       <div hidden={workspaceTab!=='walks'}>
       <section className="production-route-launch" aria-label="Прогулки и маршруты">
@@ -854,20 +882,16 @@ export function ProductionMapWorkspace({
       {durationOpen&&<section className="map-duration-planner"><p>Начало — центр карты. Можно передвинуть карту, найти адрес или нажать «Найти меня».</p><label>Сколько минут<input type="number" min="5" max="180" step="5" value={wantedMinutes} onChange={e=>{setWantedMinutes(Number(e.target.value));setDurationResult(undefined);}} /></label><button type="button" onClick={()=>setDurationResult(findDurationWalk(recordedRoutes,mapCenter,wantedMinutes))}>Подобрать записанный круг</button>{durationResult===null&&<p role="status">Подходящего записанного круга у выбранного начала нет. Выберите другую область или постройте маршрут вручную.</p>}{durationResult&&<div role="status"><b>{durationResult.route.title}</b><p>Около {durationResult.estimatedMinutes} мин пешком без остановок · начало в {durationResult.startMeters} м от центра. Вариант из прошлой прогулки; оценка рассчитана для 4 км/ч, это не проверка текущей проходимости.</p><button type="button" disabled={routeFlow!=='idle'} onClick={()=>{onReuseRoute?.(durationResult.route.id);setDurationOpen(false);}}>Посмотреть и изменить</button></div>}</section>}
       </div>
       <div hidden={workspaceTab!=='saved'}>
-      <button className="production-map-sheet-toggle" type="button" aria-expanded={savedExpanded} aria-controls="production-map-saved-body" onClick={() => setSavedExpanded((expanded) => !expanded)}>
-        <span className="production-map-grabber" aria-hidden="true" />
-        <span><b>Сохранённое на карте</b><small>{counts.routes} маршрутов · {counts.places} мест · {counts.risks} предупреждений</small></span>
-        {savedExpanded ? <CaretDown weight="bold" aria-hidden="true" /> : <CaretUp weight="bold" aria-hidden="true" />}
-      </button>
-      <div id="production-map-saved-body" className="production-map-sheet-body" hidden={!savedExpanded}>
+      <div id="production-map-saved-body" className="production-map-sheet-body">
+        <MapLibraryPanel store={libraryStore} placesVisible={layers.places} collectionId={collectionId} onCollectionChange={openCollection} plannedPlaceIds={new Set(activeStops.flatMap(s=>s.placeId?[s.placeId]:[]))} hasPlan={routeFlow==='planning'||routeFlow==='plan-review'} onChoose={chooseLibraryPlace} canPlan={['idle','planning','plan-review'].includes(routeFlow)} onPlan={places=>appendPlacesToWalk(places.map(p=>({point:[p.point.lng,p.point.lat],title:p.title,placeId:p.id})))} />
+        <details className="map-extra-layers"><summary>Слои карты</summary>
         <div className="production-map-filters" role="group" aria-label="Что показывать на карте">
           <button type="button" data-map-filter="all" aria-pressed={filter === 'all'} className={filter === 'all' ? 'active' : ''} onClick={() => selectLayerPreset('all')}>Все <span>{counts.routes + counts.places + counts.risks}</span></button>
           <button type="button" data-map-filter="routes" aria-pressed={filter === 'routes'} className={filter === 'routes' ? 'active' : ''} onClick={() => selectLayerPreset('routes')}>Маршруты <span>{counts.routes}</span></button>
           <button type="button" data-map-filter="places" aria-pressed={filter === 'places'} className={filter === 'places' ? 'active' : ''} onClick={() => selectLayerPreset('places')}>Места <span>{counts.places}</span></button>
           <button type="button" data-map-filter="risks" aria-pressed={filter === 'risks'} className={filter === 'risks' ? 'active risk' : 'risk'} onClick={() => selectLayerPreset('risks')}>Опасности <span>{counts.risks}</span></button>
         </div>
-        <fieldset className="map-layer-legend"><legend>Слои и обозначения</legend>{(['routes','places','risks'] as const).map(k=><label key={k}><input type="checkbox" checked={layers[k]} onChange={e=>setLayers(current=>({...current,[k]:e.target.checked}))} />{k==='routes'?'Линия — маршруты':k==='places'?'Метка — места':'Область — предупреждения'}</label>)}</fieldset>
-        <MapLibraryPanel store={libraryStore} onChoose={chooseLibraryPlace} canPlan={routeFlow==='idle'} onPlan={places=>{startPlanning();setRouteStops(places.map(p=>({point:[p.point.lng,p.point.lat],title:p.title,placeId:p.id})));setSavedExpanded(false);}} />
+        <fieldset className="map-layer-legend"><legend>Слои и обозначения</legend>{(['routes','places','risks'] as const).map(k=><label key={k}><input type="checkbox" checked={layers[k]} onChange={e=>setLayers(current=>({...current,[k]:e.target.checked}))} />{k==='routes'?'Линия — маршруты':k==='places'?'Метка — места':'Область — предупреждения'}</label>)}</fieldset></details>
         <div data-map-saved-content>{savedContent}</div>
       </div>
       </div>
