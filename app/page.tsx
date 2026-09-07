@@ -1002,7 +1002,7 @@ export default function Home() {
     const [profileResponse, candidatesResponse, requestsResponse, signalsResponse] = await Promise.all([
       fetch(`/api/social/profile?petId=${encodeURIComponent(petId)}`, requestOptions),
       fetch(`/api/social/candidates?petId=${encodeURIComponent(petId)}`, requestOptions),
-      fetch(`/api/social/requests?petId=${encodeURIComponent(petId)}`, requestOptions),
+      fetch(`/api/social/requests?petId=${encodeURIComponent(petId)}&history=1`, requestOptions),
       fetch(`/api/social/signals?${signalParams.toString()}`, requestOptions),
     ]);
     const [profilePayload, candidatesPayload, requestsPayload, signalsPayload] = await Promise.all([
@@ -1059,7 +1059,7 @@ export default function Home() {
     const requestOptions = { headers: authHeaders(), credentials: 'include' as const, signal };
     const [signalsResponse, requestsResponse] = await Promise.all([
       fetch(`/api/social/signals?${signalParams.toString()}`, requestOptions),
-      fetch(`/api/social/requests?petId=${encodeURIComponent(petId)}`, requestOptions),
+      fetch(`/api/social/requests?petId=${encodeURIComponent(petId)}&history=1`, requestOptions),
     ]);
     const [signalsPayload, requestsPayload] = await Promise.all([
       signalsResponse.json().catch(() => ({})),

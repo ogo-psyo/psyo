@@ -10,6 +10,7 @@ import './motion.css';
 import './map-gav.css';
 import './map-route-value.css';
 import './map-gav-reference.css';
+import './gav-journey.css';
 
 export const metadata: Metadata = {
   title: 'Псё — ассистент владельца собаки',

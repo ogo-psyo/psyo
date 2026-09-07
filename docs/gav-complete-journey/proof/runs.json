@@ -1,0 +1,106 @@
+[
+  {
+    "run": "chromium-1280",
+    "fixture": true,
+    "source": "working-tree",
+    "width": "1280",
+    "engine": "chromium",
+    "proposals": 1,
+    "states": 26,
+    "passed": true
+  },
+  {
+    "run": "chromium-320",
+    "fixture": true,
+    "source": "working-tree",
+    "width": "320",
+    "engine": "chromium",
+    "proposals": 1,
+    "states": 26,
+    "passed": true
+  },
+  {
+    "run": "chromium-390",
+    "fixture": true,
+    "source": "working-tree",
+    "width": "390",
+    "engine": "chromium",
+    "proposals": 1,
+    "states": 26,
+    "passed": true
+  },
+  {
+    "run": "compiled-chromium",
+    "fixture": true,
+    "source": "working-tree",
+    "width": 390,
+    "engine": "chromium",
+    "proposals": 1,
+    "states": 26,
+    "passed": true
+  },
+  {
+    "run": "compiled-edges",
+    "fixture": true,
+    "passed": true,
+    "states": 6,
+    "engine": "webkit"
+  },
+  {
+    "run": "compiled-webkit",
+    "fixture": true,
+    "source": "working-tree",
+    "width": 390,
+    "engine": "webkit",
+    "proposals": 1,
+    "states": 26,
+    "passed": true
+  },
+  {
+    "run": "edges",
+    "fixture": true,
+    "passed": true,
+    "states": 6,
+    "engine": "webkit"
+  },
+  {
+    "run": "evidence",
+    "fixture": true,
+    "source": "working-tree",
+    "width": 390,
+    "engine": "chromium",
+    "proposals": 1,
+    "states": 22,
+    "passed": true
+  },
+  {
+    "run": "webkit-1280",
+    "fixture": true,
+    "source": "working-tree",
+    "width": "1280",
+    "engine": "webkit",
+    "proposals": 1,
+    "states": 26,
+    "passed": true
+  },
+  {
+    "run": "webkit-320",
+    "fixture": true,
+    "source": "working-tree",
+    "width": "320",
+    "engine": "webkit",
+    "proposals": 1,
+    "states": 26,
+    "passed": true
+  },
+  {
+    "run": "webkit-390",
+    "fixture": true,
+    "source": "working-tree",
+    "width": "390",
+    "engine": "webkit",
+    "proposals": 1,
+    "states": 26,
+    "passed": true
+  }
+]

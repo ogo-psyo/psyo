@@ -1,0 +1,73 @@
+/* One surface language from discovery through the relationship's intermediate steps. */
+body.companion-app .gav-dialog{position:fixed;inset:12px;margin:auto;width:min(680px,calc(100% - 24px));max-width:none;max-height:calc(100dvh - 24px);height:fit-content;padding:0;border:0;border-radius:26px;background:#f8f9fc;color:#283347;box-shadow:0 18px 60px #14283c30;overscroll-behavior:contain;scrollbar-gutter:stable;font:400 16px/1.5 var(--font-pouf),system-ui,sans-serif}
+.gav-dialog::backdrop{background:#1d2a3e66}
+body.companion-app .gav-dialog :is(.woof-overlay,.woof-composer){position:relative!important;inset:auto!important;min-height:0!important;max-height:none!important;height:auto!important;width:100%!important;max-width:none!important;margin:0!important;padding:60px 22px 28px!important;overflow:visible!important;border:0!important;border-radius:0!important;background:#f8f9fc!important;color:#283347!important;box-shadow:none!important;box-sizing:border-box}
+body.companion-app .gav-dialog :is(.woof-overlay-x,.woof-sheet-close){position:absolute!important;inset:10px 12px auto auto!important;width:44px;height:44px;padding:10px!important;background:#e9edf5!important;color:#44546c!important;border-radius:50%!important}
+body.companion-app .gav-dialog :is(h2,h3,h4,p){margin:0 0 12px;color:inherit;text-wrap:pretty}
+body.companion-app .gav-dialog h2{font-size:25px;line-height:1.2;letter-spacing:-.025em}
+body.companion-app .gav-dialog h3{font-size:20px;line-height:1.3}
+body.companion-app .gav-dialog h4{font-size:17px;line-height:1.4}
+body.companion-app .gav-dialog button{font:600 14px/1.35 var(--font-pouf),system-ui,sans-serif;min-height:44px;border:1px solid transparent;border-radius:14px;padding:11px 14px;background:#e9eef6;color:#3d526e;box-shadow:none;cursor:pointer}
+body.companion-app .gav-dialog button:disabled{opacity:.55;cursor:default}
+body.companion-app .gav-dialog :is(button,input,select,textarea,summary):focus-visible{outline:3px solid #225fa0;outline-offset:3px}
+body.companion-app .gav-dialog :is(.woof-primary,.primary){background:#2d72bd!important;color:#fff!important;border:0!important;box-shadow:none!important}
+body.companion-app .gav-dialog button[aria-pressed=true],body.companion-app .gav-dialog .social-scenarios input:checked+span{background:#dce9fb!important;color:#243c61!important}
+body.companion-app .gav-dialog :is(input:not([type=checkbox]),select,textarea){box-sizing:border-box;width:100%;min-height:48px;border:1px solid #d9e0eb!important;border-radius:14px!important;padding:12px!important;background:white!important;color:#283347!important;font:400 16px/1.4 var(--font-pouf),system-ui,sans-serif!important}
+body.companion-app .gav-dialog :is(label,legend){display:block;font-size:14px!important;color:#526078!important;font-weight:500!important}
+body.companion-app .gav-dialog :is(.social-profile-sheet,.social-request-card,.social-requests-panel){padding:0;margin:0;border:0;background:transparent;box-shadow:none;color:#283347}
+body.companion-app .gav-dialog .social-section-heading{padding:0;margin-bottom:20px}
+body.companion-app .gav-dialog .social-request-list{display:block}
+body.companion-app .gav-dialog .social-form-grid{gap:16px;margin-bottom:20px}
+body.companion-app .gav-dialog .social-scenarios{border:0;padding:0;margin:20px 0}
+body.companion-app .gav-dialog .social-profile-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+body.companion-app .gav-dialog .social-profile-actions button{flex:1 1 180px}
+body.companion-app .gav-dialog .woof-overlay-close{margin-top:16px;background:#e9eef6!important;color:#3d526e!important}
+body.companion-app .gav-dialog [role=alert]{padding:12px;border-radius:14px;background:#fff0ed;color:#8b342b;font-size:14px;overflow-wrap:anywhere;margin-block:12px}
+body.companion-app .gav-dialog [role=status]{font-size:14px;color:#415772}
+body.companion-app .gav-dialog .gav-back{background:transparent;margin:-10px 0 12px;padding-inline:0}
+.gav-connection-identity{display:flex;align-items:center;gap:14px;min-width:0;text-align:left}
+.gav-connection-identity>img,.gav-connection-identity>svg{width:64px;height:64px;flex:none;object-fit:contain;background:#e8eef8;border-radius:20px}
+.gav-connection-identity>svg{padding:14px;box-sizing:border-box;color:#778ca8}
+.gav-connection-identity b{font-size:23px;line-height:1.2;overflow-wrap:anywhere}
+body.companion-app .gav-dialog .gav-connection-identity p{margin:5px 0 0;font-size:14px;color:#526078}
+body.companion-app .gav-dialog .gav-connection-purpose{font-size:13px;color:#66758a;margin:16px 0}
+body.companion-app .gav-dialog .gav-connection-row{display:flex;width:100%;justify-content:space-between;align-items:center;gap:12px;background:white;border:1px solid #e3e9f1;padding:16px;margin-bottom:10px;border-radius:22px;text-align:left}
+body.companion-app .gav-dialog .gav-connections>section{margin-top:26px}
+.gav-history{margin-top:28px}.gav-history summary{padding:12px 0;min-height:44px}
+body.companion-app .gav-dialog .social-request-actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+body.companion-app .gav-dialog .social-request-actions button{flex:1 1 140px}
+.gav-contact-unavailable{padding:16px;border-radius:18px;background:#edf2fa;margin:16px 0}
+body.companion-app .gav-dialog .meeting-place-panel{padding:24px 0 0;border-top:1px solid #dfe6f0;margin-top:24px}
+.gav-muted{font-size:13px;color:#67758b!important}
+body.companion-app .gav-dialog .gav-meeting-proposal{padding:16px;background:white;border:1px solid #e0e7f1;border-radius:22px;margin:18px 0}
+.gav-meeting-proposal>span{display:block;font-size:13px;color:#55677f;margin-bottom:8px}
+body.companion-app .gav-dialog .meeting-preview-map{position:relative;isolation:isolate;height:240px;min-height:240px;overflow:hidden;border-radius:18px;margin-block:12px;background:#e9eef5}
+body.companion-app .gav-dialog .meeting-preview-map>.live-map{height:100%!important;min-height:0!important}
+.gav-connection-more{margin-top:28px;color:#66758a}.gav-connection-more>summary{padding:12px 0;min-height:44px}
+body.companion-app .gav-dialog .social-safety-actions{display:flex;gap:10px;flex-wrap:wrap;padding:8px 0}
+body.companion-app .gav-dialog .social-safety-actions button{background:#f6edef;color:#843e49}
+.gav-step-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+.gav-picker-methods{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}.gav-picker-methods button{flex:1}
+.gav-search-row{display:flex;gap:8px;margin:8px 0 12px}.gav-search-row input{flex:1;min-width:0}.gav-search-row button{flex:none}
+body.companion-app .gav-dialog .gav-place-choice{display:block;width:100%;text-align:left;margin-top:10px;background:white;border:1px solid #d9e2ef}
+.gav-place-choice small{display:block;font-weight:400;margin-top:5px}.gav-chosen-place{padding:14px;background:#edf2fa;border-radius:16px;margin-top:16px!important}
+.gav-meeting-editor>div>button{margin:8px 8px 0 0}.gav-meeting-editor:focus,.gav-meeting-editor>div:focus{outline:none}
+.gav-inline-confirm,.social-block-confirm{padding:16px;background:#fff0ed;border-radius:18px;margin-top:12px}.gav-inline-confirm button,.social-block-confirm button{margin:4px}
+body.companion-app .production-woof-workspace .woof-map-layer{isolation:isolate;z-index:0}
+body.companion-app .gav-resume-connection{order:0;grid-column:1/-1;padding:0 16px 12px;background:#f8f9fc}
+.gav-resume-connection button{width:100%;min-height:48px;border:0;border-radius:16px;padding:12px 16px;text-align:left;color:#25456e;background:#e5edfa;font:600 14px/1.4 var(--font-pouf),system-ui,sans-serif}
+@media(max-width:360px){body.companion-app .gav-dialog :is(.woof-overlay,.woof-composer){padding-inline:16px!important}.gav-search-row{flex-wrap:wrap}.gav-search-row button{width:100%}.gav-connection-identity b{font-size:21px}}
+body.companion-app .gav-dialog .social-request-card{display:block}
+body.companion-app .gav-dialog p{font-weight:400;line-height:1.5}
+body.companion-app .gav-dialog .gav-relationship-heading{position:sticky;top:0;z-index:5;background:#f8f9fc;padding:8px 0 14px;box-shadow:0 10px 12px #f8f9fc;margin-top:-8px}
+body.companion-app .gav-dialog .gav-relationship-heading .gav-back{margin:0 0 8px}
+body.companion-app .gav-dialog .woof-privacy,body.companion-app .gav-dialog .woof-expiry{font-weight:400!important;font-size:13px!important}
+.gav-connection-portrait{width:64px;height:64px;flex:none;overflow:hidden;border-radius:20px}
+body.companion-app .gav-dialog .gav-connection-portrait .gav-photo{width:64px;height:64px;aspect-ratio:1;background:#e8eef8}
+.gav-connection-portrait .gav-photo-fallback span,.gav-connection-portrait .gav-photo-loading{display:none}
+.gav-connection-portrait .gav-photo-fallback svg{width:32px;height:32px}
+body.companion-app .gav-dialog .map-surface-status{background:#e9eef6!important;color:#506482!important}
+body.companion-app .gav-dialog select{appearance:none;-webkit-appearance:none;height:48px;min-height:48px!important;padding-right:34px!important;background-image:linear-gradient(45deg,transparent 50%,#526078 50%),linear-gradient(135deg,#526078 50%,transparent 50%)!important;background-position:calc(100% - 19px) 21px,calc(100% - 14px) 21px!important;background-size:5px 5px!important;background-repeat:no-repeat!important}
+body.companion-app .gav-dialog .gav-connection-portrait .gav-photo-fallback{padding:0;gap:0;min-height:0;width:64px;height:64px}
+body.companion-app .gav-dialog .gav-connection-portrait .gav-photo-fallback svg{width:28px!important;height:28px!important}
+body.companion-app .gav-dialog .gav-relationship-heading{box-shadow:none;border-bottom:1px solid #e2e8f1;margin-bottom:12px}

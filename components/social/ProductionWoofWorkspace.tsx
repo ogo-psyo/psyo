@@ -6,6 +6,7 @@ import type { CandidateGroup, CoarseLocation, SocialCandidate, SocialProfile, So
 import type { SocialRequestView } from './RequestsPanel';
 import { RequestsPanel } from './RequestsPanel';
 import { SocialProfileSheet } from './SocialProfileSheet';
+import { GavDialog } from './GavDialog';
 import { MeetingPlacePanel } from './MeetingPlacePanel';
 import type { OwnerRouteView } from '@/lib/mapUi';
 import { WoofLiveMap } from './WoofLiveMap';
@@ -114,7 +115,9 @@ export function ProductionWoofWorkspace(props: Props) {
   const [profileEditor, setProfileEditor] = useState(false);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [browsedCandidateId,setBrowsedCandidateId]=useState<string|null>(null);
-  const [meetingRequest,setMeetingRequest]=useState<string|null>(null);
+  const [chosenRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [awaitingPartner, setAwaitingPartner] = useState<string | null>(null);
+  const selectedRequestId = chosenRequestId || (awaitingPartner ? props.requests.find(r => (r.status === 'pending' || r.status === 'accepted') && (r.senderPetId === awaitingPartner || r.recipientPetId === awaitingPartner))?.id : null) || null;
   const [requestsOpen, setRequestsOpen] = useState(props.recommendationEntry?.view === 'requests');
   const [manualArea, setManualArea] = useState(false);
   const [areaQuery, setAreaQuery] = useState('');
@@ -124,6 +127,8 @@ export function ProductionWoofWorkspace(props: Props) {
   const [areaState, setAreaState] = useState<'idle'|'loading'|'error'|'ready'>('idle');
   const areaSearchRef = useRef<AbortController|null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [clockNow, setClockNow] = useState(() => Date.now());
+  useEffect(() => { const timer = window.setInterval(() => setClockNow(Date.now()), 12000); return () => window.clearInterval(timer); }, []);
   const [liveWhen, setLiveWhen] = useState<'all' | 'now' | 'later'>('all');
   const [livePace, setLivePace] = useState<'all' | WalkPace>('all');
   const [meetRadius, setMeetRadius] = useState<'5' | '10' | '15' | 'city'>('city');
@@ -180,9 +185,9 @@ export function ProductionWoofWorkspace(props: Props) {
   const refreshRef = useRef(props.onRefresh);
   const activePartnerIds = useMemo(() => new Set(props.requests.flatMap((request) => {
     if (request.status !== 'pending' && request.status !== 'accepted') return [];
-    const mine = props.profile?.petId;
+    const mine = props.petId;
     return request.senderPetId === mine ? [request.recipientPetId] : request.recipientPetId === mine ? [request.senderPetId] : [];
-  })), [props.profile?.petId, props.requests]);
+  })), [props.petId, props.requests]);
   const allCandidates = useMemo(() => {
     const unique = new Map<string, SocialCandidate>();
     for (const candidate of [...props.candidates.nearby, ...props.candidates.city]) {
@@ -201,10 +206,10 @@ export function ProductionWoofWorkspace(props: Props) {
     return insideRadius && matchesScenario && matchesLifeStage && matchesEnergy;
   }), [allCandidates, meetEnergy, meetLifeStage, meetRadius, meetScenario]);
   const filteredLiveSignals = useMemo(() => {
-    const nowBoundary = Date.now() + 30 * 60_000;
+    const nowBoundary = clockNow + 30 * 60_000;
     return props.signals.filter((signal) => signal.isMine || ((livePace === 'all' || signal.pace === livePace)
       && (liveWhen === 'all' || (liveWhen === 'now' ? Date.parse(signal.startsAt) <= nowBoundary : Date.parse(signal.startsAt) > nowBoundary))));
-  }, [livePace, liveWhen, props.signals]);
+  }, [clockNow, livePace, liveWhen, props.signals]);
   const selectedSignal = filteredLiveSignals.find((signal) => signal.id === selectedSignalId)
     || filteredLiveSignals.find((signal) => !signal.isMine)
     || filteredLiveSignals.find((signal) => signal.isMine)
@@ -234,14 +239,32 @@ export function ProductionWoofWorkspace(props: Props) {
     };
   }, []);
 
+  const selectedRequest = props.requests.find(r => r.id === selectedRequestId);
+  const activeRequests = props.requests.filter(r => r.status === 'pending' || r.status === 'accepted');
+  function openRequests(id: string | null = null) { setAwaitingPartner(null); setSelectedRequestId(id); setRequestsOpen(true); }
+  async function respond(candidateId: string, scenario: SocialScenario, signalId?: string) {
+    const existing = activeRequests.find(r => r.senderPetId === candidateId || r.recipientPetId === candidateId);
+    if (existing) { openRequests(existing.id); return true; }
+    const saved = await props.onRequest(candidateId, scenario, signalId);
+    if (saved) { openRequests(); setAwaitingPartner(candidateId); }
+    return saved;
+  }
   useEffect(() => {
-    if (!activeModal) {if(window.history.state?.gavOverlay)window.history.back();return;}
-    if (!window.history.state?.gavOverlay) window.history.pushState({...window.history.state,gavOverlay:true},'',window.location.href);
-    const back=()=>{setSignalComposer(false);setProfileEditor(false);setSelectedCandidateId(null);setRequestsOpen(false);};
-    window.addEventListener('popstate',back);
-    return()=>window.removeEventListener('popstate',back);
-  },[activeModal]);
-
+    if (!activeModal) return;
+    const step = activeModal === 'requests' ? `requests:${selectedRequestId || ''}` : activeModal;
+    if (window.history.state?.gavOverlay === step) return;
+    if (activeModal === 'requests' && selectedRequestId && !String(window.history.state?.gavOverlay || '').startsWith('requests:')) window.history.pushState({...window.history.state,gavOverlay:'requests:'}, '', window.location.href);
+    window.history.pushState({...window.history.state,gavOverlay:step}, '', window.location.href);
+  }, [activeModal, selectedRequestId]);
+  useEffect(() => {
+    const back = () => {
+      const step = String(window.history.state?.gavOverlay || '');
+      setAwaitingPartner(null);
+      setSignalComposer(step === 'composer'); setProfileEditor(step === 'profile'); setSelectedCandidateId(null);
+      setRequestsOpen(step.startsWith('requests:')); setSelectedRequestId(step.startsWith('requests:') ? step.slice(9) || null : null);
+    };
+    window.addEventListener('popstate', back); return () => window.removeEventListener('popstate', back);
+  }, []);
   function openSignalComposer() {
     if (ownSignal && !note) {
       setPace(ownSignal.pace);setNote(ownSignal.note || '');
@@ -262,10 +285,11 @@ export function ProductionWoofWorkspace(props: Props) {
     } catch {if(!controller.signal.aborted)setAreaState('error');}
   }
   function closeActiveModal() {
-    if (activeModal === 'composer') setSignalComposer(false);
-    if (activeModal === 'profile') setProfileEditor(false);
-    if (activeModal === 'candidate') setSelectedCandidateId(null);
-    if (activeModal === 'requests') setRequestsOpen(false);
+    if (window.history.state?.gavOverlay) window.history.go(activeModal === 'requests' && selectedRequestId ? -2 : -1);
+    setAwaitingPartner(null); setSignalComposer(false); setProfileEditor(false); setSelectedCandidateId(null); setRequestsOpen(false); setSelectedRequestId(null);
+  }
+  function backToRequests() {
+    if (selectedRequestId) window.history.back(); else closeActiveModal();
   }
 
   useEffect(() => {
@@ -281,7 +305,7 @@ export function ProductionWoofWorkspace(props: Props) {
     const controls = Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'));
     controls[0]?.focus();
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') { event.preventDefault(); closeActiveModal(); return; }
+      if (event.key === 'Escape') return; // Native dialog owns dismissal.
       const currentControls = Array.from(dialog!.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.getClientRects().length);
       if (event.key !== 'Tab' || currentControls.length === 0) return;
       const first = currentControls[0];
@@ -295,8 +319,6 @@ export function ProductionWoofWorkspace(props: Props) {
       siblings.forEach((child) => { if (child instanceof HTMLElement) child.inert = false; });
       restoreFocusRef.current?.focus();
     };
-  // closeActiveModal intentionally follows the active modal captured by this effect.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeModal]);
 
   function locateSignal() {
@@ -324,7 +346,7 @@ export function ProductionWoofWorkspace(props: Props) {
     if (!location) return;
     if (!signalDraftRef.current) signalDraftRef.current = { startsAt: startsAt(), pace, note, location };
     const confirmed = await props.onSaveSignal(signalDraftRef.current);
-    if (confirmed) { signalDraftRef.current = null; setSignalComposer(false); setNote(''); }
+    if (confirmed) { signalDraftRef.current = null; closeActiveModal(); setNote(''); }
   }
 
   function refreshMeetLocation() {
@@ -357,11 +379,13 @@ export function ProductionWoofWorkspace(props: Props) {
         <button type="button" aria-pressed={mode === 'live'} onClick={() => setMode('live')}>Сейчас рядом</button>
         <button type="button" aria-pressed={mode === 'meet'} onClick={() => setMode('meet')}>Знакомства</button>
       </div>
-      <button type="button" onClick={() => setRequestsOpen(true)} aria-label={`Отклики и связи: ${props.requests.length}`}><UsersThree /><span className="woof-requests-label">Отклики и связи</span>{props.requests.length > 0 && <span>{props.requests.length}</span>}</button>
+      <button type="button" onClick={() => openRequests()} aria-label={`Отклики и связи: ${activeRequests.length}`}><UsersThree /><span className="woof-requests-label">Отклики и связи</span>{activeRequests.length > 0 && <span>{activeRequests.length}</span>}</button>
     </header>
 
     {props.result && !activeModal && <p className="woof-action-result" role="status">{props.result}</p>}
     {props.error && !activeModal && !needsArea && <p className="woof-action-error" role="alert">{props.error}</p>}
+
+    {!activeModal && activeRequests.length > 0 && <div className="gav-resume-connection"><button type="button" onClick={() => openRequests(activeRequests.length === 1 ? activeRequests[0].id : null)}>{activeRequests.some(r => r.status === 'pending' && r.recipientPetId === props.petId) ? 'Вас зовут — посмотреть отклики' : activeRequests.some(r => r.status === 'accepted') ? 'Продолжить знакомство' : 'Ваши отклики — ждём ответа'}<span aria-hidden="true"> →</span></button></div>}
 
     {props.inviteState !== 'idle' && <aside className={`woof-incoming-invite state-${props.inviteState}`} aria-live="polite" role={props.inviteState === 'error' ? 'alert' : 'status'}>
       <div>
@@ -405,7 +429,7 @@ export function ProductionWoofWorkspace(props: Props) {
         <p className="woof-location-copy"><ShieldCheck />{selectedSignal.district || 'Примерная зона'} · точное место скрыто</p>
         {selectedSignal.isMine ? <div className="woof-signal-actions">
           <button type="button" disabled={props.busyId === 'signal'} onClick={() => props.onCloseSignal('completed')}>Завершить</button>
-        </div> : <button className="woof-primary" type="button" disabled={props.busyId === selectedSignal.petId} onClick={() => props.onRequest(selectedSignal.petId, 'walk', selectedSignal.id)}>Откликнуться</button>}
+        </div> : <button className="woof-primary" type="button" disabled={props.busyId === selectedSignal.petId} onClick={() => respond(selectedSignal.petId, 'walk', selectedSignal.id)}>{activeRequests.some(r => r.senderPetId === selectedSignal.petId || r.recipientPetId === selectedSignal.petId) ? 'Продолжить знакомство' : 'Откликнуться'}</button>}
       </article>}
       {props.accessMessage ? <article className="woof-empty-live woof-access-state" role="status"><PawPrint /><b>Познакомимся в Telegram</b><p>{props.accessMessage}</p></article> : props.state === 'error' ? <article className="woof-empty-live woof-error-state" role="alert"><PawPrint /><b>Район не загрузился</b><p>Проверьте соединение — Псё не будет выдавать ошибку за отсутствие собак.</p><button type="button" onClick={() => props.onRetry()}>Повторить</button></article>
         : props.signalReason === 'CITY_NOT_SUPPORTED' ? <article className="woof-empty-live"><PawPrint /><b>Здесь Гав ещё не работает</b><p>Сейчас живые сигналы доступны в Москве и Санкт-Петербурге.</p></article>
@@ -428,13 +452,14 @@ export function ProductionWoofWorkspace(props: Props) {
         <label><span>Возраст</span><select value={meetLifeStage} onChange={(event) => setMeetLifeStage(event.target.value as typeof meetLifeStage)}><option value="all">Любой</option><option value="puppy">Щенок</option><option value="adult">Взрослая</option><option value="senior">Старшая</option></select></label>
         <label><span>Ритм</span><select value={meetEnergy} onChange={(event) => setMeetEnergy(event.target.value as typeof meetEnergy)}><option value="all">Любой</option><option value="calm">Спокойный</option><option value="balanced">Уравновешенный</option><option value="active">Активный</option></select></label>
         <p>{props.profile?.coarseLocation ? `Поиск считается от вашего примерного района. Точная точка не показывается.` : 'Разрешите геолокацию или укажите район в анкете — точная точка не сохраняется.'}</p>
+        <button className="woof-primary" type="button" onClick={() => setFiltersOpen(false)}>Показать анкеты · {filteredCandidates.length}</button>
       </section>}
       {props.accessMessage ? <article className="woof-empty-meet" role="status"><PawPrint /><h2>Познакомимся в Telegram</h2><p>{props.accessMessage}</p></article> : props.state === 'error' ? <article className="woof-empty-meet" role="alert"><PawPrint /><h2>Анкеты не загрузились</h2><p>Это сбой соединения, а не пустой поиск.</p><button className="woof-primary" type="button" onClick={() => props.onRetry()}>Повторить</button></article>
-      : props.state === 'loading' ? <p role="status">Обновляю анкеты…</p> : filteredCandidates.length > 0 ? <CandidateDeck candidates={filteredCandidates} selectedId={browsedCandidateId} onSelect={setBrowsedCandidateId} busyId={props.busyId} onRequest={props.onRequest} preferredScenario={meetScenario}/>  : <article className="woof-empty-meet"><PawPrint /><h2>{allCandidates.length ? 'Под эти фильтры никого нет' : props.profile?.discoverable ? 'Новые анкеты появятся здесь' : 'Сначала расскажите о собаке'}</h2><p>{allCandidates.length ? 'Расширьте радиус или уберите один из фильтров.' : props.profile?.discoverable ? 'Псё покажет только реальные анкеты вашего города.' : 'Характер и привычный ритм помогут найти подходящую компанию.'}</p>{allCandidates.length ? <button className="woof-primary" type="button" onClick={() => { setMeetRadius('city'); setMeetScenario('all'); setMeetLifeStage('all'); setMeetEnergy('all'); }}>Сбросить фильтры</button> : <button className="woof-primary" type="button" onClick={() => setProfileEditor(true)}>{props.profile?.discoverable ? 'Проверить мою анкету' : 'Создать анкету'}</button>}</article>}
+      : props.state === 'loading' ? <p role="status">Обновляю анкеты…</p> : filteredCandidates.length > 0 ? <CandidateDeck candidates={filteredCandidates} selectedId={browsedCandidateId} onSelect={setBrowsedCandidateId} busyId={props.busyId} onRequest={respond} preferredScenario={meetScenario}/>  : <article className="woof-empty-meet"><PawPrint /><h2>{allCandidates.length ? 'Под эти фильтры никого нет' : props.profile?.discoverable ? 'Новые анкеты появятся здесь' : 'Сначала расскажите о собаке'}</h2><p>{allCandidates.length ? 'Расширьте радиус или уберите один из фильтров.' : props.profile?.discoverable ? 'Псё покажет только реальные анкеты вашего города.' : 'Характер и привычный ритм помогут найти подходящую компанию.'}</p>{allCandidates.length ? <button className="woof-primary" type="button" onClick={() => { setMeetRadius('city'); setMeetScenario('all'); setMeetLifeStage('all'); setMeetEnergy('all'); }}>Сбросить фильтры</button> : <button className="woof-primary" type="button" onClick={() => setProfileEditor(true)}>{props.profile?.discoverable ? 'Проверить мою анкету' : 'Создать анкету'}</button>}</article>}
     </main>}
 
-    {signalComposer && <section onChangeCapture={() => { signalDraftRef.current = null; }} ref={composerRef} className="woof-composer" role="dialog" aria-modal="true" aria-labelledby="woof-composer-title">
-      <button className="woof-sheet-close" type="button" onClick={() => setSignalComposer(false)} aria-label="Закрыть"><X /></button>
+    {signalComposer && <GavDialog label="Свой Гав" onClose={closeActiveModal}><section onChangeCapture={() => { signalDraftRef.current = null; }} ref={composerRef} className="woof-composer" role="dialog" aria-modal="true" aria-labelledby="woof-composer-title">
+      <button className="woof-sheet-close" type="button" onClick={closeActiveModal} aria-label="Закрыть"><X /></button>
       <h2 id="woof-composer-title">Когда идём?</h2><p>{props.dogName} · {location ? props.profile?.district || "Выбранная примерная зона" : "Выберите район"}</p>
       {(props.error || locationError) && <p role="alert">{locationError || props.error}</p>}
       <div className="woof-choice-row"><button type="button" aria-pressed={when === 'now'} onClick={() => { signalDraftRef.current = null; setWhen('now'); }}>Сейчас</button><button type="button" aria-pressed={when === 'later'} onClick={() => { signalDraftRef.current = null; setWhen('later'); }}>Позже</button></div>
@@ -445,10 +470,15 @@ export function ProductionWoofWorkspace(props: Props) {
       <p className="woof-privacy"><ShieldCheck />На карте появится зона радиусом 700 м, а не ваша точка.</p>
       <p className="woof-expiry"><ClockCountdown />{when === 'now' ? 'Гав исчезнет автоматически через 2 часа.' : 'Гав исчезнет через 3 часа после выбранного времени.'}</p>
       <button className="woof-primary" type="button" disabled={!location || props.busyId === 'signal'} onClick={submitSignal}>{props.busyId === 'signal' ? 'Сохраняю…' : !location ? 'Сначала выберите район' : ownSignal ? 'Обновить Гав' : 'Дать Гав'}</button>
-    </section>}
+    </section></GavDialog>}
 
-    {profileEditor && <div ref={profileOverlayRef} className="woof-overlay" role="dialog" aria-modal="true" aria-label="Моя анкета знакомства"><button className="woof-overlay-x" type="button" onClick={() => setProfileEditor(false)} aria-label="Закрыть"><X /></button>{props.result && <p role="status">{props.result}</p>}{props.error && <p role="alert">{props.error}</p>}<SocialProfileSheet petId={props.petId} dogName={props.dogName} profile={props.profile} busy={props.busyId === 'profile'} locating={props.locating} onSave={props.onSaveProfile} onHide={props.onHideProfile} onLocate={props.onLocateProfile} /><button className="woof-overlay-close" type="button" onClick={() => setProfileEditor(false)}>Закрыть</button></div>}
+    {profileEditor && <GavDialog label="Моя анкета знакомства" onClose={closeActiveModal}><div ref={profileOverlayRef} className="woof-overlay" role="dialog" aria-modal="true" aria-label="Моя анкета знакомства"><button className="woof-overlay-x" type="button" onClick={closeActiveModal} aria-label="Закрыть"><X /></button>{props.error && <p role="alert">{props.error}</p>}<SocialProfileSheet petId={props.petId} dogName={props.dogName} profile={props.profile} busy={props.busyId === 'profile'} locating={props.locating} onSave={async draft => { const saved = await props.onSaveProfile(draft); if (saved && draft.discoverable) closeActiveModal(); return saved; }} onHide={props.onHideProfile} onLocate={props.onLocateProfile} /><button className="woof-overlay-close" type="button" onClick={closeActiveModal}>К анкетам</button></div></GavDialog>}
     {selectedCandidate && <div ref={candidateOverlayRef} className="woof-overlay" role="presentation">{props.error && <p role="alert">{props.error}</p>}<CandidateProfile candidate={selectedCandidate} busy={props.busyId === selectedCandidate.petId} onClose={() => setSelectedCandidateId(null)} onRequest={() => props.onRequest(selectedCandidate.petId, selectedCandidate.sharedScenarios[0] || 'meet')} /></div>}
-    {requestsOpen && <div ref={requestsOverlayRef} className="woof-overlay" role="dialog" aria-modal="true" aria-label="Отклики и связи"><button className="woof-overlay-x" type="button" onClick={() => setRequestsOpen(false)} aria-label="Закрыть"><X /></button>{props.result && <p role="status">{props.result}</p>}{props.error && <p role="alert">{props.error}</p>}{meetingRequest?<MeetingPlacePanel requestId={meetingRequest} petId={props.petId} routes={props.routes} headers={props.authHeaders} onClose={()=>setMeetingRequest(null)} />:<RequestsPanel onMeeting={setMeetingRequest} requests={props.requests} petId={props.petId} busyId={props.busyId} missingTelegramUsernameAction={props.missingTelegramUsernameAction ?? null} onAction={props.onUpdateRequest} onReport={props.onReport} onOpenChat={props.onOpenContact} />}</div>}
+    {requestsOpen && <GavDialog label={selectedRequest ? `Знакомство: ${selectedRequest.otherDog?.name || 'собака'}` : 'Отклики и связи'} onClose={closeActiveModal}><div ref={requestsOverlayRef} className="woof-overlay gav-relationship" role="dialog" aria-modal="true" aria-label="Отклики и связи"><button className="woof-overlay-x" type="button" onClick={closeActiveModal} aria-label="Закрыть"><X /></button>
+      {props.error && <p role="alert">{props.error}</p>}
+      <RequestsPanel key={selectedRequestId || 'list'} selectedId={selectedRequestId} onSelect={setSelectedRequestId} onBack={backToRequests} requests={props.requests} petId={props.petId} busyId={props.busyId} missingTelegramUsernameAction={props.missingTelegramUsernameAction ?? null} onAction={props.onUpdateRequest} onReport={props.onReport} onOpenChat={props.onOpenContact} onRefresh={() => props.onRefresh()}>
+        {selectedRequest?.status === 'accepted' && <MeetingPlacePanel key={selectedRequest.id} requestId={selectedRequest.id} petId={props.petId} routes={props.routes} headers={props.authHeaders} center={props.viewerLocation || props.profile?.coarseLocation} partnerName={selectedRequest.otherDog?.name || 'собаки'} />}
+      </RequestsPanel>
+    </div></GavDialog>}
   </section>;
 }
