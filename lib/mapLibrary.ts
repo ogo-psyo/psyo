@@ -121,9 +121,14 @@ export function applyLibraryCommand(library: MapLibrary, command: LibraryCommand
     next.applied = [...next.applied, command.id].slice(-256);
     return next;
 }
-export function collectionPoints(library: MapLibrary, id: string, selected?: string[]): number[][] {
+export function collectionPlaces(library: MapLibrary, id: string, selected?: string[]): SavedPlace[] {
     const collection = library.collections.find(c => c.id === id);
-    if (!collection)
-        return [];
-    return collection.placeIds.filter(id => !selected || selected.includes(id)).flatMap(id => { const p = library.places.find(p => p.id === id); return p && !p.unavailable ? [[p.point.lng, p.point.lat]] : []; });
+    if (!collection) return [];
+    return collection.placeIds.filter(id => !selected || selected.includes(id)).flatMap(id => {
+        const place = library.places.find(p => p.id === id);
+        return place && !place.unavailable ? [place] : [];
+    });
+}
+export function collectionPoints(library: MapLibrary, id: string, selected?: string[]): number[][] {
+    return collectionPlaces(library,id,selected).map(p=>[p.point.lng,p.point.lat]);
 }

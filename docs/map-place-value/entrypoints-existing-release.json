@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "host": "https://pso-mvp.vercel.app",
+      "status": 200,
+      "release": "80e102598e3cbfe6e8d8880cce60a41e122099d6",
+      "ok": true
+    },
+    {
+      "host": "https://pso-mvp-uglanovrms-projects.vercel.app",
+      "status": 200,
+      "release": "80e102598e3cbfe6e8d8880cce60a41e122099d6",
+      "ok": true
+    }
+  ]
+}

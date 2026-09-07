@@ -73,13 +73,13 @@ function MapEvents({ onMapClick, onPick, onCenterChange,onBoundsChange }: Pick<L
     },
     moveend() {
       const center = map.getCenter();
-      onCenterChange?.({ lat: center.lat, lng: center.lng });
+      onCenterChange?.({ lat: center.lat, lng: center.lng, zoom: map.getZoom() });
       const bounds=map.getBounds();onBoundsChange?.({south:bounds.getSouth(),west:bounds.getWest(),north:bounds.getNorth(),east:bounds.getEast()});
     },
   });
   useEffect(() => {
     const center = map.getCenter();
-    onCenterChange?.({ lat: center.lat, lng: center.lng });
+    onCenterChange?.({ lat: center.lat, lng: center.lng, zoom: map.getZoom() });
     const bounds=map.getBounds();onBoundsChange?.({south:bounds.getSouth(),west:bounds.getWest(),north:bounds.getNorth(),east:bounds.getEast()});
   }, [map, onCenterChange,onBoundsChange]);
   return null;
@@ -133,7 +133,7 @@ function MapViewport({ zones, features, userLocation, focusPoint, routePoints, f
     }
     if (focusPoint && focusPoint.token !== focusTokenRef.current) {
       focusTokenRef.current = focusPoint.token;
-      map.setView([focusPoint.lat, focusPoint.lng], 16, { animate: !reducedMotion() });
+      map.setView([focusPoint.lat, focusPoint.lng], focusPoint.zoom ?? 16, { animate: !reducedMotion() });
       return;
     }
     if (userLocation && !orientedRef.current) {

@@ -3,6 +3,7 @@ import { measuredRouteDistance, splitRoute } from './routeGeometry';
 export type RouteStop = {
     point: number[];
     title?: string;
+    placeId?: string;
 };
 export type RoutePlanning = {
     version: 1;
@@ -21,7 +22,8 @@ export function parseRoutePlanning(value: unknown): RoutePlanning | null {
     for (const item of v.stops) {
         if (!item || typeof item !== 'object' || !Array.isArray(item.point) || item.point.length !== 2 || !item.point.every((n: unknown) => typeof n === 'number') || !isValidGeoPoint({ lng: item.point[0], lat: item.point[1] }))
             return null;
-        stops.push({ point: [...item.point], ...(typeof item.title === 'string' ? { title: item.title.slice(0, 160) } : {}) });
+        if (item.placeId !== undefined && (typeof item.placeId !== 'string' || !item.placeId.trim() || item.placeId.length > 180)) return null;
+        stops.push({ point: [...item.point], ...(typeof item.title === 'string' ? { title: item.title.slice(0, 160) } : {}), ...(item.placeId ? { placeId: item.placeId } : {}) });
     }
     return { version: 1, mode: v.mode as RoutePlanning['mode'], stops, ...(v.stairs === true ? { stairs: true } : {}), ...(typeof v.estimatedMinutes === 'number' && Number.isFinite(v.estimatedMinutes) && v.estimatedMinutes >= 0 ? { estimatedMinutes: Math.round(v.estimatedMinutes) } : {}) };
 }

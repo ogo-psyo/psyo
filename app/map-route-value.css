@@ -63,6 +63,39 @@ body.companion-app .production-route-review-summary{border:0;background:linear-g
 body.companion-app .production-route-review-summary>svg{background:#d5e1cd!important;color:#405e4a!important}
 body.companion-app .map-work-area .production-map-privacy button[aria-pressed=true]{background:#dfe8d5!important;border-color:#647b59!important;color:#34513d!important}
 body.companion-app .production-route-review-summary+p{font-size:14px;line-height:1.5}
+/* Places are a geographic result list, not duplicate entrances into search. */
+body.companion-app .map-place-discovery { font-size:16px; font-weight:400; line-height:1.45; }
+body.companion-app .map-place-discovery h2 { font-size:21px; font-weight:600; margin:0 0 6px; }
+body.companion-app .map-place-discovery header p,.place-data-source,.place-storage-note { font-size:13px; color:#53675b; line-height:1.5; }
+body.companion-app .place-category-filters { display:flex; flex-wrap:wrap; gap:8px; margin-block:16px; }
+body.companion-app :is(.place-category-filters,.place-area-change,.map-point-actions) button,.place-retry { min-height:44px; padding:10px 12px; border:0; border-radius:13px; font:inherit; font-size:14px; font-weight:500; background:#e8eee2; color:#34513d; }
+body.companion-app .place-category-filters button[aria-pressed=true] { background:#405e4a; color:#fffefa; }
+body.companion-app .place-category-filters label { display:flex; align-items:center; gap:8px; font-size:14px; flex-wrap:wrap; }
+body.companion-app .place-category-filters select { min-height:44px; max-width:100%; padding:8px; border:1px solid #a7b7a5; border-radius:12px; background:#fcfcf8; font:inherit; color:#34513d; }
+body.companion-app .place-discovery-status { margin-block:12px; font-size:14px; font-weight:400; }
+.place-discovery-list { list-style:none; margin:0; padding:0; }
+body.companion-app .place-discovery-list li { border-bottom:1px solid #dce5da; }
+body.companion-app .place-discovery-list button { width:100%; min-height:60px; display:flex; align-items:flex-start; gap:12px; padding:16px 0; border:0; background:transparent; box-shadow:none; font:inherit; color:#283e34; text-align:start; }
+.place-discovery-list button>svg { flex:none; width:22px; height:22px; margin-top:2px; }
+.place-discovery-list button>span { flex:1; min-width:0; }
+.place-discovery-list b { display:block; font-size:16px; font-weight:600; overflow-wrap:anywhere; }
+.place-discovery-list span span,.place-discovery-list small { display:block; font-size:13px; line-height:1.5; color:#53675b; overflow-wrap:anywhere; }
+.place-area-change { padding:12px 0; border-block:1px solid #dce5da; display:grid; gap:8px; font-size:14px; }
+.place-retry { display:flex; align-items:center; gap:8px; }
+.map-point-actions { padding-block:16px; border-bottom:1px solid #dce5da; margin-bottom:16px; }
+.map-point-actions button { margin:4px; }
+body.companion-app .map-place-panel { font-size:16px; font-weight:400; line-height:1.5; }
+body.companion-app .map-place-panel h2 { font-size:23px; font-weight:600; }
+body.companion-app .map-place-panel .place-back { background:transparent; padding-inline:0; font-size:14px; }
+.place-primary-actions { margin-block:16px; display:grid; gap:8px; }
+body.companion-app .place-primary-actions .primary { background:linear-gradient(125deg,#496b53,#405e4a); color:#fffefa; }
+.place-save-actions { border-block:1px solid #dce5da; padding-block:16px; margin-block:16px; }
+.place-save-actions label { display:grid; gap:6px; }
+.place-save-actions select { width:100%; min-height:44px; font:inherit; border:1px solid #a7b7a5; border-radius:12px; background:#fcfcf8; padding:8px; color:#34513d; margin-bottom:8px; }
+body.companion-app :is(.map-place-discovery,.map-place-panel,.map-point-actions) :is(button,a,select):focus-visible { outline:2px solid #283e34; outline-offset:3px; }
+@media(prefers-reduced-motion:no-preference){body.companion-app :is(.map-place-discovery,.map-point-actions) button { transition:transform 140ms ease-out,background-color 140ms ease-out; }body.companion-app :is(.map-place-discovery,.map-point-actions) button:active { transform:scale(.96); }}
 /* Keep the final library/feed actions above the persistent app navigation. */
 body.companion-app .production-map-workspace:not(.route-focus),body.companion-app .production-woof-workspace{scroll-padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 body.companion-app .production-map-workspace:not(.route-focus) .map-work-area,body.companion-app .woof-work-area,body.companion-app .production-woof-workspace .woof-meet-feed{padding-bottom:calc(108px + env(safe-area-inset-bottom))!important;scroll-padding-bottom:96px}
+
+body.companion-app .place-category-filters select { font-size:16px; }
