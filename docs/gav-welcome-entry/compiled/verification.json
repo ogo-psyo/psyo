@@ -1,0 +1,13 @@
+[
+  {
+    "engine": "webkit",
+    "width": 390,
+    "noImplicitGPS": true,
+    "oneEntry": true,
+    "noBlankMap": true,
+    "deniedGPSToManual": true,
+    "backPreservesInput": true,
+    "searchRetry": true,
+    "selectedAreaRestoresMap": true
+  }
+]
