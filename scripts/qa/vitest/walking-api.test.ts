@@ -1,0 +1,13 @@
+import { it, expect, vi, beforeEach, afterEach } from 'vitest';
+const mocks = vi.hoisted(() => ({ auth: vi.fn(), session: vi.fn(), db: vi.fn() }));
+vi.mock('@/lib/server/auth', () => ({ getRequestAuth: mocks.auth }));
+vi.mock('@/lib/server/appSession', () => ({ getAppSessionFromRequest: mocks.session }));
+vi.mock('@/lib/server/supabase', () => ({ getSupabaseAdmin: mocks.db }));
+import { POST } from '../../../app/api/map/walking/route';
+const request = (body: unknown) => new Request('http://localhost/api/map/walking', { method: 'POST', body: JSON.stringify(body) });
+beforeEach(() => { mocks.auth.mockResolvedValue({ user: { id: 'owner' } }); mocks.session.mockReturnValue(null); mocks.db.mockReturnValue({ rpc: vi.fn().mockResolvedValue({ data: true }) }); });
+afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); });
+it('rejects anonymous requests before provider/storage access', async () => { mocks.auth.mockResolvedValue({ user: null }); const fetch = vi.fn(); vi.stubGlobal('fetch', fetch); expect((await POST(request({ points: [[37, 55], [37.001, 55.001]] }))).status).toBe(401); expect(fetch).not.toHaveBeenCalled(); expect(mocks.db).not.toHaveBeenCalled(); });
+it('rejects malformed or overwide inputs before egress', async () => { const fetch = vi.fn(); vi.stubGlobal('fetch', fetch); expect((await POST(request({ points: [['37', 55], [37, 55]] }))).status).toBe(400); expect((await POST(request({ points: [[37, 55], [40, 55]] }))).status).toBe(422); expect((await POST(request({ points: { map: 3 } }))).status).toBe(400); expect(fetch).not.toHaveBeenCalled(); });
+it('distinguishes shared quota and preserves retry semantics', async () => { const fetch = vi.fn(); vi.stubGlobal('fetch', fetch); mocks.db.mockReturnValue({ rpc: vi.fn().mockResolvedValue({ data: false }) }); expect((await POST(request({ points: [[37, 55], [37.001, 55.001]] }))).status).toBe(429); expect(fetch).not.toHaveBeenCalled(); });
+it('sends only a quantized area to provider, not private waypoint precision or text', async () => { const fetch = vi.fn().mockResolvedValue(Response.json({ elements: [{ type: 'node', id: 1, lon: 37.000123, lat: 55.000321 }, { type: 'node', id: 2, lon: 37.001, lat: 55.001 }, { type: 'way', id: 3, nodes: [1, 2], tags: { highway: 'footway' } }] })); vi.stubGlobal('fetch', fetch); const response = await POST(request({ points: [[37.000123, 55.000321], [37.001, 55.001]], note: 'PRIVATE' })); expect(response.status).toBe(200); const out = fetch.mock.calls[0][1].body.toString(); expect(out).not.toContain('37.000123'); expect(out).not.toContain('PRIVATE'); expect(response.headers.get('Cache-Control')).toBe('private, no-store'); expect((await response.json()).source).toBe('OpenStreetMap'); });

@@ -8,6 +8,7 @@ import './editorial.css';
 import './companion.css';
 import './motion.css';
 import './map-gav.css';
+import './map-route-value.css';
 
 export const metadata: Metadata = {
   title: 'Псё — ассистент владельца собаки',

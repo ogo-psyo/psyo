@@ -1,3 +1,4 @@
+import {parseRoutePlanning} from '@/lib/routePlanning';
 import { routeEwkt,validRouteGaps,storedRoutePoints,measuredRouteDistance } from '@/lib/routeGeometry';
 import { NextResponse } from 'next/server';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
@@ -45,6 +46,9 @@ export async function PATCH(request: Request, ctx: Ctx) {
   if ('path' in body) {
     const path=routeEwkt(body.path);
     if(!path)return NextResponse.json({error:'INVALID_ROUTE_GEOMETRY'},{status:400});
+    const planning=body.planning==null?null:parseRoutePlanning(body.planning);
+    if(body.planning!=null&&!planning)return NextResponse.json({error:'INVALID_PLANNING'},{status:400});
+    patch.planning=planning;
     patch.path=path;patch.path_gaps=validRouteGaps(body.pathGaps,body.path.length);
     patch.distance_meters=Math.round(measuredRouteDistance(body.path,patch.path_gaps as number[]));
   }

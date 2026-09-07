@@ -1,3 +1,4 @@
+import {parseRoutePlanning,type RoutePlanning} from './routePlanning';
 import { isValidGeoPoint } from './geo';
 export type RouteFlow = 'idle' | 'recording' | 'paused' | 'gps-error' | 'record-review' | 'planning' | 'plan-review';
 export type StoredRouteSession = {
@@ -12,11 +13,13 @@ export type StoredRouteSession = {
     note?: string;
     editingRouteId?: string;
     gaps?: number[];
+    planning?:RoutePlanning;
+    calculationKey?:string;
 };
 export const routeSessionKey = (petId: string) => `pso.map.active-route.v3:${petId}`;
 export const persistentFlows: RouteFlow[] = ['recording', 'paused', 'record-review', 'planning', 'plan-review'];
-export function hasRouteWork(session: Pick<StoredRouteSession, 'points' | 'elapsedSeconds' | 'flow' | 'title' | 'note'>) {
-    return session.points.length > 0 || Boolean(session.title?.trim() || session.note?.trim())
+export function hasRouteWork(session: Pick<StoredRouteSession, 'points' | 'elapsedSeconds' | 'flow' | 'title' | 'note' | 'planning'>) {
+    return session.points.length > 0 || Boolean(session.planning?.stops.length) || Boolean(session.title?.trim() || session.note?.trim())
         || (['recording', 'paused', 'record-review'].includes(session.flow) && session.elapsedSeconds > 0);
 }
 export function readRouteSession(raw: string | null, petId: string): StoredRouteSession | null {
@@ -29,7 +32,7 @@ export function readRouteSession(raw: string | null, petId: string): StoredRoute
         // Reject malformed geometry as a whole; never silently drop a user's points.
         if (value.points.some(p => !Array.isArray(p) || p.length < 2 || !isValidGeoPoint({ lng: p[0], lat: p[1] })))
             return null;
-        const session = { ...value, elapsedSeconds: Math.max(0, Number(value.elapsedSeconds) || 0) };
+        const session = { ...value, planning:parseRoutePlanning(value.planning)||undefined, elapsedSeconds: Math.max(0, Number(value.elapsedSeconds) || 0) };
         return hasRouteWork(session) ? session : null;
     }
     catch {

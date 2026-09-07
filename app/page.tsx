@@ -1,4 +1,5 @@
 'use client';
+import {downloadRouteGpx,type RoutePlanning} from '@/lib/routePlanning';
 
 import { ChangeEvent, type FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, CopySimple, FilePdf, Files, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning, ShoppingBag, Sparkle, TextT, Trash, UploadSimple } from '@phosphor-icons/react';
@@ -579,7 +580,7 @@ export default function Home() {
   const [mapVisited, setMapVisited] = useState(false);
   const [mapActivity, setMapActivity] = useState<'recording'|'paused'|null>(null);
   useEffect(() => {if (tab === 'map') setMapVisited(true);}, [tab]);
-  const [routeEditSeed,setRouteEditSeed] = useState<{token:number;points:number[][]}|null>(null);
+  const [routeEditSeed,setRouteEditSeed] = useState<{token:number;points:number[][];planning?:RoutePlanning;review?:boolean;pathGaps?:number[];routeSource?:'recorded'|'planned';durationSeconds?:number;startedAt?:string}|null>(null);
   const [editingRouteGeometryId,setEditingRouteGeometryId] = useState<string|null>(null);
   const [mapSavedRevision, setMapSavedRevision] = useState(0);
   const mapSaveLockRef = useRef(false);
@@ -2971,15 +2972,16 @@ export default function Home() {
     handleMapPick(event.latlng);
   }
 
-  function planSavedRoute(route:OwnerRouteView,edit:boolean) {
-    if(routePoints.length || mapActivity) {setError('Сначала сохраните или удалите текущий черновик маршрута.');return;}
-    setEditingRouteGeometryId(edit?route.id:null);
-    setNewZoneTitle(edit?route.title:`${route.title} · новая прогулка`);
+  function planSavedRoute(route:OwnerRouteView,edit:boolean,review=false) {
+    if(routePoints.length || mapRouteMeta?.planning?.stops.length || mapActivity) {setError('Сначала сохраните или удалите текущий черновик маршрута.');return;}
+    setEditingRouteGeometryId(edit||review?route.id:null);
+    setNewZoneTitle(edit||review?route.title:`${route.title} · новая прогулка`);
     setNewZoneNote(route.description||'');setMapSaveMode('private');
-    setRouteEditSeed({token:Date.now(),points:route.path.coordinates.map(p=>[...p])});
+    setRouteEditSeed({token:Date.now(),points:route.path.coordinates.map(p=>[...p]),planning:route.planning,review,pathGaps:route.pathGaps,routeSource:route.routeSource,durationSeconds:route.durationSeconds,startedAt:route.startedAt});
     setProductionMapMode('route');
   }
   async function createMapFeature(visibility: 'private' | 'shared') {
+    if(drawMode==='route'&&mapRouteMeta?.ready===false)return setError('Сначала примените актуальный расчёт пути или выберите ручное построение.');
     if (drawMode === 'route' && routePoints.length < 2) return setError('Для маршрута нужны хотя бы две точки.');
     if (drawMode !== 'route' && !pickedZonePoint) return setError('Сначала коснись карты, чтобы выбрать точку.');
     const title = (newZoneTitle || (drawMode === 'route' ? 'Маршрут прогулки' : newZoneType === 'risk_zone' ? 'Опасное место' : 'Место на карте')).trim();
@@ -2996,6 +2998,7 @@ export default function Home() {
           path: { type: 'LineString', coordinates: routePoints },
           visibility: 'private',
           routeSource: mapRouteMeta?.routeSource || 'planned',
+          planning:mapRouteMeta?.planning,
           startedAt: mapRouteMeta?.startedAt,
           durationSeconds: mapRouteMeta?.durationSeconds,
           pathGaps: mapRouteMeta?.pathGaps,
@@ -3021,7 +3024,7 @@ export default function Home() {
 
     const recommendationId = drawMode === 'route' ? acceptedRecommendationId('plan_walk') : undefined;
     const body = drawMode === 'route'
-      ? { type: 'route', title, petId: profile.backendPetId, path: routePoints, visibility, description: newZoneNote || null, routeSource: mapRouteMeta?.routeSource || 'planned', pathGaps: mapRouteMeta?.pathGaps, startedAt: mapRouteMeta?.startedAt, durationSeconds: mapRouteMeta?.durationSeconds ?? 0, distanceMeters: mapRouteMeta?.distanceMeters ?? 0, recommendationId }
+      ? { type: 'route', title, petId: profile.backendPetId, path: routePoints, visibility, description: newZoneNote || null, routeSource: mapRouteMeta?.routeSource || 'planned', planning:mapRouteMeta?.planning, pathGaps: mapRouteMeta?.pathGaps, startedAt: mapRouteMeta?.startedAt, durationSeconds: mapRouteMeta?.durationSeconds ?? 0, distanceMeters: mapRouteMeta?.distanceMeters ?? 0, recommendationId }
       : { type: 'point', title, petId: profile.backendPetId, lat: pickedZonePoint?.lat, lng: pickedZonePoint?.lng, zone_type: newZoneType, visibility, description: newZoneNote || null };
 
     const fingerprint=JSON.stringify(body);
@@ -3067,6 +3070,7 @@ export default function Home() {
       return;
     }
     if (mode === 'risk') {
+      setMapSaveMode('private');
       setDrawMode('point');
       setNewZoneType('risk_zone');
       return;
@@ -4110,11 +4114,11 @@ export default function Home() {
     : drawMode === 'point' && newZoneType === 'risk_zone'
       ? 'risk'
       : 'view';
-  const mapDraftReady = drawMode === 'route' ? routePoints.length >= 2 : Boolean(pickedZonePoint);
+  const mapDraftReady = drawMode === 'route' ? routePoints.length >= 2 && mapRouteMeta?.ready!==false : Boolean(pickedZonePoint);
   const mapComposerContent = <section className="production-map-composer" data-map-composer-content aria-label={productionMapMode === 'route' ? 'Новый маршрут' : 'Новое предупреждение'}>
     <div className="production-map-composer-status">
       <span aria-hidden="true">{productionMapMode === 'route' ? <MapTrifold weight="regular" /> : <ShieldWarning weight="fill" />}</span>
-      <div><b>{productionMapMode === 'route' ? `Поставлено: ${routePoints.length}` : pickedZonePoint ? 'Примерное место выбрано' : 'Выберите место'}</b><p>{productionMapMode === 'route' ? 'Касайтесь карты по ходу прогулки. Достаточно двух точек.' : mapSaveMode === 'shared' ? 'По ссылке будет видна только приблизительная область.' : 'Отметка останется личной. Точное место никому не показывается.'}</p></div>
+      <div><b>{productionMapMode === 'route' ? `Поставлено: ${routePoints.length}` : pickedZonePoint ? 'Примерное место выбрано' : 'Выберите место'}</b><p>{productionMapMode === 'route' ? 'Проверьте путь, добавьте название и сохраните маршрут.' : mapSaveMode === 'shared' ? 'По ссылке будет видна только приблизительная область.' : 'Отметка останется личной. Точное место никому не показывается.'}</p></div>
     </div>
     <label>Название <span>необязательно</span><input value={newZoneTitle} onChange={(event) => setNewZoneTitle(event.target.value)} placeholder={productionMapMode === 'route' ? 'Например, вечерний круг' : 'Например, битое стекло'} /></label>
     <label>Что важно знать <span>необязательно</span><textarea value={newZoneNote} onChange={(event) => setNewZoneNote(event.target.value)} placeholder={productionMapMode === 'route' ? 'Покрытие, вода, освещение' : 'Что произошло и когда заметили'} rows={2} /></label>
@@ -4124,7 +4128,7 @@ export default function Home() {
     </section>
     <div className="production-map-composer-actions">
       <button type="button" className="secondary" onClick={() => setProductionMapMode('view')}>{productionMapMode === 'route' ? 'Свернуть маршрут' : 'Отменить'}</button>
-      {productionMapMode === 'route' && routePoints.length > 0 && <button type="button" className="secondary" onClick={() => setRoutePoints([])}>Очистить</button>}
+
       <button type="button" className="primary" disabled={!mapDraftReady || mapDraftSaving} onClick={() => void saveProductionMapDraft()}>{mapDraftSaving ? 'Сохраняю…' : !mapDraftReady ? productionMapMode === 'route' ? 'Отметьте две точки' : 'Коснитесь карты' : mapSaveMode === 'shared' ? 'Сохранить и скопировать ссылку' : 'Сохранить лично'}</button>
     </div>
   </section>;
@@ -4136,7 +4140,7 @@ export default function Home() {
     </article>)}
     {ownerRoutes.map((route) => <article key={route.id} className="production-map-saved-row route">
       <span className="production-map-saved-mark" aria-hidden="true"><MapPin weight="fill" /></span>
-      {editingRouteId === route.id ? <div className="production-map-route-edit"><input value={routeTitleDraft} onChange={(event) => setRouteTitleDraft(event.target.value)} aria-label="Название маршрута" /><input value={routeDescriptionDraft} onChange={(event) => setRouteDescriptionDraft(event.target.value)} aria-label="Заметка о маршруте" /><span><button type="button" disabled={Boolean(routeMutationBusy) || !routeTitleDraft.trim()} onClick={() => updateOwnerRoute(route.id, { title: routeTitleDraft.trim(), description: routeDescriptionDraft.trim() })}>Сохранить</button><button type="button" onClick={() => setEditingRouteId(null)}>Отмена</button></span></div> : <><div><b>{route.title}</b><p>{route.routeSource === 'recorded' ? `${route.startedAt ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(new Date(route.startedAt)) + ' · ' : ''}${route.durationSeconds !== undefined ? `${Math.floor(route.durationSeconds / 60)} мин · ` : ''}${route.distanceMeters !== undefined ? route.distanceMeters < 1000 ? `${route.distanceMeters} м` : `${(route.distanceMeters / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} км` : 'Записанная прогулка'}` : route.description || 'Маршрут построен заранее'} · {route.visibility === 'shared' ? 'по ссылке' : 'только вам'}</p></div><div className="production-map-row-actions"><button type="button" onClick={() => planSavedRoute(route,false)}>Повторить маршрут</button>{route.routeSource==='planned'&&<button type="button" onClick={() => planSavedRoute(route,true)}>Изменить путь</button>}<button type="button" onClick={() => beginOwnerRouteEdit(route)}>Изменить</button><button type="button" onClick={() => route.visibility === 'shared' ? revokeOwnerRouteShare(route) : shareOwnerRoute(route)}>{route.visibility === 'shared' ? 'Закрыть ссылку' : 'Поделиться'}</button><button type="button" className="danger-action" onClick={() => setPendingRouteDeletion(route)}>Убрать</button></div></>}
+      {editingRouteId === route.id ? <div className="production-map-route-edit"><input value={routeTitleDraft} onChange={(event) => setRouteTitleDraft(event.target.value)} aria-label="Название маршрута" /><input value={routeDescriptionDraft} onChange={(event) => setRouteDescriptionDraft(event.target.value)} aria-label="Заметка о маршруте" /><span><button type="button" disabled={Boolean(routeMutationBusy) || !routeTitleDraft.trim()} onClick={() => updateOwnerRoute(route.id, { title: routeTitleDraft.trim(), description: routeDescriptionDraft.trim() })}>Сохранить</button><button type="button" onClick={() => setEditingRouteId(null)}>Отмена</button></span></div> : <><div><b>{route.title}</b><p>{route.routeSource === 'recorded' ? `${route.startedAt ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' }).format(new Date(route.startedAt)) + ' · ' : ''}${route.durationSeconds !== undefined ? `${Math.floor(route.durationSeconds / 60)} мин · ` : ''}${route.distanceMeters !== undefined ? route.distanceMeters < 1000 ? `${route.distanceMeters} м` : `${(route.distanceMeters / 1000).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} км` : 'Записанная прогулка'}` : route.description || 'Маршрут построен заранее'} · {route.visibility === 'shared' ? 'по ссылке' : 'только вам'}</p></div><div className="production-map-row-actions"><button type="button" onClick={() => planSavedRoute(route,false,true)}>Открыть</button><button type="button" onClick={() => planSavedRoute(route,false)}>Повторить маршрут</button><button type="button" onClick={()=>downloadRouteGpx(route.title,route.path.coordinates,route.pathGaps,route.planning?.stops)}>GPX</button>{route.routeSource==='planned'&&<button type="button" onClick={() => planSavedRoute(route,true)}>Изменить путь</button>}<button type="button" onClick={() => beginOwnerRouteEdit(route)}>Изменить</button><button type="button" onClick={() => route.visibility === 'shared' ? revokeOwnerRouteShare(route) : shareOwnerRoute(route)}>{route.visibility === 'shared' ? 'Закрыть ссылку' : 'Поделиться'}</button><button type="button" className="danger-action" onClick={() => setPendingRouteDeletion(route)}>Убрать</button></div></>}
     </article>)}
     {removedZone && <div className="restore-notice" role="status"><span>Место убрано</span><button type="button" onClick={restoreZone}>Вернуть</button></div>}
   </section>;

@@ -39,6 +39,7 @@ export type LiveMapProps = {
   picked?: { lat: number; lng: number } | null;
   drawMode?: 'none' | 'point' | 'route';
   routePoints?: number[][];
+  routeStops?:number[][];
   routeGaps?: number[];
   onPick?: (point: { lat: number; lng: number }) => void;
   onMapClick?: (event: { latlng: { lat: number; lng: number } }) => void;

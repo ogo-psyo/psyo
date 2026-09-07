@@ -1,3 +1,4 @@
+import {parseRoutePlanning,type RoutePlanning} from './routePlanning';
 import { validRouteGaps, storedRoutePoints } from './routeGeometry';
 export type OwnerRouteView = {
   id: string;
@@ -8,6 +9,7 @@ export type OwnerRouteView = {
   path: { type: 'LineString'; coordinates: number[][] };
   visibility: 'private' | 'shared';
   routeSource: 'recorded' | 'planned';
+  planning?:RoutePlanning;
   startedAt?: string;
   durationSeconds?: number;
   pathGaps?: number[];
@@ -42,6 +44,7 @@ export function normalizeOwnerRoutes(value: unknown): OwnerRouteView[] {
       title: typeof source.title === 'string' && source.title.trim() ? source.title.trim() : 'Маршрут прогулки',
       description: typeof source.description === 'string' && source.description.trim() ? source.description.trim() : undefined,
       path,
+      ...(parseRoutePlanning(source.planning)?{planning:parseRoutePlanning(source.planning)!}:{}),
       pathGaps: validRouteGaps(source.path_gaps ?? source.pathGaps, path.coordinates.length),
       visibility: source.visibility === 'shared' ? 'shared' : 'private',
       routeSource: source.route_source === 'recorded' || source.routeSource === 'recorded' ? 'recorded' : 'planned',

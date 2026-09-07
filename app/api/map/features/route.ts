@@ -1,3 +1,4 @@
+import {parseRoutePlanning} from '@/lib/routePlanning';
 import { measuredMapOperation } from '@/lib/server/mapMetrics';
 import { createHash } from 'node:crypto';
 import { validRouteGaps, routeEwkt, storedRoutePoints } from '@/lib/routeGeometry';
@@ -117,6 +118,8 @@ async function measuredMutation(request:Request){
       const { data: pet } = await supabase.from('pets').select('id').eq('id', body.petId).eq('owner_id', ownerId).maybeSingle();
       if (!pet) return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
     }
+    const planning=body.planning==null?null:parseRoutePlanning(body.planning);
+    if(body.planning!=null&&!planning)return NextResponse.json({error:'INVALID_PLANNING'},{status:400});
     const routeSource = body.routeSource === 'recorded' ? 'recorded' : 'planned';
     const startedAt = routeSource === 'recorded' && typeof body.startedAt === 'string' && Number.isFinite(Date.parse(body.startedAt))
       ? new Date(body.startedAt).toISOString()
@@ -128,7 +131,7 @@ async function measuredMutation(request:Request){
     if(retryKey&&retryKey.length>128)return NextResponse.json({error:'INVALID_IDEMPOTENCY_KEY'},{status:400});
     const hex=retryKey?createHash('sha256').update(`${ownerId}:${retryKey}`).digest('hex'):null;
     const routeId=hex?`${hex.slice(0,8)}-${hex.slice(8,12)}-4${hex.slice(13,16)}-a${hex.slice(17,20)}-${hex.slice(20,32)}`:crypto.randomUUID();
-    const fingerprint=createHash('sha256').update(JSON.stringify({petId:body.petId,title:body.title.trim(),path:body.path,visibility,description:body.description,routeSource,startedAt,durationSeconds,distanceMeters,pathGaps:body.pathGaps})).digest('hex');
+    const fingerprint=createHash('sha256').update(JSON.stringify({petId:body.petId,title:body.title.trim(),path:body.path,visibility,description:body.description,routeSource,startedAt,durationSeconds,distanceMeters,pathGaps:body.pathGaps,planning})).digest('hex');
     const { data:inserted, error } = await supabase.from('map_routes').insert({
       id:routeId,
       request_fingerprint:fingerprint,
@@ -142,6 +145,7 @@ async function measuredMutation(request:Request){
       path: lineString,
       share_token: visibility === 'shared' ? crypto.randomUUID() : null,
       route_source: routeSource,
+      planning,
       path_gaps: validRouteGaps(body.pathGaps, body.path.length),
       started_at: startedAt,
       duration_seconds: durationSeconds,

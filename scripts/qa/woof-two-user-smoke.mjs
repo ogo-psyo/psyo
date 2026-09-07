@@ -1,4 +1,4 @@
-import { chromium } from 'playwright';
+import { chromium, webkit } from 'playwright';
 import assert from 'node:assert/strict';
 
 const base = process.env.BASE_URL || 'http://localhost:3101';
@@ -15,6 +15,7 @@ async function makeUser(browser, { ownerId, pet, location }) {
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
   });
   const page = await context.newPage();
+  await page.route('https://telegram.org/js/**',r=>r.fulfill({status:200,contentType:'application/javascript',body:''}));
   await page.route('**/api/v1/session/telegram', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ mode: 'telegram', session: { psyoUserId: ownerId, ownerId, firstName: pet.name, username: ownerId } }) }));
   await page.route('**/api/app/bootstrap**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ mode: 'owner', pet, pets: [pet], profile: appProfile(pet), activePetId: pet.id, reminders: [], wishlist: [], zones: [], routes: [], observations: [], documents: [] }) }));
   await page.route('**/api/social/profile**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ profile: null }) }));
@@ -39,9 +40,9 @@ async function makeUser(browser, { ownerId, pet, location }) {
     const requests = sharedRequest && [sharedRequest.senderPetId, sharedRequest.recipientPetId].includes(pet.id) ? [{ ...sharedRequest, otherDog: { name: sharedRequest.senderPetId === pet.id ? 'Мята' : 'Луна', avatarUrl: null } }] : [];
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ requests, missingTelegramUsernameAction: null }) });
   });
-  await page.goto(base, { waitUntil: 'networkidle' });
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
   await page.evaluate((stored) => { localStorage.setItem('pso.topapp.onboarding.v1', 'done'); localStorage.setItem('pso.product.profile.v5', JSON.stringify(stored)); }, appProfile(pet));
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('.app-tabs button[data-route="nearby"]').click({ force: true });
   await page.waitForTimeout(250);
   if (!await page.locator('.production-woof-workspace').count()) {
@@ -53,7 +54,8 @@ async function makeUser(browser, { ownerId, pet, location }) {
   return { context, page };
 }
 
-const browser = await chromium.launch({ headless: true });
+const engine=process.env.ENGINE||'chromium';
+const browser = await ({chromium,webkit}[engine]).launch({ headless: true });
 try {
   const userA = await makeUser(browser, { ownerId: 'owner-a', pet: { id: 'pet-a', name: 'Мята', owner_id: 'owner-a' }, location: { latitude: 55.76, longitude: 37.62 } });
   await userA.page.getByRole('button', { name: 'Дать Гав', exact: true }).click();
@@ -74,6 +76,7 @@ try {
   assert.ok((requestReads.get('owner-a') || 0) > readsBeforeRefresh, 'user A should poll requests while Gav stays open');
   const labels = await userA.page.locator('.woof-topbar button').evaluateAll((buttons) => buttons.map((button) => button.getAttribute('aria-label') || button.textContent));
   assert.ok(labels.includes('Отклики и связи: 1'), `user A should receive the response badge; got ${labels.join(' | ')}`);
+  if(process.env.OUT_DIR){for(const width of [320,390,1280]){await userA.page.setViewportSize({width,height:width===1280?720:844});await userA.page.waitForTimeout(500);await userA.page.screenshot({path:`${process.env.OUT_DIR}/gav-${engine}-${width}.png`});if(await userA.page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw Error('Gav overflow');}}
   console.log('woof two-user smoke: PASS');
   await userA.context.close();
   await userB.context.close();
