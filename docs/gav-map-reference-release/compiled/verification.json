@@ -1,0 +1,21 @@
+{
+  "fixture": true,
+  "report": [
+    {
+      "engine": "chromium",
+      "width": 390,
+      "swipeNoSends": true,
+      "photoRatios": 5,
+      "missingAndBroken": true,
+      "keyboard": true,
+      "modeReturn": true,
+      "responseFailureRetry": true,
+      "requests": 2,
+      "saveCalls": 3,
+      "appendNonempty": true,
+      "dedup": true,
+      "saveFailureRetryReopen": true,
+      "noOfflineCatalog": true
+    }
+  ]
+}

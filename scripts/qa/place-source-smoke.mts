@@ -1,0 +1,13 @@
+import fs from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import {normalizeOsmPlaces} from '../../lib/osmPlaces';
+import {queryPlaceRegions} from '../../lib/placeDiscovery';
+const raw=JSON.parse(await fs.readFile('/Users/ogoruslan/.openclaw/workspace/reports/pso-map-place-value/control-osm.json','utf8'));
+assert.equal(raw.remark,undefined);
+const bounds={south:55.72,west:37.58,north:55.77,east:37.65};
+const places=normalizeOsmPlaces(raw.elements,bounds);
+const region={id:'moscow-control-only',title:'Контрольная область, не продуктовый охват',bounds,updatedAt:raw.osm3s.timestamp_osm_base,sourceUrl:'https://www.openstreetmap.org/copyright',places};
+const parks=queryPlaceRegions([region],bounds,'parks')!,vets=queryPlaceRegions([region],bounds,'vets')!;
+assert.ok(parks.results.length>0);assert.ok(vets.results.length>0);assert.equal(places.some(p=>'phone' in p||'note' in p),false);
+const result={at:new Date().toISOString(),controlOnly:true,source:'one-off public OSM extract; not a live app backend',bounds,sourceElements:raw.elements.length,normalized:places.length,groups:Object.fromEntries(['parks','dogParks','vets','shops','grooming','cafes'].map(k=>[k,places.filter(p=>p.group===k).length])),samples:parks.results.slice(0,3).map(p=>({id:p.id,title:p.title,point:p.point})),regionalProductionCoverage:'not selected'};
+await fs.writeFile('docs/map-place-value/source-smoke.json',JSON.stringify(result,null,2));console.log(result);

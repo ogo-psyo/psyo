@@ -1,0 +1,14 @@
+[
+  {
+    "engine": "webkit",
+    "width": 390,
+    "dualEntry": true,
+    "stopsOnlyRestore": true,
+    "calculationFailure": true,
+    "saveFailure": true,
+    "accountFixtureRoundtrip": true,
+    "gpx": true,
+    "staleGuard": true,
+    "pageErrors": []
+  }
+]

@@ -1,0 +1,77 @@
+{
+  "fixture": true,
+  "results": [
+    {
+      "engine": "chromium",
+      "width": 320,
+      "requests": 7,
+      "saves": 3,
+      "accountFixtureSaveRetryDedup": true,
+      "reopen": true,
+      "collectionToNamedStops": true,
+      "draftReload": true,
+      "emptyAndFailure": true,
+      "focusReturn": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "requests": 7,
+      "saves": 3,
+      "accountFixtureSaveRetryDedup": true,
+      "reopen": true,
+      "collectionToNamedStops": true,
+      "draftReload": true,
+      "emptyAndFailure": true,
+      "focusReturn": true
+    },
+    {
+      "engine": "chromium",
+      "width": 1280,
+      "requests": 7,
+      "saves": 3,
+      "accountFixtureSaveRetryDedup": true,
+      "reopen": true,
+      "collectionToNamedStops": true,
+      "draftReload": true,
+      "emptyAndFailure": true,
+      "focusReturn": true
+    },
+    {
+      "engine": "webkit",
+      "width": 320,
+      "requests": 6,
+      "saves": 3,
+      "accountFixtureSaveRetryDedup": true,
+      "reopen": true,
+      "collectionToNamedStops": true,
+      "draftReload": true,
+      "emptyAndFailure": true,
+      "focusReturn": true
+    },
+    {
+      "engine": "webkit",
+      "width": 390,
+      "requests": 7,
+      "saves": 3,
+      "accountFixtureSaveRetryDedup": true,
+      "reopen": true,
+      "collectionToNamedStops": true,
+      "draftReload": true,
+      "emptyAndFailure": true,
+      "focusReturn": true
+    },
+    {
+      "engine": "webkit",
+      "width": 1280,
+      "requests": 6,
+      "saves": 3,
+      "accountFixtureSaveRetryDedup": true,
+      "reopen": true,
+      "collectionToNamedStops": true,
+      "draftReload": true,
+      "emptyAndFailure": true,
+      "focusReturn": true
+    }
+  ]
+}

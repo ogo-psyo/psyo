@@ -56,3 +56,15 @@ If RC1 foundation breaks the Mini App:
 2. Keep Telegram webhook receiving updates.
 3. Keep billing flags off.
 4. Record the failure in `docs/KNOWN_LIMITATIONS.md` or a dated incident note.
+
+## Mini-app entrypoint gate (postmortem 2026-09-07)
+
+A successful short alias is not a completed Mini App release. Enumerate Vercel aliases and record the actual configured Telegram entry URL. Never claim BotFather/menu configuration was inspected unless it was. The documented legacy hostname must not stay pinned to an older deployment.
+
+After deploy and alias assignment, verify the exact merge SHA on both supported origins:
+
+```bash
+node scripts/qa/check-release-entrypoints.mjs EXPECTED_FULL_SOURCE_SHA
+```
+
+Also browser-smoke the legacy/Telegram origin, preserving its origin (no redirect migration of local drafts/auth). Record deployment READY, both health results, applicable authenticated write acceptance and physical Telegram coverage separately. If alias reassignment is needed, use the already tested deployment and verify again. A rollback must account for all supported aliases and preserve additive data/migrations.

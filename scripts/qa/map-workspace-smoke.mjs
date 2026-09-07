@@ -85,7 +85,7 @@ try {
     await page.locator('[data-route-flow="record-review"]').waitFor();
     await page.waitForFunction(() => {
       const mapRect = document.querySelector('.leaflet-container')?.getBoundingClientRect();
-      const routeRect = document.querySelector('.leaflet-overlay-pane path[stroke="#4f7659"]')?.getBoundingClientRect();
+      const routeRect = document.querySelector('.leaflet-overlay-pane path.pso-active-route-path')?.getBoundingClientRect();
       return Boolean(mapRect && routeRect && routeRect.left >= mapRect.left - 12 && routeRect.right <= mapRect.right + 12 && routeRect.top >= mapRect.top - 12 && routeRect.bottom <= mapRect.bottom + 12);
     }, undefined, { timeout: 2_000 }).catch(() => { throw new Error(`${width}: completed route is not fitted into the review map`); });
     if (outDir) await page.screenshot({ path: `${outDir}/map-walk-review-${width}.png`, fullPage: false });
@@ -94,6 +94,7 @@ try {
       await page.locator('[data-route-flow="idle"]').waitFor();
       await page.getByRole('button', {name:'Сохранённое',exact:true}).click();
       await page.locator('.production-map-saved-row.route p').getByText(/мин/).waitFor();
+      await page.locator('.map-extra-layers summary').click();
       const savedLayout = await page.evaluate(() => {
         const filters = document.querySelector('.production-map-filters')?.getBoundingClientRect();
         const lastFilter = document.querySelector('.production-map-filters button:last-child')?.getBoundingClientRect();

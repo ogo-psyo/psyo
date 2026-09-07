@@ -2,7 +2,8 @@ import {chromium,webkit} from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 const base=process.env.BASE_URL||'http://127.0.0.1:3236';
-const out='docs/map-route-value-v12';
+const out=process.env.OUT_DIR||'docs/map-route-value-v12';
+await fs.mkdir(out,{recursive:true});
 const pet={id:'route-test-pet',name:'Мята',owner_id:'route-test-owner'};
 const profile={dogName:pet.name,backendPetId:pet.id,breedId:'mixed',breedGroupId:'mixed',lifeStage:'взрослая',size:'средняя',vaccineStatus:'актуально',parasiteStatus:'актуально',socialMode:'сначала спросить',energyLevel:'обычный',neighborhood:'Сокол',photos:[],selectedStyle:'city'};
 const report=[];
@@ -42,7 +43,7 @@ for(const engine of (process.env.ENGINE?[process.env.ENGINE]:['chromium','webkit
  await page.locator('#production-map-search-input').press('Enter');
  await page.getByRole('option').filter({hasText:'Тестовый парк'}).click();
  await page.getByRole('button',{name:'Добавить в прогулку',exact:true}).click();
- await page.getByRole('button',{name:'Добавить остановку',exact:true}).click();
+ await page.getByRole('button',{name:'Продолжить',exact:true}).click();
  assert.equal(await page.locator('.map-waypoint-list li').count(),2);
  await page.getByRole('button',{name:'Точка 2: выше',exact:true}).click();
  assert.match(await page.locator('.map-waypoint-list li').first().innerText(),/Тестовый парк/);

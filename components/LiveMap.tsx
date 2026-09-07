@@ -29,7 +29,7 @@ export type MapFeature = {
 
 export type MapLayerFilter = 'all' | 'routes' | 'places' | 'risks';
 export type MapUserLocation = { lat: number; lng: number; accuracy?: number };
-export type MapFocusPoint = { lat: number; lng: number; token: number };
+export type MapFocusPoint = { lat: number; lng: number; token: number; zoom?: number; bounds?: MapBounds };
 export type MapBounds = {south:number;west:number;north:number;east:number};
 export type MapSearchPoint = { lat: number; lng: number; title: string; detail?: string };
 
@@ -40,12 +40,13 @@ export type LiveMapProps = {
   drawMode?: 'none' | 'point' | 'route';
   routePoints?: number[][];
   routeStops?:number[][];
+  routeStopIds?:(string|undefined)[];
   routeGaps?: number[];
   onPick?: (point: { lat: number; lng: number }) => void;
   onMapClick?: (event: { latlng: { lat: number; lng: number } }) => void;
   searchBounds?:MapBounds|null;
   onBoundsChange?:(bounds:MapBounds)=>void;
-  onCenterChange?: (point: { lat: number; lng: number }) => void;
+  onCenterChange?: (point: { lat: number; lng: number; zoom?: number }) => void;
   onRouteDraw?: (points: { lat: number; lng: number }[]) => void;
   filter?: MapLayerFilter;
   selectedFeatureId?: string|null;

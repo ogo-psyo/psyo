@@ -1,0 +1,15 @@
+# Map place value implementation
+User16327 approves proceeding with SPEC DoR/DoD. Branch feat/map-place-value-dod from80e1025. Terminal: real discovery/place/save/reopen/planning chain, scenario-preservation evidence, explicit per-card gaps, concrete reviewable release result; no Yandex or new paidservice. MapZoneService boundary only, existing accounts/APIrights unchanged.
+
+DoR investigation: public Nominatim disallows area POI harvest; public Overpass policy explicitly warns against relying on public instances as app backend. Use an owned, licensed regional OSM extract for production discovery, not automatic scrape on every camera move. Region question sent early; independent place/library/route improvements continue. Do not silently limit geography or label unserved area empty. Provider policy text snapshots saved alongside. Exact coverage/source/date/limits will be documented before enabling dataset.
+
+Roles: implementation/self-review assistant; owner product choice Ruslan; no independent reviewer assigned in this run. UI evidence will use realdata whereavailable plus isolated fixtures for failures, labels explicit. Design/contract/scenario evidence grows with eachverticalslice. Production user testaccounts/physicalTelegram remain separate acceptance blockers; never editrealuserrecords to manufacturepass.
+
+## Concrete discovery contract (owned extract)
+- Category keys all/parks/dogParks/vets/shops/grooming/cafes; no dog-access inference fromcategory. Unknown explicit. Originaltextsearchcategories unchanged.
+- Local query maximum viewport span0.3latitude/0.5longitude degrees; maximum80displayed rows, exactcount withinownedbase+truncatedflag. Uncoveredrequest422AREA_NOT_COVERED; overwide422AREA_LIMIT, malformed400. No externalquery onpan/category. Catalog capped25000POIs/region,8MBinputimport. SourceURL,date,bounds required.
+- Public OSM identities/names/coordinates/tags only. Ownerlibrary separate; ownusernotes nevermergedintodataset. ODbLattribution/source download retained. Datasetupdates explicit import+review, notsilentlivepoll. Caching public300s browser/3600sedge. No promise datasetisallrealplaces/currentdogaccess.
+- Numerical limits are app-controlled initial boundedimplementationconstraints, not claimedvendorlimits/qualitymeasurements. Actual citycoverage pendinguseranswer; onlycontrolarea maybeusedforQA. No silentcommercial reliance on publicOverpass.
+
+## Dataset operations
+`scripts/data/import-map-places.mts source.json region-manifest.json candidate.json` is an offline, bounded import. It emits a candidate and never installs or polls a provider. Manifest requires region ID/title/bounds/source URL; original extraction timestamp required. Review coverage, known POIs, counts and unavailable categories before replacing runtime catalog; publish the exact derived public dataset with ODbL attribution/source before release. Do not silently use the control Moscow area as product scope. Catalog currently empty intentionally while region choice is outstanding; a no-coverage response is not a successful empty POI search and this is not Ready for release.

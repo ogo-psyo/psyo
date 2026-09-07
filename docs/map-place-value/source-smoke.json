@@ -1,0 +1,48 @@
+{
+  "at": "2026-09-07T09:59:06.151Z",
+  "controlOnly": true,
+  "source": "one-off public OSM extract; not a live app backend",
+  "bounds": {
+    "south": 55.72,
+    "west": 37.58,
+    "north": 55.77,
+    "east": 37.65
+  },
+  "sourceElements": 1897,
+  "normalized": 1883,
+  "groups": {
+    "parks": 140,
+    "dogParks": 21,
+    "vets": 7,
+    "shops": 19,
+    "grooming": 6,
+    "cafes": 1690
+  },
+  "samples": [
+    {
+      "id": "osm-way-556522267",
+      "title": "Парк без названия",
+      "point": {
+        "lat": 55.7457124,
+        "lng": 37.6143444
+      }
+    },
+    {
+      "id": "osm-relation-13629175",
+      "title": "Репинский сквер",
+      "point": {
+        "lat": 55.7451626,
+        "lng": 37.6176666
+      }
+    },
+    {
+      "id": "osm-relation-1382200",
+      "title": "Парк без названия",
+      "point": {
+        "lat": 55.7451047,
+        "lng": 37.6065904
+      }
+    }
+  ],
+  "regionalProductionCoverage": "not selected"
+}
