@@ -78,7 +78,7 @@ export function RequestsPanel({
   if (!visible.length) return <section className="gav-journey-empty"><h2>Знакомство больше недоступно</h2><p>Возможно, участник закрыл его. Другие отклики остаются в списке.</p><button type="button" onClick={onBack}>К откликам</button></section>;
   return (
     <section className="social-requests-panel" aria-labelledby="social-requests-title">
-      
+
       <h2 id="social-requests-title" className="sr-only">Знакомство</h2>
       <div className="social-request-list">
         {visible.map((request) => {
