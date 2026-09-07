@@ -794,22 +794,9 @@ export default function Home() {
     }
 
     const controller = new AbortController();
-    let locationTimer: ReturnType<typeof setTimeout> | undefined;
     const bootstrap = async () => {
-      // Discovery/profile must not wait for browser geolocation (which may stall in a background WebView).
+      // Show existing data immediately; location permission follows an explicit area choice.
       await loadSocialSurface(controller.signal, socialViewerLocation);
-      if (controller.signal.aborted || socialViewerLocation || !navigator.geolocation) return;
-      setSocialLocating(true);
-      locationTimer = setTimeout(() => { if (!controller.signal.aborted) setSocialLocating(false); }, 11000);
-      navigator.geolocation.getCurrentPosition((position) => {
-        clearTimeout(locationTimer);
-        if (controller.signal.aborted) return;
-        setSocialLocating(false);
-        const next = { lat: position.coords.latitude, lng: position.coords.longitude };
-        setSocialViewerLocation(next);
-        void loadSocialSurface(controller.signal, next).catch(() => { if (!controller.signal.aborted) setNearbyState('error'); });
-      }, () => { clearTimeout(locationTimer); if (!controller.signal.aborted) setSocialLocating(false); },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 });
     };
     bootstrap().catch((lookupError) => {
       if (controller.signal.aborted) return;
@@ -820,7 +807,7 @@ export default function Home() {
       setNearbyReason('NEARBY_LOOKUP_FAILED');
       setNearbyState('error');
     });
-    return () => { controller.abort(); clearTimeout(locationTimer); };
+    return () => { controller.abort(); };
   }, [profile.backendPetId, session?.access_token, tab, telegramSession.ownerId]);
 
   useEffect(() => {

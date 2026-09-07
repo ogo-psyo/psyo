@@ -1,0 +1,68 @@
+[
+  {
+    "engine": "chromium",
+    "width": 320,
+    "noImplicitGPS": true,
+    "oneEntry": true,
+    "noBlankMap": true,
+    "deniedGPSToManual": true,
+    "backPreservesInput": true,
+    "searchRetry": true,
+    "selectedAreaRestoresMap": true
+  },
+  {
+    "engine": "chromium",
+    "width": 390,
+    "noImplicitGPS": true,
+    "oneEntry": true,
+    "noBlankMap": true,
+    "deniedGPSToManual": true,
+    "backPreservesInput": true,
+    "searchRetry": true,
+    "selectedAreaRestoresMap": true
+  },
+  {
+    "engine": "chromium",
+    "width": 1280,
+    "noImplicitGPS": true,
+    "oneEntry": true,
+    "noBlankMap": true,
+    "deniedGPSToManual": true,
+    "backPreservesInput": true,
+    "searchRetry": true,
+    "selectedAreaRestoresMap": true
+  },
+  {
+    "engine": "webkit",
+    "width": 320,
+    "noImplicitGPS": true,
+    "oneEntry": true,
+    "noBlankMap": true,
+    "deniedGPSToManual": true,
+    "backPreservesInput": true,
+    "searchRetry": true,
+    "selectedAreaRestoresMap": true
+  },
+  {
+    "engine": "webkit",
+    "width": 390,
+    "noImplicitGPS": true,
+    "oneEntry": true,
+    "noBlankMap": true,
+    "deniedGPSToManual": true,
+    "backPreservesInput": true,
+    "searchRetry": true,
+    "selectedAreaRestoresMap": true
+  },
+  {
+    "engine": "webkit",
+    "width": 1280,
+    "noImplicitGPS": true,
+    "oneEntry": true,
+    "noBlankMap": true,
+    "deniedGPSToManual": true,
+    "backPreservesInput": true,
+    "searchRetry": true,
+    "selectedAreaRestoresMap": true
+  }
+]

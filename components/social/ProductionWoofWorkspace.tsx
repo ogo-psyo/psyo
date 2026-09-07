@@ -118,6 +118,8 @@ export function ProductionWoofWorkspace(props: Props) {
   const [requestsOpen, setRequestsOpen] = useState(props.recommendationEntry?.view === 'requests');
   const [manualArea, setManualArea] = useState(false);
   const [areaQuery, setAreaQuery] = useState('');
+  const [areaLocateAttempted,setAreaLocateAttempted]=useState(false);
+  const areaLocateError=areaLocateAttempted&&!props.locating&&!props.viewerLocation?'Не удалось определить район. Можно указать его вручную.':'';
   const [areaResults, setAreaResults] = useState<Array<{id:string;title:string;detail?:string;point:CoarseLocation}>>([]);
   const [areaState, setAreaState] = useState<'idle'|'loading'|'error'|'ready'>('idle');
   const areaSearchRef = useRef<AbortController|null>(null);
@@ -335,8 +337,17 @@ export function ProductionWoofWorkspace(props: Props) {
     });
   }
 
-  return <section ref={rootRef} onClickCapture={event=>{if(!activeModal){const button=(event.target as HTMLElement).closest<HTMLElement>("button");if(button)restoreFocusRef.current=button;}}} className="production-woof-workspace" data-view-mode={mode} data-production-journey="nearby" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
-    <div className="woof-map-layer" aria-hidden={mode !== 'live'}>
+  useEffect(()=>{if(manualArea)rootRef.current?.querySelector<HTMLInputElement>('.woof-manual-area input')?.focus();},[manualArea]);
+  const needsArea=mode==='live'&&!props.viewerLocation&&props.signalReason!=='CITY_NOT_SUPPORTED';
+  const manualAreaForm=<section className="woof-manual-area" aria-label="Выбор района">
+    <label>Город, район или место<input autoComplete="off" value={areaQuery} placeholder="Например, Сокол, Москва" onChange={e=>setAreaQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')void findArea();}} /></label>
+    <button type="button" disabled={areaQuery.trim().length<2||areaState==='loading'} onClick={findArea}>{areaState==='loading'?'Ищу…':'Найти район'}</button>
+    <p role="status">{areaState==='loading'?'Ищу район…':areaState==='error'?'Поиск не ответил. Попробуйте ещё раз — название сохранилось.':areaState==='ready'&&!areaResults.length?'Не нашли это место. Добавьте город или уточните название.':''}</p>
+    {areaResults.map(result=><button type="button" key={result.id} onClick={()=>{props.onChooseViewerLocation(result.point);signalDraftRef.current=null;setLocation(result.point);setManualArea(false);}}>{result.title}{result.detail?` · ${result.detail}`:''}</button>)}
+  </section>;
+
+  return <section ref={rootRef} onClickCapture={event=>{if(!activeModal){const button=(event.target as HTMLElement).closest<HTMLElement>("button");if(button)restoreFocusRef.current=button;}}} className="production-woof-workspace" data-view-mode={mode} data-needs-area={needsArea} data-production-journey="nearby" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
+    <div className="woof-map-layer" hidden={needsArea} aria-hidden={mode !== 'live'||needsArea}>
       {props.viewerLocation ? <WoofLiveMap signals={filteredLiveSignals} viewerLocation={props.viewerLocation} viewerRadiusMeters={props.viewerRadiusMeters} selectedId={selectedSignal?.id ?? null} onSelect={(id) => setSelectedSignalId(id)} />
         : <div className="woof-map-await" aria-hidden="true" />}
     </div>
@@ -350,7 +361,7 @@ export function ProductionWoofWorkspace(props: Props) {
     </header>
 
     {props.result && !activeModal && <p className="woof-action-result" role="status">{props.result}</p>}
-    {props.error && !activeModal && <p className="woof-action-error" role="alert">{props.error}</p>}
+    {props.error && !activeModal && !needsArea && <p className="woof-action-error" role="alert">{props.error}</p>}
 
     {props.inviteState !== 'idle' && <aside className={`woof-incoming-invite state-${props.inviteState}`} aria-live="polite" role={props.inviteState === 'error' ? 'alert' : 'status'}>
       <div>
@@ -361,9 +372,22 @@ export function ProductionWoofWorkspace(props: Props) {
       {props.inviteState !== 'loading' && <button type="button" onClick={props.onDismissInvite}>{props.inviteState === 'ready' ? 'Отклонить' : 'Закрыть'}</button>}
     </aside>}
 
-    {mode === 'live' && <div className="woof-work-area">
+    {needsArea&&<main className="woof-welcome">
+      <div className="woof-welcome-symbol"><PawPrint weight="duotone" aria-hidden="true"/></div>
+      <h1>{manualArea?'Где будем гулять?':'С кем пойдём гулять?'}</h1>
+      <p>{manualArea?'Найдите привычное место для прогулок.':'Выберите район — посмотрим, кто ищет компанию рядом.'}</p>
+      {manualArea?<>{manualAreaForm}<button type="button" className="woof-welcome-back" onClick={()=>setManualArea(false)}>Назад</button></>:<div className="woof-welcome-actions">
+        <button type="button" className="woof-welcome-locate" onClick={()=>{setAreaLocateAttempted(true);props.onLocateViewer();}} disabled={props.locating}><Crosshair aria-hidden="true"/>{props.locating?'Определяю район…':'Найти рядом со мной'}</button>
+        <button type="button" className="woof-welcome-manual" onClick={()=>setManualArea(true)}>Указать район</button>
+      </div>}
+      {areaLocateError&&!manualArea&&<p className="woof-welcome-error" role="alert">{areaLocateError}</p>}
+      {props.error&&<p className="woof-welcome-error" role="alert">{props.error}</p>}
+      <small className="woof-welcome-privacy"><ShieldCheck aria-hidden="true"/>Точное местоположение другим не показываем.</small>
+      {props.accessMessage&&<p className="woof-welcome-access">Карту можно посмотреть без входа. Для откликов нужен вход через Telegram.</p>}
+    </main>}
+    {mode === 'live' && !needsArea && <div className="woof-work-area">
       <div className="woof-search-panel"><div className="woof-area-summary"><h1 className="sr-only">Гав</h1><p>{props.viewerLocation ? `${props.profile?.district || 'Выбранный центр на карте'} · ${props.viewerRadiusKm} км · примерная зона` : 'Область поиска ещё не выбрана'}</p><button type="button" onClick={()=>setManualArea(v=>!v)} aria-expanded={manualArea}>Выбрать район вручную</button></div>
-      {manualArea && <section className="woof-manual-area" aria-label="Выбор района"><label>Район или место<input value={areaQuery} onChange={e=>setAreaQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')void findArea();}} /></label><button type="button" disabled={areaQuery.trim().length<2||areaState==='loading'} onClick={findArea}>Найти район</button><p role="status">{areaState==='loading'?'Ищу район…':areaState==='error'?'Не удалось найти район. Повторите поиск.':areaState==='ready'&&!areaResults.length?'Ничего не найдено':''}</p>{areaResults.map(result=><button type="button" key={result.id} onClick={()=>{props.onChooseViewerLocation(result.point);signalDraftRef.current=null;setLocation(result.point);setManualArea(false);}}>{result.title} · {result.detail}</button>)}</section>}
+      {manualArea && manualAreaForm}
       <details className="woof-live-filter-disclosure"><summary>Радиус и фильтры · {props.viewerRadiusKm} км · {liveWhen==='all'?'любое время':liveWhen==='now'?'сейчас':'позже'} · {livePace==='all'?'любой темп':paceCopy[livePace]}</summary><section className="woof-live-filters" aria-label="Фильтры поиска на карте">
         <label><span>Радиус</span><select value={String(props.viewerRadiusKm)} onChange={(event) => props.onChangeViewerRadius(Number(event.target.value))}><option value="3">3 км</option><option value="5">5 км</option><option value="10">10 км</option><option value="15">15 км</option></select></label>
         <label><span>Когда</span><select value={liveWhen} onChange={(event) => setLiveWhen(event.target.value as typeof liveWhen)}><option value="all">Любое</option><option value="now">Сейчас</option><option value="later">Позже</option></select></label>
