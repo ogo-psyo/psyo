@@ -221,7 +221,7 @@ export function LiveMapClient({
       <MapContainer center={defaultCenter} zoom={12} className="live-map" zoomControl attributionControl={false} aria-label={accessibleLabel}>
         <MapAccessibility label={accessibleLabel} />
         <AttributionControl prefix={false} />
-        <OpenFreeMapLayer key={tileRevision} onLoad={() => setTilesReady(true)} onError={() => setTilesFailed(true)} />
+        <OpenFreeMapLayer key={tileRevision} onLoad={() => { setTilesReady(true); setTilesFailed(false); }} onError={() => { setTilesReady(false); setTilesFailed(true); }} />
         <MapEvents onMapClick={onMapClick} onPick={onPick} onCenterChange={onCenterChange} onBoundsChange={onBoundsChange} />
         {searchBounds&&<Rectangle bounds={[[searchBounds.south,searchBounds.west],[searchBounds.north,searchBounds.east]]} pathOptions={{color:'#526f53',weight:1,dashArray:'4 6',fillOpacity:0}} interactive={false} />}
         <MapViewport zones={zones} features={features} userLocation={userLocation} focusPoint={focusPoint} routePoints={routePoints} fitDraftRoute={fitDraftRoute} />

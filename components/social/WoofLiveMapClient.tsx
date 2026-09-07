@@ -13,30 +13,55 @@ function escapeHtml(value: string) {
   return value.replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char] || char);
 }
 
-function Viewport({ signals, viewerLocation }: Pick<WoofLiveMapProps, 'signals' | 'viewerLocation'>) {
+function Viewport({ viewerLocation, selectedId, signals }: Pick<WoofLiveMapProps, 'viewerLocation' | 'selectedId' | 'signals'>) {
   const map = useMap();
   const positionedFor = useRef<string|null>(null);
+  const selection = useRef<string|null>(selectedId);
   useEffect(() => {
-    const area=viewerLocation?`${viewerLocation.lat}:${viewerLocation.lng}`:'none';
-    if(positionedFor.current===area)return;positionedFor.current=area;
-    map.invalidateSize({ animate: false });
-    if (signals.length === 0) {
-      if (viewerLocation) map.setView([viewerLocation.lat, viewerLocation.lng], 15, { animate: false });
-      return;
-    }
-    const points = [
-      ...(viewerLocation ? [[viewerLocation.lat, viewerLocation.lng] as [number, number]] : []),
-      ...signals.map((signal) => [signal.approximateLocation.lat, signal.approximateLocation.lng] as [number, number]),
-    ];
-    if (points.length === 1) map.setView(points[0], 14, { animate: false });
-    else map.fitBounds(points, { paddingTopLeft: [42, 120], paddingBottomRight: [42, 250], maxZoom: 14, animate: false });
-  }, [map, signals, viewerLocation]);
+    if (!viewerLocation) return;
+    const area = `${viewerLocation.lat}:${viewerLocation.lng}`;
+    if (positionedFor.current === area) return;
+    const first = positionedFor.current === null;
+    positionedFor.current = area;
+    map.invalidateSize({ animate: false, pan: false });
+    // Preserve the user's zoom when searching a moved map. New results must not
+    // fit back to a distant own signal or reset the camera on every poll.
+    map.setView([viewerLocation.lat, viewerLocation.lng], first ? 14 : map.getZoom(), { animate: false });
+  }, [map, viewerLocation]);
+  useEffect(() => {
+    if (selection.current === selectedId) return;
+    selection.current = selectedId;
+    const signal = signals.find(s => s.id === selectedId);
+    if (signal) map.panTo([signal.approximateLocation.lat, signal.approximateLocation.lng], { animate: false });
+  }, [map, selectedId, signals]);
   return null;
 }
 
-export function WoofLiveMapClient({ signals, viewerLocation, viewerRadiusMeters, selectedId, onSelect }: WoofLiveMapProps) {
+function ExplorerControls({ expanded, onToggleExpanded, onSearchHere, searching, viewerLocation, viewerRadiusMeters }: WoofLiveMapProps) {
+  const map = useMap();
+  const ref = useRef<HTMLDivElement>(null);
+  const [moved, setMoved] = useState(false);
+  const viewerLat = viewerLocation?.lat, viewerLng = viewerLocation?.lng;
+  useEffect(() => {
+    if (ref.current) { L.DomEvent.disableClickPropagation(ref.current); L.DomEvent.disableScrollPropagation(ref.current); }
+    const update = () => setMoved(viewerLat !== undefined && viewerLng !== undefined && map.getCenter().distanceTo([viewerLat, viewerLng]) > 100);
+    // Selecting a marker pans the camera too, but does not ask for a new search.
+    map.on('dragend', update);
+    const frame = requestAnimationFrame(() => setMoved(false));
+    return () => { cancelAnimationFrame(frame); map.off('dragend', update); };
+  }, [map, viewerLat, viewerLng]);
+  return <div ref={ref} className="woof-map-explorer">
+    <button type="button" className="woof-expand-map" aria-expanded={expanded} onClick={onToggleExpanded}>{expanded ? 'Свернуть карту' : 'Развернуть карту'}</button>
+    {expanded && onSearchHere && <button type="button" className="woof-search-here" disabled={searching} onClick={() => { const center = map.getCenter(); setMoved(false); onSearchHere({lat:center.lat,lng:center.lng}); }}>{searching ? 'Ищем компанию…' : `Искать здесь · ${viewerRadiusMeters / 1000} км`}</button>}
+    {expanded && moved && <span className="woof-map-moved" role="status">Карта перемещена — обновите поиск здесь</span>}
+  </div>;
+}
+
+export function WoofLiveMapClient(props: WoofLiveMapProps) {
+  const {signals,viewerLocation,viewerRadiusMeters,selectedId,onSelect,onMapState}=props;
   const [tileState,setTileState] = useState<'loading'|'ready'|'error'>('loading');
   const [tileRevision,setTileRevision] = useState(0);
+  useEffect(() => { onMapState?.(tileState); }, [onMapState, tileState]);
   const icons = useMemo(() => new Map(signals.map((signal) => {
     const content = signal.avatarUrl
       ? `<img src="${escapeHtml(signal.avatarUrl)}" alt="" />`
@@ -52,8 +77,9 @@ export function WoofLiveMapClient({ signals, viewerLocation, viewerRadiusMeters,
   return <MapContainer center={defaultCenter} zoom={12} className="woof-live-map" zoomControl attributionControl={false} aria-label="Карта активных Гав-сигналов поблизости">
     <AttributionControl prefix={false} />
 <OpenFreeMapLayer key={tileRevision} onLoad={()=>setTileState('ready')} onError={()=>setTileState('error')} />
-    {tileState!=='ready'&&<div className="woof-map-load-state" role={tileState==='error'?'alert':'status'}>{tileState==='loading'?'Карта загружается…':<>Подложка карты не загрузилась. Сигналы сохранены. <button type="button" onClick={()=>{setTileState('loading');setTileRevision(v=>v+1);}}>Повторить</button></>}</div>}
-    <Viewport signals={signals} viewerLocation={viewerLocation} />
+    {tileState!=='ready'&&<div className="woof-map-load-state" role={tileState==='error'?'alert':'status'}>{tileState==='loading'?'Карта загружается…':<>Карта недоступна. Гав и отклики работают. <button type="button" onClick={()=>{setTileState('loading');setTileRevision(v=>v+1);}}>Повторить загрузку карты</button></>}</div>}
+    <Viewport signals={signals} viewerLocation={viewerLocation} selectedId={selectedId} />
+    <ExplorerControls {...props} />
     {viewerLocation && <>
       <Circle center={[viewerLocation.lat, viewerLocation.lng]} radius={viewerRadiusMeters} pathOptions={{ color: '#4d7057', fillColor: '#c4d4b8', fillOpacity: 0.055, weight: 1, dashArray: '6 8' }} interactive={false} />
       <CircleMarker center={[viewerLocation.lat, viewerLocation.lng]} radius={7} pathOptions={{ color: '#f7fff9', fillColor: '#4d7057', fillOpacity: 1, weight: 3 }} interactive={false} />

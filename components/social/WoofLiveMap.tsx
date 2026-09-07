@@ -9,6 +9,11 @@ export type WoofLiveMapProps = {
   viewerLocation: CoarseLocation | null;
   viewerRadiusMeters: number;
   selectedId: string | null;
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
+  searching?: boolean;
+  onSearchHere?: (location: CoarseLocation) => void;
+  onMapState?: (state: 'loading' | 'ready' | 'error') => void;
   onSelect: (id: string) => void;
 };
 

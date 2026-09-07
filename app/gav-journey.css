@@ -71,3 +71,82 @@ body.companion-app .gav-dialog select{appearance:none;-webkit-appearance:none;he
 body.companion-app .gav-dialog .gav-connection-portrait .gav-photo-fallback{padding:0;gap:0;min-height:0;width:64px;height:64px}
 body.companion-app .gav-dialog .gav-connection-portrait .gav-photo-fallback svg{width:28px!important;height:28px!important}
 body.companion-app .gav-dialog .gav-relationship-heading{box-shadow:none;border-bottom:1px solid #e2e8f1;margin-bottom:12px}
+
+/* Live Gav is an actionable state, not a settings page below a blank map. */
+body.companion-app .production-woof-workspace .woof-topbar{display:flex!important;gap:8px;width:100%;box-sizing:border-box}
+body.companion-app .production-woof-workspace .woof-topbar>button{flex:0 0 44px!important;min-width:44px!important;width:44px!important;padding:10px!important;position:relative}
+body.companion-app .production-woof-workspace .woof-requests-label{display:none!important}
+body.companion-app .production-woof-workspace .woof-mode-switch{flex:1;min-width:0}
+body.companion-app .production-woof-workspace .woof-mode-switch button{padding:10px 8px!important;white-space:normal}
+body.companion-app .production-woof-workspace .woof-map-layer{height:clamp(170px,28dvh,240px)!important;min-height:170px}
+body.companion-app .production-woof-workspace[data-map-state=error] .woof-map-layer{height:150px!important;min-height:150px}
+body.companion-app .production-woof-workspace .woof-work-area{margin-top:0;padding:12px 18px 28px!important;border-radius:0;background:white}
+body.companion-app .woof-work-area .woof-search-panel{margin-bottom:12px!important;z-index:auto}
+.woof-live-tools{display:flex;align-items:flex-start;gap:8px;position:relative}
+body.companion-app .woof-live-tools .woof-area-change,body.companion-app .woof-live-tools summary{display:flex;align-items:center;gap:6px;min-height:44px;padding:10px 12px;box-sizing:border-box;background:#edf2f8;border:0;border-radius:14px;color:#465b78;font:500 14px/1.4 var(--font-pouf),system-ui,sans-serif}
+.woof-live-tools svg{width:18px;height:18px;flex:none}
+.woof-live-tools .woof-live-filter-disclosure{flex:1;margin:0}
+.woof-live-tools summary{cursor:pointer;list-style:none}
+.woof-live-tools summary::-webkit-details-marker{display:none}
+body.companion-app .woof-live-tools .woof-live-filters{position:static;inset:auto;display:grid;margin-top:8px;padding:10px!important;box-shadow:none!important;background:#f3f6fb!important;border-radius:14px!important}
+body.companion-app .woof-live-tools:has(details[open]){flex-wrap:wrap}
+body.companion-app .woof-live-tools details[open]{flex-basis:100%}
+body.companion-app .woof-work-area .woof-manual-area{position:static!important;inset:auto!important;margin:12px 0;max-height:none;max-width:none;width:100%;box-sizing:border-box;background:#f4f6fa;box-shadow:none;padding:12px;border-radius:16px}
+body.companion-app .woof-work-area .woof-manual-area :is(input,button){min-height:44px;max-width:100%;box-sizing:border-box;font-size:16px}
+body.companion-app .woof-work-area .woof-area-done{min-height:44px;background:#edf2f8;border:0;border-radius:12px;padding:10px 14px;color:#465b78}
+body.companion-app .woof-work-area .woof-signal-card{border:0!important;padding:0!important;margin-bottom:12px!important}
+body.companion-app .woof-work-area .woof-signal-main{gap:12px}
+body.companion-app .woof-work-area .woof-signal-main p{font-size:17px;color:#283347;margin:0 0 4px}
+body.companion-app .woof-work-area .woof-signal-main span{font-size:13px;line-height:1.5;color:#58697f;font-weight:400}
+body.companion-app .woof-work-area .woof-card-avatar{width:52px;height:52px;flex:none;overflow:hidden;border-radius:16px}
+body.companion-app .woof-card-avatar .gav-photo{width:52px;height:52px;aspect-ratio:1;background:#e8eef7}
+body.companion-app .woof-card-avatar .gav-photo-fallback{width:52px;height:52px;min-height:0;padding:0;gap:0}
+body.companion-app .woof-card-avatar .gav-photo-fallback svg{width:26px!important;height:26px!important}
+.woof-card-avatar :is(.gav-photo-fallback span,.gav-photo-loading){display:none}
+body.companion-app .woof-work-area .woof-location-copy{font-size:12px;font-weight:400;color:#64758a;margin:10px 0}
+body.companion-app .woof-work-area .woof-signal-actions{display:flex;gap:8px;margin-top:12px}
+body.companion-app .woof-work-area .woof-signal-actions button{min-height:44px;flex:1;background:#eef2f8;color:#495f7c;border:0;border-radius:14px;padding:10px 12px;font-size:14px}
+body.companion-app .woof-work-area .woof-signal-actions .woof-primary,body.companion-app .woof-work-area .woof-give-button{background:#2d72bd!important;color:white!important}
+.woof-waiting-company{margin-top:16px;font-size:14px;color:#58697f;line-height:1.5}
+body.companion-app .woof-waiting-company p{margin:0 0 6px}
+body.companion-app .woof-waiting-company button{border:0;border-radius:12px;min-height:44px;padding:8px 12px;background:#edf2f8;color:#385b86;font-size:14px}
+.woof-signal-picker{display:flex;gap:8px;overflow:auto;padding-block:10px}
+body.companion-app .woof-signal-picker button{flex:none;min-height:44px;padding:10px 12px;border:1px solid #dce4ef;border-radius:14px;background:white;color:#465b78}
+body.companion-app .woof-signal-picker button[aria-pressed=true]{background:#e4eefb;border-color:#2d72bd}
+body.companion-app .woof-live-map .woof-map-load-state{z-index:650;top:12px;left:12px;right:12px;max-width:none;padding:12px;border-radius:14px;background:#f5f7fc;color:#465b78;font:14px/1.5 system-ui;box-shadow:0 2px 12px #263c5110}
+body.companion-app .woof-map-load-state button{display:block;min-height:44px;background:#e2ecfa;color:#28568c;margin-top:8px;padding:8px 12px;font-size:14px}
+body.companion-app .woof-live-map .leaflet-control-attribution{font-size:9px;max-width:100%;background:#fffffff0}
+@media(min-width:800px){body.companion-app .production-woof-workspace .woof-map-layer,body.companion-app .production-woof-workspace[data-map-state=error] .woof-map-layer{height:100%!important;min-height:0}}
+body.companion-app .woof-work-area .woof-signal-card>.woof-primary{background:#2d72bd!important;color:white!important;min-height:44px}
+body.companion-app .woof-work-area .woof-signal-card .woof-primary{box-shadow:none!important}
+/* Expand the same map, keeping its camera and selected signal alive. */
+.woof-map-explorer{position:absolute;z-index:660;top:10px;inset-inline:12px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+body.companion-app .woof-map-explorer button{pointer-events:auto;min-height:44px;padding:10px 12px;border:0;border-radius:14px;background:#fff;color:#354d6d;box-shadow:0 2px 10px #22354b14;font:500 13px/1.3 var(--font-pouf),system-ui,sans-serif}
+body.companion-app .woof-map-explorer .woof-search-here{background:#2d72bd;color:white}
+.woof-map-moved{flex-basis:100%;font:12px/1.4 system-ui;background:#ffffffed;padding:6px 10px;border-radius:10px;color:#465b78;width:fit-content}
+body.companion-app .woof-live-map .woof-map-load-state{top:64px}
+body.companion-app .production-woof-workspace[data-map-state=error] .woof-map-layer{height:205px!important;min-height:205px}
+body.companion-app .production-woof-workspace[data-map-expanded=true][data-view-mode=live]{overflow:hidden!important}
+body.companion-app .production-woof-workspace[data-map-expanded=true][data-view-mode=live] .woof-map-layer{flex:1 1 0;height:auto!important;min-height:220px}
+body.companion-app .production-woof-workspace[data-map-expanded=true][data-view-mode=live] .woof-work-area{flex:0 1 auto;min-height:0;max-height:42%;overflow-y:auto;padding-bottom:14px!important;scroll-padding-bottom:12px}
+body.companion-app .production-woof-workspace[data-map-expanded=true] .woof-work-area .woof-signal-note{margin-block:8px;font-size:13px;line-height:1.4}
+body.companion-app .production-woof-workspace[data-map-expanded=true] .woof-live-map .leaflet-control-zoom{display:block;position:relative;top:100px;border:0;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px #22354b14}
+@media(min-width:800px){body.companion-app .production-woof-workspace[data-map-expanded=true][data-view-mode=live] .woof-work-area{max-height:none;grid-row:2}body.companion-app .production-woof-workspace[data-map-expanded=true][data-view-mode=live] .woof-map-layer{grid-column:2;grid-row:1/3;height:100%!important}}
+.woof-expanded-tools{display:flex;gap:8px;margin-bottom:10px}
+body.companion-app .woof-expanded-tools button{min-height:36px;padding:6px 10px;background:#edf2f8;border:0;border-radius:12px;color:#465b78;font-size:13px}
+body.companion-app .woof-expanded-tools button[aria-pressed=true]{background:#dae8fa;color:#245b9d}
+body.companion-app .production-woof-workspace[data-map-expanded=true][data-map-panel=selection] .woof-search-panel,
+body.companion-app .production-woof-workspace[data-map-expanded=true][data-map-panel=list] .woof-live-tools,
+body.companion-app .production-woof-workspace[data-map-expanded=true][data-map-panel=tools] .woof-signal-picker{display:none!important}
+body.companion-app .production-woof-workspace[data-map-expanded=true]:not([data-map-panel=selection]) :is(.woof-signal-card,.woof-give-button,.woof-waiting-company){display:none!important}
+body.companion-app .production-woof-workspace[data-map-expanded=true] .woof-waiting-company{display:none}
+body.companion-app .production-woof-workspace[data-map-expanded=true] .woof-work-area .woof-location-copy{margin:6px 0;font-size:11px}
+body.companion-app .production-woof-workspace[data-map-expanded=true] .woof-signal-card .woof-signal-actions{margin-top:8px}
+body.companion-app .production-woof-workspace[data-map-expanded=true] .woof-work-area .woof-signal-card{margin-bottom:0!important}
+body.companion-app .production-woof-workspace[data-map-expanded=true] .woof-work-area .woof-give-button{margin:8px 0 0!important;min-height:36px;padding:8px!important;font-size:12px}
+body.companion-app .production-woof-workspace[data-map-expanded=true] .woof-work-area:has(.woof-signal-card) .woof-give-button{display:none!important}
+body.companion-app .production-woof-workspace[data-map-expanded=true] .woof-work-area .woof-location-copy{display:none}
+body.companion-app .woof-expanded-tools button{min-height:44px}
+body.companion-app .woof-live-filters select{height:44px!important;min-height:44px!important;font-size:16px!important;appearance:none;-webkit-appearance:none;background:#fff!important;color:#354d6d!important;border:1px solid #ccd7e5!important;border-radius:12px!important;padding:8px!important}
+@media(max-width:360px){body.companion-app .production-woof-workspace .woof-mode-switch button{font-size:13px!important;padding-inline:4px!important}}
+body.companion-app .production-woof-workspace[data-map-expanded=true][data-map-panel=list] :is(.woof-manual-area,.woof-area-done){display:none!important}
