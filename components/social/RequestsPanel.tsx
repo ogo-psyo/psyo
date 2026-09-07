@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { CandidatePhoto } from './CandidateDeck';
+import { PawPrint } from '@phosphor-icons/react';
 import type { SocialScenario } from '@/lib/socialCore';
 
 export type SocialRequestView = {
@@ -21,14 +23,6 @@ const scenarioLabels: Record<SocialScenario, string> = {
   mating: 'случку',
 };
 
-const statusLabels: Record<SocialRequestView['status'], string> = {
-  pending: 'ждёт решения',
-  accepted: 'вы согласились',
-  rejected: 'отклонён',
-  cancelled: 'отменён',
-  blocked: 'пользователь заблокирован',
-};
-
 export function RequestsPanel({
   petId,
   requests,
@@ -38,6 +32,7 @@ export function RequestsPanel({
   onReport,
   onOpenChat,
   onMeeting,
+  selectedId, onSelect, onBack, children, onRefresh,
 }: {
   petId: string;
   requests: SocialRequestView[];
@@ -47,34 +42,54 @@ export function RequestsPanel({
   onReport: (id: string, reason: string) => Promise<boolean>;
   onOpenChat: (url: string) => void;
   onMeeting?: (id:string)=>void;
+  selectedId?: string | null;
+  onSelect?: (id: string) => void;
+  onBack?: () => void;
+  children?: ReactNode;
+  onRefresh?: () => void;
+
 }) {
   const [reportingId, setReportingId] = useState<string | null>(null);
   const [blockingId, setBlockingId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
-  if (requests.length === 0) return <section className="social-requests-panel social-requests-empty" aria-labelledby="social-requests-title">
-    <div className="social-section-heading"><div><h3 id="social-requests-title">Откликов пока нет</h3><p>Когда кто-то откликнется на ваш Гав или анкету, запрос появится здесь автоматически.</p></div></div>
-  </section>;
-
+  const [closing, setClosing] = useState(false);
+  const statusCopy = (request: SocialRequestView) => request.status === 'pending'
+    ? request.recipientPetId === petId ? `Вас зовут на ${scenarioLabels[request.scenario]}` : 'Ждём ответа'
+    : request.status === 'accepted' ? 'Можно договориться о встрече' : 'Знакомство закрыто';
+  const identity = (request: SocialRequestView) => <div className="gav-connection-identity">
+    <div className="gav-connection-portrait"><CandidatePhoto src={request.otherDog?.avatarUrl || null} name={request.otherDog?.name || 'собаки'}/></div>
+    <div><b>{request.otherDog?.name ?? 'Другая собака'}</b><p>{statusCopy(request)}</p></div>
+  </div>;
+  if (onSelect && !selectedId) {
+    const groups = [
+      { title: 'Вас зовут', items: requests.filter(r => r.status === 'pending' && r.recipientPetId === petId) },
+      { title: 'Можно договариваться', items: requests.filter(r => r.status === 'accepted') },
+      { title: 'Ждём ответа', items: requests.filter(r => r.status === 'pending' && r.senderPetId === petId) },
+    ];
+    const history = requests.filter(r => r.status !== 'pending' && r.status !== 'accepted');
+    return <section className="gav-connections" aria-label="Отклики и связи"><h2>Ваша компания</h2>
+      <p>Здесь продолжаются знакомства — от первого отклика до места прогулки.</p>
+      {!groups.some(g => g.items.length) && <div className="gav-journey-empty"><PawPrint aria-hidden="true"/><h3>Сейчас нет активных откликов</h3><p>Выберите собаку или дайте свой Гав, чтобы найти компанию.</p><button type="button" className="woof-primary" onClick={onBack}>Вернуться к собакам</button></div>}
+      {groups.filter(g => g.items.length).map(g => <section key={g.title}><h3>{g.title}</h3>{g.items.map(r => <button className="gav-connection-row" type="button" key={r.id} onClick={() => onSelect(r.id)}>{identity(r)}<span aria-hidden="true">→</span></button>)}</section>)}
+      {!!history.length && <details className="gav-history"><summary>Завершённые знакомства · {history.length}</summary>{history.map(r => <button className="gav-connection-row" type="button" key={r.id} onClick={() => onSelect(r.id)}>{identity(r)}<span aria-hidden="true">→</span></button>)}</details>}
+    </section>;
+  }
+  const visible = selectedId ? requests.filter(r => r.id === selectedId) : requests;
+  if (!visible.length) return <section className="gav-journey-empty"><h2>Знакомство больше недоступно</h2><p>Возможно, участник закрыл его. Другие отклики остаются в списке.</p><button type="button" onClick={onBack}>К откликам</button></section>;
   return (
     <section className="social-requests-panel" aria-labelledby="social-requests-title">
-      <div className="social-section-heading">
-        <div>
-          <h3 id="social-requests-title">Отклики и связи</h3>
-          <p>Контакт откроется только после взаимного согласия.</p>
-        </div>
-      </div>
+
+      <h2 id="social-requests-title" className="sr-only">Знакомство</h2>
       <div className="social-request-list">
-        {requests.map((request) => {
+        {visible.map((request) => {
           const incoming = request.recipientPetId === petId;
           const busy = busyId === request.id;
           return (
             <article key={request.id} className="social-request-card">
-              <div>
-                <b>{request.otherDog?.name ?? 'Другая собака'}</b>
-                <p>{incoming ? `Вас зовут на ${scenarioLabels[request.scenario]}` : `Ваш запрос на ${scenarioLabels[request.scenario]}`}</p>
-                <p>{request.source === "signal" ? "Отклик на Гав" : request.source === "invite" ? "По приглашению" : "Знакомство по анкете"} · {statusLabels[request.status]}</p>
-              </div>
-
+              <header className="gav-relationship-heading">{onBack && <button className="gav-back" type="button" onClick={onBack}>← К откликам</button>}{identity(request)}</header>
+              <p className="gav-connection-purpose">{request.source === 'signal' ? 'Отклик на Гав' : request.source === 'invite' ? 'По приглашению' : 'Знакомство по анкете'} · {scenarioLabels[request.scenario]}</p>
+              {request.status === 'pending' && <p>{incoming ? 'Откликнитесь на приглашение. После согласия можно выбрать место и открыть контакт.' : 'Отклик отправлен. Ответ появится здесь автоматически; можно продолжить поиск компании.'}</p>}
+              {request.status !== 'pending' && request.status !== 'accepted' && <p>Эта связь закрыта. Активные знакомства и новые отклики — в общем списке.</p>}
               {request.status === 'pending' && incoming && (
                 <div className="social-request-actions">
                   <button className="primary" type="button" disabled={busy} onClick={() => onAction(request.id, 'accept')}>Принять</button>
@@ -85,20 +100,20 @@ export function RequestsPanel({
                 <button type="button" disabled={busy} onClick={() => onAction(request.id, 'cancel')}>Отменить запрос</button>
               )}
               {request.status === 'accepted' && <div className="social-request-actions">
-                {onMeeting&&<button type="button" onClick={()=>onMeeting(request.id)}>Место встречи</button>}
+                {!children&&onMeeting&&<button type="button" onClick={()=>onMeeting(request.id)}>Место встречи</button>}
                 {request.telegramContactUrl && <button className="primary" type="button" onClick={() => onOpenChat(request.telegramContactUrl!)}>Открыть чат</button>}
-                <button type="button" disabled={busy} onClick={() => onAction(request.id, 'close')}>Завершить знакомство</button>
-              </div>}
-              {request.status === 'accepted' && !request.telegramContactUrl && missingTelegramUsernameAction && (
-                <p className="social-inline-hint">{missingTelegramUsernameAction}</p>
-              )}
 
+              </div>}
+              {request.status === 'accepted' && !request.telegramContactUrl && <div className="gav-contact-unavailable"><p>{missingTelegramUsernameAction || 'Контакт участника пока недоступен. Вы можете предложить место здесь; чат появится, когда контакт станет доступен.'}</p><button type="button" onClick={onRefresh}>Проверить контакт</button></div>}
+              {request.status === 'accepted' && children}
               {request.status !== 'blocked' && (
-                <div className="social-safety-actions">
+                <details className="gav-connection-more"><summary>Другие действия</summary><div className="social-safety-actions">
+                  {request.status === 'accepted' && <button type="button" disabled={busy} onClick={() => setClosing(true)}>Завершить знакомство</button>}
                   <button type="button" disabled={busy} onClick={() => setBlockingId(request.id)}>Заблокировать</button>
                   <button type="button" disabled={busy} onClick={() => { setReportingId(request.id); setReason(''); }}>Пожаловаться</button>
-                </div>
+                </div></details>
               )}
+              {closing && <div className="gav-inline-confirm"><p>Завершить это знакомство? Оно останется в истории, но место и контакт больше не будут доступны.</p><button type="button" disabled={busy} onClick={async () => { if (await onAction(request.id, 'close')) setClosing(false); }}>Да, завершить</button><button type="button" onClick={() => setClosing(false)}>Продолжить знакомство</button></div>}
 
               {reportingId === request.id && (
                 <form onSubmit={async (event) => {

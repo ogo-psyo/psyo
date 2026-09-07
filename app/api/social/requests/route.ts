@@ -176,6 +176,7 @@ export async function GET(request: Request) {
   const context = await socialRequestContext(request);
   if ('response' in context) return context.response!;
   const petId = new URL(request.url).searchParams.get('petId');
+  const includeHistory = new URL(request.url).searchParams.get('history') === '1';
   if (!petId) return NextResponse.json({ error: 'PET_ID_REQUIRED' }, { status: 400 });
   try {
     if (!await requireOwnedPet(context.supabase, context.ownerId, petId)) {
@@ -200,9 +201,13 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) return socialStorageError();
+    // History cannot displace any active relationship from the existing 100-row feed.
+    const history = includeHistory ? await context.supabase.from('social_match_requests').select('*').or(`sender_pet_id.eq.${petId},recipient_pet_id.eq.${petId}`).in('status', ['rejected', 'cancelled']).order('created_at', { ascending: false }).limit(30) : { data: [], error: null };
+    if (history.error) return socialStorageError();
+    const rows = [...latestActiveRequestsByPetPair(data ?? []), ...(history.data ?? [])];
     const excluded = await excludedOwnerIds(context.supabase, context.ownerId);
-    const otherPetIds = [...new Set((data ?? []).map((row) => row.sender_pet_id === petId ? row.recipient_pet_id : row.sender_pet_id))];
-    const requestPetIds = [...new Set((data ?? []).flatMap((row) => [row.sender_pet_id, row.recipient_pet_id]))];
+    const otherPetIds = [...new Set(rows.map((row) => row.sender_pet_id === petId ? row.recipient_pet_id : row.sender_pet_id))];
+    const requestPetIds = [...new Set(rows.flatMap((row) => [row.sender_pet_id, row.recipient_pet_id]))];
     const [petsLookup, discoveryLookup] = await Promise.all([
       otherPetIds.length ? context.supabase.from('pets').select('id, name, avatar_url, avatar_source, active_avatar_asset_id').in('id', otherPetIds) : Promise.resolve({ data: [], error: null }),
       requestPetIds.length ? context.supabase.from('social_discovery_profiles').select('pet_id, discoverable').in('pet_id', requestPetIds) : Promise.resolve({ data: [], error: null }),
@@ -212,7 +217,7 @@ export async function GET(request: Request) {
     const petsById = new Map((otherPets ?? []).map((pet) => [pet.id, { name: pet.name, avatar_url: socialAvatarUrl(pet) }]));
     const discoverablePets = new Set((discoveryLookup.data ?? []).filter((item) => item.discoverable).map((item) => item.pet_id));
     const requests = [];
-    for (const row of latestActiveRequestsByPetPair(data ?? [])) {
+    for (const row of rows) {
       const otherOwnerId = row.sender_owner_id === context.ownerId ? row.recipient_owner_id : row.sender_owner_id;
       if (excluded.has(otherOwnerId)) continue;
       const pairBlocked = false;
