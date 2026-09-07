@@ -1,0 +1,80 @@
+[
+  {
+    "engine": "chromium",
+    "width": 320,
+    "compiledApp": true,
+    "dualEntry": true,
+    "stopsOnlyRestore": true,
+    "calculationFailure": true,
+    "saveFailure": true,
+    "accountFixtureRoundtrip": true,
+    "gpx": true,
+    "staleGuard": true,
+    "pageErrors": []
+  },
+  {
+    "engine": "chromium",
+    "width": 390,
+    "compiledApp": true,
+    "dualEntry": true,
+    "stopsOnlyRestore": true,
+    "calculationFailure": true,
+    "saveFailure": true,
+    "accountFixtureRoundtrip": true,
+    "gpx": true,
+    "staleGuard": true,
+    "pageErrors": []
+  },
+  {
+    "engine": "chromium",
+    "width": 1280,
+    "compiledApp": true,
+    "dualEntry": true,
+    "stopsOnlyRestore": true,
+    "calculationFailure": true,
+    "saveFailure": true,
+    "accountFixtureRoundtrip": true,
+    "gpx": true,
+    "staleGuard": true,
+    "pageErrors": []
+  },
+  {
+    "engine": "webkit",
+    "width": 320,
+    "compiledApp": true,
+    "dualEntry": true,
+    "stopsOnlyRestore": true,
+    "calculationFailure": true,
+    "saveFailure": true,
+    "accountFixtureRoundtrip": true,
+    "gpx": true,
+    "staleGuard": true,
+    "pageErrors": []
+  },
+  {
+    "engine": "webkit",
+    "width": 390,
+    "compiledApp": true,
+    "dualEntry": true,
+    "stopsOnlyRestore": true,
+    "calculationFailure": true,
+    "saveFailure": true,
+    "accountFixtureRoundtrip": true,
+    "gpx": true,
+    "staleGuard": true,
+    "pageErrors": []
+  },
+  {
+    "engine": "webkit",
+    "width": 1280,
+    "compiledApp": true,
+    "dualEntry": true,
+    "stopsOnlyRestore": true,
+    "calculationFailure": true,
+    "saveFailure": true,
+    "accountFixtureRoundtrip": true,
+    "gpx": true,
+    "staleGuard": true,
+    "pageErrors": []
+  }
+]

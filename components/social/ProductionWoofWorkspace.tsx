@@ -332,7 +332,7 @@ export function ProductionWoofWorkspace(props: Props) {
     });
   }
 
-  return <section ref={rootRef} onClickCapture={event=>{if(!activeModal){const button=(event.target as HTMLElement).closest<HTMLElement>("button");if(button)restoreFocusRef.current=button;}}} className="production-woof-workspace" data-production-journey="nearby" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
+  return <section ref={rootRef} onClickCapture={event=>{if(!activeModal){const button=(event.target as HTMLElement).closest<HTMLElement>("button");if(button)restoreFocusRef.current=button;}}} className="production-woof-workspace" data-view-mode={mode} data-production-journey="nearby" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
     <div className="woof-map-layer" aria-hidden={mode !== 'live'}>
       {props.viewerLocation ? <WoofLiveMap signals={filteredLiveSignals} viewerLocation={props.viewerLocation} viewerRadiusMeters={props.viewerRadiusMeters} selectedId={selectedSignal?.id ?? null} onSelect={(id) => setSelectedSignalId(id)} />
         : <div className="woof-map-await" aria-hidden="true" />}
@@ -358,7 +358,7 @@ export function ProductionWoofWorkspace(props: Props) {
       {props.inviteState !== 'loading' && <button type="button" onClick={props.onDismissInvite}>{props.inviteState === 'ready' ? 'Отклонить' : 'Закрыть'}</button>}
     </aside>}
 
-    {mode === 'live' && <>
+    {mode === 'live' && <div className="woof-work-area">
       <div className="woof-search-panel"><div className="woof-area-summary"><h1 className="sr-only">Гав</h1><p>{props.viewerLocation ? `${props.profile?.district || 'Выбранный центр на карте'} · ${props.viewerRadiusKm} км · примерная зона` : 'Область поиска ещё не выбрана'}</p><button type="button" onClick={()=>setManualArea(v=>!v)} aria-expanded={manualArea}>Выбрать район вручную</button></div>
       {manualArea && <section className="woof-manual-area" aria-label="Выбор района"><label>Район или место<input value={areaQuery} onChange={e=>setAreaQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')void findArea();}} /></label><button type="button" disabled={areaQuery.trim().length<2||areaState==='loading'} onClick={findArea}>Найти район</button><p role="status">{areaState==='loading'?'Ищу район…':areaState==='error'?'Не удалось найти район. Повторите поиск.':areaState==='ready'&&!areaResults.length?'Ничего не найдено':''}</p>{areaResults.map(result=><button type="button" key={result.id} onClick={()=>{props.onChooseViewerLocation(result.point);signalDraftRef.current=null;setLocation(result.point);setManualArea(false);}}>{result.title} · {result.detail}</button>)}</section>}
       <details className="woof-live-filter-disclosure"><summary>Радиус и фильтры · {props.viewerRadiusKm} км · {liveWhen==='all'?'любое время':liveWhen==='now'?'сейчас':'позже'} · {livePace==='all'?'любой темп':paceCopy[livePace]}</summary><section className="woof-live-filters" aria-label="Фильтры поиска на карте">
@@ -385,7 +385,7 @@ export function ProductionWoofWorkspace(props: Props) {
           : props.signalReason === 'VIEWER_LOCATION_REQUIRED' ? <article className="woof-empty-live woof-location-state"><Crosshair /><b>Покажите район рядом</b><p>Точная точка не сохраняется — для поиска используется округлённая зона.</p><button type="button" onClick={props.onLocateViewer} disabled={props.locating}>{props.locating ? 'Определяю…' : 'Показать рядом'}</button></article>
             : !selectedSignal && props.state !== 'loading' && <article className="woof-empty-live"><PawPrint /><b>{props.signals.some((signal) => !signal.isMine) ? 'Под эти фильтры пока тихо' : `В радиусе ${props.viewerRadiusKm} км пока тихо`}</b><p>{props.signals.some((signal) => !signal.isMine) ? 'Выберите любое время и темп или расширьте радиус.' : 'Ваш Гав станет первой живой точкой района.'}</p>{props.signals.some((signal) => !signal.isMine) && <button type="button" onClick={() => { setLiveWhen('all'); setLivePace('all'); props.onChangeViewerRadius(15); }}>Показать всех</button>}</article>}
       {!props.accessMessage && props.signalReason !== 'CITY_NOT_SUPPORTED' && <button ref={composerTriggerRef} className="woof-give-button" type="button" onClick={openSignalComposer}>{ownSignal ? 'Изменить Гав' : 'Дать Гав'}<PawPrint weight="fill" /></button>}
-    </>}
+    </div>}
 
     {mode === 'meet' && <main ref={feedRef} onScroll={event=>{try{sessionStorage.setItem(`${viewKey}:scroll`,String(event.currentTarget.scrollTop));}catch{/* preference only */}}} className="woof-meet-feed">
       <div className="woof-meet-intro"><p className="woof-kicker">найти своих</p><h1>Знакомства</h1><p>Спокойный поиск постоянной компании — без показа геопозиции.</p></div>

@@ -1,0 +1,68 @@
+/* Approved adjacent Map/Gav composition. Existing type, colors and motion retained. */
+body.companion-app .production-map-workspace{display:flex!important;flex-direction:column;overflow-y:auto!important;background:linear-gradient(130deg,#fcfcf8,#f0f4ec)!important;isolation:isolate}
+body.companion-app .map-workspace-tools{position:relative;flex-shrink:0;padding:12px 18px;background:#fcfcf8;z-index:510}
+body.companion-app .map-workspace-tools .production-map-topbar{position:relative!important;inset:auto!important;padding:0!important;margin-bottom:10px}
+body.companion-app .map-workspace-tools .production-map-profile{box-shadow:none!important;background:transparent!important;padding:0!important}
+body.companion-app .map-workspace-tools .production-map-profile small{display:none}
+body.companion-app .map-workspace-tools .production-map-search{position:relative!important;inset:auto!important;box-shadow:none!important;width:100%;background:#eaf0e5!important;margin:0}
+body.companion-app .map-workspace-tools .map-search-area{position:relative;inset:auto;margin-top:8px;box-shadow:none}
+body.companion-app .map-workspace-tools .production-map-status{position:relative!important;inset:auto!important;display:block!important;margin:6px 0 0;padding:0;font-size:12px;min-height:0;background:transparent!important;box-shadow:none!important;transform:none!important}
+body.companion-app .map-workspace-tools .production-map-status:empty{display:none!important}
+body.companion-app .production-map-workspace .production-map-canvas{position:relative!important;inset:auto!important;flex:none!important;height:clamp(220px,33dvh,330px)!important;min-height:220px!important;width:100%;overflow:hidden}
+body.companion-app .production-map-workspace.route-focus .production-map-canvas{height:clamp(220px,33dvh,330px)!important}
+body.companion-app .production-map-canvas :is(.live-map-frame,.live-map,.leaflet-container){height:100%!important;min-height:0!important}
+body.companion-app .map-work-area{position:relative;flex:1;padding:20px 20px 28px;min-width:0}
+body.companion-app .map-work-area :is(.production-map-snap-sheet,.production-route-controller,.map-place-panel){position:relative!important;inset:auto!important;transform:none!important;width:100%!important;height:auto!important;max-height:none!important;min-height:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;overflow:visible!important;padding:0!important}
+body.companion-app .map-work-area :is(.production-map-sheet-body,.production-route-controller-body){height:auto!important;max-height:none!important;overflow:visible!important;padding:12px 0!important}
+body.companion-app .map-work-area:has(.map-place-panel) :is(.production-map-snap-sheet,.production-route-controller){display:none!important}
+body.companion-app .production-route-controller-actions{position:relative!important;inset:auto!important;display:flex!important;flex-wrap:wrap;gap:8px;padding:14px 0!important;box-shadow:none!important;background:transparent!important}
+body.companion-app .production-route-controller-actions>button{flex:1;min-width:100px;min-height:44px}
+body.companion-app .production-route-controller-heading{padding:0 0 14px!important;gap:8px;flex-wrap:wrap}
+body.companion-app .map-home-tabs{display:flex;gap:18px;border-bottom:1px solid #dce5da;margin-bottom:16px}
+body.companion-app .map-home-tabs button{min-height:44px;min-width:0;background:transparent;border:0;border-bottom:2px solid transparent;padding:8px 0;color:#53675b;font:inherit;font-size:14px;border-radius:0;box-shadow:none}
+body.companion-app .map-home-tabs button[aria-pressed=true]{color:#283e34;border-bottom-color:#405e4a;font-weight:600}
+.map-nearby-places h2{font-size:21px;margin:0 0 12px}.map-nearby-places button{display:block;min-height:44px;text-align:left;border:0;background:transparent;color:#405e4a;padding:10px 0;font:inherit}.map-nearby-row{width:100%;border-bottom:1px solid #dde5da!important}.map-nearby-row span{display:block;font-size:13px}
+.route-planning-method{display:flex;gap:8px;margin-bottom:14px}.route-planning-method button,.route-calculation button,.route-candidate button{min-height:44px;font:inherit;border:0;border-radius:13px;padding:10px 12px;color:#34513d;background:#e3ecdd}.route-planning-method button[aria-pressed=true],.route-calculation .primary,.route-candidate .primary{background:linear-gradient(130deg,#496b53,#405e4a);color:#fffefa}
+.route-candidate{padding:14px 0;border-block:1px solid #dce5da;margin-bottom:12px}.route-candidate p,.route-calculation p{font-size:13px;line-height:1.5;color:#53675b}.route-candidate button{margin:6px 8px 0 0}.route-calculation{margin:16px 0}.route-calculation>section{padding:12px 0}.route-calculation-error{color:#823d3b;background:#f6e8e0;padding:12px;border-radius:12px;font-size:14px}
+body.companion-app .map-waypoint-list li{flex-wrap:wrap;padding-block:12px;gap:6px}.map-waypoint-list .route-stop-label{flex:1 1 100%;display:block;text-align:left;padding:0;min-height:44px;border:0;background:transparent}.route-stop-label b{font-size:16px;font-weight:600}.route-stop-label small{font-size:12px}
+body.companion-app .route-stop-number{background:transparent;border:0;box-shadow:none;color:white;font-size:12px;font-weight:700;padding:0}.route-stop-number:before{display:none}
+body.companion-app .production-map-workspace .leaflet-bottom.leaflet-right{top:auto!important;bottom:0!important;right:0!important}
+body.companion-app .production-map-workspace .leaflet-top.leaflet-left{top:12px!important;bottom:auto!important;left:auto!important;right:10px!important}
+body.companion-app .production-map-center-pin{top:50%!important;left:50%!important}
+/* Gav: one continuous work region below geography, same states and handlers. */
+body.companion-app .production-woof-workspace{display:flex!important;flex-direction:column;overflow-y:auto!important;background:linear-gradient(130deg,#fcfcf8,#f0f4ec)!important}
+body.companion-app .production-woof-workspace .woof-topbar{position:relative!important;inset:auto!important;order:0;flex-shrink:0;padding:12px 18px!important;background:#fcfcf8}
+body.companion-app .production-woof-workspace .woof-map-layer{position:relative!important;inset:auto!important;order:1;flex:none;height:clamp(230px,35dvh,340px)!important;min-height:230px}
+body.companion-app .production-woof-workspace[data-view-mode=meet] .woof-map-layer{display:none}
+body.companion-app .woof-work-area{position:relative;order:2;flex:1;padding:18px 20px 26px}
+body.companion-app .woof-work-area :is(.woof-search-panel,.woof-signal-card,.woof-empty-live,.woof-give-button){position:relative!important;inset:auto!important;transform:none!important;width:100%!important;max-width:none!important;max-height:none!important;margin:0 0 16px!important;overflow:visible!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}
+body.companion-app .woof-work-area .woof-give-button{border-radius:14px!important;background:linear-gradient(130deg,#496b53,#405e4a)!important;padding:14px!important;min-height:48px;color:white!important}
+body.companion-app .woof-work-area .woof-area-summary{padding:0;margin:0}.woof-work-area .woof-live-filter-disclosure{margin-inline:0}.woof-work-area .woof-live-heading{justify-content:flex-start!important;padding:8px 0!important}
+body.companion-app .woof-work-area .woof-signal-card{border-top:1px solid #dde5da!important;padding-top:16px!important}
+body.companion-app .production-woof-workspace .woof-meet-feed{position:relative!important;inset:auto!important;order:2;flex:1;min-height:0;overflow:visible!important;padding-bottom:24px}
+body.companion-app .woof-live-map .leaflet-bottom.leaflet-right{top:auto!important;bottom:0!important;right:0!important}
+body.companion-app .production-woof-workspace>.woof-action-result,body.companion-app .production-woof-workspace>.woof-action-error{order:0;flex-shrink:0}
+@media(min-width:800px){
+ body.companion-app .production-map-workspace{display:grid!important;grid-template-columns:400px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);overflow:hidden!important}
+ body.companion-app .map-workspace-tools{grid-column:1;grid-row:1;padding:16px 24px}
+ body.companion-app .production-map-workspace .production-map-canvas,body.companion-app .production-map-workspace.route-focus .production-map-canvas{grid-column:2;grid-row:1/3;height:100%!important;min-height:0!important}
+ body.companion-app .map-work-area{grid-column:1;grid-row:2;overflow:auto;min-height:0;padding:16px 24px 24px}
+ body.companion-app .production-woof-workspace{display:grid!important;grid-template-columns:400px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);overflow:hidden!important}
+ body.companion-app .production-woof-workspace .woof-topbar{grid-column:1;grid-row:1}
+ body.companion-app .production-woof-workspace .woof-map-layer{grid-column:2;grid-row:1/3;height:100%!important;min-height:0}
+ body.companion-app .woof-work-area{grid-column:1;grid-row:2;overflow:auto;min-height:0}
+ body.companion-app .production-woof-workspace .woof-meet-feed{grid-column:1/3;grid-row:2;overflow:auto!important}
+}
+
+body.companion-app .map-workspace-tools :is(.production-map-profile,.production-map-search,.production-map-locate){border:0!important;border-radius:14px!important}
+body.companion-app .production-map-workspace .leaflet-control-zoom{border:0!important;box-shadow:0 4px 16px #34493418!important;border-radius:13px!important;overflow:hidden}
+body.companion-app .production-map-workspace .leaflet-control-zoom a{border:0!important}
+body.companion-app .production-route-review>button,body.companion-app .map-editor-tools button{min-height:44px;border:0;border-radius:13px;background:#e7eee1;color:#34513d;font:inherit;font-size:14px;padding:10px 14px}
+body.companion-app .production-route-review>button{width:100%;margin-block:4px}
+body.companion-app .production-route-review-summary{border:0;background:linear-gradient(125deg,#e9efde,#e0e8d8)!important;border-radius:17px}
+body.companion-app .production-route-review-summary>svg{background:#d5e1cd!important;color:#405e4a!important}
+body.companion-app .map-work-area .production-map-privacy button[aria-pressed=true]{background:#dfe8d5!important;border-color:#647b59!important;color:#34513d!important}
+body.companion-app .production-route-review-summary+p{font-size:14px;line-height:1.5}
+/* Keep the final library/feed actions above the persistent app navigation. */
+body.companion-app .production-map-workspace:not(.route-focus),body.companion-app .production-woof-workspace{scroll-padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+body.companion-app .production-map-workspace:not(.route-focus) .map-work-area,body.companion-app .woof-work-area,body.companion-app .production-woof-workspace .woof-meet-feed{padding-bottom:calc(108px + env(safe-area-inset-bottom))!important;scroll-padding-bottom:96px}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { AttributionControl, Circle, CircleMarker, MapContainer, Marker, Polyline, Popup, Rectangle, useMap, useMapEvents } from 'react-leaflet';
+import { AttributionControl, Circle, CircleMarker, MapContainer, Marker, Polyline, Popup, Tooltip, Rectangle, useMap, useMapEvents } from 'react-leaflet';
 import type { LiveMapProps, MapFeature } from './LiveMap';
 import { OpenFreeMapLayer } from './OpenFreeMapLayer';
 import 'leaflet/dist/leaflet.css';
@@ -111,16 +111,17 @@ function MapViewport({ zones, features, userLocation, focusPoint, routePoints, f
   useEffect(() => {
     const draft = draftRoutePositions(routePoints || []);
     const draftSignature = fitDraftRoute && draft.length > 1
-      ? `${draft.length}:${draft[0].join(',')}:${draft.at(-1)?.join(',')}`
+      ? JSON.stringify(draft)
       : '';
     if (draftSignature && draftSignature !== fittedDraftRef.current) {
       fittedDraftRef.current = draftSignature;
       const fitCompletedRoute = () => {
         map.invalidateSize({ animate: false });
+        const adjacent=Boolean(map.getContainer().closest('.production-map-workspace')?.querySelector('.map-work-area'));
         const mapHeight = map.getSize().y;
         map.fitBounds(draft, {
-          paddingTopLeft: [44, 76],
-          paddingBottomRight: [44, Math.round(mapHeight * 0.58)],
+          paddingTopLeft: [36, adjacent?36:76],
+          paddingBottomRight: [36, adjacent?36:Math.round(mapHeight * 0.58)],
           maxZoom: 17,
           animate: false,
         });
@@ -180,6 +181,7 @@ export function LiveMapClient({
   features = [],
   picked,
   routePoints = [],
+  routeStops = [],
   routeGaps = [],
   onPick,
   onMapClick,
@@ -279,8 +281,9 @@ export function LiveMapClient({
         return null;
         })}
 
+        {routeStops.map((p,i)=><CircleMarker key={`stop-${i}`} center={[p[1],p[0]]} radius={13} pathOptions={{color:"#fffdf7",fillColor:"#405e4a",fillOpacity:1,weight:3}}><Tooltip permanent direction="center" className="route-stop-number">{i+1}</Tooltip></CircleMarker>)}
         {draftPositions.length > 1 && (
-          <Polyline positions={splitRoute(draftPositions, routeGaps) as [number,number][][]} pathOptions={{ color: '#3df881', weight: 4, dashArray: '6 8' }}>
+          <Polyline positions={splitRoute(draftPositions, routeGaps) as [number,number][][]} pathOptions={{ color: '#4f7659', weight: 4, dashArray: '6 8' }}>
             <Popup>Новый маршрут</Popup>
           </Polyline>
         )}

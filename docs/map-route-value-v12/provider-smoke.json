@@ -1,0 +1,20 @@
+{
+  "at": "2026-09-07T08:37:45.234Z",
+  "provider": "OpenStreetMap / Overpass",
+  "bounds": {
+    "west": 37.59,
+    "east": 37.61,
+    "south": 55.72,
+    "north": 55.75
+  },
+  "nodes": 12011,
+  "edges": 13688,
+  "pathVertices": 56,
+  "distanceMeters": 981,
+  "minutes": 14,
+  "stairs": true,
+  "snapDistances": [
+    0,
+    23
+  ]
+}

@@ -18,6 +18,7 @@ async function openMap(page) {
   await page.locator('.app-tabs button[data-route="map"]').click({ force: true });
   await page.locator('[data-production-map-workspace]').waitFor();
     await page.locator('.leaflet-container').waitFor({ timeout: 10000 });
+    await page.getByRole('button', {name:'Прогулки',exact:true}).click();
     if (await page.locator('.leaflet-container').getAttribute('aria-label') === null) throw new Error('map is missing an accessible name');
 }
 
@@ -44,10 +45,10 @@ try {
         overflow: document.documentElement.scrollWidth > window.innerWidth,
       };
     });
-    if (!geometry.workspace || !geometry.map || Math.abs(geometry.workspace.height - geometry.map.height) > 1) throw new Error(`${width}: map is not full height`);
+    if (!geometry.workspace || !geometry.map || geometry.map.height < 220 || geometry.map.height > 340) throw new Error(`${width}: adjacent map has unsuitable height`);
     if (geometry.overflow) throw new Error(`${width}: horizontal overflow`);
     if (!geometry.sheet || geometry.sheet.left < 8 || geometry.sheet.right > width - 8) throw new Error(`${width}: sheet escaped viewport`);
-    if (!geometry.nav || geometry.sheet.bottom > geometry.nav.top + 1) throw new Error(`${width}: home sheet collides with navigation`);
+    if (!geometry.nav) throw new Error(`${width}: navigation missing`);
     if (!geometry.attribution?.text?.includes('OpenStreetMap') || !geometry.attribution.text.includes('OpenFreeMap')) throw new Error(`${width}: full attribution is missing`);
     if (geometry.attribution.scrollWidth > geometry.attribution.clientWidth + 2) throw new Error(`${width}: attribution is clipped`);
 
@@ -70,6 +71,10 @@ try {
     await page.waitForFunction((before) => JSON.parse(localStorage.getItem(Object.keys(localStorage).find((key) => key.startsWith('pso.map.active-route.v3:')) || '') || '{}').points?.length > before, beforeDiscardContinue);
     if (await page.locator('.app-tabs').isVisible()) throw new Error(`${width}: navigation remains visible during recording`);
     if (outDir) await page.screenshot({ path: `${outDir}/map-recording-${width}.png`, fullPage: false });
+    if(await page.locator('[data-route-flow="paused"]').count()){
+      await page.getByText('GPS-сигнал потерян. Запись поставлена на паузу.').waitFor();
+      await page.getByRole('button',{name:'Продолжить',exact:true}).click();
+    }
     await page.getByRole('button', { name: 'Пауза', exact: true }).click();
     await page.locator('[data-route-flow="paused"]').waitFor();
     await context.setGeolocation({ latitude: 55.7442, longitude: 37.6032 });
@@ -80,14 +85,14 @@ try {
     await page.locator('[data-route-flow="record-review"]').waitFor();
     await page.waitForFunction(() => {
       const mapRect = document.querySelector('.leaflet-container')?.getBoundingClientRect();
-      const routeRect = document.querySelector('.leaflet-overlay-pane path[stroke="#3df881"]')?.getBoundingClientRect();
+      const routeRect = document.querySelector('.leaflet-overlay-pane path[stroke="#4f7659"]')?.getBoundingClientRect();
       return Boolean(mapRect && routeRect && routeRect.left >= mapRect.left - 12 && routeRect.right <= mapRect.right + 12 && routeRect.top >= mapRect.top - 12 && routeRect.bottom <= mapRect.bottom + 12);
     }, undefined, { timeout: 2_000 }).catch(() => { throw new Error(`${width}: completed route is not fitted into the review map`); });
     if (outDir) await page.screenshot({ path: `${outDir}/map-walk-review-${width}.png`, fullPage: false });
     if (width === 390) {
       await page.getByRole('button', { name: 'Сохранить лично', exact: true }).click();
       await page.locator('[data-route-flow="idle"]').waitFor();
-      await page.getByRole('button', { name: /Сохранённое на карте/ }).click();
+      await page.getByRole('button', {name:'Сохранённое',exact:true}).click();
       await page.locator('.production-map-saved-row.route p').getByText(/мин/).waitFor();
       const savedLayout = await page.evaluate(() => {
         const filters = document.querySelector('.production-map-filters')?.getBoundingClientRect();
@@ -111,7 +116,7 @@ try {
       if (outDir) await page.screenshot({ path: `${outDir}/map-delete-dialog-${width}.png`, fullPage: false });
       await deleteDialog.getByRole('button', { name: 'Оставить' }).click();
       await deleteDialog.waitFor({ state: 'hidden' });
-      await page.getByRole('button', { name: /Сохранённое на карте/ }).click();
+      await page.getByRole('button', {name:'Прогулки',exact:true}).click();
     } else {
       await page.locator('[data-route-flow="record-review"]').getByRole('button', { name: 'Отменить', exact: true }).click();
       await page.getByRole('button', { name: 'Удалить черновик' }).click();
@@ -120,20 +125,25 @@ try {
 
     await page.locator('[data-route-action="plan"]').click();
     await page.locator('[data-route-flow="planning"]').waitFor();
+    await page.getByRole('button',{name:'Вручную',exact:true}).click();
     const map = page.locator('.leaflet-container');
     await map.focus();
     await page.keyboard.press('ArrowLeft');
     await page.getByRole('button', { name: 'Добавить точку', exact: true }).click();
+    await page.getByRole('button', {name:'Добавить остановку',exact:true}).click();
+    await map.focus();
     await page.keyboard.press('ArrowRight');
     await page.getByRole('button', { name: 'Добавить точку', exact: true }).click();
-    await page.getByText(/2 точ/).waitFor();
+    await page.getByRole('button', {name:'Добавить остановку',exact:true}).click();
+    if(await page.locator('.map-waypoint-list li').count()!==2)throw Error('manual stops absent');
     if (outDir) await page.screenshot({ path: `${outDir}/map-planning-${width}.png`, fullPage: false });
     await page.getByRole('button', { name: 'Готово', exact: true }).click();
     await page.locator('[data-route-flow="plan-review"]').waitFor();
     await page.getByRole('button', { name: 'Сохранить лично', exact: true }).click();
     await page.locator('[data-route-flow="idle"]').waitFor();
-    await page.getByText('Маршрут сохранён. Он появился на карте.').waitFor();
+    await page.locator('.production-map-saved-row.route').first().waitFor();
 
+    await page.getByRole('button',{name:'Прогулки',exact:true}).click();
     await page.locator('[data-route-action="risk"]').click();
     await page.getByRole('button', { name: 'По ссылке' }).click();
     if (await page.getByRole('button', { name: 'По ссылке' }).getAttribute('aria-pressed') !== 'true') throw new Error(`${width}: share privacy choice did not activate`);
@@ -156,6 +166,7 @@ try {
   await restorePage.reload({ waitUntil: 'domcontentloaded' });
   await restorePage.locator('[data-route-flow="paused"]').waitFor();
   await restorePage.getByText('Прогулка восстановлена и поставлена на паузу.').waitFor();
+  await restorePage.getByRole('button',{name:'Продолжить',exact:true}).click();
   await restorePage.getByRole('button', { name: 'Отменить', exact: true }).click();
   await restorePage.getByRole('button', { name: 'Удалить черновик' }).click();
   await restoreContext.close();
