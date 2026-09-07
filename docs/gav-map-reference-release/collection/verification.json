@@ -1,0 +1,19 @@
+[
+  {
+    "engine": "chromium",
+    "width": 390,
+    "collectionMapSync": true,
+    "mapListSelection": true,
+    "focusReturn": true,
+    "appendToNonemptyPlan": true,
+    "duplicatePlacePrevented": true,
+    "mapPointSamePlan": true,
+    "backContext": true,
+    "calculationFailure": true,
+    "saveFailure": true,
+    "reopen": true,
+    "gpx": true,
+    "staleGuard": true,
+    "fixture": true
+  }
+]

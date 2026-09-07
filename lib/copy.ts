@@ -75,7 +75,7 @@ export function formatWishlistMeta(category: string, priority?: string, reason?:
   return [wishlistCategoryLabels[category] ?? 'вещь', priority ? priorityLabels[priority] ?? 'обычный приоритет' : null, reason || null].filter(Boolean).join(' · ');
 }
 
-const zoneTypeLabels: Record<string, string> = {
+export const zoneTypeLabels: Record<string, string> = {
   home_area: 'домашний район',
   walk_route: 'маршрут',
   safe_place: 'спокойное место',

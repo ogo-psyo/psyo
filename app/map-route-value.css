@@ -14,7 +14,7 @@ body.companion-app .production-map-canvas :is(.live-map-frame,.live-map,.leaflet
 body.companion-app .map-work-area{position:relative;flex:1;padding:20px 20px 28px;min-width:0}
 body.companion-app .map-work-area :is(.production-map-snap-sheet,.production-route-controller,.map-place-panel){position:relative!important;inset:auto!important;transform:none!important;width:100%!important;height:auto!important;max-height:none!important;min-height:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;overflow:visible!important;padding:0!important}
 body.companion-app .map-work-area :is(.production-map-sheet-body,.production-route-controller-body){height:auto!important;max-height:none!important;overflow:visible!important;padding:12px 0!important}
-body.companion-app .map-work-area:has(.map-place-panel) :is(.production-map-snap-sheet,.production-route-controller){display:none!important}
+body.companion-app .map-work-area:has(>.map-place-panel) :is(.production-map-snap-sheet,.production-route-controller){display:none!important}
 body.companion-app .production-route-controller-actions{position:relative!important;inset:auto!important;display:flex!important;flex-wrap:wrap;gap:8px;padding:14px 0!important;box-shadow:none!important;background:transparent!important}
 body.companion-app .production-route-controller-actions>button{flex:1;min-width:100px;min-height:44px}
 body.companion-app .production-route-controller-heading{padding:0 0 14px!important;gap:8px;flex-wrap:wrap}

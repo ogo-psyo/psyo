@@ -227,12 +227,12 @@ export function LiveMapClient({
         <MapViewport zones={zones} features={features} userLocation={userLocation} focusPoint={focusPoint} routePoints={routePoints} fitDraftRoute={fitDraftRoute} />
 
         {userLocation && <>
-          <Circle center={[userLocation.lat, userLocation.lng]} radius={Math.max(40, Math.min(userLocation.accuracy || 80, 600))} pathOptions={{ color: '#07814d', fillColor: '#3df881', fillOpacity: 0.12, weight: 1 }} interactive={false} />
-          <CircleMarker center={[userLocation.lat, userLocation.lng]} radius={8} pathOptions={{ color: '#fafffb', fillColor: '#07814d', fillOpacity: 1, weight: 3 }}><Popup>Вы здесь</Popup></CircleMarker>
+          <Circle center={[userLocation.lat, userLocation.lng]} radius={Math.max(40, Math.min(userLocation.accuracy || 80, 600))} pathOptions={{ color: '#07814d', fillColor: '#72b6ea', fillOpacity: 0.12, weight: 1 }} interactive={false} />
+          <CircleMarker center={[userLocation.lat, userLocation.lng]} radius={8} pathOptions={{ color: '#fafffb', fillColor: '#347dcc', fillOpacity: 1, weight: 3 }}><Popup>Вы здесь</Popup></CircleMarker>
         </>}
 
         {searchPoint && (
-          <CircleMarker center={[searchPoint.lat, searchPoint.lng]} radius={10} pathOptions={{ color: '#f7f6f0', fillColor: '#07814d', fillOpacity: 1, weight: 4 }}>
+          <CircleMarker center={[searchPoint.lat, searchPoint.lng]} radius={10} pathOptions={{ color: '#f7f6f0', fillColor: '#347dcc', fillOpacity: 1, weight: 4 }}>
             <Popup><b>{searchPoint.title}</b>{searchPoint.detail ? <><br />{searchPoint.detail}</> : null}</Popup>
           </CircleMarker>
         )}
@@ -271,7 +271,7 @@ export function LiveMapClient({
               key={feat.id}
               positions={splitRoute(positions, feat.pathGaps) as [number,number][][]}
               eventHandlers={{click:()=>onSelectFeature?.(feat.id)}}
-              pathOptions={{ color: feat.visibility === 'public' ? '#3c7553' : '#4f7659', weight: selectedFeatureId===feat.id?6:4 }}
+              pathOptions={{ color: feat.visibility === 'public' ? '#2d78bd' : '#4a8aca', weight: selectedFeatureId===feat.id?6:4 }}
             >
               <Popup>
                 <b>{feat.title}</b>
@@ -287,7 +287,7 @@ export function LiveMapClient({
 
         {routeStops.map((p,i)=><Marker key={`stop-${i}`} position={[p[1],p[0]]} title={`Остановка ${i+1}`} zIndexOffset={800} icon={divIcon({className:'pso-route-stop-marker',html:`<span>${i+1}</span>`,iconSize:[32,32],iconAnchor:[16,16]})} eventHandlers={{click:()=>{const id=routeStopIds[i];if(id)onSelectFeature?.(id);}}} />)}
         {draftPositions.length > 1 && (
-          <Polyline positions={splitRoute(draftPositions, routeGaps) as [number,number][][]} pathOptions={{ color: '#4f7659', weight: 4, dashArray: '6 8' }}>
+          <Polyline positions={splitRoute(draftPositions, routeGaps) as [number,number][][]} pathOptions={{ className: 'pso-active-route-path', color: '#398cce', weight: 5 }}>
             <Popup>Новый маршрут</Popup>
           </Polyline>
         )}
