@@ -11,6 +11,9 @@ export async function GET() {
     environment: process.env.APP_ENV || process.env.VERCEL_ENV || 'development',
     release: process.env.RELEASE_SHA || process.env.VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_DEPLOYMENT_ID || process.env.VERCEL_URL || null,
     checks: {
+      agentEnabled: process.env.PSO_AGENT_ENABLED === 'true',
+      agentConfigured: Boolean(process.env.OPENAI_API_KEY && process.env.PSO_AGENT_MODEL),
+      knowledgeEnabled: process.env.PSO_KNOWLEDGE_ENABLED === 'true',
       appUrl: Boolean(process.env.NEXT_PUBLIC_APP_URL),
       telegramBot: Boolean(process.env.TELEGRAM_BOT_TOKEN),
       telegramWebhookSecret: Boolean(process.env.TELEGRAM_WEBHOOK_SECRET),

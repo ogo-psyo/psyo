@@ -8,6 +8,7 @@ import { PaperSheet, WatercolorScreen } from '@/components/watercolor';
 import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
 import { journalDayEntries } from '@/lib/journal';
 import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
+import { AgentPanel } from '@/components/journey/AgentPanel';
 import { VoiceObservationCapture, type PrivateVoiceNoteInput } from '@/components/journey/VoiceObservationCapture';
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
 import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';
@@ -625,6 +626,10 @@ export default function Home() {
   const [assistantActionStatuses, setAssistantActionStatuses] = useState<Record<string, AssistantActionStatus>>({});
   const [assistantSuggestedQuestions, setAssistantSuggestedQuestions] = useState<string[]>([]);
   const [assistantThreadId, setAssistantThreadId] = useState('');
+  const [agentRunId,setAgentRunId]=useState('');
+  const agentDelivered=useRef('');
+  const agentRequestEpoch=useRef(0);
+  const agentRequest=useRef<{pet:string;question:string;id:string}|null>(null);
   const [assistantDiagnostic, setAssistantDiagnostic] = useState<{ provider?: string; mode?: string }>({});
   const [assistantMessages, setAssistantMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [breedSearch, setBreedSearch] = useState('');
@@ -644,13 +649,18 @@ export default function Home() {
 
   useEffect(() => {
     setAssistantThreadId('');
+    agentRequestEpoch.current+=1;
+    setAgentRunId('');
+    agentDelivered.current='';
+    agentRequest.current=null;
+    setAssistantLoading(false);
     setAssistantMessages([]);
     setAssistantAnswer('');
     setAssistantActions([]);
     setAssistantActionStatuses({});
     setAssistantSuggestedQuestions([]);
     setAssistantDiagnostic({});
-  }, [profile.backendPetId]);
+  }, [profile.backendPetId,session?.access_token,telegramSession.ownerId]);
   const [billing, setBilling] = useState<BillingView | null>(null);
   const [careFeedback, setCareFeedback] = useState<CareFeedback>(null);
   const [pendingCareDeletion, setPendingCareDeletion] = useState<PendingCareDeletion>(null);
@@ -3438,12 +3448,15 @@ export default function Home() {
   }
 
   async function askAssistant(preset?: string) {
+    const requestEpoch=agentRequestEpoch.current;
     const question = (preset || assistantQuestion).trim();
+    if(assistantLoading) return;
     if (!question) return setError('Напиши вопрос ассистенту.');
     if (!profile.backendPetId) {
       if (!isGuestMode()) return setError('Сначала сохрани профиль собаки — ассистенту нужен контекст.');
       ensureGuestPetId();
     }
+    if(agentRequest.current?.question!==question||agentRequest.current?.pet!==profile.backendPetId) agentRequest.current={pet:profile.backendPetId||'guest',question,id:crypto.randomUUID()};
     setAssistantLoading(true); setAssistantActions([]); setAssistantActionStatuses({}); setError('');
     setAssistantMessages((current) => [...current, { role: 'user', content: question }]);
     let response: Response;
@@ -3455,6 +3468,7 @@ export default function Home() {
         ...(isGuestMode() ? {} : { petId: profile.backendPetId }),
         ...(assistantThreadId ? { threadId: assistantThreadId } : {}),
         question,
+        requestId:agentRequest.current.id,
         context: {
           pet: {
             name: profile.dogName,
@@ -3490,12 +3504,21 @@ export default function Home() {
         }),
       });
     } catch {
+      if(requestEpoch!==agentRequestEpoch.current) return;
       setAssistantLoading(false);
       setAssistantMessages((current) => current.slice(0, -1));
       setError('Псё не ответил. Проверь связь и попробуй ещё раз.');
       return;
     }
     const result = await response.json().catch(() => ({}));
+    if(requestEpoch!==agentRequestEpoch.current) return;
+    if(response.status===202&&typeof result.runId==='string') {
+      agentRequest.current=null;
+      setAgentRunId(result.runId);
+      setAssistantThreadId(result.threadId);
+      setAssistantQuestion('');
+      return;
+    }
     setAssistantLoading(false);
     if (!response.ok) {
       setAssistantMessages((current) => current.slice(0, -1));
@@ -4388,7 +4411,16 @@ export default function Home() {
           loading={assistantLoading}
           error={error}
           suggestions={assistantSuggestedQuestions.length ? assistantSuggestedQuestions : contextualAssistantSuggestions}
-          actions={<AssistantActionButtons actions={assistantActions} statuses={assistantActionStatuses} onApply={(action, key) => { void handleApplyAction(action, key); }} onOpen={openAssistantAction} />}
+          actions={<>
+            {!isGuestMode()&&profile.backendPetId&&<AgentPanel key={profile.backendPetId} petId={profile.backendPetId} runId={agentRunId} headers={authHeaders} onBusy={setAssistantLoading} onRetry={question=>void askAssistant(question)} onResult={result=>{
+              if(agentDelivered.current===result.runId) return;
+              agentDelivered.current=result.runId;
+              setAssistantAnswer(result.answer);setAssistantThreadId(result.threadId);
+              setAssistantMessages(current=>[...current,{role:'assistant',content:result.answer}]);
+              setAssistantDiagnostic({provider:'openai',mode:'agent'});
+            }}/>}
+            <AssistantActionButtons actions={assistantActions} statuses={assistantActionStatuses} onApply={(action, key) => { void handleApplyAction(action, key); }} onOpen={openAssistantAction} />
+          </>}
           diagnostic={assistantDiagnostic}
           onQuestionChange={setAssistantQuestion}
           onAsk={(question) => { void askAssistant(question); }}
