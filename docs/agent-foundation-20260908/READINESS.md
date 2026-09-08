@@ -39,10 +39,13 @@ foundation slice of the target architecture, not every future integration.
 
 ## Blocking live gates
 
-1. OpenAI account key is absent from current production. Protected entry timed
-   out without a credential. Never paste the key into chat or committed files.
-2. Paid API-test allowance is not yet established. Select a supported model from
-   the authorized account and record real latency, calls and usage before rollout.
+1. User selected a **free Groq alternative**. Existing Groq production credential
+   is present (Vercel metadata only); Secret Store is empty. OpenAI is no longer
+   a required dependency for activation. Never export keys into chat/files.
+2. Groq account Free-tier status and Compound search entitlement are unverified.
+   Paid tests are paused despite the earlier $5 maximum. Confirm the account plan
+   in Groq Console, then test actual model/tool/search access and record latency,
+   calls and usage. Availability/HTTP 200 alone is not evidence of zero cost.
 3. Direct local source fetch is correctly denied: the environment resolves the
    public site to a reserved address. Do not weaken SSRF protection. Validate the
    actual source fetch on Vercel's public egress before enabling ingestion.
@@ -53,8 +56,10 @@ foundation slice of the target architecture, not every future integration.
 
 1. Verify current production source and recovery point are still c15d067; refresh
    backup if external changes occurred. Keep the prior immutable deployment.
-2. Configure the OpenAI credential using Vercel's masked environment UI and set
-   `PSO_AGENT_MODEL` to the tested model. Configure spending limits before live use.
+2. Follow `GROQ.md`: explicitly select Groq and its search adapter, confirm the
+   free account entitlement before setting its gate, and set `PSO_AGENT_MODEL`
+   to the actually tested tool-calling model. Existing Vercel Groq key stays
+   protected; no additional OpenAI key is needed. No paid fallback.
 3. Apply the additive migration after local SQL/QA gates. Never reset existing
    tables or replace production with a local restored database.
 4. Validate a preview with approved test identities. Enable the single configured

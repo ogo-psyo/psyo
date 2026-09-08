@@ -4417,7 +4417,7 @@ export default function Home() {
               agentDelivered.current=result.runId;
               setAssistantAnswer(result.answer);setAssistantThreadId(result.threadId);
               setAssistantMessages(current=>[...current,{role:'assistant',content:result.answer}]);
-              setAssistantDiagnostic({provider:'openai',mode:'agent'});
+              setAssistantDiagnostic({provider:result.provider??'openai',mode:'agent'});
             }}/>}
             <AssistantActionButtons actions={assistantActions} statuses={assistantActionStatuses} onApply={(action, key) => { void handleApplyAction(action, key); }} onOpen={openAssistantAction} />
           </>}

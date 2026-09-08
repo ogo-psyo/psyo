@@ -2,6 +2,7 @@ import { start } from "workflow/api";
 import { z } from "zod";
 import { agentWorkflow } from "@/workflows/agent";
 import { agentDatabase, agentError, agentPrincipal, ownedPet } from "./access";
+import { agentProviderConfig } from "./providerConfig";
 
 const command = z.object({
   petId: z.string().uuid(),
@@ -17,8 +18,7 @@ export async function submitAgent(request: Request, body: unknown) {
   try {
     const owner = await agentPrincipal(request);
     await ownedPet(owner, parsed.data.petId);
-    if (!process.env.OPENAI_API_KEY || !process.env.PSO_AGENT_MODEL)
-      throw new Error("AGENT_NOT_CONFIGURED");
+    agentProviderConfig();
     const db = agentDatabase();
     const admitted = await db.rpc("agent_admit_run", {
       p_owner: owner,

@@ -5,6 +5,7 @@ export type AgentResult = {
   answer: string;
   threadId: string;
   runId: string;
+  provider?: "openai" | "groq";
   sources?: Array<{ url: string; title: string }>;
 };
 type Saved = { id: string; title: string; content: string };

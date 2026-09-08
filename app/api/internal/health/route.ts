@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { rc1Config } from '@/lib/rc1';
+import { agentProviderReady } from '@/lib/server/agent/providerConfig';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,7 +13,8 @@ export async function GET() {
     release: process.env.RELEASE_SHA || process.env.VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_DEPLOYMENT_ID || process.env.VERCEL_URL || null,
     checks: {
       agentEnabled: process.env.PSO_AGENT_ENABLED === 'true',
-      agentConfigured: Boolean(process.env.OPENAI_API_KEY && process.env.PSO_AGENT_MODEL),
+      agentConfigured: agentProviderReady().configured,
+      agentProvider: agentProviderReady().provider,
       knowledgeEnabled: process.env.PSO_KNOWLEDGE_ENABLED === 'true',
       appUrl: Boolean(process.env.NEXT_PUBLIC_APP_URL),
       telegramBot: Boolean(process.env.TELEGRAM_BOT_TOKEN),
