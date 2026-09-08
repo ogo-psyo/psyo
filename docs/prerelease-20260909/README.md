@@ -34,6 +34,7 @@
 - [Приёмка и уровни доказательств](05-ACCEPTANCE.md)
 - [API → сервис → UI](06-API-COVERAGE.md)
 - [Итоговая проверка и границы результата](07-REVIEW.md)
+- [Уточнение: Вещи и Характер, наслоение флоу](08-LEGACY-FLOW-EXAMPLES.md)
 - [Данные аудита](evidence/api-inventory.csv), [реестр поверхностей JSON](surface-register.json)
 
 ## Проверено сейчас
