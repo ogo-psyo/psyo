@@ -1,0 +1,796 @@
+[
+  {
+    "id": "SYS-01",
+    "title": "Запуск и сессия",
+    "value": "Получить свой аккаунт/собаку",
+    "flow": "Telegram/initData, browser → bootstrap → выбранная собака",
+    "states": "loading; retry; expired; wrong-origin; guest; no backend; forbidden",
+    "sources": [
+      "app/page.tsx:499",
+      "lib/server/appSession.ts:35"
+    ],
+    "decision": "R1: единый шлюз входа",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "SYS-02",
+    "title": "Первое создание собаки",
+    "value": "Начать без полной анкеты",
+    "flow": "Нет собак → имя/базовые шаги → созданный petId",
+    "states": "empty; invalid; saving; ambiguous result; retry; already-created",
+    "sources": [
+      "components/onboarding/CoreOnboarding.tsx:1",
+      "app/api/v1/onboarding/activate/route.ts:1"
+    ],
+    "decision": "R1: перенос всех шагов",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "SYS-03",
+    "title": "Смена/добавление собаки",
+    "value": "Работать с нужным питомцем",
+    "flow": "Профиль/шапка → выбор → новый контекст",
+    "states": "dirty draft; loading; error; stale response; deleted pet",
+    "sources": [
+      "app/page.tsx:529",
+      "app/api/v1/pets/route.ts:1"
+    ],
+    "decision": "R1: scoped state",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "SYS-04",
+    "title": "Аккаунт, выход, помощь",
+    "value": "Управлять доступом",
+    "flow": "Профиль → настройки → результат/возврат",
+    "states": "guest; authenticated; logout pending/error; support/legal",
+    "sources": [
+      "app/page.tsx:4701",
+      "app/api/v1/session/logout/route.ts:1",
+      "app/support/page.tsx:1"
+    ],
+    "decision": "R1: внутренний маршрут, без старой оболочки",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "SYS-05",
+    "title": "Удаление собаки/аккаунта/локальных данных",
+    "value": "Понимать масштаб удаления",
+    "flow": "Настройки → явное подтверждение → завершение",
+    "states": "wrong confirmation; saving; partial cleanup; retry; empty account",
+    "sources": [
+      "app/page.tsx:638",
+      "app/api/v1/account/route.ts:1",
+      "app/api/v1/pets/route.ts:1"
+    ],
+    "decision": "R1: сохранить отдельные команды и границы",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "SYS-06",
+    "title": "Публичный вход по ссылке",
+    "value": "Открыть разрешённый объект",
+    "flow": "dog slug / shared map / invite → ресурс или недоступность",
+    "states": "ready; revoked; expired; deleted; forbidden; login and return",
+    "sources": [
+      "app/dog/[slug]/page.tsx:1",
+      "app/map/share/[id]/page.tsx:1",
+      "app/api/social/invites/[token]/route.ts:1"
+    ],
+    "decision": "R1: включить в приёмку вне главной",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "SYS-07",
+    "title": "Флаги, ограничения, обновление",
+    "value": "Не потерять доступ при релизе",
+    "flow": "bootstrap/capabilities → доступные действия",
+    "states": "feature off; provider unavailable; update available; guest vs account",
+    "sources": [
+      "components/ReleaseFreshnessGuard.tsx:1",
+      "lib/rc1.ts:1",
+      "lib/readiness.ts:1"
+    ],
+    "decision": "R1: не включать выключенные коммерческие функции",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "SYS-08",
+    "title": "Служебные и старые страницы",
+    "value": "Не попасть в случайный старый продукт",
+    "flow": "/admin /design-v3 /legal /support",
+    "states": "authorized admin; denied; legal links; old design entry",
+    "sources": [
+      "app/admin/page.tsx:1",
+      "app/design-v3/page.tsx:1",
+      "app/legal/privacy/page.tsx:1",
+      "app/legal/terms/page.tsx:1"
+    ],
+    "decision": "Admin вне consumer redesign; design-v3 изолировать от обычных входов; legal/support сохранить",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "HOME-01",
+    "title": "Главная и ввод",
+    "value": "Сформулировать задачу",
+    "flow": "Псё → текст → конкретный рабочий шаг",
+    "states": "empty; typing; keyboard; pending; failure; history absent",
+    "sources": [
+      "components/journey/ProductionJourney.tsx:295",
+      "app/page.tsx:3513"
+    ],
+    "decision": "R1: новый ввод с явными поддержанными командами",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "HOME-02",
+    "title": "Разговор текущего помощника",
+    "value": "Получить ответ с доступным контекстом",
+    "flow": "Главная/объект → запрос → ответ/действие",
+    "states": "loading; no provider; quota; error; retry; long answer; cancelled UI",
+    "sources": [
+      "components/journey/ProductionJourney.tsx:1",
+      "app/api/assistant/route.ts:1",
+      "lib/server/assistantAnswerService.ts:1"
+    ],
+    "decision": "R1: текущий сервис, не выдавать за новый live agent",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "HOME-03",
+    "title": "Действие из ответа/рекомендации",
+    "value": "Перейти к реальному результату",
+    "flow": "Ответ → draft/entityId → сохранение → разговор",
+    "states": "unsupported; loading; replay; action failed; source outdated",
+    "sources": [
+      "app/page.tsx:3513",
+      "components/recommendations/RecommendationCard.tsx:1",
+      "app/api/recommendations/[id]/outcome/route.ts:1"
+    ],
+    "decision": "R1: явные команды и ссылки; recommendation flag сохранить",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "OBS-01",
+    "title": "Ввод наблюдения",
+    "value": "Записать слова без повторения",
+    "flow": "Главная/история/профиль → общий черновик",
+    "states": "blank; text; dirty; back; no pet; unavailable",
+    "sources": [
+      "components/journey/VoiceObservationCapture.tsx:1",
+      "app/page.tsx:2369"
+    ],
+    "decision": "R1: общий черновик",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "OBS-02",
+    "title": "Голос и расшифровка",
+    "value": "Записать без клавиатуры",
+    "flow": "Разрешение → запись → текст → проверить",
+    "states": "denied; unsupported; recording; stop; cancelled; silence; too long; quota; transcription error",
+    "sources": [
+      "components/journey/VoiceObservationCapture.tsx:1",
+      "lib/voiceCapture.ts:1",
+      "app/api/stt/transcribe/route.ts:1"
+    ],
+    "decision": "R1: сохранить существующий голос, не включать новых провайдеров",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "OBS-03",
+    "title": "Кандидаты распознавания",
+    "value": "Подтвердить именно свои факты",
+    "flow": "Текст → кандидаты → принятие/исправление/отказ",
+    "states": "extracting; low confidence; conflict; error; no candidates; partial selection",
+    "sources": [
+      "app/api/observations/extract/route.ts:1",
+      "lib/observationIngestion.ts:1",
+      "app/api/observations/voice/route.ts:1"
+    ],
+    "decision": "R1: не заменять реальную проверку regex из макета",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "OBS-04",
+    "title": "Поля, дата и сохранение",
+    "value": "Сохранить верное наблюдение",
+    "flow": "Черновик → optional metrics/date → POST → ID",
+    "states": "invalid; dirty; saving; response lost; retry; conflict; failed",
+    "sources": [
+      "components/care/ObservationEditor.tsx:1",
+      "components/health/ObservationMetricFields.tsx:1",
+      "app/api/observations/route.ts:1"
+    ],
+    "decision": "R1: после B-01 атомарности",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "OBS-05",
+    "title": "Запись и редактирование",
+    "value": "Прочитать/исправить конкретный факт",
+    "flow": "ID из любого входа → просмотр → editor → тот же ID",
+    "states": "loading; missing; denied; edited elsewhere; updating; update failure",
+    "sources": [
+      "app/api/observations/[id]/route.ts:76",
+      "components/health/HealthTimelineScreen.tsx:1"
+    ],
+    "decision": "R1: новый detail-контракт по ID",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "OBS-06",
+    "title": "Удаление и восстановление",
+    "value": "Убрать ошибочную запись",
+    "flow": "Запись → confirm → deleted → undo",
+    "states": "pending; error; already-deleted; restore expired/unavailable; retry",
+    "sources": [
+      "app/api/observations/[id]/route.ts:166",
+      "app/api/observations/[id]/restore/route.ts:1",
+      "components/care/DeleteCareDialog.tsx:1"
+    ],
+    "decision": "R1: сохранить восстановление",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "OBS-07",
+    "title": "История, день и сводка",
+    "value": "Найти прошлый факт",
+    "flow": "Всё/контекст → фильтр/дата → entityId",
+    "states": "empty; loading; page/end; no matches; partial/error; timezone boundary",
+    "sources": [
+      "components/health/HealthTimelineScreen.tsx:1",
+      "components/profile/ProfileMemoryWorkspace.tsx:160",
+      "app/api/health/route.ts:1"
+    ],
+    "decision": "R1: единая проекция, не две истории",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "CARE-01",
+    "title": "Календарь и список ухода",
+    "value": "Увидеть предстоящие дела",
+    "flow": "Всё → месяц/день/список → дело",
+    "states": "empty day; overdue; loading; error; active/history; month change",
+    "sources": [
+      "app/page.tsx:4480",
+      "app/api/reminders/route.ts:1"
+    ],
+    "decision": "R1: перенести watercolor внутренний экран",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "CARE-02",
+    "title": "Создание/изменение дела",
+    "value": "Задать обязательство",
+    "flow": "Календарь/ответ → форма → дело",
+    "states": "type; date; exact/flexible/approximate; recurrence; invalid; dirty; failure",
+    "sources": [
+      "app/page.tsx:567",
+      "app/api/reminders/route.ts:1",
+      "app/api/reminders/[id]/route.ts:1"
+    ],
+    "decision": "R1: общий редактор",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "CARE-03",
+    "title": "Выполнение/следующий повтор",
+    "value": "Зафиксировать сделанное один раз",
+    "flow": "Дело → complete → history/next due",
+    "states": "in flight; repeat; already completed; recurrence race; failed",
+    "sources": [
+      "app/api/reminders/[id]/complete/route.ts:1",
+      "supabase/migrations/20260813230000_atomic_care_mutations.sql:1"
+    ],
+    "decision": "R1: переиспользовать атомарный контракт",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "CARE-04",
+    "title": "Перенос и удаление",
+    "value": "Изменить план осознанно",
+    "flow": "Дело → snooze/edit/delete → результат",
+    "states": "invalid date; already changed; confirmation; series/current scope; error",
+    "sources": [
+      "app/api/reminders/[id]/snooze/route.ts:1",
+      "app/api/reminders/[id]/route.ts:1",
+      "components/care/DeleteCareDialog.tsx:1"
+    ],
+    "decision": "R1: не терять смысл повтора",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "CARE-05",
+    "title": "История ухода и уведомления",
+    "value": "Понять что выполнено/доставлено",
+    "flow": "Дело → события; Telegram link → тот же объект",
+    "states": "no events; delivery disabled; job failed; callback replay; completed elsewhere",
+    "sources": [
+      "app/api/reminders/[id]/history/route.ts:1",
+      "app/api/telegram/webhook/route.ts:1",
+      "lib/rc1.ts:1"
+    ],
+    "decision": "R1: delivery OFF сохранить",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "HAB-01",
+    "title": "Привычки, прогресс",
+    "value": "Следить за регулярностью",
+    "flow": "Всё → привычки → период",
+    "states": "empty; loading; no checkins; target reached; new day/week; failure",
+    "sources": [
+      "components/habits/HabitScreen.tsx:1",
+      "lib/server/habitService.ts:1"
+    ],
+    "decision": "R1: не потерять ненарисованный раздел",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "HAB-02",
+    "title": "Редактор и архив привычки",
+    "value": "Настроить регулярное действие",
+    "flow": "Список → create/edit → result/archive",
+    "states": "invalid target; invalid cadence; dirty; save error; archive confirm",
+    "sources": [
+      "app/api/habits/route.ts:1",
+      "app/api/habits/[id]/route.ts:1"
+    ],
+    "decision": "R1: полный CRUD-срез",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "HAB-03",
+    "title": "Отметка привычки",
+    "value": "Не задвоить выполнение",
+    "flow": "Привычка → checkin → пересчёт",
+    "states": "pending; replay; period rollover; quota; error",
+    "sources": [
+      "app/api/habits/[id]/checkins/route.ts:1",
+      "lib/server/habitService.ts:118"
+    ],
+    "decision": "R1: не обещать undo, пока его контракт не подтверждён",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "MAP-01",
+    "title": "Карта, область, слои",
+    "value": "Видеть нужные места",
+    "flow": "Карта → permission/manual → area/layers",
+    "states": "loading tiles; no network; denied; coarse vs exact; no features",
+    "sources": [
+      "components/journey/ProductionMapWorkspace.tsx:160",
+      "components/LiveMap.tsx:1",
+      "lib/server/mapProjection.ts:1"
+    ],
+    "decision": "R1: реальная карта, прежние privacy boundaries",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "MAP-02",
+    "title": "Поиск и выбранное место",
+    "value": "Найти и выбрать точку",
+    "flow": "Текст/маркер/список → один selectedPlace",
+    "states": "typing; loading; stale response; empty; quota; failure; back camera",
+    "sources": [
+      "components/journey/ProductionMapWorkspace.tsx:175",
+      "app/api/map/search/route.ts:1",
+      "components/map/MapPlacesPanel.tsx:1"
+    ],
+    "decision": "R1: без обещания готового каталога рядом",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "MAP-03",
+    "title": "Сохранить место",
+    "value": "Вернуться без построения маршрута",
+    "flow": "Место → save → saved/undo",
+    "states": "pending; duplicate; revision conflict; unavailable; failure",
+    "sources": [
+      "components/map/useMapLibrary.ts:1",
+      "app/api/map/library/route.ts:24"
+    ],
+    "decision": "R1: один общий объект",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "MAP-04",
+    "title": "Подборки и управление",
+    "value": "Организовать места на карте",
+    "flow": "Сохранённое → collection → map/list → create/rename/delete",
+    "states": "empty; shared member; duplicate; stale version; deleting referenced item",
+    "sources": [
+      "components/map/MapLibraryPanel.tsx:1",
+      "lib/mapLibrary.ts:1",
+      "app/api/map/library/route.ts:1"
+    ],
+    "decision": "R1: карта и список одной подборки",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "MAP-05",
+    "title": "Конструктор прогулки",
+    "value": "Собрать один план",
+    "flow": "Место/подборка/маркер → stops → reorder/delete/add",
+    "states": "0/1/many stops; dirty; undo; existing draft; closed panel; changed pet",
+    "sources": [
+      "components/journey/ProductionMapWorkspace.tsx:220",
+      "lib/routePlanning.ts:1"
+    ],
+    "decision": "R1: тот же черновик из всех входов",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "MAP-06",
+    "title": "Расчёт и ручной режим",
+    "value": "Получить честную геометрию",
+    "flow": "Stops → walking/manual → preview",
+    "states": "calculating; cancellation; no path; quota; stale result; manual disclaimer",
+    "sources": [
+      "app/api/map/walking/route.ts:1",
+      "lib/walkingGraph.ts:1",
+      "lib/routePlanning.ts:1"
+    ],
+    "decision": "R1: не подменять неудачный расчёт успехом",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "MAP-07",
+    "title": "Запись прогулки",
+    "value": "Сохранить пройденное",
+    "flow": "permission → recording → pause/resume → review",
+    "states": "background; stale GPS; denied; gap; reload; unsaved exit; zero-length",
+    "sources": [
+      "components/journey/ProductionMapWorkspace.tsx:191",
+      "lib/mapSession.ts:1",
+      "lib/routeGeometry.ts:1"
+    ],
+    "decision": "R1: полный трекер, не только кнопка старта",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "MAP-08",
+    "title": "Сохранённый маршрут",
+    "value": "Использовать результат позже",
+    "flow": "Review → title/save → ID → view/edit",
+    "states": "saving; duplicate; error; deleted; lost access; geometry/meta edit",
+    "sources": [
+      "app/api/map/features/route.ts:1",
+      "app/api/map/features/[id]/route.ts:1",
+      "lib/mapUi.ts:1"
+    ],
+    "decision": "R1: сохранить named stops и path gaps",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "MAP-09",
+    "title": "Доступ, GPX и удаление маршрута",
+    "value": "Управлять переносимостью/приватностью",
+    "flow": "Route → export/share/revoke/delete → результат",
+    "states": "export unsupported; private/shared; confirmation; broken link; error",
+    "sources": [
+      "components/journey/RouteDeleteDialog.tsx:1",
+      "app/map/share/[id]/page.tsx:1",
+      "app/api/map/features/[id]/route.ts:1"
+    ],
+    "decision": "R1: не делать private route публичным автоматически",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "MAP-10",
+    "title": "Место/опасная зона",
+    "value": "Предупредить в контексте точки",
+    "flow": "Map point → type/title/note/visibility → save/edit/delete/restore",
+    "states": "no point; invalid; private/shared; pending; error; undo",
+    "sources": [
+      "app/api/zones/route.ts:1",
+      "app/api/zones/[id]/route.ts:1",
+      "app/api/zones/[id]/restore/route.ts:1"
+    ],
+    "decision": "R1: отдельный тип данных, не поиск",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "GAV-01",
+    "title": "Вход и район",
+    "value": "Найти компанию в нужной области",
+    "flow": "Гав → permission/manual area → mode",
+    "states": "first visit; denied; manual; no profile; unavailable session",
+    "sources": [
+      "components/social/ProductionWoofWorkspace.tsx:1"
+    ],
+    "decision": "R1: оба режима",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "GAV-02",
+    "title": "Живые сигналы и фильтры",
+    "value": "Найти прогулку сейчас",
+    "flow": "Live map/list → signal → request",
+    "states": "loading; empty; filtered empty; expired; own signal; refresh error",
+    "sources": [
+      "components/social/WoofLiveMap.tsx:1",
+      "app/api/social/signals/route.ts:1"
+    ],
+    "decision": "R1: не заменять заглушкой из прототипа",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "GAV-03",
+    "title": "Создать/закрыть свой Гав",
+    "value": "Позвать компанию",
+    "flow": "Signal composer → time/pace/note/coarse area → active → close",
+    "states": "invalid time; saving; one active; replay; expired; completed/cancelled",
+    "sources": [
+      "components/social/ProductionWoofWorkspace.tsx:473",
+      "app/api/social/signals/route.ts:1"
+    ],
+    "decision": "R1: полный lifecycle",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "GAV-04",
+    "title": "Анкеты и свайп",
+    "value": "Посмотреть собак до решения",
+    "flow": "Meet → filters → card → details",
+    "states": "no photo; bad photo; loading; no matches; deck end; swipe vs vertical scroll",
+    "sources": [
+      "components/social/CandidateDeck.tsx:1",
+      "components/social/CandidateCard.tsx:1"
+    ],
+    "decision": "R1: CTA доступен, случайный свайп не отправляет",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "GAV-05",
+    "title": "Своя анкета и видимость",
+    "value": "Выбрать что показывать",
+    "flow": "Gав → edit profile → publish/hide",
+    "states": "unfilled; changed; dirty; no verified contact; save failure",
+    "sources": [
+      "components/social/SocialProfileSheet.tsx:1",
+      "app/api/social/profile/route.ts:1"
+    ],
+    "decision": "R1: отдельно от приватного паспорта",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "GAV-06",
+    "title": "Отклик/входящие/связь",
+    "value": "Понять результат обращения",
+    "flow": "Candidate/signal/invite → request → status",
+    "states": "pending; incoming/outgoing; accepted; rejected; cancelled; expired; closed",
+    "sources": [
+      "components/social/RequestsPanel.tsx:1",
+      "app/api/social/requests/route.ts:1",
+      "app/api/social/requests/[id]/route.ts:1"
+    ],
+    "decision": "R1: сервер определяет участников/переходы",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "GAV-07",
+    "title": "Контакт/жалоба/блокировка",
+    "value": "Безопасно продолжить/прекратить общение",
+    "flow": "Accepted connection → contact/report/block",
+    "states": "unverified contact; unavailable other dog; block; reason validation; error",
+    "sources": [
+      "components/social/RequestsPanel.tsx:1",
+      "lib/server/socialService.ts:1",
+      "app/api/social/requests/[id]/route.ts:1"
+    ],
+    "decision": "R1: не терять защитные действия",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "GAV-08",
+    "title": "Приглашение по ссылке",
+    "value": "Принять конкретное приглашение",
+    "flow": "invite token → preview → accepted connection",
+    "states": "self invite; gone; expired; no pet; no access; replay",
+    "sources": [
+      "app/api/social/invites/route.ts:1",
+      "app/api/social/invites/[token]/route.ts:1"
+    ],
+    "decision": "R1: глубокий вход",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "GAV-09",
+    "title": "Предложение места/маршрута",
+    "value": "Передать выбранный объект",
+    "flow": "Accepted → owned source → preview → send → proposals",
+    "states": "source missing; changed fingerprint; blocked; duplicate send; unavailable snapshot",
+    "sources": [
+      "components/social/MeetingPlacePanel.tsx:1",
+      "app/api/social/requests/[id]/meeting/route.ts:1"
+    ],
+    "decision": "R1: только отправлено/доступно/изменено",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "GAV-10",
+    "title": "Подтверждение предложения",
+    "value": "Согласовать именно одну версию места",
+    "flow": "Proposal → recipient accept/reject → agreed",
+    "states": "new entity revision; author cannot self accept; changed source; conflict",
+    "sources": [
+      "supabase/migrations/20260907012000_social_meeting_proposals.sql:1"
+    ],
+    "decision": "R2: НЕТ в production; отдельный контракт B-08",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "PRO-01",
+    "title": "Обзор и паспорт",
+    "value": "Проверить идентичность собаки",
+    "flow": "Profile → passport → edit → same petId",
+    "states": "empty optional fields; unknown; loading; no avatar; save failure",
+    "sources": [
+      "components/profile/ProfileMemoryWorkspace.tsx:130",
+      "lib/server/profileService.ts:54"
+    ],
+    "decision": "R1: без копии меню Всё",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "PRO-02",
+    "title": "Характер и взаимодействие",
+    "value": "Описать собаку без публичной публикации",
+    "flow": "Profile → character/social → edit → result",
+    "states": "unfilled; enum/custom; dirty; partial persistence; conflict",
+    "sources": [
+      "components/profile/ProfileMemoryWorkspace.tsx:328",
+      "lib/server/profileService.ts:54"
+    ],
+    "decision": "R1: атомарность B-02",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "PRO-03",
+    "title": "Фото, образ и смена идентичности",
+    "value": "Сохранить узнаваемую собаку",
+    "flow": "Upload/generate → draft → activate/discard/rollback",
+    "states": "HEIC and other formats; too large; portrait/landscape; unsupported; provider failed; old active retained",
+    "sources": [
+      "components/profile/ProfileMemoryWorkspace.tsx:310",
+      "lib/server/avatarIdentity.ts:1",
+      "app/api/v1/pets/[petId]/avatar/identity/route.ts:1"
+    ],
+    "decision": "R1: текущие capability flags, согласие не переносить молча",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "PRO-04",
+    "title": "Публичная карточка/памятка",
+    "value": "Поделиться только разрешённым",
+    "flow": "Profile → selected fields → preview → publish/export/revoke",
+    "states": "private omitted; stale preview; busy; existing link; revoked; export failure",
+    "sources": [
+      "app/page.tsx:4622",
+      "lib/server/publicDogCard.ts:1",
+      "app/api/dog-cards/route.ts:1"
+    ],
+    "decision": "R1: полный public/private проход",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "DOC-01",
+    "title": "Список документов",
+    "value": "Найти нужный материал",
+    "flow": "Всё/контекст профиля → docs → ID",
+    "states": "empty; loading; no access; storage failure; long titles",
+    "sources": [
+      "app/api/documents/route.ts:1",
+      "lib/server/petDocumentService.ts:1"
+    ],
+    "decision": "R1: один список",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "DOC-02",
+    "title": "Форма загрузки",
+    "value": "Добавить документ к собаке",
+    "flow": "File → title/kind/date/clinic → upload → ID",
+    "states": "no file; bad MIME; >4MB; cancel; upload failure; metadata failure; unknown result",
+    "sources": [
+      "app/page.tsx:4310",
+      "app/api/documents/route.ts:39"
+    ],
+    "decision": "R1: B-03 upload lifecycle",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "DOC-03",
+    "title": "Просмотр и удаление",
+    "value": "Прочитать/убрать файл",
+    "flow": "ID → short-lived URL → viewer; delete confirm → result",
+    "states": "expired signed link; file missing; forbidden; partial deletion; retry",
+    "sources": [
+      "app/api/documents/[id]/route.ts:1"
+    ],
+    "decision": "R1: не обещать undo удалённого файла без backend",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "WISH-01",
+    "title": "Список и покупка",
+    "value": "Не держать нужное в голове",
+    "flow": "Всё → purchases → add/edit → wanted/bought",
+    "states": "empty; filter; pending; duplicate; failed; long text; external URL",
+    "sources": [
+      "app/page.tsx:4365",
+      "app/page.tsx:4724",
+      "app/api/wishlist/route.ts:1",
+      "app/api/wishlist/[id]/route.ts:1"
+    ],
+    "decision": "R1: объединить overview/detail",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "WISH-02",
+    "title": "Запланировать покупку",
+    "value": "Связать покупку с уходом по желанию",
+    "flow": "Item → explicit date → atomic item/reminder → both links",
+    "states": "optional off; date invalid; partial not allowed; repeated command; edit linkage",
+    "sources": [
+      "app/api/wishlist/route.ts:1",
+      "supabase/migrations/20260903210000_wishlist_plan_link.sql:1"
+    ],
+    "decision": "R1: не включать reminder по умолчанию",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "WISH-03",
+    "title": "Удалить/восстановить покупку",
+    "value": "Исправить список",
+    "flow": "Item → delete → undo/expired",
+    "states": "linked reminder scope; already removed; restore conflict; error",
+    "sources": [
+      "app/api/wishlist/[id]/route.ts:1",
+      "app/api/wishlist/[id]/restore/route.ts:1"
+    ],
+    "decision": "R1: явная судьба связанного дела",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "AGT-01",
+    "title": "Фоновое задание агента",
+    "value": "Вернуться к долгой задаче",
+    "flow": "Conversation → admitted run → events → result",
+    "states": "queued; running; failed; quota; cancelled; reconnect; replay",
+    "sources": [
+      "@agent:app/api/agent/runs/route.ts:1",
+      "@agent:lib/server/agent/runner.ts:1"
+    ],
+    "decision": "R3: PR29, не смешивать с R1",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "AGT-02",
+    "title": "Сохранённый ответ и источники",
+    "value": "Использовать проверяемый ответ позже",
+    "flow": "Result → explicit save → artifact ID → reopen",
+    "states": "no sources; unavailable source; save error; duplicate; deleted artifact",
+    "sources": [
+      "@agent:app/api/agent/results/route.ts:1",
+      "@agent:lib/server/agent/tools.ts:1"
+    ],
+    "decision": "R3: источники и реальный поиск — live gate",
+    "status": "specified; not implemented/accepted in new UI"
+  },
+  {
+    "id": "AGT-03",
+    "title": "Память агента",
+    "value": "Управлять учитываемым контекстом",
+    "flow": "Profile → memory list → fact → edit/forget → result",
+    "states": "empty; source/type; conflict; corrected; forgotten; replay; re-ingestion; error",
+    "sources": [
+      "@agent:app/api/agent/memory/route.ts:1",
+      "@agent:supabase/tests/agent_foundation.sql:1"
+    ],
+    "decision": "R3: не имитировать одним textarea",
+    "status": "specified; not implemented/accepted in new UI"
+  }
+]
