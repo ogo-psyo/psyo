@@ -1,0 +1,38 @@
+{
+  "gav": {
+    "dialogs": [
+      {
+        "open": true,
+        "label": "Моя анкета знакомства",
+        "text": "Анкета Мята\n\nОна появится в поиске только после твоего решения.\n\nскрыта\nГород\nМосква\nСанкт-Петербург\nОкруг или район необязательно\nНе указывать\nЦАО\nСАО\nСВАО\nВАО\nЮВАО\nЮАО\nЮЗАО\nЗАО\nСЗАО\nЗелАО\nТиНАО\nДля чего ищете компанию\nЗнакомство\nПрогулка\nСоциализация\nСлучка\nИскать ближе ко мне\n\nПоказываем только диапазон расстояния. Координаты и точный адрес остаются скрыты.\n\nОпубликовать анкету\nСохранить скрытой\n\nВыбери хотя бы один сценарий.\n\nК анкетам"
+      }
+    ],
+    "text": "Сейчас рядом\nЗнакомства\nЗнакомства\nПоказать фильтры\nИскать рядом\nСоздать анкету\n\nВесь город · Все цели · Любой возраст · Любой ритм\n\nСначала расскажите о собаке\n\nХарактер и привычный ритм помогут найти подходящую компанию.\n\nСоздать анкету\nГлавная\nМята\nКарта\nГав\nВещи\nАнкета Мята\n\nОна появится в поиске только после твоего решения.\n\nскрыта\nГород\nМосква\nСанкт-Петербург\nОкруг или район необязательно\nНе указывать\nЦАО\nСАО\nСВАО\nВАО\nЮВАО\nЮАО\nЮЗАО\nЗАО\nСЗАО\nЗелАО\nТиНАО\nДля чего ищете компанию\nЗнакомство\nПрогулка\nСоциализация\nСлучка\nИскать ближе ко мне\n\nПоказываем только диапазон расстояния. Координаты и точный адрес остаются скрыты.\n\nОпубликовать анкету\nСохранить скрытой\n\nВыбери хотя бы один сценарий.\n\nК анкетам",
+    "history": {
+      "tab": "nearby",
+      "__NA": true,
+      "__PRIVATE_NEXTJS_INTERNALS_TREE": {
+        "tree": [
+          "",
+          {
+            "children": [
+              "__PAGE__",
+              {},
+              null,
+              null,
+              4096
+            ]
+          },
+          null,
+          null,
+          4112
+        ],
+        "renderedSearch": ""
+      },
+      "gavOverlay": "profile"
+    },
+    "selects": 2
+  },
+  "error": "locator.check: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('dialog[open]').getByLabel('Прогулка', { exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <input type=\"checkbox\"/>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <span>Прогулка</span> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <span>Прогулка</span> intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    15 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is visible, enabled and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <span>Прогулка</span> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+  "pageErrors": []
+}

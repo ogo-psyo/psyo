@@ -1,0 +1,604 @@
+{
+  "engine": "chromium",
+  "width": 320,
+  "evidence": "Local c15d067 UI; all API and external requests intercepted; synthetic owner/data; dev badge only hidden",
+  "checks": [
+    {
+      "id": "things-favorite-is-create",
+      "status": "OBSERVED",
+      "data": {
+        "text": "К вещам\nЧто нужно Мяте\n\nЛичный список покупок и того, что заканчивается.\n\nЗакрыть добавление\n0 позиций\nЧто нужно\nНазвание\nКатегория\nамуниция\nкорм\nлакомства\nигрушка\nздоровье\nгруминг\nсервис\nдругое\nЗачем\nнеобязательно\nДобавить в план\nПсё напомнит купить к выбранной дате\nКупить до\nНапиши название\nСписок пока пуст\n\nЗдесь можно держать покупки и услуги для Мята.\n\nГлавная\nМята\nКарта\nГав\nВещи",
+        "overflow": 0,
+        "inputs": [
+          {
+            "name": "Название",
+            "tag": "INPUT",
+            "type": "text",
+            "size": "16px",
+            "value": "",
+            "disabled": false
+          },
+          {
+            "name": "Категория\nамуниция\nкорм\nлакомства\nигрушка\nздоровье\nгруминг\nсервис\nдруг",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "gear",
+            "disabled": false
+          },
+          {
+            "name": "Зачем\nнеобязательно",
+            "tag": "INPUT",
+            "type": "text",
+            "size": "16px",
+            "value": "",
+            "disabled": false
+          },
+          {
+            "name": "Добавить в план\nПсё напомнит купить к выбранной дате",
+            "tag": "INPUT",
+            "type": "checkbox",
+            "size": "16px",
+            "value": "on",
+            "disabled": false
+          },
+          {
+            "name": "Купить до",
+            "tag": "INPUT",
+            "type": "date",
+            "size": "16px",
+            "value": "2026-09-10",
+            "disabled": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "things-error",
+      "status": "OBSERVED",
+      "data": {
+        "retained": "Контрольная вещь",
+        "alerts": [
+          "Покупка не сохранилась. Всё введённое осталось в форме — проверь связь и попробуй снова.",
+          ""
+        ],
+        "overflow": 0,
+        "inputs": [
+          {
+            "name": "Название",
+            "tag": "INPUT",
+            "type": "text",
+            "size": "16px",
+            "value": "Контрольная вещь",
+            "disabled": false
+          },
+          {
+            "name": "Категория\nамуниция\nкорм\nлакомства\nигрушка\nздоровье\nгруминг\nсервис\nдруг",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "gear",
+            "disabled": false
+          },
+          {
+            "name": "Зачем\nнеобязательно",
+            "tag": "INPUT",
+            "type": "text",
+            "size": "16px",
+            "value": "",
+            "disabled": false
+          },
+          {
+            "name": "Добавить в план\nПсё напомнит купить к выбранной дате",
+            "tag": "INPUT",
+            "type": "checkbox",
+            "size": "16px",
+            "value": "on",
+            "disabled": false
+          },
+          {
+            "name": "Купить до",
+            "tag": "INPUT",
+            "type": "date",
+            "size": "16px",
+            "value": "2026-09-10",
+            "disabled": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "character-field-target",
+      "status": "OBSERVED",
+      "data": {
+        "labels": [
+          "ТемпераментНе указаномягкийуверенныйосторожныйигривыйнезависимыйохранныйтревожный",
+          "ЭнергияНе указанодиванныйспокойныйсреднийактивныйракета",
+          "ОбучаемостьНе указанонужна мотивацияпостепенно осваиваетбыстро схватывает",
+          "Как любит игратьНе указаноспокойный контактдогонялкиапортборьбанюховые игрыне любит игры",
+          "Как остаётся один"
+        ],
+        "focusInside": true,
+        "overflow": 0,
+        "inputs": [
+          {
+            "name": "Темперамент\nНе указано\nмягкий\nуверенный\nосторожный\nигривый\nнезависимый",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "",
+            "disabled": false
+          },
+          {
+            "name": "Энергия\nНе указано\nдиванный\nспокойный\nсредний\nактивный\nракета",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "",
+            "disabled": false
+          },
+          {
+            "name": "Обучаемость\nНе указано\nнужна мотивация\nпостепенно осваивает\nбыстро схв",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "",
+            "disabled": false
+          },
+          {
+            "name": "Как любит играть\nНе указано\nспокойный контакт\nдогонялки\nапорт\nборьба\nн",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "",
+            "disabled": false
+          },
+          {
+            "name": "Как остаётся один",
+            "tag": "INPUT",
+            "type": "text",
+            "size": "16px",
+            "value": "",
+            "disabled": false
+          }
+        ],
+        "dialog": "profile-editor-title"
+      }
+    },
+    {
+      "id": "character-escape-draft",
+      "status": "OBSERVED",
+      "data": {
+        "reopened": ""
+      }
+    },
+    {
+      "id": "character-error-and-focus",
+      "status": "OBSERVED",
+      "data": {
+        "open": 1,
+        "input": "Контроль после сбоя",
+        "alerts": [
+          "Не удалось сохранить личный профиль. Изменения остались на экране — попробуй ещё раз."
+        ],
+        "focus": {
+          "tag": "BUTTON",
+          "text": "ОбщительностьПока не заполнено",
+          "outline": "rgb(49, 94, 168) solid 3px"
+        }
+      }
+    },
+    {
+      "id": "character-unknown-scale",
+      "status": "OBSERVED",
+      "data": [
+        {
+          "text": "Уверенность\nПока не заполнено\nосторожный\nсмелый",
+          "position": "--position: 50%;"
+        },
+        {
+          "text": "Общительность\nПока не заполнено\nсам по себе\nко всем",
+          "position": "--position: 50%;"
+        },
+        {
+          "text": "Возбуждение\nПока не заполнено\nровный\nвозбудимый",
+          "position": "--position: 50%;"
+        },
+        {
+          "text": "Обучаемость\nПока не заполнено\nнужна мотивация\nбыстро схватывает",
+          "position": "--position: 50%;"
+        }
+      ]
+    },
+    {
+      "id": "recent-completed-destination",
+      "status": "OBSERVED",
+      "data": {
+        "activeToggle": "Календарь",
+        "doneVisible": 0,
+        "text": "На главную\nПлан заботы\n\nДела, напоминания и история ухода.\n\n1 активное дело\nДобавить дело\nКалендарь\nИстория\nСентябрь 2026 Г.\n1 дело в плане\nСегодня\nПн\nВт\nСр\nЧт\nПт\nСб\nВс\n31\n1\n2\n3\n4\n5\n6\n7\n8\n9\n1\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\nДела на выбранную дату\nСреда, 9 Сентября\nДобавить\nДело\nТекущее контрольное дело\n\nср, 9 сентября, в 02:27 · Не повторять\n\nГотово\nОтложить\nИзменить\nУдалить\nЧто нужно не забыть\n\nНазвание, тип и дата. Всё остальное можно поправить прямо в списке.\n\nДругое\nОбработка\nВакцина\nГруминг\nКорм\nТренировка\nВетеринар\nТочное время\nВ течение дня\nПримерно\nНе повторять\nКаждый день\nКаждую неделю\nКаждый месяц\nРаз в три месяца\nКаждый год\nОбработка\nВакцинация\nГруминг\n\nНе удалось сохранить личный профиль. Изменения остались на экране — попробуй ещё раз.\n\nГлавная\nМята\nКарта\nГав\nВещи"
+      }
+    },
+    {
+      "id": "care-form-accessibility",
+      "status": "OBSERVED",
+      "data": {
+        "ax": "- 'textbox \"Например: обработка от клещей\"'\n- button \"Добавить дело\"",
+        "overflow": 0,
+        "inputs": [
+          {
+            "name": "Например: обработка от клещей",
+            "tag": "INPUT",
+            "type": "text",
+            "size": "16px",
+            "value": "",
+            "disabled": false
+          },
+          {
+            "name": "Тип дела",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "custom",
+            "disabled": false
+          },
+          {
+            "name": "Дата дела",
+            "tag": "INPUT",
+            "type": "date",
+            "size": "16px",
+            "value": "2026-09-09",
+            "disabled": false
+          },
+          {
+            "name": "Точность времени",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "flexible",
+            "disabled": false
+          },
+          {
+            "name": "Повтор дела",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "none",
+            "disabled": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "care-history-add-focus",
+      "status": "OBSERVED",
+      "data": {
+        "focused": "<input placeholder=\"Например: обработка от клещей\" value=\"\" style=\"\">",
+        "overflow": 0,
+        "inputs": [
+          {
+            "name": "Например: обработка от клещей",
+            "tag": "INPUT",
+            "type": "text",
+            "size": "16px",
+            "value": "",
+            "disabled": false
+          },
+          {
+            "name": "Тип дела",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "custom",
+            "disabled": false
+          },
+          {
+            "name": "Дата дела",
+            "tag": "INPUT",
+            "type": "date",
+            "size": "16px",
+            "value": "2026-09-09",
+            "disabled": false
+          },
+          {
+            "name": "Точность времени",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "flexible",
+            "disabled": false
+          },
+          {
+            "name": "Повтор дела",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "none",
+            "disabled": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "profile-habits-back",
+      "status": "OBSERVED",
+      "data": {
+        "start": "На главную\nПривычки Мяты\n\nРегулярные дела появятся здесь\n\nПока без привычек\n\nДобавь только то, что действительно повторяется: прогулку, кормление, лекарство или уход.\n\nДобавить привычку\n\nНе удалось сохранить личный профиль. Изменения остались на экране — попробуй ещё раз.\n\nГлавная\nМята\nКарта\nГав\nВещи",
+        "arrived": 0,
+        "home": 1,
+        "hash": "#today"
+      }
+    },
+    {
+      "id": "document-dirty-dismiss",
+      "status": "OBSERVED",
+      "data": {
+        "before": {
+          "overflow": 0,
+          "inputs": [
+            {
+              "name": "Что это",
+              "tag": "INPUT",
+              "type": "text",
+              "size": "16px",
+              "value": "Несохранённый документ",
+              "disabled": false
+            },
+            {
+              "name": "Тип документа\nАнализ\nНазначение\nВакцинация\nДругое",
+              "tag": "SELECT",
+              "type": "select-one",
+              "size": "16px",
+              "value": "analysis",
+              "disabled": false
+            },
+            {
+              "name": "Дата документа\nнеобязательно",
+              "tag": "INPUT",
+              "type": "date",
+              "size": "16px",
+              "value": "",
+              "disabled": false
+            },
+            {
+              "name": "Клиника\nнеобязательно",
+              "tag": "INPUT",
+              "type": "text",
+              "size": "16px",
+              "value": "",
+              "disabled": false
+            },
+            {
+              "name": "Выбрать PDF или фото\nДо 4 МБ · файл останется приватным",
+              "tag": "INPUT",
+              "type": "file",
+              "size": "16px",
+              "value": "",
+              "disabled": false
+            }
+          ],
+          "dialog": "profile-document-sheet-title"
+        },
+        "reopened": ""
+      }
+    },
+    {
+      "id": "document-server-error",
+      "status": "OBSERVED",
+      "data": {
+        "alert": [
+          "Не удалось сохранить документ. Проверь формат и размер файла — до 4 МБ."
+        ],
+        "title": "Контроль ошибки"
+      }
+    },
+    {
+      "id": "public-card-entry",
+      "status": "OBSERVED",
+      "data": {
+        "text": "В профиль\nПубличная карточка\n\nОдна безопасная ссылка для догситтера, грумера, друга или человека во дворе. Ты решаешь, что показать и когда закрыть доступ.\n\nСначала подготовь памятку\n\nОсталось: как знакомиться.\n\nДозаполнить профиль\nчерновик\nМ\nДОБАВИТЬ ОБРАЗ\nМята\n\nпорода необязательна\n\nГЛАВНОЕ ПРАВИЛО\nсначала спросить владельца\n\nЛучше подходить спокойно, без резких рук и еды без разрешения.\n\nХАРАКТЕР\nДобавить характер\nРАЙОН\nрайон скрыт\n1 из 3\nПравить\n✓\nИмя\nготово\n•\nПравило контакта\nдобавить: как знакомиться\n○\nОсобые ограничения\nнеобязательно\nПоля памятки\n4 из 4\nПорода\nпомогает узнать собаку\nХарактер\nритм и темперамент\nЧто не делать\nважно для безопасности\nРайон\nтолько район, без адреса\n\nИмя и главное правило контакта остаются обязательными. Точный адрес, контакты владельца, лекарства и внутренние заметки сюда не попадают.\n\nPDF / печать\nЧто не публикуем автоматически\n\nТочный адрес, контакты владельца, медицинские заметки, лекарства и внутреннюю историю ухода. В памятку попадает только то, что нужно человеку рядом с собакой.\n\nНе удалось сохранить документ. Проверь формат и размер файла — до 4 МБ.\n\nГлавная\nМята\nКарта\nГав\nВещи",
+        "overflow": 0,
+        "inputs": []
+      }
+    },
+    {
+      "id": "gav-entry-profile",
+      "status": "OBSERVED",
+      "data": {
+        "text": "Сейчас рядом\nЗнакомства\n\nНе удалось сохранить документ. Проверь формат и размер файла — до 4 МБ.\n\nЗнакомства\nПоказать фильтры\nИскать рядом\nСоздать анкету\n\nВесь город · Все цели · Любой возраст · Любой ритм\n\nСначала расскажите о собаке\n\nХарактер и привычный ритм помогут найти подходящую компанию.\n\nСоздать анкету\n\nНе удалось сохранить документ. Проверь формат и размер файла — до 4 МБ.\n\nГлавная\nМята\nКарта\nГав\nВещи",
+        "overflow": 0,
+        "inputs": []
+      }
+    },
+    {
+      "id": "map-empty-error",
+      "status": "OBSERVED",
+      "data": {
+        "text": "М\nДОБАВИТЬ ОБРАЗ\nКарта · Мята\nНайти организацию, место или маршрут\nНайти\n+\n−\n© OpenFreeMap © OpenStreetMap contributors\nКарта пока недоступна\nПовторить загрузку\nСохранённые места и маршруты остаются доступны.\nМеста\nПрогулки\nСохранённое\nПодборки\nОткрыть подборку\nВсе сохранённые · 0\n\nВ подборке пока нет мест. Найдите место на карте или через поиск и сохраните его сюда.\n\nУправлять местами\nУправлять подборками\nСлои карты\nКарта пока чистая\n\nСохраните маршрут или предупредите об опасном месте.\n\nНе удалось сохранить документ. Проверь формат и размер файла — до 4 МБ.\n\nГлавная\nМята\nКарта\nГав\nВещи",
+        "overflow": 0,
+        "inputs": [
+          {
+            "name": "Клиника, парк или маршрут",
+            "tag": "INPUT",
+            "type": "text",
+            "size": "16px",
+            "value": "",
+            "disabled": false
+          },
+          {
+            "name": "Открыть подборку",
+            "tag": "SELECT",
+            "type": "select-one",
+            "size": "16px",
+            "value": "saved",
+            "disabled": false
+          },
+          {
+            "name": "Например, парки рядом",
+            "tag": "INPUT",
+            "type": "text",
+            "size": "16px",
+            "value": "",
+            "disabled": false
+          },
+          {
+            "name": "",
+            "tag": "INPUT",
+            "type": "checkbox",
+            "size": "16px",
+            "value": "on",
+            "disabled": false
+          },
+          {
+            "name": "",
+            "tag": "INPUT",
+            "type": "checkbox",
+            "size": "16px",
+            "value": "on",
+            "disabled": false
+          },
+          {
+            "name": "",
+            "tag": "INPUT",
+            "type": "checkbox",
+            "size": "16px",
+            "value": "on",
+            "disabled": false
+          }
+        ]
+      }
+    }
+  ],
+  "requests": [
+    {
+      "path": "/api/internal/release",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/app/bootstrap",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/billing/entitlements",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/v1/session/telegram",
+      "method": "POST",
+      "body": "{\"initData\":\"test-fixture-not-valid\"}"
+    },
+    {
+      "path": "/api/internal/release",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/app/bootstrap",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/billing/entitlements",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/v1/session/telegram",
+      "method": "POST",
+      "body": "{\"initData\":\"test-fixture-not-valid\"}"
+    },
+    {
+      "path": "/api/app/bootstrap",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/app/bootstrap",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/billing/entitlements",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/observations",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/dog-cards",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/habits",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/health",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/pets/11111111-1111-4111-8111-111111111111/summary",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/recommendations",
+      "method": "POST",
+      "body": "{\"petId\":\"11111111-1111-4111-8111-111111111111\"}"
+    },
+    {
+      "path": "/api/wishlist",
+      "method": "POST",
+      "body": "{\"petId\":\"11111111-1111-4111-8111-111111111111\",\"title\":\"Контрольная вещь\",\"category\":\"gear\",\"reason\":null,\"priority\":\"medium\",\"plannedFor\":\"2026-09-10\",\"dueAt\":\"2026-09-10T09:00:00.000Z\",\"source\":\"manual\"}"
+    },
+    {
+      "path": "/api/v1/pets",
+      "method": "POST",
+      "body": "{\"profile\":{\"avatarImageUrl\":\"\",\"avatarSource\":\"none\",\"photoUrls\":[],\"dogName\":\"Мята\",\"breedId\":\"mixed\",\"breedGroupId\":\"mixed\",\"breedCustom\":\"\",\"breedHint\":\"\",\"neighborhood\":\"\",\"bio\":\"\",\"age\":\"\",\"lifeStage\":\"\",\"sex\":\"\",\"neutered\":\"\",\"weight\":\"\",\"size\":\"\",\"coatType\":\"\",\"colorMarks\":\"\",\"microchip\":\"\",\"temperament\":\"\",\"energyLevel\":\"\",\"trainability\":\"\",\"playStyle\":\"\",\"socialMode\":\"\",\"childFriendly\":\"\",\"dogFriendly\":\"\",\"catFriendly\":\"\",\"aloneTime\":\"Контроль после сбоя\",\"triggers\":\"\",\"healthNotes\":\"\",\"allergies\":\"\",\"diet\":\"\",\"vetClinic\":\"\",\"vaccineStatus\":\"\",\"parasiteStatus\":\"\",\"medication\":\"\",\"nextCareDate\":\"\",\"habits\":[{\"id\":\"walk\",\"title\":\"Прогулки\",\"value\":\"утро и вечер, любит тихие дворы\"},{\"id\":\"food\",\"title\":\"Еда\",\"value\":\"ест нормально, лакомства — за команды\"},{\"id\":\"triggers\",\"title\":\"Триггеры\",\"value\":\"не любит самокаты и громкие пакеты\"}],\"photos\":[],\"selectedStyle\":\"city\",\"avatarPrompt\":\"\",\"isPublic\":false,\"isOnMap\":false,\"backendPetId\":\"11111111-1111-4111-8111-111111111111\"}}"
+    },
+    {
+      "path": "/api/documents",
+      "method": "POST",
+      "body": "------WebKitFormBoundary8nqHmOYcbjlikX9x\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\nКонтроль ошибки\r\n------WebKitFormBoundary8nqHmOYcbjlikX9x\r\nContent-Disposition: form-data; name=\"kind\"\r\n\r\nanalysis\r\n------WebKitFormBoundary8nqHmOYcbjlikX9x\r\nContent-Disposition: form-data; name=\"documentDate\"\r\n\r\n\r\n------WebKitFormBoundary8nqHmOYcbjlikX9x\r\nContent-Disposition: form-data; name=\"clinic\"\r\n\r\n\r\n------WebKitFormBoundary8nqHmOYcbjlikX9x\r\nContent-Disposition: form-data; name=\"file\"; filename=\"test.pdf\"\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.4\n%%EOF\r\n------WebKitFormBoundary8nqHmOYcbjlikX9x\r\nContent-Disposition: form-data; name=\"petId\"\r\n\r\n11111111-1111-4111-8111-111111111111\r\n------WebKitFormBoundary8nqHmOYcbjlikX9x--\r\n"
+    },
+    {
+      "path": "/api/social/profile",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/social/candidates",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/social/requests",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/social/signals",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/map/library",
+      "method": "GET",
+      "body": null
+    }
+  ],
+  "externalBlocked": [
+    "telegram.org",
+    "tiles.openfreemap.org"
+  ],
+  "pageErrors": []
+}
