@@ -1,0 +1,41 @@
+.screen {color:#3e3b47;}
+:global(body.companion-app main.app-canvas) .screen {background:radial-gradient(ellipse at 100% 0,#eeebf577,transparent 60%),#f9f9fb!important;padding:20px 24px calc(112px + env(safe-area-inset-bottom));min-height:calc(100dvh - 36px);}
+:global(body.companion-app main.app-canvas) .screen h1 {font:400 clamp(36px,9vw,48px)/1.15 PsoHandwritten,sans-serif!important;letter-spacing:0!important;color:#3e3b47;}
+.screen :global(.module-screen-heading) {margin:24px 0 16px;}
+.screen :global(.module-screen-heading) p {font-size:15px;color:#71677a;}
+:global(body.companion-app main.app-canvas) .screen h2 {font:400 26px/1.2 PsoHandwritten,sans-serif!important;}
+:global(body.companion-app main.app-canvas) .screen button {min-height:44px;font:400 16px/1.4 var(--font-pouf);color:#4d405b;background:transparent;border:0;box-shadow:none;}
+:global(body.companion-app main.app-canvas) .screen :global(:is(.health-add,.primary,.care-row-actions button,.health-more)) {padding:10px 16px;background:#eeeaf4!important;border-radius:18px!important;border:1px solid #e7e0ed!important;}
+.screen :is(button,summary):focus-visible,.screen :is(input,select,textarea):focus-visible {outline:3px solid #76628c!important;outline-offset:3px;}
+.screen button:disabled {opacity:.5;}
+.screen fieldset {border:0;padding:0;margin:0;min-width:0;display:grid;gap:16px;}
+.screen label {display:grid;gap:8px;font:400 15px/1.5 var(--font-pouf);color:#63586d;}
+:global(body.companion-app main.app-canvas) .screen :is(input,select,textarea) {font:400 16px/1.55 var(--font-pouf)!important;color:#3e3b47!important;background:#fff9!important;border:1px solid #d9d1e2!important;border-radius:14px!important;padding:12px!important;box-shadow:none!important;width:100%;min-width:0;}
+:global(body.companion-app main.app-canvas) .screen textarea {min-height:112px;resize:vertical;}
+:global(body.companion-app main.app-canvas) .screen :global(:is(.health-capture,.structured-observation-editor)) {padding:18px!important;background:linear-gradient(130deg,#fff,#f0edf6a0)!important;border:1px solid white!important;border-radius:24px!important;box-shadow:0 10px 28px #6352700a!important;margin:16px 0;}
+.screen summary {display:flex;align-items:center;min-height:44px;cursor:pointer;gap:12px;font-size:16px;color:#65546f;}
+.screen summary::after {content:'＋';margin-inline-start:auto;}
+.screen details[open]>summary::after {content:'−';}
+.screen :global(.health-facts) {border:0;border-bottom:1px solid #e4dfea;border-radius:0;padding:12px 0;margin:20px 0;}
+.screen :global(.health-facts) fieldset {padding-block:12px;}
+:global(body.companion-app main.app-canvas) .screen :global(.health-timeline) {background:transparent;border:0;padding:0;box-shadow:none;}
+:global(body.companion-app main.app-canvas) .screen :global(.health-timeline)>article {background:transparent!important;border:0!important;border-bottom:1px solid #e4dfea!important;border-radius:0!important;padding:20px 0!important;box-shadow:none!important;}
+:global(body.companion-app main.app-canvas) .screen :global(.health-record-text) {white-space:pre-wrap;overflow-wrap:anywhere;font:400 18px/1.55 var(--font-pouf);color:#3e3b47;margin:12px 0;}
+.screen :global(.health-observation-heading) time {font-size:14px;color:#71677a;}
+.screen :global(.health-observation-grid) {display:flex;flex-wrap:wrap;gap:12px 24px;margin:16px 0;}
+.screen :global(.health-observation-grid) div {background:transparent;border:0;padding:0;}
+.screen :global(.health-observation-grid) dt {font-size:13px;color:#71677a;}
+.screen :global(.health-observation-grid) dd {font-size:16px;margin:4px 0;}
+.screen [role=alert] {color:#963d51;font-size:15px;line-height:1.5;}
+.screen :global(.health-save-status):empty {display:none;}
+.screen :global(.health-save-status),.screen :global(.health-restore) {font-size:16px;line-height:1.5;}
+.screen :global(.health-calendar-panel) {background:#f1edf6;border-radius:20px;padding:12px;}
+.screen :global(.health-calendar-grid) {gap:2px;}
+.screen :global(.health-calendar-grid) button {padding:0;min-width:0;}
+:global(body.companion-app main.app-canvas) .screen :global(.health-calendar-grid) button[aria-pressed=true] {background:#ded5ea;border-radius:12px;}
+.screen :global(.care-row-actions) {display:flex;flex-wrap:wrap;gap:12px;}
+@media(max-width:360px){:global(body.companion-app main.app-canvas) .screen{padding-inline:20px;}.screen :global(.health-capture){padding:14px;}}
+
+:global(body.companion-app main.app-canvas) .screen summary {font:400 16px/1.4 var(--font-pouf)!important;color:#65546f!important;background:transparent!important;}
+:global(body.companion-app main.app-canvas) .screen :global(.health-facts) {background:transparent!important;border:0!important;border-bottom:1px solid #e4dfea!important;box-shadow:none!important;border-radius:0!important;}
+:global(body.companion-app main.app-canvas) .screen button {color:#4d405b!important;}

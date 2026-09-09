@@ -120,3 +120,9 @@ See [AGENT-MAP.md](AGENT-MAP.md). Shared map search/API/tool, real typed provide
 [THINGS-FLOW.md](THINGS-FLOW.md): immediate title, optional details, same-row edit, bought history/remove/restore. Request-start lock, pet/ID-checked receipts, scoped errors and preserved manual/edit drafts; assistant suggestion no longer inherits a manual deadline. Linked reminder completion uses its real transaction receipt, not a fallible subsequent bootstrap.
 
 204 tests/build/contracts/lint217;6 final Things cases across2browsers×3widths, plus8 prior assistant/interaction regression cases. Foreign/demo receipts rejected; assistant-action retry preserves unrelated manual composer. UI screenshots visually reviewed. API/browser fixtures only. Restoring a deleted planned item does not restore its deleted reminder (existing DB behavior, explicit UI copy, still open for full reversible-plan scope). No production/cloud/provider changes.
+
+## U-03: original records, health and complete metric edits
+
+[HEALTH-FLOW.md](HEALTH-FLOW.md): history/text-first, optional metrics/calendar, retained edits and local errors/restore; all canonical primary facts stay readable/editable. Complete health projection and stable bounded continuation; strict mutation receipts and request lock, no dependency on a second read to confirm a write. Clearing a metric now updates its stored value rather than resurrecting the old primary value.
+
+Full QA213, then19 focused endpoint/atomic/projection tests and final rebuild for primary facts. Synthetic local Postgres keyset/RPC tests passed with rollback. Browser fixture acceptance is distinct from real cloud/provider/device gates; see final health manifest. No production changes.

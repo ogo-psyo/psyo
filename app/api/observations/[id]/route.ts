@@ -30,7 +30,6 @@ const allowedTypes = new Set([
 
 const allowedSources = new Set(['manual', 'assistant', 'import', 'demo']);
 const quickMetricTypes = ['mood', 'appetite', 'stool', 'energy'] as const;
-type QuickMetricType = typeof quickMetricTypes[number];
 
 function mapObservation(row: any) {
   const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
@@ -59,13 +58,10 @@ function parseDate(value: unknown) {
   return date.toISOString();
 }
 
-function quickMetricValue(body: any, key: QuickMetricType) {
-  return typeof body?.[key] === 'string' && body[key].trim() ? body[key].trim() : null;
-}
-
 export async function PATCH(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const body = await request.json().catch(() => ({}));
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return careError('INVALID_BODY', 'Не удалось прочитать изменение записи.', 400);
   const idempotencyKey = readCareIdempotencyKey(request, body);
   if (!idempotencyKey) return careError('IDEMPOTENCY_KEY_REQUIRED', 'Не удалось безопасно сохранить запись.', 400);
   const patch: Record<string, unknown> = {};
@@ -96,17 +92,23 @@ export async function PATCH(request: Request, ctx: Ctx) {
     patch.metadata = body.metadata;
   }
 
-  const metricPatch = quickMetricTypes.reduce<Record<string, string>>((acc, key) => {
-    const value = quickMetricValue(body, key);
-    if (value) acc[key] = value;
-    return acc;
-  }, {});
+  const hasAllMetrics = quickMetricTypes.every(key => Object.hasOwn(body, key));
+  const metricPatch: Record<string, string> = {};
+  for (const key of quickMetricTypes) {
+    if (!Object.hasOwn(body, key)) continue;
+    if (typeof body[key] !== 'string') return careError('INVALID_METRIC', 'Показатель должен быть текстом.', 400);
+    const value = body[key].trim();
+    // Clearing needs a complete reviewed snapshot to derive a consistent primary value.
+    if (!value && !hasAllMetrics) return careError('INCOMPLETE_METRIC_CLEAR', 'Для изменения загрузите всю запись.', 400);
+    metricPatch[key] = value;
+  }
   if (Object.keys(metricPatch).length > 0) {
     patch.metadata = { ...(patch.metadata as Record<string, unknown> | undefined), ...metricPatch };
     if (body.type === undefined && body.value === undefined) {
-      const [primaryType, primaryValue] = Object.entries(metricPatch)[0];
-      patch.type = primaryType;
-      patch.value = primaryValue;
+      const primary = Object.entries(metricPatch).find(([, value]) => value);
+      if (primary) { patch.type = primary[0]; patch.value = primary[1]; }
+      else if (typeof body.note === 'string' && body.note.trim()) { patch.type = 'note'; patch.value = body.note.trim(); }
+      else return careError('EMPTY_OBSERVATION', 'Оставьте текст или хотя бы один показатель.', 400);
     }
   }
 
@@ -146,6 +148,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
 export async function DELETE(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const body = await request.json().catch(() => ({}));
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return careError('INVALID_BODY', 'Не удалось прочитать изменение записи.', 400);
   const idempotencyKey = readCareIdempotencyKey(request, body);
   if (!idempotencyKey) return careError('IDEMPOTENCY_KEY_REQUIRED', 'Не удалось безопасно убрать запись.', 400);
   const auth = await getRequestAuth(request);

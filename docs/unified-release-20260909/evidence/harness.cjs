@@ -16,6 +16,7 @@ async function setup(engine='chromium',width=390){
   if(u.pathname==='/api/app/bootstrap')return json({mode:'owner',connected:true,activePetId:pet.id,pet,pets:[pet],profile,social:{alone_time_note:state.remoteAlone||'Исходное',...state.social},observations:state.observations,documents:state.documents,reminders:state.reminders,wishlist:state.wishlist,zones:[],routes:[],avatarCapabilities:{identityEnabled:true,uploadsEnabled:true,generationEnabled:false,providerReady:false}});
   if(req.method()!=='GET'&&state.fail)return json({error:'QA_SAVE_FAILURE',message:'Контрольный сбой сохранения'},503);
   if(u.pathname==='/api/observations')return json({observations:state.observations});
+  if(u.pathname==='/api/health')return json({entries:state.observations,hasMore:false,nextCursor:null});
   if(u.pathname==='/api/habits')return json({habits:[]});
   if(u.pathname==='/api/documents'){if(req.method()==='POST'){const document={id:'d-created',petId:pet.id,title:'Документ после повтора',kind:'analysis',createdAt:now};state.documents.unshift(document);return json({document},201);}return json({documents:state.documents});}
   if(u.pathname==='/api/pets'||u.pathname==='/api/v1/pets')return json({pet,profile:req.postDataJSON()?.profile||profile});

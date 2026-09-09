@@ -1,0 +1,31 @@
+{
+  "status": "local_slice_verified",
+  "productionChanged": false,
+  "liveProvider": false,
+  "cloudAcceptance": false,
+  "browserApi": "synthetic intercepted; external requests blocked",
+  "buildLog": "/tmp/pso-u03-pagination-build.log",
+  "fullQaBaseline": 213,
+  "subsequentFocusedTests": 19,
+  "lintWarnings": 215,
+  "browserCases": {
+    "health": 6,
+    "equalTimeCache": 1,
+    "interaction": 4,
+    "assistant": 4
+  },
+  "sql": [
+    "health-keyset.sql",
+    "health-metric-clear.sql"
+  ],
+  "sha256": {
+    "app/page.tsx": "43aeb4612384dd09d4cd7788dd26ff84a35c46359c649111488fd36814886a93",
+    "app/api/health/route.ts": "afdeb11cef81b14bff5267b782f59658898ccfee7939cc21eecbc34855aff9be",
+    "app/api/observations/[id]/route.ts": "4b2fe12ca3fe413413e49fdd592c2900f89aefbb2f24341c3c8fa2e064855c7f",
+    "lib/server/healthTimelineService.ts": "3cc5346633acf6ab37e1b7398ba09a745534b45cb1e73357d2d213fe690a5103",
+    "lib/observationLabels.ts": "a36ebcde60701797b6031b472879ae4d5b7333df8edaf96c62c525b68211d6e6",
+    "components/health/HealthTimelineScreen.tsx": "187cd74a40cbd8be123927fc178a3134eb9fac0bf3f6f068dc5171dcbeccc509",
+    "components/health/HealthTimeline.module.css": "9ad517b39f5a9464b5f9360729a5cd4a67b8a2aa49b4e43b8287e722a2fa7797",
+    "components/care/ObservationEditor.tsx": "bcf498f65fece74ce51a0b4184fdeef2b0c9318cb148fc71b1e7ea81cc711273"
+  }
+}

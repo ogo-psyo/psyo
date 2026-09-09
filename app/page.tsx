@@ -1,4 +1,6 @@
 'use client';
+
+import { isPrimaryObservationFact } from '@/lib/observationLabels';
 import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
 import {isMapSearchPlace,type MapSearchPlace} from '@/lib/mapSearchPlace';
 import {downloadRouteGpx,type RoutePlanning} from '@/lib/routePlanning';
@@ -588,6 +590,14 @@ export default function Home() {
   const [socialInviteState, setSocialInviteState] = useState<'idle' | 'loading' | 'ready' | 'gone' | 'error'>('idle');
   const [observationDraft, setObservationDraft] = useState<ObservationDraft>(defaultObservationDraft);
   const [observationSaving, setObservationSaving] = useState(false);
+  const [observationCaptureOpen, setObservationCaptureOpen] = useState(false);
+  const [observationIssue, setObservationIssue] = useState<{scope:string;message:string}|null>(null);
+  const [healthFactsError, setHealthFactsError] = useState('');
+  const [healthNextCursor, setHealthNextCursor] = useState<string|null>(null);
+  const [healthLoading, setHealthLoading] = useState(false);
+  const healthReadVersion = useRef(0);
+  const healthLoadedPet = useRef<string|null>(null);
+  const observationWrite = useRef<symbol|null>(null);
   const [editingObservationId, setEditingObservationId] = useState<string | null>(null);
   const agentObservationEdits = useRef(new Map<string,ReviewedObservation>());
   const observationEditDrafts = useRef(new Map<string, ObservationEditorDraft>());
@@ -1584,9 +1594,10 @@ export default function Home() {
       setWishlist((payload.wishlist ?? []).filter(belongsToSelectedPet));
       setZones((payload.zones ?? []).filter(belongsToSelectedPet));
       setOwnerRoutes(normalizeOwnerRoutes((payload.routes ?? []).filter(belongsToSelectedPet)));
-      if (Array.isArray(payload.observations)) {
+      // Bootstrap is a profile snapshot, not a replacement for an already paged history.
+      if (Array.isArray(payload.observations) && healthLoadedPet.current !== selectedPetId) {
         const bootObservations = payload.observations.filter(belongsToSelectedPet).map(normalizeObservation).filter(Boolean) as ObservationView[];
-        setObservations(bootObservations.slice(0, 12));
+        setObservations(bootObservations);
       }
       setDocuments(Array.isArray(payload.documents) ? payload.documents.filter(belongsToSelectedPet) : []);
     } else if (!preserveLocalGuest && payload.empty && payload.user?.id) {
@@ -1625,7 +1636,7 @@ export default function Home() {
     setHeroNameDraft(hydratedLocal.dogName || '');
     try {
       const savedObservations = JSON.parse(window.localStorage.getItem(observationsStorageKey(hydratedLocal.backendPetId)) || '[]');
-      if (Array.isArray(savedObservations)) setObservations(savedObservations.map(normalizeObservation).filter(Boolean).slice(0, 12) as ObservationView[]);
+      if (Array.isArray(savedObservations)) setObservations(savedObservations.map(normalizeObservation).filter(Boolean) as ObservationView[]);
     } catch {}
     observationsLoadedRef.current = true;
     const supabase = getSupabaseBrowser();
@@ -1973,6 +1984,9 @@ export default function Home() {
     : billing?.upgrade?.available ? 'Оплата готова через Telegram.' : 'Оплата пока недоступна.';
 
   function resetPetScopedDrafts() {
+    healthReadVersion.current++; healthLoadedPet.current=null; observationWrite.current=null;
+    setHealthNextCursor(null); setHealthLoading(false); setObservationIssue(null); setHealthFactsError('');
+    setObservationSaving(false); setObservationMutationBusy(false); setObservationCaptureOpen(false);
     wishlistOperation.current = null; wishlistEditDrafts.current.clear(); setWishlistWriting(null); setWishlistIssue(null); setEditingWishlistId(null); setRemovedWishlistItem(null);
     setRecordDetail(null);
     setProfileSurface('overview');
@@ -2112,13 +2126,17 @@ export default function Home() {
     const date = new Date(createdAt);
     const type = String(raw.type || '');
     const value = String(raw.value || '');
+    const metric=(key:string)=> {
+      const stored=typeof raw[key]==='string'?raw[key]:typeof metadata[key]==='string'?metadata[key]:type===key?value:'';
+      return stored.trim()||undefined;
+    };
     return {
       id: id || guestId('observation'),
       petId: raw.petId || raw.pet_id ? String(raw.petId || raw.pet_id) : undefined,
-      mood: String(raw.mood || metadata.mood || (type === 'mood' ? value : '')).trim() || undefined,
-      appetite: String(raw.appetite || metadata.appetite || (type === 'appetite' ? value : '')).trim() || undefined,
-      stool: String(raw.stool || metadata.stool || (type === 'stool' ? value : '')).trim() || undefined,
-      energy: String(raw.energy || metadata.energy || (type === 'energy' ? value : '')).trim() || undefined,
+      mood: metric('mood'),
+      appetite: metric('appetite'),
+      stool: metric('stool'),
+      energy: metric('energy'),
       type, value,
       note: note || (type === 'note' ? value : '') || undefined,
       createdAt: Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString(),
@@ -2128,23 +2146,35 @@ export default function Home() {
 
   function updateObservationDraft(patch: Partial<ObservationDraft>) {
     setObservationDraft((current) => ({ ...current, ...patch }));
-    setError('');
+    if (observationIssue?.scope === 'create') setObservationIssue(null);
   }
 
-  async function loadObservations() {
-    const params = new URLSearchParams({ limit: '12' });
-    if (profile.backendPetId) params.set('petId', profile.backendPetId);
-    const response = await fetch(`/api/observations?${params.toString()}`, { headers: authHeaders() });
-    if (!response.ok) return;
-    const payload = await response.json().catch(() => ({}));
-    const source = Array.isArray(payload?.observations) ? payload.observations : Array.isArray(payload) ? payload : [];
-    const remote = source.map(normalizeObservation).filter(Boolean) as ObservationView[];
-    if (!remote.length) return;
-    setObservations((current) => {
-      const byId = new Map<string, ObservationView>();
-      [...remote.map((item) => ({ ...item, syncStatus: 'saved' as const })), ...current].forEach((item) => byId.set(item.id, item));
-      return Array.from(byId.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 12);
-    });
+  async function loadObservations() { await loadHealthTimeline(); }
+
+  async function loadHealthTimeline(before?: string, signal?: AbortSignal) {
+    const petId=profile.backendPetId;
+    if (!petId || isGuestMode() || observationWrite.current) return;
+    const version=++healthReadVersion.current;
+    const current=()=>version===healthReadVersion.current && documentActivePet.current===petId && !signal?.aborted;
+    setHealthLoading(true);
+    setModuleErrors(value=>({...value,health:undefined}));
+    try {
+      const params=new URLSearchParams({petId}); if(before)params.set('before',before);
+      const response=await fetch(`/api/health?${params}`,{headers:authHeaders(),credentials:'include',signal});
+      const payload=await response.json();
+      if(!current())return;
+      if(!response.ok || !Array.isArray(payload.entries))throw new Error('HEALTH_READ_FAILED');
+      const entries=payload.entries.map((entry:unknown)=>observationReceipt(entry,petId)) as ObservationView[];
+      setObservations(previous=>{
+        // A fresh read starts a new cursor chain; only the actively edited draft stays visible.
+        const retained=before?previous:previous.filter(item=>item.id===editingObservationId);
+        return [...new Map([...retained,...entries.map(item=>({...item,syncStatus:'saved' as const}))].map(item=>[item.id,item])).values()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
+      });
+      healthLoadedPet.current=petId;
+      setHealthNextCursor(payload.hasMore && typeof payload.nextCursor==='string'?payload.nextCursor:null);
+    } catch {
+      if(current())setModuleErrors(value=>({...value,health:'Не удалось загрузить записи. Уже открытые остались здесь.'}));
+    } finally {if(current())setHealthLoading(false);}
   }
 
   async function loadRealModules(petId = profile.backendPetId, signal?: AbortSignal) {
@@ -2155,33 +2185,25 @@ export default function Home() {
       return;
     }
     setHabitLoading(true);
-    setModuleErrors({});
+    setModuleErrors(value=>({...value,habits:undefined}));
     const request = { headers: authHeaders(), credentials: 'include' as const, signal };
     try {
-      const [habitResponse, healthResponse, summaryResponse] = await Promise.all([
+      const [habitResponse, summaryResponse] = await Promise.all([
         fetch(`/api/habits?petId=${encodeURIComponent(petId)}`, request),
-        fetch(`/api/health?petId=${encodeURIComponent(petId)}`, request),
         fetch(`/api/pets/${encodeURIComponent(petId)}/summary`, request),
       ]);
-      const [habitPayload, healthPayload, summaryPayload] = await Promise.all([
+      const [habitPayload, summaryPayload] = await Promise.all([
         habitResponse.json().catch(() => ({})),
-        healthResponse.json().catch(() => ({})),
         summaryResponse.json().catch(() => ({})),
       ]);
+      if(signal?.aborted || documentActivePet.current!==petId)return;
       if (habitResponse.ok) setHabits(Array.isArray(habitPayload.habits) ? habitPayload.habits : []);
-      if (healthResponse.ok && Array.isArray(healthPayload.entries)) {
-        const entries = healthPayload.entries.map(normalizeObservation).filter(Boolean) as ObservationView[];
-        setObservations(entries.slice(0, 50));
-      }
       if (summaryResponse.ok && summaryPayload.summary) setDogSummary(summaryPayload.summary);
-      setModuleErrors({
-        habits: habitResponse.ok ? undefined : 'Проверь соединение и попробуй снова.',
-        health: healthResponse.ok ? undefined : 'Проверь соединение и попробуй снова.',
-      });
+      setModuleErrors(value=>({...value,habits:habitResponse.ok?undefined:'Проверь соединение и попробуй снова.'}));
       if (!summaryResponse.ok) setDogSummary(null);
     } catch (loadError) {
-      if (!(loadError instanceof DOMException && loadError.name === 'AbortError')) {
-        setModuleErrors({ habits: 'Проверь соединение и попробуй снова.', health: 'Проверь соединение и попробуй снова.' });
+      if (!signal?.aborted && documentActivePet.current===petId && !(loadError instanceof DOMException && loadError.name === 'AbortError')) {
+        setModuleErrors(value=>({...value,habits:'Проверь соединение и попробуй снова.'}));
       }
     } finally {
       if (!signal?.aborted) setHabitLoading(false);
@@ -2192,6 +2214,7 @@ export default function Home() {
     if (!profile.backendPetId || isGuestMode()) return;
     const controller = new AbortController();
     void loadRealModules(profile.backendPetId, controller.signal);
+    void loadHealthTimeline(undefined, controller.signal);
     return () => controller.abort();
   }, [profile.backendPetId, session?.access_token, telegramSession.ownerId]);
 
@@ -2326,70 +2349,50 @@ export default function Home() {
     });
   }, [careView, reminders, reminderHistory]);
 
-  async function submitObservation() {
-    if (observationSaving) return;
-    const note = observationDraft.note?.trim();
-    if (!observationDraft.mood && !observationDraft.appetite && !observationDraft.stool && !observationDraft.energy && !note) {
-      setError('Выбери то, что заметил, или добавь короткую заметку.');
-      return;
-    }
-    const petId = profile.backendPetId || (isGuestMode() ? ensureGuestPetId() : undefined);
-    const payloadFingerprint = JSON.stringify({ petId, ...observationDraft, note });
-    const mutationScope = `observation:create:${payloadFingerprint}`;
-    const createdAt = careMutationTime(mutationScope, () => new Date().toISOString());
-    const draft: ObservationView = {
-      id: guestId('observation'),
-      petId,
-      mood: observationDraft.mood,
-      appetite: observationDraft.appetite,
-      stool: observationDraft.stool,
-      energy: observationDraft.energy,
-      note: note || undefined,
-      createdAt,
-      syncStatus: 'local',
-    };
-    setObservationSaving(true);
-    setError('');
+  function observationReceipt(value: unknown, petId: string, expectedId?: string): ObservationView {
+    if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('INVALID_OBSERVATION_RECEIPT');
+    const raw=value as Record<string,unknown>;
+    const id=raw?.id, ownerPet=raw?.petId??raw?.pet_id, date=raw?.observedAt??raw?.observed_at??raw?.createdAt??raw?.created_at;
+    if(typeof id!=='string'||!id||ownerPet!==petId||(expectedId&&id!==expectedId)||typeof date!=='string'||!Number.isFinite(Date.parse(date))||raw.source==='demo'||raw.deleted_at)throw new Error('INVALID_OBSERVATION_RECEIPT');
+    const saved=normalizeObservation(raw); if(!saved)throw new Error('INVALID_OBSERVATION_RECEIPT');
+    return {...saved,syncStatus:'saved'};
+  }
 
-    if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) {
-      setObservations((current) => [draft, ...current].slice(0, 12));
-      setObservationDraft(defaultObservationDraft);
-      finishCareMutation(mutationScope);
-      setObservationSaving(false);
-      return;
-    }
+  async function writeObservation<T>(scope:string, task:(current:()=>boolean)=>Promise<T>):Promise<T|null> {
+    if(observationWrite.current)return null;
+    const token=Symbol(scope), petId=profile.backendPetId;
+    observationWrite.current=token;
+    const current=()=>observationWrite.current===token && documentActivePet.current===petId;
+    // Ignore an older in-flight read; the mutation receipt is newer than that snapshot.
+    healthReadVersion.current++; setHealthLoading(false);
+    setObservationIssue(null);
+    if(scope==='create')setObservationSaving(true);else setObservationMutationBusy(true);
+    try{return await task(current);}
+    catch{if(current())setObservationIssue({scope,message:'Не удалось подтвердить изменение. Ввод остался здесь — повторите попытку.'});return null;}
+    finally{if(current()){observationWrite.current=null;setObservationSaving(false);setObservationMutationBusy(false);}}
+  }
 
-    try {
-      const response = await fetch('/api/observations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(mutationScope), ...authHeaders() },
-        body: JSON.stringify({
-          petId: profile.backendPetId,
-          ...(draft.note && !draft.mood && !draft.appetite && !draft.stool && !draft.energy ? { type: 'note', value: draft.note } : {}),
-          mood: draft.mood || undefined,
-          appetite: draft.appetite || undefined,
-          stool: draft.stool || undefined,
-          energy: draft.energy || undefined,
-          note: draft.note || null,
-          observedAt: createdAt,
-          source: 'manual',
-        }),
-      });
-      if (!response.ok) {
-        setError('Запись не сохранилась. Текст остался здесь — проверь связь и попробуй снова.');
-        return;
+  async function submitObservation():Promise<ObservationView|null> {
+    const note=observationDraft.note?.trim();
+    if(!observationDraft.mood&&!observationDraft.appetite&&!observationDraft.stool&&!observationDraft.energy&&!note)return null;
+    const guest=isGuestMode(),petId=profile.backendPetId||(guest?ensureGuestPetId():undefined);
+    if(!petId){setObservationIssue({scope:'create',message:'Сначала выберите собаку. Текст остался здесь.'});return null;}
+    const scope=`observation:create:${JSON.stringify({petId,...observationDraft,note})}`;
+    const createdAt=careMutationTime(scope,()=>new Date().toISOString());
+    return writeObservation('create',async current=>{
+      let saved:ObservationView={id:guestId('observation'),petId,...observationDraft,note:note||undefined,createdAt,syncStatus:'local'};
+      if(!guest){
+        const response=await fetch('/api/observations',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify({petId,...observationDraft,note:note||null,observedAt:createdAt,source:'manual',...(note&&!observationDraft.mood&&!observationDraft.appetite&&!observationDraft.stool&&!observationDraft.energy?{type:'note',value:note}:{})})});
+        const payload=await response.json();
+        if(!current())return null;
+        if(!response.ok||payload.mode==='demo')throw new Error('SAVE_FAILED');
+        saved=observationReceipt(payload.observation,petId);
       }
-      const payload = await response.json().catch(() => ({}));
-      const saved = normalizeObservation(payload?.observation || payload);
-      if (saved) setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
-      setObservationDraft(defaultObservationDraft);
-      finishCareMutation(mutationScope);
-      await loadRealModules(profile.backendPetId);
-    } catch {
-      setError('Запись не сохранилась. Текст остался здесь — проверь связь и попробуй снова.');
-    } finally {
-      setObservationSaving(false);
-    }
+      if(!current())return null;
+      setObservations(previous=>[saved,...previous.filter(item=>item.id!==saved.id)]);
+      setObservationDraft(defaultObservationDraft);finishCareMutation(scope);
+      return saved;
+    });
   }
 
   async function transcribeVoiceObservation(audio: Blob) {
@@ -2445,7 +2448,7 @@ export default function Home() {
     if (!response.ok) throw new Error(String(payload.error || 'OBSERVATION_SAVE_FAILED'));
     const saved = normalizeObservation(payload.observation || payload);
     if (!saved) throw new Error('OBSERVATION_SAVE_FAILED');
-    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
+    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)]);
     finishCareMutation(scope);
     await loadRealModules(profile.backendPetId);
     return { decisions: Array.isArray(payload.decisions) ? payload.decisions as IngestionDecision[] : [], summary: payload.summary || {} };
@@ -2460,7 +2463,7 @@ export default function Home() {
       const draft: ObservationView = {
         id: guestId('observation'), petId, note: text, createdAt, syncStatus: 'local',
       };
-      setObservations((current) => [draft, ...current].slice(0, 12));
+      setObservations((current) => [draft, ...current]);
       return;
     }
     const scope = `observation:voice-note:${petId}:${createdAt}:${text}`;
@@ -2477,7 +2480,7 @@ export default function Home() {
     if (!response.ok) throw new Error(String(payload.error || 'PRIVATE_NOTE_SAVE_FAILED'));
     const saved = normalizeObservation(payload.observation || payload);
     if (!saved) throw new Error('PRIVATE_NOTE_SAVE_FAILED');
-    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
+    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)]);
     finishCareMutation(scope);
   }
 
@@ -2489,66 +2492,46 @@ export default function Home() {
       stool: observation.stool || '',
       energy: observation.energy || '',
       note: observation.note || '',
+      ...(isPrimaryObservationFact(observation.type)?{type:observation.type,value:observation.value}:{}),
     });
     setError('');
   }
 
   async function editObservation(id: string) {
-    const scope = `observation:update:${id}:${JSON.stringify(observationEditDraft)}`;
-    if (isGuestMode()) {
-      setObservations((current) => current.map((item) => item.id === id ? { ...item, ...observationEditDraft } : item));
-      observationEditDrafts.current.delete(id);
-      setEditingObservationId(null);
-      return;
-    }
-    setObservationMutationBusy(true);
-    try {
-      const response = await fetch(`/api/observations/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify(observationEditDraft),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) return setError('Не получилось сохранить запись. Изменения остались в форме.');
-      const saved = normalizeObservation(payload.observation);
-      if (saved) setObservations((current) => current.map((item) => item.id === id ? { ...saved, syncStatus: 'saved' as const } : item));
-      finishCareMutation(scope);
-      observationEditDrafts.current.delete(id);
-      setEditingObservationId(null);
-    } catch {
-      setError('Не получилось сохранить запись. Изменения остались в форме.');
-    } finally {
-      setObservationMutationBusy(false);
-    }
+    const scope=`observation:update:${id}:${JSON.stringify(observationEditDraft)}`;
+    const original=observations.find(item=>item.id===id),petId=profile.backendPetId;
+    if(!original)return;
+    await writeObservation(id,async current=>{
+      let saved:ObservationView={...original,...observationEditDraft};
+      if(!isGuestMode()){
+        const response=await fetch(`/api/observations/${id}`,{method:'PATCH',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify(observationEditDraft)});
+        const payload=await response.json();if(!current())return;
+        if(!response.ok||!petId)throw new Error('SAVE_FAILED');
+        saved=observationReceipt(payload.observation,petId,id);
+      }
+      if(!current())return;
+      setObservations(previous=>previous.map(item=>item.id===id?saved:item));
+      finishCareMutation(scope);observationEditDrafts.current.delete(id);setEditingObservationId(null);
+    });
   }
 
   async function deleteObservation(id: string) {
-    const observation = observations.find((item) => item.id === id);
-    if (!observation || observationMutationBusy) return;
-    if (isGuestMode()) {
-      setObservations((current) => current.filter((item) => item.id !== id));
-      setRecentlyDeletedObservation(observation);
-      setCareFeedback({ kind: 'observation-deleted', observationId: id, title: 'наблюдение' });
-      return;
-    }
-    const scope = `observation:delete:${id}`;
-    setObservationMutationBusy(true);
-    try {
-      const response = await fetch(`/api/observations/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({}),
-      });
-      if (!response.ok) return setError('Не получилось убрать запись. Попробуй ещё раз.');
-      setObservations((current) => current.filter((item) => item.id !== id));
-      setRecentlyDeletedObservation(observation);
-      setCareFeedback({ kind: 'observation-deleted', observationId: id, title: 'наблюдение' });
-      finishCareMutation(scope);
-    } catch {
-      setError('Не получилось убрать запись. Попробуй ещё раз.');
-    } finally {
-      setObservationMutationBusy(false);
-    }
+    const observation=observations.find(item=>item.id===id);
+    if(!observation)return;
+    const scope=`observation:delete:${id}`;
+    await writeObservation(id,async current=>{
+      if(!isGuestMode()){
+        const response=await fetch(`/api/observations/${id}`,{method:'DELETE',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:'{}'});
+        if(!current())return;
+        const receipt=await response.json();
+        if(!current())return;
+        if(!response.ok||receipt.ok!==true||!Number.isFinite(Date.parse(receipt.deletedAt)))throw new Error('DELETE_FAILED');
+      }
+      if(!current())return;
+      setObservations(previous=>previous.filter(item=>item.id!==id));setRecentlyDeletedObservation(observation);
+      setEditingObservationId(previous=>previous===id?null:previous);
+      setCareFeedback({kind:'observation-deleted',observationId:id,title:'запись'});finishCareMutation(scope);
+    });
   }
 
   async function uploadPetDocument(event: FormEvent<HTMLFormElement>) {
@@ -2603,32 +2586,21 @@ export default function Home() {
   }
 
   async function restoreObservation() {
-    if (!recentlyDeletedObservation) return;
-    const observation = recentlyDeletedObservation;
-    if (isGuestMode()) {
-      setObservations((current) => [observation, ...current]);
-      setRecentlyDeletedObservation(null);
-      setCareFeedback(null);
-      return;
-    }
-    const scope = `observation:restore:${observation.id}`;
-    setObservationMutationBusy(true);
-    try {
-      const response = await fetch(`/api/observations/${observation.id}/restore`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({}),
-      });
-      if (!response.ok) return setError('Не получилось вернуть запись. Попробуй ещё раз.');
-      setObservations((current) => [observation, ...current.filter((item) => item.id !== observation.id)]);
-      setRecentlyDeletedObservation(null);
-      setCareFeedback(null);
-      finishCareMutation(scope);
-    } catch {
-      setError('Не получилось вернуть запись. Попробуй ещё раз.');
-    } finally {
-      setObservationMutationBusy(false);
-    }
+    const observation=recentlyDeletedObservation,petId=profile.backendPetId;
+    if(!observation)return;
+    const scope=`observation:restore:${observation.id}`;
+    await writeObservation('restore',async current=>{
+      let saved=observation;
+      if(!isGuestMode()){
+        const response=await fetch(`/api/observations/${observation.id}/restore`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:'{}'});
+        const payload=await response.json();if(!current())return;
+        if(!response.ok||!petId)throw new Error('RESTORE_FAILED');
+        saved=observationReceipt(payload.observation,petId,observation.id);
+      }
+      if(!current())return;
+      setObservations(previous=>[saved,...previous.filter(item=>item.id!==saved.id)]);
+      setRecentlyDeletedObservation(null);setCareFeedback(null);finishCareMutation(scope);
+    });
   }
 
   function updateProfile(patch: Partial<DogProfile>) {
@@ -2819,12 +2791,12 @@ export default function Home() {
   const profileConflictResolver = useRef<((profile: DogProfile | null) => void) | null>(null);
   const profileSaveAttempt = useRef<{ body: string; key: string } | null>(null);
 
-  async function savePrivateProfile(nextProfile?: DogProfile) {
+  async function savePrivateProfile(nextProfile?: DogProfile, reportError: (message:string)=>void = setError) {
     let profileToSave = nextProfile || profile;
-    if (!profileToSave.dogName.trim()) { setError('Сначала добавь имя собаки.'); return null; }
-    if (profileSaving) return profileToSave.backendPetId || null;
+    if (!profileToSave.dogName.trim()) { reportError('Сначала добавь имя собаки.'); return null; }
+    if (profileSaving) return null;
     setProfileSaving(true);
-    setError('');
+    reportError('');
     if (isGuestMode()) {
       ensureGuestPetId();
       setProfile(profileToSave);
@@ -2878,7 +2850,7 @@ export default function Home() {
         return savedPetId || null;
       }
     } catch (error) {
-      setError(error instanceof Error && error.message === 'PROFILE_VERSION_CONFLICT'
+      reportError(error instanceof Error && error.message === 'PROFILE_VERSION_CONFLICT'
         ? 'Профиль изменён на другом устройстве. Ваш ввод сохранён на экране; перед повтором нужно сверить актуальные данные.'
         : 'Не удалось сохранить личный профиль. Изменения остались на экране — попробуй ещё раз.');
       return null;
@@ -2887,6 +2859,7 @@ export default function Home() {
     }
   }
   async function signOut() {
+    healthReadVersion.current++; healthLoadedPet.current=null; observationWrite.current=null; setObservationIssue(null); setHealthFactsError('');setObservationSaving(false);setObservationMutationBusy(false);setObservationCaptureOpen(false);setHealthNextCursor(null);
     wishlistOperation.current = null; setWishlistWriting(null); setWishlistIssue(null);
     await getSupabaseBrowser()?.auth.signOut();
     await fetch('/api/v1/session/logout', { method: 'POST', credentials: 'include' }).catch(() => null);
@@ -4664,7 +4637,8 @@ export default function Home() {
         />}
 
         {hasDog && tab === 'health' && <HealthTimelineScreen
-          dogName={petNameGent}
+          key={profile.backendPetId || activePetId}
+          dogName={profile.dogName || 'Собака'}
           entries={observations}
           draft={observationDraft}
           saving={observationSaving}
@@ -4672,18 +4646,28 @@ export default function Home() {
           onBack={() => closeSecondaryFlow('today')}
           onDraftChange={updateObservationDraft}
           onSave={submitObservation}
-          onRetry={() => loadRealModules(profile.backendPetId)}
+          onRetry={() => loadHealthTimeline()}
+          loading={healthLoading}
+          hasMore={Boolean(healthNextCursor)}
+          onLoadMore={() => healthNextCursor ? loadHealthTimeline(healthNextCursor) : Promise.resolve()}
+          captureOpen={observationCaptureOpen}
+          onCaptureOpen={setObservationCaptureOpen}
+          issue={observationIssue}
+          recentlyDeleted={Boolean(recentlyDeletedObservation)}
+          onRestore={restoreObservation}
+          factsError={healthFactsError}
+          factsSaving={profileSaving}
           editingId={editingObservationId}
           editDraft={observationEditDraft}
           mutationBusy={observationMutationBusy}
           onStartEdit={startObservationEdit}
           onEditDraftChange={(patch) => setObservationEditDraft(current => { const next = { ...current, ...patch }; if (editingObservationId) observationEditDrafts.current.set(editingObservationId, next); return next; })}
           onSaveEdit={editObservation}
-          onCancelEdit={() => { if (editingObservationId) observationEditDrafts.current.delete(editingObservationId); setEditingObservationId(null); }}
+          onCancelEdit={() => { if (editingObservationId) observationEditDrafts.current.set(editingObservationId,observationEditDraft); setEditingObservationId(null); }}
           onDelete={deleteObservation}
           facts={healthFactsDraft ?? profile}
           onFactChange={(patch) => setHealthFactsDraft(current => ({ ...(current ?? profile), ...patch }))}
-          onSaveFacts={async () => { if (await savePrivateProfile(healthFactsDraft ?? profile)) setHealthFactsDraft(null); }}
+          onSaveFacts={async () => { if (await savePrivateProfile(healthFactsDraft ?? profile,setHealthFactsError)) setHealthFactsDraft(null); }}
         />}
 
         {hasDog && tab === 'nearby' && <ProductionWoofWorkspace
@@ -5068,7 +5052,7 @@ export default function Home() {
         onOpenCard={() => setTab('card')}
       />}
       <CareActionNotice
-        feedback={careFeedback}
+        feedback={careFeedback?.kind === 'observation-deleted' ? null : careFeedback}
         onUndo={undoLastCareCompletion}
         onDismiss={() => setCareFeedback(null)}
       />

@@ -100,14 +100,14 @@ const {setup,out} = require('./harness.cjs');
    assert.equal(await page.getByLabel('Аллергии',{exact:true}).inputValue(),'Черновик аллергии');
    await page.locator('.health-observation-actions').getByRole('button',{name:'Изменить',exact:true}).click();
    let editor=page.locator('.structured-observation-editor');
-   await editor.locator('summary').click();
-   await editor.getByLabel('Контекст наблюдения').fill('Изменение, которое нельзя потерять');
+   await editor.getByLabel('Текст записи').fill('Изменение, которое нельзя потерять');
+   await page.locator('.health-date-filter > summary').click();
    await page.getByRole('button',{name:'Предыдущий месяц'}).click();
    await page.getByRole('button',{name:'Вернуться к редактированию'}).click();
    editor=page.locator('.structured-observation-editor');
    // Details reopens explicitly after remount; text is preserved independently.
-   if(!await editor.getByLabel('Контекст наблюдения').isVisible()) await editor.locator('summary').click();
-   assert.equal(await editor.getByLabel('Контекст наблюдения').inputValue(),'Изменение, которое нельзя потерять');
+   if(!await editor.getByLabel('Текст записи').isVisible()) await editor.locator('summary').click();
+   assert.equal(await editor.getByLabel('Текст записи').inputValue(),'Изменение, которое нельзя потерять');
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    await page.getByRole('button',{name:'Назад',exact:true}).click();
    await page.getByRole('button',{name:'Вернуться к обзору',exact:true}).click();
