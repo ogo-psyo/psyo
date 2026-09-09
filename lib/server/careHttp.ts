@@ -109,6 +109,9 @@ export function careMutationError(error: unknown) {
   if (message.includes('PET_NOT_FOUND')) {
     return careError('PET_NOT_FOUND', 'Эта собака не найдена или недоступна.', 404);
   }
+  if (message.includes('OBSERVATION_NOT_FOUND')) {
+    return careError('OBSERVATION_NOT_FOUND', 'Эта запись не найдена или недоступна.', 404);
+  }
   if (message.includes('REMINDER_NOT_FOUND')) {
     return careError('REMINDER_NOT_FOUND', 'Это дело не найдено или недоступно.', 404);
   }

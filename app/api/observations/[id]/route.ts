@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
-import { abortCareMutation, beginCareMutation, careError, careMutationError, careRequestFingerprint, finishCareMutation, readCareIdempotencyKey } from '@/lib/server/careHttp';
+import { careError, careMutationError, careRequestFingerprint, readCareIdempotencyKey } from '@/lib/server/careHttp';
 
 export const runtime = 'nodejs';
 
@@ -57,16 +57,6 @@ function parseDate(value: unknown) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return undefined;
   return date.toISOString();
-}
-
-async function ownedObservation(supabase: any, ownerId: string, id: string) {
-  return supabase
-    .from('pet_observations')
-    .select('id, metadata, pets!inner(owner_id)')
-    .eq('id', id)
-    .eq('pets.owner_id', ownerId)
-    .is('deleted_at', null)
-    .single();
 }
 
 function quickMetricValue(body: any, key: QuickMetricType) {
@@ -124,7 +114,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
 
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
-  const supabase = auth.supabase ?? getSupabaseAdmin();
+  const supabase = getSupabaseAdmin();
   const ownerId = auth.user?.id ?? appSession?.ownerId;
 
   if (!supabase) {
@@ -140,22 +130,15 @@ export async function PATCH(request: Request, ctx: Ctx) {
 
   if (!ownerId) return careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401);
 
-  const owned = await ownedObservation(supabase, ownerId, id);
-  if (owned.error?.code === '42P01') return NextResponse.json({ error: 'OBSERVATIONS_SCHEMA_NOT_READY' }, { status: 503 });
-  if (owned.error) return NextResponse.json({ error: 'OBSERVATION_NOT_FOUND' }, { status: 404 });
-  if (patch.metadata) patch.metadata = { ...(owned.data.metadata ?? {}), ...(patch.metadata as Record<string, unknown>) };
-
   const fingerprint = careRequestFingerprint({ id, patch });
   try {
-    const claim = await beginCareMutation({ supabase, ownerId, idempotencyKey, operation: 'observation:update', fingerprint });
-    if (claim.replayed) return NextResponse.json(claim.response);
-    const { data, error } = await supabase.from('pet_observations').update(patch).eq('id', id).select('*').single();
+    const { data, error } = await supabase.rpc('care_observation_atomic', {
+      p_owner_id: ownerId, p_idempotency_key: idempotencyKey,
+      p_request_fingerprint: fingerprint, p_action: 'update', p_target_id: id, p_patch: patch,
+    });
     if (error) throw error;
-    const response = { observation: mapObservation(data), mode: 'supabase' };
-    await finishCareMutation({ supabase, ownerId, idempotencyKey, response });
-    return NextResponse.json(response);
+    return NextResponse.json({ ...data, observation: data.observation?.pet_id ? mapObservation(data.observation) : data.observation });
   } catch (error) {
-    await abortCareMutation({ supabase, ownerId, idempotencyKey });
     return careMutationError(error);
   }
 }
@@ -167,28 +150,21 @@ export async function DELETE(request: Request, ctx: Ctx) {
   if (!idempotencyKey) return careError('IDEMPOTENCY_KEY_REQUIRED', 'Не удалось безопасно убрать запись.', 400);
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
-  const supabase = auth.supabase ?? getSupabaseAdmin();
+  const supabase = getSupabaseAdmin();
   const ownerId = auth.user?.id ?? appSession?.ownerId;
 
   if (!supabase) return NextResponse.json({ ok: true, ...demoModeResponse('Connect Supabase to persist observations.') });
   if (!ownerId) return careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401);
 
-  const owned = await ownedObservation(supabase, ownerId, id);
-  if (owned.error?.code === '42P01') return NextResponse.json({ error: 'OBSERVATIONS_SCHEMA_NOT_READY' }, { status: 503 });
-  if (owned.error) return NextResponse.json({ error: 'OBSERVATION_NOT_FOUND' }, { status: 404 });
-
-  const deletedAt = new Date().toISOString();
   const fingerprint = careRequestFingerprint({ id });
   try {
-    const claim = await beginCareMutation({ supabase, ownerId, idempotencyKey, operation: 'observation:delete', fingerprint });
-    if (claim.replayed) return NextResponse.json(claim.response);
-    const result = await supabase.from('pet_observations').update({ deleted_at: deletedAt }).eq('id', id);
-    if (result.error) throw result.error;
-    const response = { ok: true, deletedAt, canRestore: true };
-    await finishCareMutation({ supabase, ownerId, idempotencyKey, response });
-    return NextResponse.json(response);
+    const { data, error } = await supabase.rpc('care_observation_atomic', {
+      p_owner_id: ownerId, p_idempotency_key: idempotencyKey,
+      p_request_fingerprint: fingerprint, p_action: 'delete', p_target_id: id, p_patch: {},
+    });
+    if (error) throw error;
+    return NextResponse.json(data);
   } catch (error) {
-    await abortCareMutation({ supabase, ownerId, idempotencyKey });
     return careMutationError(error);
   }
 }

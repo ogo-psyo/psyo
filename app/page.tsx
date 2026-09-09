@@ -12,6 +12,8 @@ import { VoiceObservationCapture, type PrivateVoiceNoteInput } from '@/component
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
 import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';
 import { RouteDeleteDialog } from '@/components/journey/RouteDeleteDialog';
+import { ProfileConflictDialog } from '@/components/profile/ProfileConflictDialog';
+import { mergeProfileDraft, type ProfileMerge } from '@/lib/profileMerge';
 import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
 import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
@@ -424,6 +426,7 @@ function dbToProfile(payload: any, preferredPetId?: string): Partial<DogProfile>
       : avatarSource === 'uploaded' ? pet.avatar_url || pet.avatarUrl || '' : '';
   return {
     backendPetId: pet.id,
+    profileVersion: pet.profile_version ?? pet.profileVersion,
     avatarImageUrl,
     avatarSource,
     photoUrls: avatarSource === 'none' ? [] : Array.isArray(pet.photo_urls || pet.photoUrls) ? (pet.photo_urls || pet.photoUrls).filter(Boolean) : pet.avatar_url || pet.avatarUrl ? [pet.avatar_url || pet.avatarUrl] : [],
@@ -1467,6 +1470,10 @@ export default function Home() {
       providerReady: payload?.avatarCapabilities?.providerReady === true,
     });
     const dbProfile = dbToProfile(payload, petId);
+    if (dbProfile?.backendPetId && dbProfile.profileVersion !== undefined) {
+      profileBaselines.current.set(`${dbProfile.backendPetId}:${dbProfile.profileVersion}`, dbProfile);
+      if (profileBaselines.current.size > 20) profileBaselines.current.delete(profileBaselines.current.keys().next().value!);
+    }
     const selectedPetId = String(petId || payload.activePetId || dbProfile?.backendPetId || payload.pet?.id || '');
     const belongsToSelectedPet = (item: any) => {
       const itemPetId = String(item?.petId || item?.pet_id || '');
@@ -2716,8 +2723,13 @@ export default function Home() {
     updateProfile({ avatarImageUrl: renderUrl, avatarSource: result.source || 'none' });
   }
 
+  const profileBaselines = useRef(new Map<string, Partial<DogProfile>>());
+  const [profileConflict, setProfileConflict] = useState<ProfileMerge | null>(null);
+  const profileConflictResolver = useRef<((profile: DogProfile | null) => void) | null>(null);
+  const profileSaveAttempt = useRef<{ body: string; key: string } | null>(null);
+
   async function savePrivateProfile(nextProfile?: DogProfile) {
-    const profileToSave = nextProfile || profile;
+    let profileToSave = nextProfile || profile;
     if (!profileToSave.dogName.trim()) { setError('Сначала добавь имя собаки.'); return null; }
     if (profileSaving) return profileToSave.backendPetId || null;
     setProfileSaving(true);
@@ -2731,30 +2743,53 @@ export default function Home() {
       return profileToSave.backendPetId || guestPetIdRef.current;
     }
     try {
-      const idempotencyKey = profileToSave.backendPetId ? '' : (addDogKeyRef.current ?? `add-pet:${crypto.randomUUID()}`);
-      if (!profileToSave.backendPetId) addDogKeyRef.current = idempotencyKey;
-      const response = await fetch('/api/v1/pets', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
-          ...authHeaders(),
-        },
-        body: JSON.stringify({ profile: { ...profileToSave, isPublic: false } }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result?.error || 'Не удалось сохранить профиль');
-      const savedPetId = result.pet?.id || profileToSave.backendPetId;
-      addDogKeyRef.current = null;
-      setProfile({ ...profileToSave, backendPetId: savedPetId, isPublic: false });
-      if (savedPetId) setActivePetId(savedPetId);
-      await loadBootstrap(undefined, savedPetId);
-      setNotice('saved');
-      window.setTimeout(() => setNotice('idle'), 1600);
-      return savedPetId || null;
-    } catch {
-      setError('Не удалось сохранить личный профиль. Изменения остались на экране — попробуй ещё раз.');
+      for (;;) {
+        const requestBody = JSON.stringify({ profile: { ...profileToSave, isPublic: false } });
+        if (profileSaveAttempt.current?.body !== requestBody) profileSaveAttempt.current = { body: requestBody, key: `profile:${crypto.randomUUID()}` };
+        const idempotencyKey = profileToSave.backendPetId ? profileSaveAttempt.current.key : (addDogKeyRef.current ?? `add-pet:${crypto.randomUUID()}`);
+        if (!profileToSave.backendPetId) addDogKeyRef.current = idempotencyKey;
+        const response = await fetch('/api/v1/pets', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+            ...authHeaders(),
+          },
+          body: requestBody,
+        });
+        const result = await response.json();
+        if (response.status === 409 && result?.error === 'PROFILE_VERSION_CONFLICT') {
+          const latest = await fetch(`/api/app/bootstrap?petId=${encodeURIComponent(profileToSave.backendPetId!)}`, { credentials: 'include', headers: authHeaders() });
+          if (!latest.ok) throw new Error('PROFILE_VERSION_CONFLICT');
+          const remote = dbToProfile(await latest.json(), profileToSave.backendPetId);
+          if (!remote || remote.profileVersion === undefined) throw new Error('PROFILE_VERSION_CONFLICT');
+          const base = profileBaselines.current.get(`${profileToSave.backendPetId}:${profileToSave.profileVersion}`);
+          const merge = mergeProfileDraft(base, profileToSave, { ...profileToSave, ...remote });
+          // Even disjoint changes are reviewed before re-submitting a full profile.
+          const resolved = await new Promise<DogProfile | null>(resolve => {
+            profileConflictResolver.current = resolve;
+            setProfileConflict(merge);
+          });
+          if (!resolved) return null;
+          profileToSave = resolved;
+          continue;
+        }
+        if (!response.ok) throw new Error(result?.error || 'Не удалось сохранить профиль');
+        profileSaveAttempt.current = null;
+        const savedPetId = result.pet?.id || profileToSave.backendPetId;
+        addDogKeyRef.current = null;
+        setProfile({ ...profileToSave, backendPetId: savedPetId, profileVersion: result.pet?.profileVersion, isPublic: false });
+        if (savedPetId) setActivePetId(savedPetId);
+        await loadBootstrap(undefined, savedPetId);
+        setNotice('saved');
+        window.setTimeout(() => setNotice('idle'), 1600);
+        return savedPetId || null;
+      }
+    } catch (error) {
+      setError(error instanceof Error && error.message === 'PROFILE_VERSION_CONFLICT'
+        ? 'Профиль изменён на другом устройстве. Ваш ввод сохранён на экране; перед повтором нужно сверить актуальные данные.'
+        : 'Не удалось сохранить личный профиль. Изменения остались на экране — попробуй ещё раз.');
       return null;
     } finally {
       setProfileSaving(false);
@@ -4817,6 +4852,11 @@ export default function Home() {
         onUndo={undoLastCareCompletion}
         onDismiss={() => setCareFeedback(null)}
       />
+      {profileConflict && <ProfileConflictDialog key={profileConflict.remote.profileVersion} conflict={profileConflict} onResolve={resolved => {
+        setProfileConflict(null);
+        profileConflictResolver.current?.(resolved);
+        profileConflictResolver.current = null;
+      }} />}
       <DeleteCareDialog
         reminder={pendingCareDeletion}
         busy={careDeletionBusy}

@@ -1,0 +1,9 @@
+.dialog { color: var(--ink, #202329); background: var(--surface, #fff); border: 0; border-radius: 24px; padding: 24px; width: min(440px, calc(100% - 24px)); max-height: calc(100dvh - 32px); margin: auto; overflow: auto; overscroll-behavior: contain; }
+.dialog::backdrop { background: rgb(15 20 35 / 45%); }
+.dialog h2 { margin-top: 0; }
+.dialog fieldset { border: 0; padding: 0; margin: 24px 0; min-width: 0; }
+.dialog legend { font-weight: 700; }
+.dialog label { display: flex; gap: 12px; align-items: flex-start; min-height: 44px; padding: 10px 0; overflow-wrap: anywhere; }
+.dialog input { flex-shrink: 0; margin-top: 5px; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.actions button { min-height: 44px; padding: 10px 16px; border-radius: 16px; }

@@ -60,6 +60,7 @@ export type DogHabit = {
 
 export type DogProfile = {
   backendPetId?: string;
+  profileVersion?: number;
   avatarImageUrl: string;
   avatarSource: 'none' | 'uploaded' | 'generated' | 'demo';
   photoUrls: string[];

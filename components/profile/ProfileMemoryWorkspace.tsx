@@ -205,9 +205,12 @@ export function ProfileMemoryWorkspace(props: Props) {
   };
 
   const closeEditor = () => {
+    // Close the native top-layer dialog before restoring focus. WebKit can
+    // otherwise undo focus restored while React still has the dialog open.
+    editorDialogRef.current?.close();
     setEditor(null);
     setEditorDraft(null);
-    window.setTimeout(() => editorTriggerRef.current?.focus(), 0);
+    window.requestAnimationFrame(() => editorTriggerRef.current?.focus());
   };
 
   const updateEditorProfile = (patch: Partial<DogProfile>) => setEditorDraft((current) => current ? { ...current, ...patch } : current);
