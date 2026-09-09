@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     if (!agentEnabled()) return Response.json({ enabled: false });
     const result = await agentDatabase()
       .from("agent_runs")
-      .select("id,status")
+      .select("id,status,question,thread_id,created_at")
       .eq("owner_id", owner)
       .eq("pet_id", pet)
       .order("created_at", { ascending: false })

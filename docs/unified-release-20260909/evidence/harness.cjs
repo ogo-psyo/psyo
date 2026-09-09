@@ -29,7 +29,7 @@ async function setup(engine='chromium',width=390){
  });
  const page=await ctx.newPage();page.setDefaultTimeout(8000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base,{waitUntil:'domcontentloaded',timeout:120000});await page.locator('.app-tabs').waitFor({timeout:60000});await page.addStyleTag({content:'nextjs-portal{display:none!important}'});
- async function nav(tab){await page.locator(`.app-tabs button[data-route="${tab}"]`).click();await page.waitForTimeout(150);}
+ async function nav(tab){if(['things','diary'].includes(tab)){await page.locator('.app-tabs button[data-route="all"]').click();await page.locator(`[data-tool-destination="${tab}"]`).click();await page.waitForTimeout(150);return;}await page.locator(`.app-tabs button[data-route="${tab}"]`).click();await page.waitForTimeout(150);}
  async function snapshot(name){await page.screenshot({path:`${out}/${engine}-${width}-${name}.png`,fullPage:false});return page.locator('body').innerText();}
  return {browser,ctx,page,nav,snapshot,state,errors,profile,pet};
 }

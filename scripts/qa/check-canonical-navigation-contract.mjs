@@ -6,12 +6,17 @@ const page = readFileSync('app/page.tsx', 'utf8');
 const woof = readFileSync('components/social/ProductionWoofWorkspace.tsx', 'utf8');
 
 const failures = [];
+const tools = readFileSync('components/app/ConnectedHome.tsx', 'utf8');
+for (const destination of ['diary','calendar','health','habits','things','passport','card']) {
+ if (!tools.includes(`id:'${destination}'`)) failures.push(`missing direct tool: ${destination}`);
+}
+if (!page.includes('onOpenJournalEntry=') || !page.includes('onOpenRecord={openPrivateRecord}')) failures.push('day and profile must resolve the same exact record');
 const primaryRoutes = [
-  ["id: 'today'", "label: 'Главная'"],
-  ["id: 'profile'", "label: 'Профиль'"],
+  ["id: 'today'", "label: 'Псё'"],
   ["id: 'map'", "label: 'Карта'"],
   ["id: 'nearby'", "label: 'Гав'"],
-  ["id: 'things'", "label: 'Вещи'"],
+  ["id: 'all'", "label: 'Всё'"],
+  ["id: 'profile'", "label: 'Профиль'"],
 ];
 
 let cursor = -1;
@@ -29,13 +34,13 @@ for (const forbidden of ["id: 'calendar'", "id: 'card'", "id: 'assistant'", "lab
   if (navigation.includes(forbidden)) failures.push(`secondary surface leaked into primary navigation: ${forbidden}`);
 }
 
-for (const route of ['today', 'profile', 'map', 'nearby', 'things']) {
+for (const route of ['today', 'profile', 'map', 'nearby', 'all']) {
   const surface = new RegExp(`\\{(?:hasDog\\s*&&\\s*)?tab\\s*===\\s*['\"]${route}['\"]`);
   const persistentMap = route === 'map' && page.includes("(tab === 'map' || mapVisited)") && page.includes("hidden={tab !== 'map'}");
   if (!surface.test(page) && !persistentMap) failures.push(`primary route has no reachable surface: ${route}`);
 }
 
-for (const route of ['calendar', 'card']) {
+for (const route of ['calendar', 'card', 'things', 'diary']) {
   const surface = new RegExp(`\\{(?:hasDog\\s*&&\\s*)?tab\\s*===\\s*['\"]${route}['\"]`);
   if (!surface.test(page)) failures.push(`secondary in-app surface was removed: ${route}`);
 }

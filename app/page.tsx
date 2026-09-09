@@ -9,6 +9,7 @@ import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { WatercolorScreen } from '@/components/watercolor';
 import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
 import { journalDayEntries } from '@/lib/journal';
+import { ConnectedHome, ConnectedTools } from '@/components/app/ConnectedHome';
 import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
 import { AgentPanel } from '@/components/journey/AgentPanel';
 import type { ReviewedObservation } from '@/lib/agentObservation';
@@ -90,7 +91,7 @@ type ObservationView = { id: string; type?: string; value?: string; petId?: stri
 type ObservationDraft = { mood: string; appetite: string; stool: string; energy: string; note?: string };
 type DocumentView = { id: string; petId: string; kind: string; title: string; clinic?: string | null; documentDate?: string | null; originalName: string; mimeType: string; sizeBytes: number; createdAt: string };
 type SocialInviteView = { token: string; scenario: SocialScenario; petName: string | null; expiresAt: string };
-type Tab = 'today' | 'calendar' | 'habits' | 'health' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
+type Tab = 'today' | 'all' | 'diary' | 'calendar' | 'habits' | 'health' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
 type DrawMode = 'none' | 'point' | 'route';
 type MapSaveMode = 'private' | 'shared';
 type ViralCardFormat = 'story' | 'square' | 'poster';
@@ -526,10 +527,10 @@ export default function Home() {
   const [healthFactsDraft, setHealthFactsDraft] = useState<DogProfile | null>(null);
   const [recordDetail, setRecordDetail] = useState<RecordDetail | null>(null);
   const [profileSurface, setProfileSurface] = useState<ProfileSurface>('overview');
-  type FlowOrigin = { from: Tab; to: Tab; detail: PrimaryRoute | null; shellScroll: number; windowScroll: number; focusText: string };
+  type FlowOrigin = { from: Tab; to: Tab; detail: Tab | null; shellScroll: number; windowScroll: number; focusText: string };
   const secondaryOrigins = useRef<FlowOrigin[]>([]);
   const pendingViewRestore = useRef<FlowOrigin | null>(null);
-  const [journeyDetail, setJourneyDetail] = useState<PrimaryRoute | null>(null);
+  const [journeyDetail, setJourneyDetail] = useState<Tab | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -762,7 +763,7 @@ export default function Home() {
 
   function setTab(nextTab: Tab) {
     if (nextTab === tab) return;
-    if (['calendar', 'habits', 'health', 'card'].includes(nextTab)) {
+    if (['calendar', 'habits', 'health', 'card', 'diary', 'things'].includes(nextTab)) {
       secondaryOrigins.current.push({ from: tab, to: nextTab, detail: journeyDetail, shellScroll: phoneShellRef.current?.scrollTop ?? 0, windowScroll: window.scrollY, focusText: document.activeElement instanceof HTMLButtonElement ? document.activeElement.textContent?.trim() ?? '' : '' });
     } else secondaryOrigins.current = [];
     setTabState(nextTab);
@@ -773,7 +774,7 @@ export default function Home() {
     }
   }
 
-  function closeSecondaryFlow(parent: 'today' | 'profile') {
+  function closeSecondaryFlow(parent: 'today' | 'profile' | 'all') {
     const origin = secondaryOrigins.current.at(-1);
     const valid = origin?.to === tab ? secondaryOrigins.current.pop() : undefined;
     const target = valid?.from ?? parent;
@@ -784,6 +785,20 @@ export default function Home() {
     nextUrl.hash = target;
     window.history.replaceState({ tab: target, detail: valid?.detail }, '', nextUrl);
   }
+
+  function openPrivateRecord(kind: 'observation' | 'reminder', id: string, trigger: HTMLButtonElement) {
+            if (kind === 'observation') {
+              const item = observations.find(entry => entry.id === id);
+              if (!item) return;
+              setRecordDetail({ id, trigger, title: `Запись о ${petNameGent}`, date: item.createdAt, text: item.note || item.value || '',
+                facts: [item.mood && `Состояние: ${item.mood}`, item.appetite && `Аппетит: ${item.appetite}`, item.stool && `Пищеварение: ${item.stool}`, item.energy && `Энергия: ${item.energy}`].filter((value): value is string => Boolean(value)) });
+            } else {
+              const item = reminders.find(entry => entry.id === id);
+              if (!item) return;
+              setRecordDetail({ id, trigger, title: item.title, date: item.completedAt || item.dueAt, text: item.completedAt || item.status === 'done' || item.status === 'completed' ? 'Дело выполнено' : 'Запланировано',
+                facts: item.nextDueAt ? [`Следующий срок: ${new Date(item.nextDueAt).toLocaleString('ru-RU')}`] : [] });
+            }
+          }
 
   function openAssistantSheet(event?:{currentTarget:EventTarget|null}) {
     setAssistantReturnFocus(event?.currentTarget instanceof HTMLElement?event.currentTarget:document.activeElement as HTMLElement|null);
@@ -804,7 +819,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const knownTabs: Tab[] = ['today', 'calendar', 'habits', 'health', 'nearby', 'map', 'card', 'profile', 'things'];
+    const knownTabs: Tab[] = ['today', 'all', 'diary', 'calendar', 'habits', 'health', 'nearby', 'map', 'card', 'profile', 'things'];
     const syncTabFromLocation = () => {
       const requested = window.location.hash.replace(/^#/, '') as Tab;
       setTabState(knownTabs.includes(requested) ? requested : 'today');
@@ -1729,13 +1744,8 @@ export default function Home() {
   const breedLabel = useMemo(() => getBreedLabel(profile), [profile]);
   const avatarReady = avatarState === 'ready';
   const hasDog = Boolean(profile.dogName.trim());
-  const activePrimaryRoute: PrimaryRoute = tab === 'calendar' || tab === 'habits' || tab === 'health'
-    ? 'today'
-    : tab === 'card'
-      ? 'profile'
-      : tab as PrimaryRoute;
-  const isJourneyRoute = (['today', 'profile', 'map', 'nearby', 'things'] as const).includes(tab as PrimaryRoute)
-    && journeyDetail !== tab;
+  const activePrimaryRoute: PrimaryRoute = ['calendar', 'habits', 'health', 'card', 'diary', 'things'].includes(tab) ? 'all' : tab as PrimaryRoute;
+  const isJourneyRoute = ['today', 'all', 'diary', 'profile', 'map', 'nearby', 'things'].includes(tab) && journeyDetail !== tab;
   const activeReminders = useMemo(() => reminders.filter((reminder) => reminder.status !== 'done'), [reminders]);
   const doneReminders = useMemo(() => reminders.filter((reminder) => reminder.status === 'done'), [reminders]);
   const wantedWishlist = useMemo(() => wishlist.filter((item) => item.status !== 'bought' && item.status !== 'not_suitable'), [wishlist]);
@@ -4262,7 +4272,7 @@ export default function Home() {
   </section>;
 
   return (
-    <main className="app-canvas">
+    <main className="app-canvas" data-connected-canvas={tab === 'today' || tab === 'all' ? '' : undefined}>
       <section ref={phoneShellRef} className={`phone-shell${hasDog ? ' journal-shell' : ''} tab-${tab}${hasDog && (isJourneyRoute || journeyDetail === 'nearby') ? ' journey-active' : ''}`}>
         <header className="app-header">
           <div className="app-wordmark">
@@ -4316,12 +4326,31 @@ export default function Home() {
           <GeneratedAvatar profile={profile} ready={false} size="large" />
           <div>
             <h2 id="first-run-title">Добавь собаку</h2>
-            <p>Начни с имени. После этого Псё покажет одно ближайшее дело и сохранит всё остальное на потом.</p>
+            <p>Начни с имени. Возраст, пол и породу можно указать позже.</p>
           </div>
           <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>
         </section>}
 
-        {hasDog && tab === 'today' && !journeyDetail && <ProductionJourney route="today"
+        {hasDog && tab === 'today' && !journeyDetail && <ConnectedHome
+          key={`home:${profile.backendPetId || activePetId}`}
+          dogName={profile.dogName} petId={profile.backendPetId} guest={isGuestMode()}
+          question={assistantQuestion} loading={assistantLoading} headers={authHeaders}
+          recentQuestion={assistantMessages.findLast(message => message.role === 'user')?.content}
+          onQuestion={setAssistantQuestion}
+          onAsk={() => { openAssistantSheet(); void askAssistant(); }}
+          onContinue={run => { if (run) { setAgentRunId(run.id); setAssistantThreadId(run.thread_id || ''); } openAssistantSheet(); }}
+          onProfile={() => { setProfileSurface('overview'); setTab('profile'); }}
+          onAll={() => setTab('all')}
+        />}
+        {hasDog && tab === 'all' && <ConnectedTools onOpen={destination => {
+          if (destination === 'passport') {
+            const origin = { from: tab, to: 'profile' as Tab, detail: journeyDetail, shellScroll: phoneShellRef.current?.scrollTop ?? 0, windowScroll: window.scrollY, focusText: document.activeElement?.textContent?.trim() ?? '' };
+            setProfileSurface('passport'); setTab('profile'); secondaryOrigins.current.push(origin);
+          } else setTab(destination);
+        }} />}
+        {hasDog && tab === 'diary' && !journeyDetail && <ProductionJourney route="today"
+          onBack={() => closeSecondaryFlow('all')}
+          onOpenJournalEntry={(entry, trigger) => openPrivateRecord(entry.kind === 'care' ? 'reminder' : 'observation', entry.id.replace(/^(care|observation)-/, ''), trigger)}
           dogName={profile.dogName}
           breedLabel={breedLabel}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
@@ -4381,7 +4410,7 @@ export default function Home() {
 
         {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ProfileMemoryWorkspace
           surface={profileSurface}
-          onSurfaceChange={setProfileSurface}
+          onSurfaceChange={surface => { if (surface === 'overview' && secondaryOrigins.current.at(-1)?.to === 'profile') closeSecondaryFlow('all'); else setProfileSurface(surface); }}
           key={`profile:${profile.backendPetId || activePetId}`}
           profile={profile}
           breedLabel={breedLabel}
@@ -4406,7 +4435,7 @@ export default function Home() {
           avatarOwnerPrompt={avatarOwnerPrompt}
           avatarConsent={avatarConsent}
           error={error}
-          onBack={() => setTab('today')}
+          onBack={() => secondaryOrigins.current.at(-1)?.to === 'profile' ? closeSecondaryFlow('all') : setTab('today')}
           onOpenIdentity={() => { setError(''); setAvatarComposerOpen(true); }}
           onCloseIdentity={() => setAvatarComposerOpen(false)}
           onPhotoChange={handlePhotos}
@@ -4426,19 +4455,7 @@ export default function Home() {
             documentUploadTriggerRef.current = trigger;
             setDocumentUploadOpen(true);
           }}
-          onOpenRecord={(kind, id, trigger) => {
-            if (kind === 'observation') {
-              const item = observations.find(entry => entry.id === id);
-              if (!item) return;
-              setRecordDetail({ id, trigger, title: `Запись о ${petNameGent}`, date: item.createdAt, text: item.note || item.value || '',
-                facts: [item.mood && `Состояние: ${item.mood}`, item.appetite && `Аппетит: ${item.appetite}`, item.stool && `Пищеварение: ${item.stool}`, item.energy && `Энергия: ${item.energy}`].filter((value): value is string => Boolean(value)) });
-            } else {
-              const item = reminders.find(entry => entry.id === id);
-              if (!item) return;
-              setRecordDetail({ id, trigger, title: item.title, date: item.completedAt || item.dueAt, text: item.completedAt || item.status === 'done' || item.status === 'completed' ? 'Дело выполнено' : 'Запланировано',
-                facts: item.nextDueAt ? [`Следующий срок: ${new Date(item.nextDueAt).toLocaleString('ru-RU')}`] : [] });
-            }
-          }}
+          onOpenRecord={openPrivateRecord}
           onOpenDocument={(id) => window.open(`/api/documents/${id}`, '_blank', 'noopener,noreferrer')}
           onDeleteDocument={(id) => void deletePetDocument(id)}
           documentBusyId={documentBusyId}
@@ -4792,7 +4809,7 @@ export default function Home() {
           </article>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'card' && <WatercolorScreen onBack={() => closeSecondaryFlow('profile')} backLabel="В профиль" className="public-card-screen" tone="gold" eyebrow="" title="Публичная карточка" caption="Одна безопасная ссылка для догситтера, грумера, друга или человека во дворе. Ты решаешь, что показать и когда закрыть доступ." aside={<PawPrint className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'card' && <WatercolorScreen onBack={() => closeSecondaryFlow('profile')} backLabel="Назад" className="public-card-screen" tone="gold" eyebrow="" title="Публичная карточка" caption="Одна безопасная ссылка для догситтера, грумера, друга или человека во дворе. Ты решаешь, что показать и когда закрыть доступ." aside={<PawPrint className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
 
           <section className={`public-card-lifecycle ${publicCardPublished ? 'is-published' : 'is-draft'} ${publicCardHasChanges ? 'has-changes' : ''}`} aria-live="polite">
             <div className="public-card-lifecycle-icon" aria-hidden="true">{publicCardPublished ? <CheckCircle weight="fill" /> : <LinkSimple weight="duotone" />}</div>
@@ -4894,7 +4911,7 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'things' && <ProductionJourney route="things" dogName={profile.dogName} breedLabel={breedLabel}
+        {hasDog && tab === 'things' && <ProductionJourney route="things" onBack={() => closeSecondaryFlow('all')} dogName={profile.dogName} breedLabel={breedLabel}
           avatar={<GeneratedAvatar profile={profile} ready={Boolean(profile.avatarImageUrl) || demoMode} imageUrl={profile.avatarImageUrl} demo={demoMode} size="small" />}
           onNavigate={setTab} onAskAssistant={openAssistantSheet}>
           <div className="screen-primary-action">
@@ -4966,12 +4983,13 @@ export default function Home() {
       </section>
 
       {hasDog && !(tab === 'map' && productionMapMode !== 'view') && <AppNavigation dogName={profile.dogName} active={activePrimaryRoute} onAskAssistant={openAssistantSheet} onNavigate={(route) => {
+        if (route === 'profile') { setProfileSurface('overview'); secondaryOrigins.current = []; }
         setJourneyDetail(null);
         setAssistantOpen(false);
         setTab(route);
       }} />}
 
-      <DesktopContextPanel
+      {tab !== 'today' && tab !== 'all' && <DesktopContextPanel
         mode={journeyDetail || tab}
         dogName={petName || 'собаки'}
         nearestTitle={nextBestAction.title}
@@ -4988,7 +5006,7 @@ export default function Home() {
         onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
         onOpenHistory={() => { setCareView('history'); setTab('calendar'); }}
         onOpenCard={() => setTab('card')}
-      />
+      />}
       <CareActionNotice
         feedback={careFeedback}
         onUndo={undoLastCareCompletion}

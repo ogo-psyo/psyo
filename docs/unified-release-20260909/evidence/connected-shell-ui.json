@@ -1,0 +1,38 @@
+[
+  {
+    "engine": "chromium",
+    "width": 320,
+    "pass": true,
+    "scope": "actual local UI; all API synthetic; viewport resize is not physical keyboard acceptance"
+  },
+  {
+    "engine": "chromium",
+    "width": 390,
+    "pass": true,
+    "scope": "actual local UI; all API synthetic; viewport resize is not physical keyboard acceptance"
+  },
+  {
+    "engine": "chromium",
+    "width": 1280,
+    "pass": true,
+    "scope": "actual local UI; all API synthetic; viewport resize is not physical keyboard acceptance"
+  },
+  {
+    "engine": "webkit",
+    "width": 320,
+    "pass": true,
+    "scope": "actual local UI; all API synthetic; viewport resize is not physical keyboard acceptance"
+  },
+  {
+    "engine": "webkit",
+    "width": 390,
+    "pass": true,
+    "scope": "actual local UI; all API synthetic; viewport resize is not physical keyboard acceptance"
+  },
+  {
+    "engine": "webkit",
+    "width": 1280,
+    "pass": true,
+    "scope": "actual local UI; all API synthetic; viewport resize is not physical keyboard acceptance"
+  }
+]

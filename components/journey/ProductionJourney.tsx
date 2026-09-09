@@ -72,6 +72,8 @@ type BaseProps = {
 
 type ProductionJourneyProps = BaseProps & {
   dayEntries?: JournalEntry[];
+  onBack?: () => void;
+  onOpenJournalEntry?: (entry: JournalEntry, trigger: HTMLButtonElement) => void;
   careTitle?: string;
   careDetail?: string;
   careActionLabel?: string;
@@ -303,18 +305,19 @@ function TodayScreen(props: ProductionJourneyProps) {
   const entries = props.dayEntries || [];
   const date = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
   return <main className="production-journey-screen journal-screen" data-production-journey="today" title={`${props.dogName} сегодня`}>
+    {props.onBack && <button type="button" className="journal-quiet" onClick={props.onBack}>← Назад</button>}
     <div data-all-profile data-parity="production-today-identity"><JournalMasthead dogName={props.dogName} avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} /></div>
-    <div className="journal-title"><h1>Сегодня</h1><p>{date}</p></div>
+    <div className="journal-title"><h1>Дела и записи</h1><p>{date}</p></div>
     <section className="journal-status" data-all-observation-trends aria-label="Самочувствие">
-      <div className="journal-status-line"><Heart aria-hidden="true" /><h2>Начнём с самочувствия</h2></div>
-      <p>Как сегодня чувствует себя {props.dogName}?<br />Ваши заметки помогут видеть изменения.</p>
+      <div className="journal-status-line"><Heart aria-hidden="true" /><h2>Запомнить важное</h2></div>
+      <p>Наблюдение, мысль или то, к чему хочется вернуться.</p>
       {!observationCaptureOpen && <button type="button" className="journal-primary" data-observation-composer aria-label={`Рассказать о состоянии ${props.dogName}`} aria-expanded="false" aria-controls="all-observation-capture" onClick={openObservationCapture}><PencilSimple aria-hidden="true" />Записать наблюдение</button>}
       {observationCaptureOpen && <div id="all-observation-capture" className="all-observation-capture"><button type="button" className="journal-quiet" onClick={() => setObservationCaptureOpen(false)}>Закрыть запись <X aria-hidden="true" /></button>{props.voiceCapture}</div>}
       <button type="button" className="journal-status-history" onClick={() => props.onNavigate('health')}>Посмотреть прошлые записи <CaretRight aria-hidden="true" /></button>
     </section>
     <section className="journal-day" aria-labelledby="journal-day-title">
       <div className="journal-section-title"><h2 id="journal-day-title">День по порядку</h2><button type="button" aria-label="Открыть план ухода" onClick={props.onOpenCare}><CalendarCheck aria-hidden="true" /></button></div>
-      {entries.length ? <ol className="journal-entries">{entries.slice(0, 4).map((entry) => <li key={entry.id} className="journal-entry"><time dateTime={entry.at}>{new Date(entry.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</time><span className={`journal-point${entry.completed ? ' done' : ''}`}>{entry.completed ? <Check aria-hidden="true" /> : <CalendarCheck aria-hidden="true" />}</span><button type="button" onClick={() => entry.kind === 'observation' ? props.onNavigate('health') : props.onOpenCare?.()}><b>{entry.title}</b><small>{entry.detail}</small></button></li>)}</ol> : <div className="journal-empty"><p>На сегодня пока нет записей и дел.</p><button type="button" className="journal-text-link" onClick={props.onOpenCare}>Открыть план ухода <CaretRight aria-hidden="true" /></button></div>}
+      {entries.length ? <ol className="journal-entries">{entries.slice(0, 4).map((entry) => <li key={entry.id} className="journal-entry"><time dateTime={entry.at}>{new Date(entry.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</time><span className={`journal-point${entry.completed ? ' done' : ''}`}>{entry.completed ? <Check aria-hidden="true" /> : <CalendarCheck aria-hidden="true" />}</span><button type="button" onClick={event => props.onOpenJournalEntry?.(entry, event.currentTarget)}><b>{entry.title}</b><small>{entry.detail}</small></button></li>)}</ol> : <div className="journal-empty"><p>На сегодня пока нет записей и дел.</p><button type="button" className="journal-text-link" onClick={props.onOpenCare}>Открыть план ухода <CaretRight aria-hidden="true" /></button></div>}
       {entries.length > 4 && <button type="button" className="journal-text-link" onClick={props.onOpenCare}>Весь план <CaretRight aria-hidden="true" /></button>}
     </section>
     <button type="button" className="journal-ask" onClick={props.onAskAssistant}><Sparkle aria-hidden="true" /><span><b>Есть вопрос о собаке?</b><small>Спросите Псё</small></span><CaretRight aria-hidden="true" /></button>
@@ -441,6 +444,7 @@ function NearbyScreen(props: ProductionJourneyProps) {
 
 function ThingsScreen(props: ProductionJourneyProps) {
   return <main className="production-journey-screen journal-screen journal-things" data-production-journey="things">
+    {props.onBack && <button type="button" className="journal-quiet" onClick={props.onBack}>← Назад</button>}
     <JournalMasthead dogName={props.dogName} avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
     <div className="journal-title"><h1>Вещи</h1><p>Что нужно купить и что уже куплено.</p>{props.onAskAssistant&&<button type="button" className="journal-quiet" aria-label="Спросить Псё" onClick={props.onAskAssistant}>Спросить Псё</button>}</div>
     {props.children}

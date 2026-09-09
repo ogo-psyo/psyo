@@ -108,3 +108,9 @@ See [AGENT-MAP.md](AGENT-MAP.md). Shared map search/API/tool, real typed provide
 [AGENT-SAVED-WALK.md](AGENT-SAVED-WALK.md): read_walk collects an owned ID; opening re-reads the canonical record through shared service/API. Missing/failed reads are distinct. Map shows path, note, stops, date/GPS gaps and exports correct GPX without creating a clone or replacing an active route. Viewing hides unrelated browsing controls until close.
 
 204 full QA tests/build/contracts; lint217/220. Final build and 8 browser combinations (saved read + calculated walk regression) pass. 25 read-only SQL projections compile after applying the two existing route migrations only to the isolated local fixture. Still no live inference/cloud/device acceptance or production changes.
+
+## U-01: connected main and direct navigation
+
+[APP-SHELL.md](APP-SHELL.md): grouped real text→assistant; actual recent run; five primary tabs with direct All destinations; original day/voice/care flow preserved as diary. Day rows open exact canonical records. Main/All no longer display the competing desktop care sidebar. All→passport and secondary return restore original entry/focus, including WebKit.
+
+204 tests, build/contracts/lint217; 6 main/direct-entry browser paths plus8 assistant/map regression paths pass. Final screenshots compared with the grouped Naris direction. Synthetic API evidence only; full inner UI and all live release gates remain open.
