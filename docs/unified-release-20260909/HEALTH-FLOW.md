@@ -32,3 +32,5 @@ A final cache review separated the paged health feed from bootstrap's limited pr
 Final immutable build: `/tmp/pso-u03-pagination-build.log`.15 browser cases passed:6 expanded records paths,1 equal-time/cache boundary,4 interaction and4 assistant regressions. Final targeted19 tests pass; latest lint215/220 and contracts pass. The full QA baseline before final primary-fact/cache refinements was213 tests, not a claim that a new full suite ran after every refinement. No unresolved failure in these checks.
 
 Visual-only follow-up after85bd09c: actual metric rows still inherited a legacy beige box/heavy weight. Scoped overrides remove that box and set readable normal-weight values. Rebuild and dedicated Chromium/WebKit390 computed-style+viewport checks passed; no functional code changed after the15-case functional run. Both CI checks on85bd09c passed.
+
+Final visual verification also checks the parent metric grid, not just its cells: the inherited box came from both levels. Latest grid build and both-engine390 visual checks passed; fresh viewport image inspected and sent with an explicit synthetic/local caption.
