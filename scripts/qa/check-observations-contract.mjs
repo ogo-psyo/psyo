@@ -5,6 +5,7 @@ const files = {
   page: readFileSync('app/page.tsx', 'utf8'),
   bootstrap: readFileSync('app/api/app/bootstrap/route.ts', 'utf8'),
   observations: readFileSync('app/api/observations/route.ts', 'utf8'),
+  atomic: readFileSync('supabase/migrations/20260909010000_atomic_observations.sql', 'utf8'),
   observationById: readFileSync('app/api/observations/[id]/route.ts', 'utf8'),
   domain: readFileSync('lib/domain.ts', 'utf8'),
   schema: readFileSync('supabase/schema.sql', 'utf8'),
@@ -53,7 +54,8 @@ for (const token of [
   'export async function POST',
   'normalizeObservationInput',
   "eq('pets.owner_id', ownerId)",
-  "eq('id', body.petId).eq('owner_id', ownerId)",
+  "rpc('care_observation_atomic'",
+  'p_owner_id: ownerId',
 ]) {
   if (!files.observations.includes(token)) failures.push(`observations API missing: ${token}`);
 }
@@ -61,8 +63,8 @@ for (const token of [
 for (const token of [
   'export async function PATCH',
   'export async function DELETE',
-  'ownedObservation',
-  "eq('pets.owner_id', ownerId)",
+  "rpc('care_observation_atomic'",
+  'p_owner_id: ownerId',
 ]) {
   if (!files.observationById.includes(token)) failures.push(`observation item API missing: ${token}`);
 }
@@ -78,11 +80,15 @@ for (const token of [
 for (const token of ['<HealthTimelineScreen', 'onStartEdit={startObservationEdit}', 'onDelete={deleteObservation}']) {
   if (!files.page.includes(token)) failures.push(`canonical health wiring missing: ${token}`);
 }
-for (const token of ['Записать наблюдение', 'aria-label="История наблюдений"', '<ObservationEditor', '<ObservationMetricFields', 'data-observation-calendar', 'health-calendar-grid', 'data-observation-metrics', 'Контекст владельца', 'Изменить', 'Убрать']) {
+for (const token of ['Записать наблюдение', 'aria-label="История наблюдений"', '<ObservationEditor', '<ObservationMetricFields', 'data-observation-calendar', 'health-calendar-grid', 'data-observation-metrics', 'health-record-text', 'Загрузить более ранние', 'Текст записи', 'Изменить', 'Убрать']) {
   if (!files.health.includes(token)) failures.push(`canonical health lifecycle missing: ${token}`);
 }
 if (files.profileMemory.includes("surface === 'health'")) {
   failures.push('duplicate profile health surface is still present');
+}
+
+for (const token of ['p.owner_id = p_owner_id', 'for update of o', 'care_finish_mutation_atomic', 'CARE_MUTATION_IN_PROGRESS']) {
+  if (!files.atomic.includes(token)) failures.push(`atomic observation command missing: ${token}`);
 }
 
 if (failures.length) {

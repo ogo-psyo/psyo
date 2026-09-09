@@ -24,8 +24,10 @@ test('planned wishlist creation is one idempotent database mutation', () => {
 test('the interface preserves and exposes the wishlist-calendar link', () => {
   const page = source('app/page.tsx');
 
-  assert.match(page, /plannedFor\?: string/);
-  assert.match(page, /reminderId\?: string/);
+  const view = source('lib/wishlistView.ts');
+  assert.match(view, /plannedFor\?: string/);
+  assert.match(view, /reminderId\?: string/);
+  assert.match(page, /normalizeWishlistReceipt/);
   assert.match(page, /Добавить в вещи и план/);
   assert.match(page, /Открыть в плане/);
   assert.match(page, /setSelectedCalendarDate\(item\.plannedFor\)/);

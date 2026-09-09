@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import type { CreatePetCommand } from '@/packages/contracts';
 import { ensureProfile } from './auth';
+import { careRequestFingerprint } from './careHttp';
 
 function slugify(value: string) {
   const base = value.trim().toLowerCase().replace(/[^a-zа-яё0-9]+/gi, '-').replace(/^-|-$/g, '');
@@ -51,26 +52,17 @@ const friendlinessMap: Record<string, string> = {
 
 type ProfileOwner = { id: string; email?: string | null; user_metadata?: Record<string, unknown> };
 
-export async function savePetProfile(input: { supabase: SupabaseClient; user: ProfileOwner; profile: CreatePetCommand }) {
-  const { supabase, user, profile } = input;
-  await ensureProfile(user);
+export async function savePetProfile(input: { supabase: SupabaseClient; user: ProfileOwner; profile: CreatePetCommand; idempotencyKey: string }) {
+  const { supabase, user, profile, idempotencyKey } = input;
   const { petPayload, passportPayload, socialPayload } = buildPetProfilePersistencePayload({ user, profile });
-
-  const petQuery = profile.backendPetId
-    ? supabase.from('pets').update(petPayload).eq('id', profile.backendPetId).eq('owner_id', user.id).select('*').single()
-    : supabase.from('pets').insert(petPayload).select('*').single();
-
-  const { data: pet, error: petError } = await petQuery;
-  if (petError) throw petError;
-
-  const [passportResult, socialResult] = await Promise.all([
-    supabase.from('pet_passports').upsert({ pet_id: pet.id, ...passportPayload }).select('*').single(),
-    supabase.from('social_profiles').upsert({ pet_id: pet.id, ...socialPayload }).select('*').single(),
-  ]);
-
-  if (passportResult.error) throw passportResult.error;
-  if (socialResult.error) throw socialResult.error;
-  return { pet, passport: passportResult.data, social: socialResult.data };
+  const fingerprint = careRequestFingerprint({ petId: profile.backendPetId, expectedVersion: profile.profileVersion, petPayload, passportPayload, socialPayload });
+  const { data, error } = await supabase.rpc('update_pet_profile_atomic', {
+    p_owner_id: user.id, p_pet_id: profile.backendPetId,
+    p_expected_version: profile.profileVersion, p_idempotency_key: idempotencyKey,
+    p_request_fingerprint: fingerprint, p_pet: petPayload, p_passport: passportPayload, p_social: socialPayload,
+  });
+  if (error) throw error;
+  return data;
 }
 
 export async function createPetProfileIdempotently(input: {
@@ -82,6 +74,8 @@ export async function createPetProfileIdempotently(input: {
   const { supabase, user, profile, idempotencyKey } = input;
   await ensureProfile(user);
   const { petPayload, passportPayload, socialPayload } = buildPetProfilePersistencePayload({ user, profile });
+  // The public slug is part of the fingerprint: it must be stable across retries.
+  petPayload.public_slug = `${slugify(profile.dogName)}-${createHash('sha256').update(`${user.id}:${idempotencyKey}`).digest('hex').slice(0, 12)}`;
   const fingerprint = createHash('sha256')
     .update(JSON.stringify({ petPayload, passportPayload, socialPayload }))
     .digest('hex');
@@ -175,5 +169,6 @@ export function mapPetProfileDto(row: any) {
     publicSlug: row.public_slug,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    profileVersion: row.profile_version,
   };
 }

@@ -1,0 +1,10 @@
+[
+  "app/admin/page.tsx",
+  "app/design-v3/page.tsx",
+  "app/dog/[slug]/page.tsx",
+  "app/legal/privacy/page.tsx",
+  "app/legal/terms/page.tsx",
+  "app/map/share/[id]/page.tsx",
+  "app/page.tsx",
+  "app/support/page.tsx"
+]

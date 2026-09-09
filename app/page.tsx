@@ -1,28 +1,38 @@
 'use client';
+
+import { isPrimaryObservationFact } from '@/lib/observationLabels';
+import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
+import {isMapSearchPlace,type MapSearchPlace} from '@/lib/mapSearchPlace';
 import {downloadRouteGpx,type RoutePlanning} from '@/lib/routePlanning';
 
 import { ChangeEvent, type FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, CopySimple, FilePdf, Files, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning, ShoppingBag, Sparkle, TextT, Trash, UploadSimple } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, CopySimple, FilePdf, Files, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning, TextT, UploadSimple } from '@phosphor-icons/react';
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
-import { PaperSheet, WatercolorScreen } from '@/components/watercolor';
+import { WatercolorScreen } from '@/components/watercolor';
+import { normalizeWishlistReceipt, type WishlistView } from '@/lib/wishlistView';
 import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
 import { journalDayEntries } from '@/lib/journal';
+import { ConnectedHome, ConnectedTools } from '@/components/app/ConnectedHome';
 import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
+import { AgentPanel } from '@/components/journey/AgentPanel';
+import type { ReviewedObservation } from '@/lib/agentObservation';
 import { VoiceObservationCapture, type PrivateVoiceNoteInput } from '@/components/journey/VoiceObservationCapture';
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
 import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';
 import { RouteDeleteDialog } from '@/components/journey/RouteDeleteDialog';
+import { RecordDetailDialog, type RecordDetail } from '@/components/profile/RecordDetailDialog';
+import { ProfileConflictDialog } from '@/components/profile/ProfileConflictDialog';
+import { mergeProfileDraft, type ProfileMerge } from '@/lib/profileMerge';
 import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
 import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
-import { ObservationEditor, type ObservationEditorDraft } from '@/components/care/ObservationEditor';
+import { type ObservationEditorDraft } from '@/components/care/ObservationEditor';
 import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
 import type { DogModuleSummary } from '@/components/home/AllFunctionsHub';
 import { HabitScreen, type HabitDraft, type HabitView } from '@/components/habits/HabitScreen';
 import { HealthTimelineScreen } from '@/components/health/HealthTimelineScreen';
 import { RecommendationCard } from '@/components/recommendations/RecommendationCard';
-import { ProfileMemoryWorkspace } from '@/components/profile/ProfileMemoryWorkspace';
-import { NextCareCard } from '@/components/today/NextCareCard';
+import { ProfileMemoryWorkspace, type ProfileSurface } from '@/components/profile/ProfileMemoryWorkspace';
 import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
 import { CandidateCard } from '@/components/social/CandidateCard';
 import { CityCommunities, type CityCommunity } from '@/components/social/CityCommunities';
@@ -71,20 +81,19 @@ import type { Recommendation, RecommendationAction, RecommendationLifecycleComma
 import { loadMainRecommendation, RecommendationRequestError, transitionRecommendation } from '@/lib/recommendations/client';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
-type Notice = 'idle' | 'saved' | 'mapSaved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
+type Notice = 'documentSaved' | 'idle' | 'saved' | 'mapSaved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
 type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 type ReminderTimeMode = 'exact' | 'flexible' | 'approximate';
 type ReminderView = { id: string; petId: string; type: string; title: string; dueAt: string; recurrence?: ReminderRecurrence; status: string; snoozedUntil?: string; completedAt?: string; nextDueAt?: string };
 type ReminderHistoryItem = { id: string; eventType?: string; payload?: { dueAt?: string; completedAt?: string; nextDueAt?: string | null }; createdAt: string };
-type WishlistView = { id: string; petId: string; title: string; category: string; reason?: string; url?: string; priority: string; status: string; plannedFor?: string; reminderId?: string; createdAt?: string; created_at?: string };
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; visibility?: 'private' | 'shared' | 'public'; share_token?: string | null; created_at?: string };
 type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; avatar_source?: 'none' | 'uploaded' | 'generated'; active_avatar_asset_id?: string | null; photo_urls?: string[] };
 type AuthSession = { access_token: string; user: { email?: string } };
-type ObservationView = { id: string; petId?: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
+type ObservationView = { id: string; type?: string; value?: string; petId?: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
 type ObservationDraft = { mood: string; appetite: string; stool: string; energy: string; note?: string };
 type DocumentView = { id: string; petId: string; kind: string; title: string; clinic?: string | null; documentDate?: string | null; originalName: string; mimeType: string; sizeBytes: number; createdAt: string };
 type SocialInviteView = { token: string; scenario: SocialScenario; petName: string | null; expiresAt: string };
-type Tab = 'today' | 'calendar' | 'habits' | 'health' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
+type Tab = 'today' | 'all' | 'diary' | 'calendar' | 'habits' | 'health' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
 type DrawMode = 'none' | 'point' | 'route';
 type MapSaveMode = 'private' | 'shared';
 type ViralCardFormat = 'story' | 'square' | 'poster';
@@ -424,6 +433,7 @@ function dbToProfile(payload: any, preferredPetId?: string): Partial<DogProfile>
       : avatarSource === 'uploaded' ? pet.avatar_url || pet.avatarUrl || '' : '';
   return {
     backendPetId: pet.id,
+    profileVersion: pet.profile_version ?? pet.profileVersion,
     avatarImageUrl,
     avatarSource,
     photoUrls: avatarSource === 'none' ? [] : Array.isArray(pet.photo_urls || pet.photoUrls) ? (pet.photo_urls || pet.photoUrls).filter(Boolean) : pet.avatar_url || pet.avatarUrl ? [pet.avatar_url || pet.avatarUrl] : [],
@@ -508,19 +518,35 @@ export default function Home() {
   const [avatarComposerOpen, setAvatarComposerOpen] = useState(false);
   const [avatarCapabilities, setAvatarCapabilities] = useState({ identityEnabled: false, uploadsEnabled: false, generationEnabled: false, providerReady: false });
   const [demoMode, setDemoMode] = useState(false);
-  const [notice, setNotice] = useState<Notice>('idle');
-  const [error, setError] = useState('');
   const [tab, setTabState] = useState<Tab>('today');
-  const [journeyDetail, setJourneyDetail] = useState<PrimaryRoute | null>(null);
+  const [noticeState, setNoticeState] = useState<{ tab: Tab; value: Notice }>({ tab: 'today', value: 'idle' });
+  const setNotice = useCallback((value: Notice) => setNoticeState({ tab, value }), [tab]);
+  const notice: Notice = noticeState.tab === tab ? noticeState.value : 'idle';
+  const [errorState, setErrorState] = useState<{ tab: Tab; message: string }>({ tab: 'today', message: '' });
+  const setError = useCallback((message: string) => setErrorState({ tab, message }), [tab]);
+  const [storageError, setStorageError] = useState('');
+  const error = (errorState.tab === tab ? errorState.message : '') || storageError;
+  const [healthFactsDraft, setHealthFactsDraft] = useState<DogProfile | null>(null);
+  const [recordDetail, setRecordDetail] = useState<RecordDetail | null>(null);
+  const [profileSurface, setProfileSurface] = useState<ProfileSurface>('overview');
+  type FlowOrigin = { from: Tab; to: Tab; detail: Tab | null; shellScroll: number; windowScroll: number; focusText: string };
+  const secondaryOrigins = useRef<FlowOrigin[]>([]);
+  const pendingViewRestore = useRef<FlowOrigin | null>(null);
+  const [journeyDetail, setJourneyDetail] = useState<Tab | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [reminders, setReminders] = useState<ReminderView[]>([]);
   const [wishlist, setWishlist] = useState<WishlistView[]>([]);
   const [zones, setZones] = useState<ZoneView[]>([]);
+  type WishlistOperation = { petId: string; scope: string; token: string };
+  const wishlistOperation = useRef<WishlistOperation | null>(null);
+  const [wishlistWriting, setWishlistWriting] = useState<WishlistOperation | null>(null);
+  const [wishlistIssue, setWishlistIssue] = useState<{petId: string; scope: string; message: string} | null>(null);
   const [removedWishlistItem, setRemovedWishlistItem] = useState<WishlistView | null>(null);
   const [removedZone, setRemovedZone] = useState<ZoneView | null>(null);
   const [editingWishlistId, setEditingWishlistId] = useState<string | null>(null);
+  const wishlistEditDrafts = useRef(new Map<string,{title:string;reason:string}>());
   const [wishlistTitleDraft, setWishlistTitleDraft] = useState('');
   const [wishlistReasonDraft, setWishlistReasonDraft] = useState('');
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
@@ -533,6 +559,10 @@ export default function Home() {
   const [documentUploadOpen, setDocumentUploadOpen] = useState(false);
   const [documentUploading, setDocumentUploading] = useState(false);
   const [documentFileName, setDocumentFileName] = useState('');
+  const [documentError, setDocumentError] = useState('');
+  const documentSaveAttempt = useRef<{ signature: string; key: string } | null>(null);
+  const documentActivePet = useRef(profile.backendPetId);
+  useEffect(() => { documentActivePet.current = profile.backendPetId; setDocumentError(''); setDocumentFileName(''); documentSaveAttempt.current = null; }, [profile.backendPetId]);
   const [documentBusyId, setDocumentBusyId] = useState<string | null>(null);
   const documentUploadTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [habits, setHabits] = useState<HabitView[]>([]);
@@ -560,7 +590,17 @@ export default function Home() {
   const [socialInviteState, setSocialInviteState] = useState<'idle' | 'loading' | 'ready' | 'gone' | 'error'>('idle');
   const [observationDraft, setObservationDraft] = useState<ObservationDraft>(defaultObservationDraft);
   const [observationSaving, setObservationSaving] = useState(false);
+  const [observationCaptureOpen, setObservationCaptureOpen] = useState(false);
+  const [observationIssue, setObservationIssue] = useState<{scope:string;message:string}|null>(null);
+  const [healthFactsError, setHealthFactsError] = useState('');
+  const [healthNextCursor, setHealthNextCursor] = useState<string|null>(null);
+  const [healthLoading, setHealthLoading] = useState(false);
+  const healthReadVersion = useRef(0);
+  const healthLoadedPet = useRef<string|null>(null);
+  const observationWrite = useRef<symbol|null>(null);
   const [editingObservationId, setEditingObservationId] = useState<string | null>(null);
+  const agentObservationEdits = useRef(new Map<string,ReviewedObservation>());
+  const observationEditDrafts = useRef(new Map<string, ObservationEditorDraft>());
   const [observationEditDraft, setObservationEditDraft] = useState<ObservationEditorDraft>(defaultObservationDraft);
   const [observationMutationBusy, setObservationMutationBusy] = useState(false);
   const [recentlyDeletedObservation, setRecentlyDeletedObservation] = useState<ObservationView | null>(null);
@@ -578,6 +618,11 @@ export default function Home() {
   const calendarAutoSelectedPetRef = useRef<string | null>(null);
   const [careView, setCareView] = useState<'active' | 'history'>('active');
   const [mapVisited, setMapVisited] = useState(false);
+  const [agentSavedRouteSelection,setAgentSavedRouteSelection]=useState<{token:string;petId:string;route:OwnerRouteView}|null>(null);
+  const agentMapRead=useRef<AbortController|null>(null);
+  useEffect(()=>()=>{agentMapRead.current?.abort();},[profile.backendPetId,assistantOpen]);
+  const [agentWalkSelection,setAgentWalkSelection]=useState<{token:string;petId:string;walk:AgentWalk}|null>(null);
+  const [agentMapSelection,setAgentMapSelection]=useState<{token:string;petId:string;place:MapSearchPlace;places:MapSearchPlace[]}|null>(null);
   const [mapActivity, setMapActivity] = useState<'recording'|'paused'|null>(null);
   useEffect(() => {if (tab === 'map') setMapVisited(true);}, [tab]);
   const [routeEditSeed,setRouteEditSeed] = useState<{token:number;points:number[][];planning?:RoutePlanning;review?:boolean;pathGaps?:number[];routeSource?:'recorded'|'planned';durationSeconds?:number;startedAt?:string}|null>(null);
@@ -602,8 +647,8 @@ export default function Home() {
   const [pendingRouteDeletion, setPendingRouteDeletion] = useState<OwnerRouteView | null>(null);
   const [newWishTitle, setNewWishTitle] = useState('');
   const [newWishReason, setNewWishReason] = useState('');
-  const [newWishCategory, setNewWishCategory] = useState('gear');
-  const [newWishNeedsReminder, setNewWishNeedsReminder] = useState(true);
+  const [newWishCategory, setNewWishCategory] = useState('other');
+  const [newWishNeedsReminder, setNewWishNeedsReminder] = useState(false);
   const [newWishPlannedFor, setNewWishPlannedFor] = useState(() => dateAfterDays(1));
   const [thingCaptureOpen, setThingCaptureOpen] = useState(false);
   const [mainRecommendation, setMainRecommendation] = useState<Recommendation | null>(null);
@@ -620,11 +665,17 @@ export default function Home() {
   const [publicCardLinkBusy, setPublicCardLinkBusy] = useState(false);
   const [publicCardRevokeConfirm, setPublicCardRevokeConfirm] = useState(false);
   const [assistantQuestion, setAssistantQuestion] = useState('');
+  const [assistantError,setAssistantError]=useState('');
+  const [assistantReturnFocus,setAssistantReturnFocus]=useState<HTMLElement|null>(null);
   const [assistantAnswer, setAssistantAnswer] = useState('');
   const [assistantActions, setAssistantActions] = useState<ActionSuggestion[]>([]);
   const [assistantActionStatuses, setAssistantActionStatuses] = useState<Record<string, AssistantActionStatus>>({});
   const [assistantSuggestedQuestions, setAssistantSuggestedQuestions] = useState<string[]>([]);
   const [assistantThreadId, setAssistantThreadId] = useState('');
+  const [agentRunId,setAgentRunId]=useState('');
+  const agentDelivered=useRef('');
+  const agentRequestEpoch=useRef(0);
+  const agentRequest=useRef<{pet:string;question:string;id:string}|null>(null);
   const [assistantDiagnostic, setAssistantDiagnostic] = useState<{ provider?: string; mode?: string }>({});
   const [assistantMessages, setAssistantMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [breedSearch, setBreedSearch] = useState('');
@@ -644,13 +695,18 @@ export default function Home() {
 
   useEffect(() => {
     setAssistantThreadId('');
+    agentRequestEpoch.current+=1;
+    setAgentRunId('');
+    agentDelivered.current='';
+    agentRequest.current=null;
+    setAssistantLoading(false);
     setAssistantMessages([]);
     setAssistantAnswer('');
     setAssistantActions([]);
     setAssistantActionStatuses({});
     setAssistantSuggestedQuestions([]);
     setAssistantDiagnostic({});
-  }, [profile.backendPetId]);
+  }, [profile.backendPetId,session?.access_token,telegramSession.ownerId]);
   const [billing, setBilling] = useState<BillingView | null>(null);
   const [careFeedback, setCareFeedback] = useState<CareFeedback>(null);
   const [pendingCareDeletion, setPendingCareDeletion] = useState<PendingCareDeletion>(null);
@@ -722,6 +778,9 @@ export default function Home() {
 
   function setTab(nextTab: Tab) {
     if (nextTab === tab) return;
+    if (['calendar', 'habits', 'health', 'card', 'diary', 'things'].includes(nextTab)) {
+      secondaryOrigins.current.push({ from: tab, to: nextTab, detail: journeyDetail, shellScroll: phoneShellRef.current?.scrollTop ?? 0, windowScroll: window.scrollY, focusText: document.activeElement instanceof HTMLButtonElement ? document.activeElement.textContent?.trim() ?? '' : '' });
+    } else secondaryOrigins.current = [];
     setTabState(nextTab);
     if (typeof window !== 'undefined') {
       const nextUrl = new URL(window.location.href);
@@ -730,15 +789,34 @@ export default function Home() {
     }
   }
 
-  function closeSecondaryFlow(parent: 'today' | 'profile') {
-    setTabState(parent);
+  function closeSecondaryFlow(parent: 'today' | 'profile' | 'all') {
+    const origin = secondaryOrigins.current.at(-1);
+    const valid = origin?.to === tab ? secondaryOrigins.current.pop() : undefined;
+    const target = valid?.from ?? parent;
+    pendingViewRestore.current = valid ?? null;
+    setTabState(target);
+    setJourneyDetail(valid?.detail ?? null);
     const nextUrl = new URL(window.location.href);
-    nextUrl.hash = parent;
-    window.history.replaceState({ tab: parent }, '', nextUrl);
+    nextUrl.hash = target;
+    window.history.replaceState({ tab: target, detail: valid?.detail }, '', nextUrl);
   }
 
-  function openAssistantSheet() {
-    setError('');
+  function openPrivateRecord(kind: 'observation' | 'reminder', id: string, trigger: HTMLButtonElement) {
+            if (kind === 'observation') {
+              const item = observations.find(entry => entry.id === id);
+              if (!item) return;
+              setRecordDetail({ id, trigger, title: `Запись о ${petNameGent}`, date: item.createdAt, text: item.note || item.value || '',
+                facts: [item.mood && `Состояние: ${item.mood}`, item.appetite && `Аппетит: ${item.appetite}`, item.stool && `Пищеварение: ${item.stool}`, item.energy && `Энергия: ${item.energy}`].filter((value): value is string => Boolean(value)) });
+            } else {
+              const item = reminders.find(entry => entry.id === id);
+              if (!item) return;
+              setRecordDetail({ id, trigger, title: item.title, date: item.completedAt || item.dueAt, text: item.completedAt || item.status === 'done' || item.status === 'completed' ? 'Дело выполнено' : 'Запланировано',
+                facts: item.nextDueAt ? [`Следующий срок: ${new Date(item.nextDueAt).toLocaleString('ru-RU')}`] : [] });
+            }
+          }
+
+  function openAssistantSheet(event?:{currentTarget:EventTarget|null}) {
+    setAssistantReturnFocus(event?.currentTarget instanceof HTMLElement?event.currentTarget:document.activeElement as HTMLElement|null);
     setAssistantOpen(true);
     const nextUrl = new URL(window.location.href);
     window.history.pushState({ tab, overlay: 'assistant' }, '', nextUrl);
@@ -756,7 +834,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const knownTabs: Tab[] = ['today', 'calendar', 'habits', 'health', 'nearby', 'map', 'card', 'profile', 'things'];
+    const knownTabs: Tab[] = ['today', 'all', 'diary', 'calendar', 'habits', 'health', 'nearby', 'map', 'card', 'profile', 'things'];
     const syncTabFromLocation = () => {
       const requested = window.location.hash.replace(/^#/, '') as Tab;
       setTabState(knownTabs.includes(requested) ? requested : 'today');
@@ -772,14 +850,21 @@ export default function Home() {
   }, [assistantOpen, journeyDetail]);
 
   useEffect(() => {
-    resetViewScroll();
+    const origin = pendingViewRestore.current;
+    pendingViewRestore.current = null;
+    if (!origin) { resetViewScroll(); return; }
+    window.requestAnimationFrame(() => {
+      phoneShellRef.current?.scrollTo({ top: origin.shellScroll, behavior: 'auto' });
+      window.scrollTo({ top: origin.windowScroll, behavior: 'auto' });
+      if (origin.focusText) [...document.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === origin.focusText)?.focus({ preventScroll: true });
+    });
   }, [tab, journeyDetail]);
 
   useEffect(() => {
     if (notice === 'idle') return;
     const timer = window.setTimeout(() => setNotice('idle'), 1600);
     return () => window.clearTimeout(timer);
-  }, [notice]);
+  }, [notice, setNotice]);
 
   useEffect(() => {
     if (tab !== 'nearby') return;
@@ -1467,6 +1552,10 @@ export default function Home() {
       providerReady: payload?.avatarCapabilities?.providerReady === true,
     });
     const dbProfile = dbToProfile(payload, petId);
+    if (dbProfile?.backendPetId && dbProfile.profileVersion !== undefined) {
+      profileBaselines.current.set(`${dbProfile.backendPetId}:${dbProfile.profileVersion}`, dbProfile);
+      if (profileBaselines.current.size > 20) profileBaselines.current.delete(profileBaselines.current.keys().next().value!);
+    }
     const selectedPetId = String(petId || payload.activePetId || dbProfile?.backendPetId || payload.pet?.id || '');
     const belongsToSelectedPet = (item: any) => {
       const itemPetId = String(item?.petId || item?.pet_id || '');
@@ -1505,9 +1594,10 @@ export default function Home() {
       setWishlist((payload.wishlist ?? []).filter(belongsToSelectedPet));
       setZones((payload.zones ?? []).filter(belongsToSelectedPet));
       setOwnerRoutes(normalizeOwnerRoutes((payload.routes ?? []).filter(belongsToSelectedPet)));
-      if (Array.isArray(payload.observations)) {
+      // Bootstrap is a profile snapshot, not a replacement for an already paged history.
+      if (Array.isArray(payload.observations) && healthLoadedPet.current !== selectedPetId) {
         const bootObservations = payload.observations.filter(belongsToSelectedPet).map(normalizeObservation).filter(Boolean) as ObservationView[];
-        setObservations(bootObservations.slice(0, 12));
+        setObservations(bootObservations);
       }
       setDocuments(Array.isArray(payload.documents) ? payload.documents.filter(belongsToSelectedPet) : []);
     } else if (!preserveLocalGuest && payload.empty && payload.user?.id) {
@@ -1546,7 +1636,7 @@ export default function Home() {
     setHeroNameDraft(hydratedLocal.dogName || '');
     try {
       const savedObservations = JSON.parse(window.localStorage.getItem(observationsStorageKey(hydratedLocal.backendPetId)) || '[]');
-      if (Array.isArray(savedObservations)) setObservations(savedObservations.map(normalizeObservation).filter(Boolean).slice(0, 12) as ObservationView[]);
+      if (Array.isArray(savedObservations)) setObservations(savedObservations.map(normalizeObservation).filter(Boolean) as ObservationView[]);
     } catch {}
     observationsLoadedRef.current = true;
     const supabase = getSupabaseBrowser();
@@ -1626,7 +1716,7 @@ export default function Home() {
   useEffect(() => {
     if (!profileHydrated) return;
     const result = saveProfile(profile);
-    if (!result.ok) setError(result.message);
+    setStorageError(result.ok ? '' : result.message);
   }, [profile, profileHydrated]);
   useEffect(() => {
     const explicitGuestMode = !session?.access_token && (telegramSession.mode === 'browser' || telegramSession.mode === 'error');
@@ -1639,7 +1729,7 @@ export default function Home() {
         routes: ownerRoutes,
       });
     } catch {
-      setError('Не удалось сохранить изменения на устройстве. Освободи место в браузере и попробуй снова.');
+      setStorageError('Не удалось сохранить изменения на устройстве. Освободи место в браузере и попробуй снова.');
     }
   }, [ownerRoutes, profile.backendPetId, profileHydrated, reminders, session?.access_token, telegramSession.mode, wishlist, zones]);
   useEffect(() => {
@@ -1670,15 +1760,12 @@ export default function Home() {
   const breedLabel = useMemo(() => getBreedLabel(profile), [profile]);
   const avatarReady = avatarState === 'ready';
   const hasDog = Boolean(profile.dogName.trim());
-  const activePrimaryRoute: PrimaryRoute = tab === 'calendar' || tab === 'habits' || tab === 'health'
-    ? 'today'
-    : tab === 'card'
-      ? 'profile'
-      : tab as PrimaryRoute;
-  const isJourneyRoute = (['today', 'profile', 'map', 'nearby', 'things'] as const).includes(tab as PrimaryRoute)
-    && journeyDetail !== tab;
+  const activePrimaryRoute: PrimaryRoute = ['calendar', 'habits', 'health', 'card', 'diary', 'things'].includes(tab) ? 'all' : tab as PrimaryRoute;
+  const isJourneyRoute = ['today', 'all', 'diary', 'profile', 'map', 'nearby', 'things'].includes(tab) && journeyDetail !== tab;
   const activeReminders = useMemo(() => reminders.filter((reminder) => reminder.status !== 'done'), [reminders]);
   const doneReminders = useMemo(() => reminders.filter((reminder) => reminder.status === 'done'), [reminders]);
+  const wishlistBusy = wishlistWriting?.petId === (profile.backendPetId || activePetId || 'guest');
+  const wishlistError = wishlistIssue?.petId === (profile.backendPetId || activePetId || 'guest') ? wishlistIssue : null;
   const wantedWishlist = useMemo(() => wishlist.filter((item) => item.status !== 'bought' && item.status !== 'not_suitable'), [wishlist]);
   const boughtWishlist = useMemo(() => wishlist.filter((item) => item.status === 'bought'), [wishlist]);
   const profileChecklist = useMemo(() => [
@@ -1897,6 +1984,17 @@ export default function Home() {
     : billing?.upgrade?.available ? 'Оплата готова через Telegram.' : 'Оплата пока недоступна.';
 
   function resetPetScopedDrafts() {
+    healthReadVersion.current++; healthLoadedPet.current=null; observationWrite.current=null;
+    setHealthNextCursor(null); setHealthLoading(false); setObservationIssue(null); setHealthFactsError('');
+    setObservationSaving(false); setObservationMutationBusy(false); setObservationCaptureOpen(false);
+    wishlistOperation.current = null; wishlistEditDrafts.current.clear(); setWishlistWriting(null); setWishlistIssue(null); setEditingWishlistId(null); setRemovedWishlistItem(null);
+    setRecordDetail(null);
+    setProfileSurface('overview');
+    secondaryOrigins.current = [];
+    setHealthFactsDraft(null);
+    observationEditDrafts.current.clear();
+    agentObservationEdits.current.clear();
+    setAgentMapSelection(null);setAgentWalkSelection(null);setAgentSavedRouteSelection(null);
     setJourneyDetail(null);
     setTabState('today');
     if (typeof window !== 'undefined') {
@@ -1905,7 +2003,7 @@ export default function Home() {
       window.history.replaceState({ tab: 'today' }, '', nextUrl);
     }
     setAssistantOpen(false);
-    setAssistantQuestion('');
+    setAssistantQuestion('');setAssistantError('');
     setAssistantAnswer('');
     setAssistantActions([]);
     setAssistantActionStatuses({});
@@ -1921,7 +2019,7 @@ export default function Home() {
     setRoutePoints([]);
     setMapRouteMeta(null);
     setNewWishTitle('');
-    setNewWishReason('');
+    setNewWishReason(''); setNewWishCategory('other'); setNewWishNeedsReminder(false); setNewWishPlannedFor(dateAfterDays(1));
     setThingCaptureOpen(false);
     setSocialProfile(null);
     setSocialCandidates({ nearby: [], city: [] });
@@ -2028,14 +2126,19 @@ export default function Home() {
     const date = new Date(createdAt);
     const type = String(raw.type || '');
     const value = String(raw.value || '');
+    const metric=(key:string)=> {
+      const stored=typeof raw[key]==='string'?raw[key]:typeof metadata[key]==='string'?metadata[key]:type===key?value:'';
+      return stored.trim()||undefined;
+    };
     return {
       id: id || guestId('observation'),
       petId: raw.petId || raw.pet_id ? String(raw.petId || raw.pet_id) : undefined,
-      mood: String(raw.mood || metadata.mood || (type === 'mood' ? value : '')).trim() || undefined,
-      appetite: String(raw.appetite || metadata.appetite || (type === 'appetite' ? value : '')).trim() || undefined,
-      stool: String(raw.stool || metadata.stool || (type === 'stool' ? value : '')).trim() || undefined,
-      energy: String(raw.energy || metadata.energy || (type === 'energy' ? value : '')).trim() || undefined,
-      note: note || undefined,
+      mood: metric('mood'),
+      appetite: metric('appetite'),
+      stool: metric('stool'),
+      energy: metric('energy'),
+      type, value,
+      note: note || (type === 'note' ? value : '') || undefined,
       createdAt: Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString(),
       syncStatus: raw.syncStatus === 'saved' ? 'saved' : 'local',
     };
@@ -2043,23 +2146,35 @@ export default function Home() {
 
   function updateObservationDraft(patch: Partial<ObservationDraft>) {
     setObservationDraft((current) => ({ ...current, ...patch }));
-    setError('');
+    if (observationIssue?.scope === 'create') setObservationIssue(null);
   }
 
-  async function loadObservations() {
-    const params = new URLSearchParams({ limit: '12' });
-    if (profile.backendPetId) params.set('petId', profile.backendPetId);
-    const response = await fetch(`/api/observations?${params.toString()}`, { headers: authHeaders() });
-    if (!response.ok) return;
-    const payload = await response.json().catch(() => ({}));
-    const source = Array.isArray(payload?.observations) ? payload.observations : Array.isArray(payload) ? payload : [];
-    const remote = source.map(normalizeObservation).filter(Boolean) as ObservationView[];
-    if (!remote.length) return;
-    setObservations((current) => {
-      const byId = new Map<string, ObservationView>();
-      [...remote.map((item) => ({ ...item, syncStatus: 'saved' as const })), ...current].forEach((item) => byId.set(item.id, item));
-      return Array.from(byId.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 12);
-    });
+  async function loadObservations() { await loadHealthTimeline(); }
+
+  async function loadHealthTimeline(before?: string, signal?: AbortSignal) {
+    const petId=profile.backendPetId;
+    if (!petId || isGuestMode() || observationWrite.current) return;
+    const version=++healthReadVersion.current;
+    const current=()=>version===healthReadVersion.current && documentActivePet.current===petId && !signal?.aborted;
+    setHealthLoading(true);
+    setModuleErrors(value=>({...value,health:undefined}));
+    try {
+      const params=new URLSearchParams({petId}); if(before)params.set('before',before);
+      const response=await fetch(`/api/health?${params}`,{headers:authHeaders(),credentials:'include',signal});
+      const payload=await response.json();
+      if(!current())return;
+      if(!response.ok || !Array.isArray(payload.entries))throw new Error('HEALTH_READ_FAILED');
+      const entries=payload.entries.map((entry:unknown)=>observationReceipt(entry,petId)) as ObservationView[];
+      setObservations(previous=>{
+        // A fresh read starts a new cursor chain; only the actively edited draft stays visible.
+        const retained=before?previous:previous.filter(item=>item.id===editingObservationId);
+        return [...new Map([...retained,...entries.map(item=>({...item,syncStatus:'saved' as const}))].map(item=>[item.id,item])).values()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
+      });
+      healthLoadedPet.current=petId;
+      setHealthNextCursor(payload.hasMore && typeof payload.nextCursor==='string'?payload.nextCursor:null);
+    } catch {
+      if(current())setModuleErrors(value=>({...value,health:'Не удалось загрузить записи. Уже открытые остались здесь.'}));
+    } finally {if(current())setHealthLoading(false);}
   }
 
   async function loadRealModules(petId = profile.backendPetId, signal?: AbortSignal) {
@@ -2070,33 +2185,25 @@ export default function Home() {
       return;
     }
     setHabitLoading(true);
-    setModuleErrors({});
+    setModuleErrors(value=>({...value,habits:undefined}));
     const request = { headers: authHeaders(), credentials: 'include' as const, signal };
     try {
-      const [habitResponse, healthResponse, summaryResponse] = await Promise.all([
+      const [habitResponse, summaryResponse] = await Promise.all([
         fetch(`/api/habits?petId=${encodeURIComponent(petId)}`, request),
-        fetch(`/api/health?petId=${encodeURIComponent(petId)}`, request),
         fetch(`/api/pets/${encodeURIComponent(petId)}/summary`, request),
       ]);
-      const [habitPayload, healthPayload, summaryPayload] = await Promise.all([
+      const [habitPayload, summaryPayload] = await Promise.all([
         habitResponse.json().catch(() => ({})),
-        healthResponse.json().catch(() => ({})),
         summaryResponse.json().catch(() => ({})),
       ]);
+      if(signal?.aborted || documentActivePet.current!==petId)return;
       if (habitResponse.ok) setHabits(Array.isArray(habitPayload.habits) ? habitPayload.habits : []);
-      if (healthResponse.ok && Array.isArray(healthPayload.entries)) {
-        const entries = healthPayload.entries.map(normalizeObservation).filter(Boolean) as ObservationView[];
-        setObservations(entries.slice(0, 50));
-      }
       if (summaryResponse.ok && summaryPayload.summary) setDogSummary(summaryPayload.summary);
-      setModuleErrors({
-        habits: habitResponse.ok ? undefined : 'Проверь соединение и попробуй снова.',
-        health: healthResponse.ok ? undefined : 'Проверь соединение и попробуй снова.',
-      });
+      setModuleErrors(value=>({...value,habits:habitResponse.ok?undefined:'Проверь соединение и попробуй снова.'}));
       if (!summaryResponse.ok) setDogSummary(null);
     } catch (loadError) {
-      if (!(loadError instanceof DOMException && loadError.name === 'AbortError')) {
-        setModuleErrors({ habits: 'Проверь соединение и попробуй снова.', health: 'Проверь соединение и попробуй снова.' });
+      if (!signal?.aborted && documentActivePet.current===petId && !(loadError instanceof DOMException && loadError.name === 'AbortError')) {
+        setModuleErrors(value=>({...value,habits:'Проверь соединение и попробуй снова.'}));
       }
     } finally {
       if (!signal?.aborted) setHabitLoading(false);
@@ -2107,6 +2214,7 @@ export default function Home() {
     if (!profile.backendPetId || isGuestMode()) return;
     const controller = new AbortController();
     void loadRealModules(profile.backendPetId, controller.signal);
+    void loadHealthTimeline(undefined, controller.signal);
     return () => controller.abort();
   }, [profile.backendPetId, session?.access_token, telegramSession.ownerId]);
 
@@ -2241,70 +2349,50 @@ export default function Home() {
     });
   }, [careView, reminders, reminderHistory]);
 
-  async function submitObservation() {
-    if (observationSaving) return;
-    const note = observationDraft.note?.trim();
-    if (!observationDraft.mood && !observationDraft.appetite && !observationDraft.stool && !observationDraft.energy && !note) {
-      setError('Выбери то, что заметил, или добавь короткую заметку.');
-      return;
-    }
-    const petId = profile.backendPetId || (isGuestMode() ? ensureGuestPetId() : undefined);
-    const payloadFingerprint = JSON.stringify({ petId, ...observationDraft, note });
-    const mutationScope = `observation:create:${payloadFingerprint}`;
-    const createdAt = careMutationTime(mutationScope, () => new Date().toISOString());
-    const draft: ObservationView = {
-      id: guestId('observation'),
-      petId,
-      mood: observationDraft.mood,
-      appetite: observationDraft.appetite,
-      stool: observationDraft.stool,
-      energy: observationDraft.energy,
-      note: note || undefined,
-      createdAt,
-      syncStatus: 'local',
-    };
-    setObservationSaving(true);
-    setError('');
+  function observationReceipt(value: unknown, petId: string, expectedId?: string): ObservationView {
+    if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('INVALID_OBSERVATION_RECEIPT');
+    const raw=value as Record<string,unknown>;
+    const id=raw?.id, ownerPet=raw?.petId??raw?.pet_id, date=raw?.observedAt??raw?.observed_at??raw?.createdAt??raw?.created_at;
+    if(typeof id!=='string'||!id||ownerPet!==petId||(expectedId&&id!==expectedId)||typeof date!=='string'||!Number.isFinite(Date.parse(date))||raw.source==='demo'||raw.deleted_at)throw new Error('INVALID_OBSERVATION_RECEIPT');
+    const saved=normalizeObservation(raw); if(!saved)throw new Error('INVALID_OBSERVATION_RECEIPT');
+    return {...saved,syncStatus:'saved'};
+  }
 
-    if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) {
-      setObservations((current) => [draft, ...current].slice(0, 12));
-      setObservationDraft(defaultObservationDraft);
-      finishCareMutation(mutationScope);
-      setObservationSaving(false);
-      return;
-    }
+  async function writeObservation<T>(scope:string, task:(current:()=>boolean)=>Promise<T>):Promise<T|null> {
+    if(observationWrite.current)return null;
+    const token=Symbol(scope), petId=profile.backendPetId;
+    observationWrite.current=token;
+    const current=()=>observationWrite.current===token && documentActivePet.current===petId;
+    // Ignore an older in-flight read; the mutation receipt is newer than that snapshot.
+    healthReadVersion.current++; setHealthLoading(false);
+    setObservationIssue(null);
+    if(scope==='create')setObservationSaving(true);else setObservationMutationBusy(true);
+    try{return await task(current);}
+    catch{if(current())setObservationIssue({scope,message:'Не удалось подтвердить изменение. Ввод остался здесь — повторите попытку.'});return null;}
+    finally{if(current()){observationWrite.current=null;setObservationSaving(false);setObservationMutationBusy(false);}}
+  }
 
-    try {
-      const response = await fetch('/api/observations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(mutationScope), ...authHeaders() },
-        body: JSON.stringify({
-          petId: profile.backendPetId,
-          ...(draft.note && !draft.mood && !draft.appetite && !draft.stool && !draft.energy ? { type: 'note', value: draft.note } : {}),
-          mood: draft.mood || undefined,
-          appetite: draft.appetite || undefined,
-          stool: draft.stool || undefined,
-          energy: draft.energy || undefined,
-          note: draft.note || null,
-          observedAt: createdAt,
-          source: 'manual',
-        }),
-      });
-      if (!response.ok) {
-        setError('Запись не сохранилась. Текст остался здесь — проверь связь и попробуй снова.');
-        return;
+  async function submitObservation():Promise<ObservationView|null> {
+    const note=observationDraft.note?.trim();
+    if(!observationDraft.mood&&!observationDraft.appetite&&!observationDraft.stool&&!observationDraft.energy&&!note)return null;
+    const guest=isGuestMode(),petId=profile.backendPetId||(guest?ensureGuestPetId():undefined);
+    if(!petId){setObservationIssue({scope:'create',message:'Сначала выберите собаку. Текст остался здесь.'});return null;}
+    const scope=`observation:create:${JSON.stringify({petId,...observationDraft,note})}`;
+    const createdAt=careMutationTime(scope,()=>new Date().toISOString());
+    return writeObservation('create',async current=>{
+      let saved:ObservationView={id:guestId('observation'),petId,...observationDraft,note:note||undefined,createdAt,syncStatus:'local'};
+      if(!guest){
+        const response=await fetch('/api/observations',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify({petId,...observationDraft,note:note||null,observedAt:createdAt,source:'manual',...(note&&!observationDraft.mood&&!observationDraft.appetite&&!observationDraft.stool&&!observationDraft.energy?{type:'note',value:note}:{})})});
+        const payload=await response.json();
+        if(!current())return null;
+        if(!response.ok||payload.mode==='demo')throw new Error('SAVE_FAILED');
+        saved=observationReceipt(payload.observation,petId);
       }
-      const payload = await response.json().catch(() => ({}));
-      const saved = normalizeObservation(payload?.observation || payload);
-      if (saved) setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
-      setObservationDraft(defaultObservationDraft);
-      finishCareMutation(mutationScope);
-      await loadRealModules(profile.backendPetId);
-    } catch {
-      setError('Запись не сохранилась. Текст остался здесь — проверь связь и попробуй снова.');
-    } finally {
-      setObservationSaving(false);
-    }
+      if(!current())return null;
+      setObservations(previous=>[saved,...previous.filter(item=>item.id!==saved.id)]);
+      setObservationDraft(defaultObservationDraft);finishCareMutation(scope);
+      return saved;
+    });
   }
 
   async function transcribeVoiceObservation(audio: Blob) {
@@ -2360,7 +2448,7 @@ export default function Home() {
     if (!response.ok) throw new Error(String(payload.error || 'OBSERVATION_SAVE_FAILED'));
     const saved = normalizeObservation(payload.observation || payload);
     if (!saved) throw new Error('OBSERVATION_SAVE_FAILED');
-    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
+    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)]);
     finishCareMutation(scope);
     await loadRealModules(profile.backendPetId);
     return { decisions: Array.isArray(payload.decisions) ? payload.decisions as IngestionDecision[] : [], summary: payload.summary || {} };
@@ -2375,7 +2463,7 @@ export default function Home() {
       const draft: ObservationView = {
         id: guestId('observation'), petId, note: text, createdAt, syncStatus: 'local',
       };
-      setObservations((current) => [draft, ...current].slice(0, 12));
+      setObservations((current) => [draft, ...current]);
       return;
     }
     const scope = `observation:voice-note:${petId}:${createdAt}:${text}`;
@@ -2392,101 +2480,94 @@ export default function Home() {
     if (!response.ok) throw new Error(String(payload.error || 'PRIVATE_NOTE_SAVE_FAILED'));
     const saved = normalizeObservation(payload.observation || payload);
     if (!saved) throw new Error('PRIVATE_NOTE_SAVE_FAILED');
-    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
+    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)]);
     finishCareMutation(scope);
   }
 
   function startObservationEdit(observation: ObservationView) {
     setEditingObservationId(observation.id);
-    setObservationEditDraft({
+    setObservationEditDraft(observationEditDrafts.current.get(observation.id) ?? {
       mood: observation.mood || '',
       appetite: observation.appetite || '',
       stool: observation.stool || '',
       energy: observation.energy || '',
       note: observation.note || '',
+      ...(isPrimaryObservationFact(observation.type)?{type:observation.type,value:observation.value}:{}),
     });
     setError('');
   }
 
   async function editObservation(id: string) {
-    const scope = `observation:update:${id}:${JSON.stringify(observationEditDraft)}`;
-    if (isGuestMode()) {
-      setObservations((current) => current.map((item) => item.id === id ? { ...item, ...observationEditDraft } : item));
-      setEditingObservationId(null);
-      return;
-    }
-    setObservationMutationBusy(true);
-    try {
-      const response = await fetch(`/api/observations/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify(observationEditDraft),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) return setError('Не получилось сохранить запись. Изменения остались в форме.');
-      const saved = normalizeObservation(payload.observation);
-      if (saved) setObservations((current) => current.map((item) => item.id === id ? { ...saved, syncStatus: 'saved' as const } : item));
-      finishCareMutation(scope);
-      setEditingObservationId(null);
-    } catch {
-      setError('Не получилось сохранить запись. Изменения остались в форме.');
-    } finally {
-      setObservationMutationBusy(false);
-    }
+    const scope=`observation:update:${id}:${JSON.stringify(observationEditDraft)}`;
+    const original=observations.find(item=>item.id===id),petId=profile.backendPetId;
+    if(!original)return;
+    await writeObservation(id,async current=>{
+      let saved:ObservationView={...original,...observationEditDraft};
+      if(!isGuestMode()){
+        const response=await fetch(`/api/observations/${id}`,{method:'PATCH',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify(observationEditDraft)});
+        const payload=await response.json();if(!current())return;
+        if(!response.ok||!petId)throw new Error('SAVE_FAILED');
+        saved=observationReceipt(payload.observation,petId,id);
+      }
+      if(!current())return;
+      setObservations(previous=>previous.map(item=>item.id===id?saved:item));
+      finishCareMutation(scope);observationEditDrafts.current.delete(id);setEditingObservationId(null);
+    });
   }
 
   async function deleteObservation(id: string) {
-    const observation = observations.find((item) => item.id === id);
-    if (!observation || observationMutationBusy) return;
-    if (isGuestMode()) {
-      setObservations((current) => current.filter((item) => item.id !== id));
-      setRecentlyDeletedObservation(observation);
-      setCareFeedback({ kind: 'observation-deleted', observationId: id, title: 'наблюдение' });
-      return;
-    }
-    const scope = `observation:delete:${id}`;
-    setObservationMutationBusy(true);
-    try {
-      const response = await fetch(`/api/observations/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({}),
-      });
-      if (!response.ok) return setError('Не получилось убрать запись. Попробуй ещё раз.');
-      setObservations((current) => current.filter((item) => item.id !== id));
-      setRecentlyDeletedObservation(observation);
-      setCareFeedback({ kind: 'observation-deleted', observationId: id, title: 'наблюдение' });
-      finishCareMutation(scope);
-    } catch {
-      setError('Не получилось убрать запись. Попробуй ещё раз.');
-    } finally {
-      setObservationMutationBusy(false);
-    }
+    const observation=observations.find(item=>item.id===id);
+    if(!observation)return;
+    const scope=`observation:delete:${id}`;
+    await writeObservation(id,async current=>{
+      if(!isGuestMode()){
+        const response=await fetch(`/api/observations/${id}`,{method:'DELETE',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:'{}'});
+        if(!current())return;
+        const receipt=await response.json();
+        if(!current())return;
+        if(!response.ok||receipt.ok!==true||!Number.isFinite(Date.parse(receipt.deletedAt)))throw new Error('DELETE_FAILED');
+      }
+      if(!current())return;
+      setObservations(previous=>previous.filter(item=>item.id!==id));setRecentlyDeletedObservation(observation);
+      setEditingObservationId(previous=>previous===id?null:previous);
+      setCareFeedback({kind:'observation-deleted',observationId:id,title:'запись'});finishCareMutation(scope);
+    });
   }
 
   async function uploadPetDocument(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!profile.backendPetId || documentUploading) return;
+    const petId = profile.backendPetId;
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-    form.set('petId', profile.backendPetId);
+    form.set('petId', petId);
+    const file = form.get('file');
+    if (!(file instanceof File) || !file.size) { setDocumentError('Выберите PDF или фото.'); return; }
     setDocumentUploading(true);
-    setError('');
+    setDocumentError('');
     try {
-      const response = await fetch('/api/documents', { method: 'POST', headers: authHeaders(), body: form });
+      const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', await file.arrayBuffer()))].map(byte => byte.toString(16).padStart(2, '0')).join('');
+      const signature = JSON.stringify({ fields: [...form.entries()].filter(([key]) => key !== 'file'), name: file.name, type: file.type, hash });
+      if (documentSaveAttempt.current?.signature !== signature) documentSaveAttempt.current = { signature, key: `document:${crypto.randomUUID()}` };
+      const response = await fetch('/api/documents', { method: 'POST', headers: { ...authHeaders(), 'Idempotency-Key': documentSaveAttempt.current.key }, body: form });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.error || 'UPLOAD_FAILED');
-      setDocuments((current) => [payload.document, ...current]);
+      if (documentActivePet.current !== petId) return;
+      setDocuments(current => [payload.document, ...current.filter(item => item.id !== payload.document.id)]);
+      documentSaveAttempt.current = null;
       setDocumentUploadOpen(false);
       setDocumentFileName('');
       formElement.reset();
-      setNotice('saved');
+      setNotice('documentSaved');
       window.setTimeout(() => setNotice('idle'), 1400);
-    } catch {
-      setError('Не удалось сохранить документ. Проверь формат и размер файла — до 4 МБ.');
-    } finally {
-      setDocumentUploading(false);
-    }
+    } catch (error) {
+      if (documentActivePet.current !== petId) return;
+      const code = error instanceof Error ? error.message : '';
+      setDocumentError(code === 'FILE_TOO_LARGE' ? 'Файл больше 4 МБ. Выберите файл поменьше.'
+        : code === 'FILE_TYPE_NOT_ALLOWED' ? 'Подойдёт PDF или изображение JPEG, PNG, WebP.'
+        : code === 'DOCUMENT_REMOVED' ? 'Этот документ уже удалён. Выберите файл заново, если хотите добавить его снова.'
+        : 'Не удалось подтвердить сохранение. Ввод и файл остались здесь — повторите попытку.');
+    } finally { setDocumentUploading(false); }
   }
 
   async function deletePetDocument(id: string) {
@@ -2498,39 +2579,28 @@ export default function Home() {
       if (!response.ok) throw new Error('DELETE_FAILED');
       setDocuments((current) => current.filter((item) => item.id !== id));
     } catch {
-      setError('Не удалось удалить документ. Ничего не изменилось — попробуй ещё раз.');
+      setError('Удаление документа не завершено. Повторите попытку; повтор не затронет другие файлы.');
     } finally {
       setDocumentBusyId(null);
     }
   }
 
   async function restoreObservation() {
-    if (!recentlyDeletedObservation) return;
-    const observation = recentlyDeletedObservation;
-    if (isGuestMode()) {
-      setObservations((current) => [observation, ...current]);
-      setRecentlyDeletedObservation(null);
-      setCareFeedback(null);
-      return;
-    }
-    const scope = `observation:restore:${observation.id}`;
-    setObservationMutationBusy(true);
-    try {
-      const response = await fetch(`/api/observations/${observation.id}/restore`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({}),
-      });
-      if (!response.ok) return setError('Не получилось вернуть запись. Попробуй ещё раз.');
-      setObservations((current) => [observation, ...current.filter((item) => item.id !== observation.id)]);
-      setRecentlyDeletedObservation(null);
-      setCareFeedback(null);
-      finishCareMutation(scope);
-    } catch {
-      setError('Не получилось вернуть запись. Попробуй ещё раз.');
-    } finally {
-      setObservationMutationBusy(false);
-    }
+    const observation=recentlyDeletedObservation,petId=profile.backendPetId;
+    if(!observation)return;
+    const scope=`observation:restore:${observation.id}`;
+    await writeObservation('restore',async current=>{
+      let saved=observation;
+      if(!isGuestMode()){
+        const response=await fetch(`/api/observations/${observation.id}/restore`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:'{}'});
+        const payload=await response.json();if(!current())return;
+        if(!response.ok||!petId)throw new Error('RESTORE_FAILED');
+        saved=observationReceipt(payload.observation,petId,observation.id);
+      }
+      if(!current())return;
+      setObservations(previous=>[saved,...previous.filter(item=>item.id!==saved.id)]);
+      setRecentlyDeletedObservation(null);setCareFeedback(null);finishCareMutation(scope);
+    });
   }
 
   function updateProfile(patch: Partial<DogProfile>) {
@@ -2716,12 +2786,17 @@ export default function Home() {
     updateProfile({ avatarImageUrl: renderUrl, avatarSource: result.source || 'none' });
   }
 
-  async function savePrivateProfile(nextProfile?: DogProfile) {
-    const profileToSave = nextProfile || profile;
-    if (!profileToSave.dogName.trim()) { setError('Сначала добавь имя собаки.'); return null; }
-    if (profileSaving) return profileToSave.backendPetId || null;
+  const profileBaselines = useRef(new Map<string, Partial<DogProfile>>());
+  const [profileConflict, setProfileConflict] = useState<ProfileMerge | null>(null);
+  const profileConflictResolver = useRef<((profile: DogProfile | null) => void) | null>(null);
+  const profileSaveAttempt = useRef<{ body: string; key: string } | null>(null);
+
+  async function savePrivateProfile(nextProfile?: DogProfile, reportError: (message:string)=>void = setError) {
+    let profileToSave = nextProfile || profile;
+    if (!profileToSave.dogName.trim()) { reportError('Сначала добавь имя собаки.'); return null; }
+    if (profileSaving) return null;
     setProfileSaving(true);
-    setError('');
+    reportError('');
     if (isGuestMode()) {
       ensureGuestPetId();
       setProfile(profileToSave);
@@ -2731,36 +2806,61 @@ export default function Home() {
       return profileToSave.backendPetId || guestPetIdRef.current;
     }
     try {
-      const idempotencyKey = profileToSave.backendPetId ? '' : (addDogKeyRef.current ?? `add-pet:${crypto.randomUUID()}`);
-      if (!profileToSave.backendPetId) addDogKeyRef.current = idempotencyKey;
-      const response = await fetch('/api/v1/pets', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
-          ...authHeaders(),
-        },
-        body: JSON.stringify({ profile: { ...profileToSave, isPublic: false } }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result?.error || 'Не удалось сохранить профиль');
-      const savedPetId = result.pet?.id || profileToSave.backendPetId;
-      addDogKeyRef.current = null;
-      setProfile({ ...profileToSave, backendPetId: savedPetId, isPublic: false });
-      if (savedPetId) setActivePetId(savedPetId);
-      await loadBootstrap(undefined, savedPetId);
-      setNotice('saved');
-      window.setTimeout(() => setNotice('idle'), 1600);
-      return savedPetId || null;
-    } catch {
-      setError('Не удалось сохранить личный профиль. Изменения остались на экране — попробуй ещё раз.');
+      for (;;) {
+        const requestBody = JSON.stringify({ profile: { ...profileToSave, isPublic: false } });
+        if (profileSaveAttempt.current?.body !== requestBody) profileSaveAttempt.current = { body: requestBody, key: `profile:${crypto.randomUUID()}` };
+        const idempotencyKey = profileToSave.backendPetId ? profileSaveAttempt.current.key : (addDogKeyRef.current ?? `add-pet:${crypto.randomUUID()}`);
+        if (!profileToSave.backendPetId) addDogKeyRef.current = idempotencyKey;
+        const response = await fetch('/api/v1/pets', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+            ...authHeaders(),
+          },
+          body: requestBody,
+        });
+        const result = await response.json();
+        if (response.status === 409 && result?.error === 'PROFILE_VERSION_CONFLICT') {
+          const latest = await fetch(`/api/app/bootstrap?petId=${encodeURIComponent(profileToSave.backendPetId!)}`, { credentials: 'include', headers: authHeaders() });
+          if (!latest.ok) throw new Error('PROFILE_VERSION_CONFLICT');
+          const remote = dbToProfile(await latest.json(), profileToSave.backendPetId);
+          if (!remote || remote.profileVersion === undefined) throw new Error('PROFILE_VERSION_CONFLICT');
+          const base = profileBaselines.current.get(`${profileToSave.backendPetId}:${profileToSave.profileVersion}`);
+          const merge = mergeProfileDraft(base, profileToSave, { ...profileToSave, ...remote });
+          // Even disjoint changes are reviewed before re-submitting a full profile.
+          const resolved = await new Promise<DogProfile | null>(resolve => {
+            profileConflictResolver.current = resolve;
+            setProfileConflict(merge);
+          });
+          if (!resolved) return null;
+          profileToSave = resolved;
+          continue;
+        }
+        if (!response.ok) throw new Error(result?.error || 'Не удалось сохранить профиль');
+        profileSaveAttempt.current = null;
+        const savedPetId = result.pet?.id || profileToSave.backendPetId;
+        addDogKeyRef.current = null;
+        setProfile({ ...profileToSave, backendPetId: savedPetId, profileVersion: result.pet?.profileVersion, isPublic: false });
+        if (savedPetId) setActivePetId(savedPetId);
+        await loadBootstrap(undefined, savedPetId);
+        setNotice('saved');
+        window.setTimeout(() => setNotice('idle'), 1600);
+        return savedPetId || null;
+      }
+    } catch (error) {
+      reportError(error instanceof Error && error.message === 'PROFILE_VERSION_CONFLICT'
+        ? 'Профиль изменён на другом устройстве. Ваш ввод сохранён на экране; перед повтором нужно сверить актуальные данные.'
+        : 'Не удалось сохранить личный профиль. Изменения остались на экране — попробуй ещё раз.');
       return null;
     } finally {
       setProfileSaving(false);
     }
   }
   async function signOut() {
+    healthReadVersion.current++; healthLoadedPet.current=null; observationWrite.current=null; setObservationIssue(null); setHealthFactsError('');setObservationSaving(false);setObservationMutationBusy(false);setObservationCaptureOpen(false);setHealthNextCursor(null);
+    wishlistOperation.current = null; setWishlistWriting(null); setWishlistIssue(null);
     await getSupabaseBrowser()?.auth.signOut();
     await fetch('/api/v1/session/logout', { method: 'POST', credentials: 'include' }).catch(() => null);
     setSession(null);
@@ -2830,32 +2930,54 @@ export default function Home() {
     }
   }
 
+  async function performWishlistChange(scope: string, task: (isCurrent: () => boolean) => Promise<boolean>) {
+    const petId = profile.backendPetId || activePetId || 'guest';
+    if (wishlistOperation.current?.petId === petId) return false;
+    const operation = {petId, scope, token: crypto.randomUUID()};
+    const originalPet = profile.backendPetId;
+    wishlistOperation.current = operation; setWishlistWriting(operation); setWishlistIssue(null);
+    const isCurrent = () => wishlistOperation.current?.token === operation.token && documentActivePet.current === originalPet;
+    try { return await task(isCurrent); }
+    catch { if (isCurrent()) setWishlistIssue({petId,scope,message:'Не удалось подтвердить изменение. Ввод сохранён — проверь связь и повтори.'}); return false; }
+    finally { if (wishlistOperation.current?.token === operation.token) { wishlistOperation.current = null; setWishlistWriting(null); } }
+  }
+
+  function reportWishlistError(message: string) {
+    const operation = wishlistOperation.current;
+    if (operation) setWishlistIssue({petId:operation.petId,scope:operation.scope,message});
+  }
+
   async function createWishlistItem(preset?: { title: string; category?: string; reason?: string; priority?: string; plannedFor?: string; source?: 'assistant' | 'manual' }) {
+    return performWishlistChange(preset ? 'assistant:create' : 'create', async isCurrent => {
     const title = (preset?.title || newWishTitle).trim();
-    if (!title) { setError('Добавь название позиции.'); return false; }
-    const plannedFor = preset?.plannedFor || (newWishNeedsReminder ? newWishPlannedFor : undefined);
+    if (!title) { reportWishlistError('Добавь название позиции.'); return false; }
+    setWishlistIssue(null);
+    const plannedFor = preset ? preset.plannedFor : (newWishNeedsReminder ? newWishPlannedFor : undefined);
     const dueAt = plannedFor ? reminderDueAt(plannedFor, '12:00', 'flexible') : undefined;
     if (!profile.backendPetId) {
-      if (!isGuestMode()) { setError('Сначала сохрани профиль собаки.'); return false; }
+      if (!isGuestMode()) { reportWishlistError('Сначала сохрани профиль собаки.'); return false; }
       ensureGuestPetId();
     }
     if (isGuestMode()) {
       const petId = ensureGuestPetId();
       const reminderId = plannedFor ? guestId('reminder') : undefined;
-      const wishlistItem: WishlistView = { id: guestId('wish'), petId, title, category: preset?.category || newWishCategory, reason: preset?.reason || newWishReason || undefined, priority: preset?.priority || 'medium', status: 'wanted', plannedFor, reminderId, createdAt: new Date().toISOString() };
+      const wishlistItem: WishlistView = { id: guestId('wish'), petId, title, category: preset?.category || (preset ? 'other' : newWishCategory), reason: preset ? preset.reason : newWishReason || undefined, priority: preset?.priority || 'medium', status: 'wanted', plannedFor, reminderId, createdAt: new Date().toISOString() };
       setWishlist((current) => [wishlistItem, ...current]);
       if (plannedFor && reminderId && dueAt) {
         setReminders((current) => [{ id: reminderId, petId, type: wishlistItem.category === 'food' ? 'food' : 'custom', title: wishlistReminderTitle(title), dueAt, recurrence: 'none', status: 'active' }, ...current]);
       }
+      if (!preset) {
       setNewWishTitle('');
       setNewWishReason('');
+      setNewWishNeedsReminder(false);
       setNewWishPlannedFor(dateAfterDays(1));
       setThingCaptureOpen(false);
+      }
       return true;
     }
     try {
-      const category = preset?.category || newWishCategory;
-      const reason = preset?.reason || newWishReason || null;
+      const category = preset?.category || (preset ? 'other' : newWishCategory);
+      const reason = preset ? preset.reason || null : newWishReason || null;
       const recommendationId = mainRecommendation?.status === 'accepted'
         && mainRecommendation.primaryAction.intent === 'add_wishlist'
         && mainRecommendation.primaryAction.draft.title === title
@@ -2863,22 +2985,29 @@ export default function Home() {
         && mainRecommendation.primaryAction.draft.reason === reason
         ? mainRecommendation.id
         : undefined;
-      const scope = `wishlist:create:${profile.backendPetId}:${title}:${category}:${plannedFor || 'unplanned'}`;
+      const scope = `wishlist:create:${JSON.stringify([profile.backendPetId,title,category,reason,preset?.priority || 'medium',plannedFor,dueAt])}`;
       const response = await fetch('/api/wishlist', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
         body: JSON.stringify({ petId: profile.backendPetId, title, category, reason, priority: preset?.priority || 'medium', plannedFor, dueAt, recommendationId, source: preset?.source || 'manual' }),
       });
-      await response.json().catch(() => ({}));
-      if (!response.ok) { setError('Покупка не сохранилась. Всё введённое осталось в форме — проверь связь и попробуй снова.'); return false; }
-      setNewWishTitle(''); setNewWishReason(''); setNewWishPlannedFor(dateAfterDays(1)); setThingCaptureOpen(false);
-      await loadBootstrap();
+      const payload = await response.json().catch(() => ({}));
+      if (!isCurrent()) return false;
+      if (!response.ok) { reportWishlistError('Не удалось подтвердить покупку. Ввод сохранён — повтори попытку.'); return false; }
+      if (payload.mode === 'demo') throw new Error('PERSISTENCE_UNAVAILABLE');
+      const saved = normalizeWishlistReceipt(payload.item, profile.backendPetId!);
+      if (!saved) throw new Error('INVALID_WISHLIST_RECEIPT');
+      setWishlist(current => [saved, ...current.filter(item => item.id !== saved.id)]);
+      if (payload.reminder?.id && payload.reminder?.petId === profile.backendPetId) setReminders(current => [payload.reminder, ...current.filter(item => item.id !== payload.reminder.id)]);
+      if (!preset) { setNewWishTitle(''); setNewWishCategory('other'); setNewWishReason(''); setNewWishNeedsReminder(false); setNewWishPlannedFor(dateAfterDays(1)); setThingCaptureOpen(false); }
       finishCareMutation(scope);
       finishRecommendationOutcome(recommendationId);
       return true;
     } catch {
-      setError('Покупка не сохранилась. Всё введённое осталось в форме — проверь связь и попробуй снова.');
+      if (!isCurrent()) return false;
+      reportWishlistError('Не удалось подтвердить покупку. Ввод сохранён — повтори попытку.');
       return false;
     }
+    });
   }
 
   function openWishlistPlan(item: WishlistView) {
@@ -2895,11 +3024,7 @@ export default function Home() {
 
   async function completeWishlistItem(item: WishlistView) {
     if (!item.reminderId) return updateWishlistItem(item.id, { status: 'bought' });
-    const completed = await completeReminder(item.reminderId);
-    if (completed && isGuestMode()) {
-      setWishlist((current) => current.map((entry) => entry.id === item.id ? { ...entry, status: 'bought' } : entry));
-    }
-    return completed;
+    return performWishlistChange(item.id, isCurrent => completeReminder(item.reminderId!, reportWishlistError, isCurrent));
   }
 
   async function createZone(preset?: { title: string; type?: string; note?: string; radiusMeters?: number; approximateLat?: number; approximateLng?: number }) {
@@ -3211,10 +3336,17 @@ export default function Home() {
     await loadBootstrap();
   }
 
+  function beginWishlistEdit(item: WishlistView) {
+    const draft = wishlistEditDrafts.current.get(item.id);
+    setEditingWishlistId(item.id); setWishlistTitleDraft(draft?.title ?? item.title); setWishlistReasonDraft(draft?.reason ?? item.reason ?? '');
+    requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.wishlist-edit-form input')?.focus());
+  }
+
   async function updateWishlistItem(id: string, patch: Partial<WishlistView>) {
+    return performWishlistChange(id, async isCurrent => {
     if (isGuestMode()) {
       setWishlist((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
-      setEditingWishlistId(null);
+      wishlistEditDrafts.current.delete(id); setEditingWishlistId(null);
       return true;
     }
     try {
@@ -3223,21 +3355,27 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(patch),
       });
-      await response.json().catch(() => ({}));
+      const payload = await response.json().catch(() => ({}));
+      if (!isCurrent()) return false;
       if (!response.ok) {
-        setError('Не удалось обновить вещь. Изменения остались в форме.');
+        reportWishlistError('Не удалось подтвердить изменение вещи. Ввод сохранён — повтори попытку.');
         return false;
       }
-      await loadBootstrap();
-      setEditingWishlistId(null);
+      const saved = normalizeWishlistReceipt(payload.item, profile.backendPetId!, id);
+      if (!saved) throw new Error('INVALID_WISHLIST_RECEIPT');
+      setWishlist(current => current.map(item => item.id === id ? saved : item));
+      wishlistEditDrafts.current.delete(id); setEditingWishlistId(null);
       return true;
     } catch {
-      setError('Не удалось обновить вещь. Проверь соединение и попробуй снова.');
+      if (!isCurrent()) return false;
+      reportWishlistError('Не удалось подтвердить изменение вещи. Ввод сохранён — повтори попытку.');
       return false;
     }
+    });
   }
 
   async function deleteWishlistItem(id: string) {
+    return performWishlistChange(id, async isCurrent => {
     const item = wishlist.find((entry) => entry.id === id);
     if (isGuestMode()) {
       setWishlist((current) => current.filter((entry) => entry.id !== id));
@@ -3245,27 +3383,37 @@ export default function Home() {
         setReminders((current) => current.filter((reminder) => reminder.id !== item.reminderId));
       }
       if (item) setRemovedWishlistItem({ ...item, plannedFor: undefined, reminderId: undefined });
-      return;
+      return true;
     }
     const response = await fetch(`/api/wishlist/${id}`, { method: 'DELETE', headers: authHeaders() });
     await response.json().catch(() => ({}));
-    if (!response.ok) return setError('Не удалось удалить вещь');
-    if (item) setRemovedWishlistItem(item);
-    await loadBootstrap();
+      if (!isCurrent()) return false;
+    if (!response.ok) { reportWishlistError('Не удалось убрать вещь. Попробуй ещё раз.'); return false; }
+    if (item) setRemovedWishlistItem({...item, plannedFor:undefined, reminderId:undefined});
+    setWishlist(current => current.filter(entry => entry.id !== id));
+    if (item?.reminderId) setReminders(current => current.filter(entry => entry.id !== item.reminderId));
+    return true;
+    });
   }
 
   async function restoreWishlistItem() {
-    if (!removedWishlistItem) return;
+    return performWishlistChange('restore', async isCurrent => {
+    if (!removedWishlistItem) return false;
     if (isGuestMode()) {
       setWishlist((current) => [removedWishlistItem, ...current.filter((item) => item.id !== removedWishlistItem.id)]);
       setRemovedWishlistItem(null);
-      return;
+      return true;
     }
     const response = await fetch(`/api/wishlist/${removedWishlistItem.id}/restore`, { method: 'POST', headers: authHeaders() });
-    await response.json().catch(() => ({}));
-    if (!response.ok) return setError('Не удалось вернуть вещь');
+    const payload = await response.json().catch(() => ({}));
+      if (!isCurrent()) return false;
+    if (!response.ok) { reportWishlistError('Не удалось вернуть вещь. Попробуй ещё раз.'); return false; }
+    const saved = normalizeWishlistReceipt(payload.item, profile.backendPetId!, removedWishlistItem.id);
+    if (!saved) throw new Error('INVALID_WISHLIST_RECEIPT');
+    setWishlist(current => [saved, ...current.filter(item => item.id !== saved.id)]);
     setRemovedWishlistItem(null);
-    await loadBootstrap();
+    return true;
+    });
   }
 
   async function updateReminder(id: string, patch: Partial<ReminderView>) {
@@ -3324,10 +3472,12 @@ export default function Home() {
     }
   }
 
-  async function completeReminder(id: string) {
+  async function completeReminder(id: string, issue: (message: string) => void = setError, stillCurrent?: () => boolean) {
+    const petId = profile.backendPetId;
+    const isCurrent = stillCurrent || (() => documentActivePet.current === petId);
     const reminder = reminders.find((item) => item.id === id);
     if (!reminder) {
-      setError('Не удалось найти дело в плане.');
+      issue('Не удалось найти дело в плане.');
       return false;
     }
     if (isGuestMode()) {
@@ -3347,11 +3497,17 @@ export default function Home() {
         body: JSON.stringify({ completedAt, recommendationId }),
       });
       const payload = await response.json().catch(() => ({}));
+      if (!isCurrent()) return false;
       if (!response.ok) {
-        setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
+        issue('Не удалось подтвердить выполнение. Повтори — уже выполненное дело не запишется второй раз.');
         return false;
       }
-      await loadBootstrap();
+      const row = payload.reminder;
+      if (!row || row.id !== id || (row.petId ?? row.pet_id) !== reminder.petId || typeof (row.dueAt ?? row.due_at) !== 'string' || !Number.isFinite(new Date(row.dueAt ?? row.due_at).getTime()) || !['active','done'].includes(row.status)) throw new Error('INVALID_REMINDER_RECEIPT');
+      const updated: ReminderView = { ...reminder, title:typeof row.title==='string'?row.title:reminder.title, status:row.status, dueAt:row.dueAt??row.due_at,
+        recurrence:row.recurrence??reminder.recurrence, completedAt:row.completedAt??row.completed_at??undefined, snoozedUntil:row.snoozedUntil??row.snoozed_until??undefined, nextDueAt:row.nextDueAt??row.next_due_at??undefined };
+      setReminders(current => current.map(item => item.id === id ? updated : item));
+      if (updated.status === 'done') setWishlist(current => current.map(item => item.reminderId === id && item.status === 'wanted' ? {...item,status:'bought'} : item));
       if (payload.historyOccurrence) {
         setReminderHistory((current) => ({
           ...current,
@@ -3363,7 +3519,8 @@ export default function Home() {
       setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
       return true;
     } catch {
-      setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
+      if (!isCurrent()) return false;
+      issue('Не удалось подтвердить выполнение. Повтори — уже выполненное дело не запишется второй раз.');
       return false;
     } finally {
       setReminderMutationBusy(null);
@@ -3438,13 +3595,17 @@ export default function Home() {
   }
 
   async function askAssistant(preset?: string) {
+    const requestEpoch=agentRequestEpoch.current;
     const question = (preset || assistantQuestion).trim();
-    if (!question) return setError('Напиши вопрос ассистенту.');
+    if(assistantLoading) return;
+    if (!question) return setAssistantError('Напиши вопрос ассистенту.');
     if (!profile.backendPetId) {
-      if (!isGuestMode()) return setError('Сначала сохрани профиль собаки — ассистенту нужен контекст.');
+      if (!isGuestMode()) return setAssistantError('Сначала сохрани профиль собаки — ассистенту нужен контекст.');
       ensureGuestPetId();
     }
-    setAssistantLoading(true); setAssistantActions([]); setAssistantActionStatuses({}); setError('');
+    if(agentRequest.current?.question!==question||agentRequest.current?.pet!==profile.backendPetId) agentRequest.current={pet:profile.backendPetId||'guest',question,id:crypto.randomUUID()};
+    setAssistantQuestion(question);
+    setAssistantLoading(true); setAssistantActions([]); setAssistantActionStatuses({}); setAssistantError('');
     setAssistantMessages((current) => [...current, { role: 'user', content: question }]);
     let response: Response;
     try {
@@ -3455,6 +3616,7 @@ export default function Home() {
         ...(isGuestMode() ? {} : { petId: profile.backendPetId }),
         ...(assistantThreadId ? { threadId: assistantThreadId } : {}),
         question,
+        requestId:agentRequest.current.id,
         context: {
           pet: {
             name: profile.dogName,
@@ -3490,18 +3652,32 @@ export default function Home() {
         }),
       });
     } catch {
+      if(requestEpoch!==agentRequestEpoch.current) return;
       setAssistantLoading(false);
       setAssistantMessages((current) => current.slice(0, -1));
-      setError('Псё не ответил. Проверь связь и попробуй ещё раз.');
+      setAssistantError('Псё не ответил. Проверь связь и попробуй ещё раз.');
       return;
     }
     const result = await response.json().catch(() => ({}));
+    if(requestEpoch!==agentRequestEpoch.current) return;
+    if(response.status===202&&typeof result.runId==='string') {
+      agentRequest.current=null;
+      setAgentRunId(result.runId);
+      setAssistantThreadId(result.threadId);
+      setAssistantQuestion('');setAssistantError('');
+      return;
+    }
     setAssistantLoading(false);
     if (!response.ok) {
       setAssistantMessages((current) => current.slice(0, -1));
-      return setError('Псё не ответил. Проверь связь и попробуй ещё раз.');
+      return setAssistantError('Псё не ответил. Проверь связь и попробуй ещё раз.');
     }
-    setAssistantQuestion('');
+    if(result.mode==='agent'&&typeof result.runId==='string') {
+      agentDelivered.current=result.runId;
+      setAgentRunId(result.runId);
+      agentRequest.current=null;
+    }
+    setAssistantQuestion('');setAssistantError('');
     setAssistantAnswer(result.answer || 'Не получилось составить ответ. Уточни вопрос.');
     setAssistantMessages((current) => [...current, { role: 'assistant', content: result.answer || 'Не получилось составить ответ. Уточни вопрос.' }]);
     setAssistantActions(Array.isArray(result.actionSuggestions) ? result.actionSuggestions : []);
@@ -4133,7 +4309,7 @@ export default function Home() {
   </section>;
 
   return (
-    <main className="app-canvas">
+    <main className="app-canvas" data-connected-canvas={tab === 'today' || tab === 'all' ? '' : undefined}>
       <section ref={phoneShellRef} className={`phone-shell${hasDog ? ' journal-shell' : ''} tab-${tab}${hasDog && (isJourneyRoute || journeyDetail === 'nearby') ? ' journey-active' : ''}`}>
         <header className="app-header">
           <div className="app-wordmark">
@@ -4187,12 +4363,31 @@ export default function Home() {
           <GeneratedAvatar profile={profile} ready={false} size="large" />
           <div>
             <h2 id="first-run-title">Добавь собаку</h2>
-            <p>Начни с имени. После этого Псё покажет одно ближайшее дело и сохранит всё остальное на потом.</p>
+            <p>Начни с имени. Возраст, пол и породу можно указать позже.</p>
           </div>
           <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>
         </section>}
 
-        {hasDog && tab === 'today' && !journeyDetail && <ProductionJourney route="today"
+        {hasDog && tab === 'today' && !journeyDetail && <ConnectedHome
+          key={`home:${profile.backendPetId || activePetId}`}
+          dogName={profile.dogName} petId={profile.backendPetId} guest={isGuestMode()}
+          question={assistantQuestion} loading={assistantLoading} headers={authHeaders}
+          recentQuestion={assistantMessages.findLast(message => message.role === 'user')?.content}
+          onQuestion={setAssistantQuestion}
+          onAsk={() => { openAssistantSheet(); void askAssistant(); }}
+          onContinue={run => { if (run) { setAgentRunId(run.id); setAssistantThreadId(run.thread_id || ''); } openAssistantSheet(); }}
+          onProfile={() => { setProfileSurface('overview'); setTab('profile'); }}
+          onAll={() => setTab('all')}
+        />}
+        {hasDog && tab === 'all' && <ConnectedTools onOpen={destination => {
+          if (destination === 'passport') {
+            const origin = { from: tab, to: 'profile' as Tab, detail: journeyDetail, shellScroll: phoneShellRef.current?.scrollTop ?? 0, windowScroll: window.scrollY, focusText: document.activeElement?.textContent?.trim() ?? '' };
+            setProfileSurface('passport'); setTab('profile'); secondaryOrigins.current.push(origin);
+          } else setTab(destination);
+        }} />}
+        {hasDog && tab === 'diary' && !journeyDetail && <ProductionJourney route="today"
+          onBack={() => closeSecondaryFlow('all')}
+          onOpenJournalEntry={(entry, trigger) => openPrivateRecord(entry.kind === 'care' ? 'reminder' : 'observation', entry.id.replace(/^(care|observation)-/, ''), trigger)}
           dogName={profile.dogName}
           breedLabel={breedLabel}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
@@ -4251,7 +4446,9 @@ export default function Home() {
         />}
 
         {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ProfileMemoryWorkspace
-          key={profile.backendPetId || activePetId}
+          surface={profileSurface}
+          onSurfaceChange={surface => { if (surface === 'overview' && secondaryOrigins.current.at(-1)?.to === 'profile') closeSecondaryFlow('all'); else setProfileSurface(surface); }}
+          key={`profile:${profile.backendPetId || activePetId}`}
           profile={profile}
           breedLabel={breedLabel}
           imageUrl={generatedAvatarUrl || profile.avatarImageUrl || (demoMode ? '/demo-avatar.png' : '')}
@@ -4275,7 +4472,7 @@ export default function Home() {
           avatarOwnerPrompt={avatarOwnerPrompt}
           avatarConsent={avatarConsent}
           error={error}
-          onBack={() => setTab('today')}
+          onBack={() => secondaryOrigins.current.at(-1)?.to === 'profile' ? closeSecondaryFlow('all') : setTab('today')}
           onOpenIdentity={() => { setError(''); setAvatarComposerOpen(true); }}
           onCloseIdentity={() => setAvatarComposerOpen(false)}
           onPhotoChange={handlePhotos}
@@ -4293,9 +4490,9 @@ export default function Home() {
               return;
             }
             documentUploadTriggerRef.current = trigger;
-            setDocumentFileName('');
             setDocumentUploadOpen(true);
           }}
+          onOpenRecord={openPrivateRecord}
           onOpenDocument={(id) => window.open(`/api/documents/${id}`, '_blank', 'noopener,noreferrer')}
           onDeleteDocument={(id) => void deletePetDocument(id)}
           documentBusyId={documentBusyId}
@@ -4307,15 +4504,18 @@ export default function Home() {
           onOpenSettings={() => openJourneyDetail('profile')}
         />}
 
-        {hasDog && tab === 'profile' && documentUploadOpen && <ProductionDocumentSheet dogName={petNameGent} returnFocusTo={documentUploadTriggerRef.current} onClose={() => { setDocumentUploadOpen(false); setDocumentFileName(''); }}>
-          <form className="profile-life-document-form" data-slot="field-group" onSubmit={uploadPetDocument}>
+        {hasDog && <ProductionDocumentSheet key={`document:${profile.backendPetId}`} open={tab === 'profile' && documentUploadOpen} dogName={petNameGent} returnFocusTo={documentUploadTriggerRef.current} onClose={() => setDocumentUploadOpen(false)}>
+          <form className="profile-life-document-form" data-slot="field-group" onSubmit={uploadPetDocument} onReset={() => { setDocumentFileName(''); setDocumentError(''); documentSaveAttempt.current = null; }}>
+            <fieldset disabled={documentUploading} style={{ border: 0, padding: 0, margin: 0, minWidth: 0, display: 'grid', gap: 16 }}>
             <label data-slot="field"><span data-slot="field-label">Что это</span><span className="document-field-control"><TextT weight="regular" aria-hidden="true" /><input data-slot="input" name="title" required placeholder="Например, общий анализ крови" /></span></label>
             <label data-slot="field"><span data-slot="field-label">Тип документа</span><span className="document-field-control document-select-control"><Files weight="regular" aria-hidden="true" /><select data-slot="input" name="kind" defaultValue="analysis"><option value="analysis">Анализ</option><option value="prescription">Назначение</option><option value="vaccination">Вакцинация</option><option value="other">Другое</option></select><CaretDown className="document-field-action" weight="regular" aria-hidden="true" /></span></label>
             <label data-slot="field"><span data-slot="field-label">Дата документа <small>необязательно</small></span><span className="document-field-control"><CalendarBlank weight="regular" aria-hidden="true" /><input data-slot="input" name="documentDate" type="date" /></span></label>
             <label data-slot="field"><span data-slot="field-label">Клиника <small>необязательно</small></span><span className="document-field-control"><Buildings weight="regular" aria-hidden="true" /><input data-slot="input" name="clinic" placeholder="Название клиники" /></span></label>
-            <label className="document-file-drop" data-slot="field"><input data-slot="input" name="file" type="file" required accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(event) => setDocumentFileName(event.currentTarget.files?.[0]?.name || '')} aria-describedby={`profile-document-help${error ? ' profile-document-error' : ''}`} /><span className="document-file-drop-media" aria-hidden="true">{documentFileName ? <CheckCircle weight="fill" /> : <UploadSimple weight="regular" />}</span><span className="document-file-drop-copy"><b data-document-file-name>{documentFileName || 'Выбрать PDF или фото'}</b><small data-slot="field-description" id="profile-document-help">До 4 МБ · файл останется приватным</small></span><span className="document-file-drop-action" aria-hidden="true">{documentFileName ? 'Готово' : 'Выбрать'}</span></label>
-            {error && <p className="profile-life-form-error" data-slot="field-error" id="profile-document-error" role="alert">{error}</p>}
+            <label className="document-file-drop" data-slot="field"><input data-slot="input" name="file" type="file" required accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(event) => setDocumentFileName(event.currentTarget.files?.[0]?.name || '')} aria-describedby={`profile-document-help${documentError ? ' profile-document-error' : ''}`} /><span className="document-file-drop-media" aria-hidden="true">{documentFileName ? <CheckCircle weight="fill" /> : <UploadSimple weight="regular" />}</span><span className="document-file-drop-copy"><b data-document-file-name>{documentFileName || 'Выбрать PDF или фото'}</b><small data-slot="field-description" id="profile-document-help">До 4 МБ · файл останется приватным</small></span><span className="document-file-drop-action" aria-hidden="true">{documentFileName ? 'Готово' : 'Выбрать'}</span></label>
+            {documentError && <p className="profile-life-form-error" data-slot="field-error" id="profile-document-error" role="alert">{documentError}</p>}
             <button className="primary" data-slot="button" type="submit" disabled={documentUploading}>{documentUploading ? 'Добавляю…' : <><CheckCircle weight="regular" /> Добавить в историю {petNameGent}</>}</button>
+            <button type="reset">Очистить черновик</button>
+            </fieldset>
           </form>
         </ProductionDocumentSheet>}
 
@@ -4342,6 +4542,10 @@ export default function Home() {
             draftNote={newZoneNote}
             savedRevision={mapSavedRevision}
             routeEditSeed={routeEditSeed}
+            agentSelection={agentMapSelection}
+            agentWalkSelection={agentWalkSelection}
+            agentSavedRouteSelection={agentSavedRouteSelection}
+            onReturnToAssistant={openAssistantSheet}
             editingRouteId={editingRouteGeometryId}
             onActivityChange={setMapActivity}
             onReuseRoute={id=>{const route=ownerRoutes.find(r=>r.id===id);if(route)planSavedRoute(route,false);}}
@@ -4362,33 +4566,54 @@ export default function Home() {
           onNavigate={(route) => { setJourneyDetail(null); setTab(route); }}
         /></div>}
 
-        {hasDog && tab === 'things' && journeyDetail !== 'things' && <ProductionJourney route="things"
-          dogName={profile.dogName}
-          breedLabel={breedLabel}
-          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
-          things={wantedWishlist.slice(0, 3).map((item, index) => ({
-            id: item.id,
-            title: item.title,
-            detail: item.reason || (item.priority === 'high' ? 'важно купить' : 'в личном списке'),
-            tone: index === 1 ? 'rose' : index === 2 ? 'green' : 'mint',
-          }))}
-          onAddThing={() => { openJourneyDetail('things'); setThingCaptureOpen(true); }}
-          onNavigate={(route) => {
-            if (route === 'things') openJourneyDetail('things');
-            else { setJourneyDetail(null); setTab(route); }
-          }}
-        />}
-
         {hasDog && assistantOpen && <ProductionAssistantSheet
+          returnFocusTo={assistantReturnFocus}
           dogName={profile.dogName}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
           question={assistantQuestion}
           answer={assistantAnswer}
           messages={assistantMessages}
           loading={assistantLoading}
-          error={error}
+          error={assistantError}
           suggestions={assistantSuggestedQuestions.length ? assistantSuggestedQuestions : contextualAssistantSuggestions}
-          actions={<AssistantActionButtons actions={assistantActions} statuses={assistantActionStatuses} onApply={(action, key) => { void handleApplyAction(action, key); }} onOpen={openAssistantAction} />}
+          actions={<>
+            {!isGuestMode()&&profile.backendPetId&&<AgentPanel key={profile.backendPetId} petId={profile.backendPetId} runId={agentRunId} headers={authHeaders}
+              observationEdits={agentObservationEdits.current}
+              onOpenSavedWalk={async id=>{
+                const pet=profile.backendPetId;if(!pet)return 'missing';
+                agentMapRead.current?.abort();const controller=new AbortController();agentMapRead.current=controller;
+                const response=await fetch(`/api/map/features/${encodeURIComponent(id)}?petId=${encodeURIComponent(pet)}`,{headers:authHeaders(),signal:controller.signal});
+                const body=await response.json();if(controller.signal.aborted)return;
+                if(!response.ok){if(response.status===404){setAgentSavedRouteSelection(null);setOwnerRoutes(current=>current.filter(route=>route.id!==id));return 'missing';}return 'failed';}
+                const route=normalizeOwnerRoutes([body.route])[0];if(!route||route.id!==id||route.petId!==pet)return 'failed';
+                setOwnerRoutes(current=>upsertOwnerRoute(current,route));setAgentMapSelection(null);setAgentWalkSelection(null);
+                setAgentSavedRouteSelection({token:crypto.randomUUID(),petId:pet,route});
+                setAssistantOpen(false);setJourneyDetail(null);setTabState('map');
+                const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
+              }}
+              onOpenWalk={walk=>{
+                if(!isAgentWalk(walk)||!profile.backendPetId)return;
+                setAgentSavedRouteSelection(null);setAgentMapSelection(null);setAgentWalkSelection({token:crypto.randomUUID(),petId:profile.backendPetId,walk});
+                setAssistantOpen(false);setJourneyDetail(null);setTabState('map');
+                const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
+              }}
+              onOpenPlace={(place,places)=>{
+                if(!isMapSearchPlace(place)||!profile.backendPetId)return;
+                setAgentSavedRouteSelection(null);setAgentWalkSelection(null);setAgentMapSelection({token:crypto.randomUUID(),petId:profile.backendPetId,place,places:places.filter(isMapSearchPlace)});
+                setAssistantOpen(false);setJourneyDetail(null);setTabState('map');
+                const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
+              }}
+              onObservationSaved={record=>{const entry=normalizeObservation(record);if(entry)setObservations(current=>[{...entry,syncStatus:'saved' as const},...current.filter(item=>item.id!==entry.id)]);}}
+              onOpenObservation={(record,trigger)=>setRecordDetail({id:record.id,title:`Запись о ${petNameGent}`,text:record.note||record.value,date:record.observed_at,facts:[],trigger})}
+              onBusy={setAssistantLoading} onRetry={question=>void askAssistant(question)} onResult={result=>{
+              if(agentDelivered.current===result.runId) return;
+              agentDelivered.current=result.runId;
+              setAssistantAnswer(result.answer);setAssistantThreadId(result.threadId);
+              setAssistantMessages(current=>[...current,{role:'assistant',content:result.answer}]);
+              setAssistantDiagnostic({provider:result.provider??'openai',mode:'agent'});
+            }}/>}
+            <AssistantActionButtons actions={assistantActions} statuses={assistantActionStatuses} onApply={(action, key) => { void handleApplyAction(action, key); }} onOpen={openAssistantAction} />
+          </>}
           diagnostic={assistantDiagnostic}
           onQuestionChange={setAssistantQuestion}
           onAsk={(question) => { void askAssistant(question); }}
@@ -4412,7 +4637,8 @@ export default function Home() {
         />}
 
         {hasDog && tab === 'health' && <HealthTimelineScreen
-          dogName={petNameGent}
+          key={profile.backendPetId || activePetId}
+          dogName={profile.dogName || 'Собака'}
           entries={observations}
           draft={observationDraft}
           saving={observationSaving}
@@ -4420,18 +4646,28 @@ export default function Home() {
           onBack={() => closeSecondaryFlow('today')}
           onDraftChange={updateObservationDraft}
           onSave={submitObservation}
-          onRetry={() => loadRealModules(profile.backendPetId)}
+          onRetry={() => loadHealthTimeline()}
+          loading={healthLoading}
+          hasMore={Boolean(healthNextCursor)}
+          onLoadMore={() => healthNextCursor ? loadHealthTimeline(healthNextCursor) : Promise.resolve()}
+          captureOpen={observationCaptureOpen}
+          onCaptureOpen={setObservationCaptureOpen}
+          issue={observationIssue}
+          recentlyDeleted={Boolean(recentlyDeletedObservation)}
+          onRestore={restoreObservation}
+          factsError={healthFactsError}
+          factsSaving={profileSaving}
           editingId={editingObservationId}
           editDraft={observationEditDraft}
           mutationBusy={observationMutationBusy}
           onStartEdit={startObservationEdit}
-          onEditDraftChange={(patch) => setObservationEditDraft((current) => ({ ...current, ...patch }))}
+          onEditDraftChange={(patch) => setObservationEditDraft(current => { const next = { ...current, ...patch }; if (editingObservationId) observationEditDrafts.current.set(editingObservationId, next); return next; })}
           onSaveEdit={editObservation}
-          onCancelEdit={() => setEditingObservationId(null)}
+          onCancelEdit={() => { if (editingObservationId) observationEditDrafts.current.set(editingObservationId,observationEditDraft); setEditingObservationId(null); }}
           onDelete={deleteObservation}
-          facts={{ allergies: profile.allergies, medication: profile.medication, vaccineStatus: profile.vaccineStatus, parasiteStatus: profile.parasiteStatus, healthNotes: profile.healthNotes }}
-          onFactChange={(patch) => updateProfile(patch)}
-          onSaveFacts={async () => { await savePrivateProfile(); }}
+          facts={healthFactsDraft ?? profile}
+          onFactChange={(patch) => setHealthFactsDraft(current => ({ ...(current ?? profile), ...patch }))}
+          onSaveFacts={async () => { if (await savePrivateProfile(healthFactsDraft ?? profile,setHealthFactsError)) setHealthFactsDraft(null); }}
         />}
 
         {hasDog && tab === 'nearby' && <ProductionWoofWorkspace
@@ -4477,13 +4713,14 @@ export default function Home() {
           onRetry={() => loadSocialSurface().catch(() => setNearbyState('error'))}
         />}
 
-        {hasDog && tab === 'calendar' && <WatercolorScreen onBack={() => closeSecondaryFlow('today')} backLabel="На главную" className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Дела, напоминания и история ухода." aside={<CalendarDots className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'calendar' && <WatercolorScreen onBack={() => closeSecondaryFlow('today')} backLabel="Назад" className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Дела, напоминания и история ухода." aside={<CalendarDots className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
           <section className="care-workbench" aria-label="Дела ухода">
             <div className="care-workbench-head">
               <div><span className="eyebrow">сейчас в плане</span><h3>{activeReminders.length ? formatCount(activeReminders.length, ['активное дело', 'активных дела', 'активных дел']) : 'Добавь первое дело'}</h3></div>
               <button className="primary" onClick={() => {
                 setNewReminderDueDate(selectedCalendarDate);
-                document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus();
+                setCareView('active');
+                requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus());
               }}>Добавить дело</button>
             </div>
             <div className="care-view-toggle" aria-label="Раздел плана ухода">
@@ -4598,8 +4835,9 @@ export default function Home() {
               <b>Что нужно не забыть</b>
               <p>Название, тип и дата. Всё остальное можно поправить прямо в списке.</p>
             </div>
+            <label htmlFor="care-new-title">Название дела</label>
             <div className="quick-add today-quick-add">
-              <input value={newReminderTitle} onChange={(event) => setNewReminderTitle(event.target.value)} placeholder="Например: обработка от клещей" />
+              <input id="care-new-title" value={newReminderTitle} onChange={(event) => setNewReminderTitle(event.target.value)} placeholder="Например: обработка от клещей" />
               <button aria-label="Добавить дело" onClick={() => createReminder()}><Plus aria-hidden="true" /></button>
             </div>
             <div className="care-form-row">
@@ -4619,7 +4857,7 @@ export default function Home() {
           </article>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'card' && <WatercolorScreen onBack={() => closeSecondaryFlow('profile')} backLabel="В профиль" className="public-card-screen" tone="gold" eyebrow="" title="Публичная карточка" caption="Одна безопасная ссылка для догситтера, грумера, друга или человека во дворе. Ты решаешь, что показать и когда закрыть доступ." aside={<PawPrint className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'card' && <WatercolorScreen onBack={() => closeSecondaryFlow('profile')} backLabel="Назад" className="public-card-screen" tone="gold" eyebrow="" title="Публичная карточка" caption="Одна безопасная ссылка для догситтера, грумера, друга или человека во дворе. Ты решаешь, что показать и когда закрыть доступ." aside={<PawPrint className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
 
           <section className={`public-card-lifecycle ${publicCardPublished ? 'is-published' : 'is-draft'} ${publicCardHasChanges ? 'has-changes' : ''}`} aria-live="polite">
             <div className="public-card-lifecycle-icon" aria-hidden="true">{publicCardPublished ? <CheckCircle weight="fill" /> : <LinkSimple weight="duotone" />}</div>
@@ -4721,19 +4959,15 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'things' && journeyDetail === 'things' && <WatercolorScreen onBack={closeJourneyDetail} backLabel="К вещам" className="things-composition" tone="gold" eyebrow="вещи" title={`Что нужно ${petNameDatv}`} caption="Личный список покупок и того, что заканчивается." aside={<ShoppingBag className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
-          <div className="screen-primary-action">
-            <button className="primary" type="button" aria-expanded={thingCaptureOpen} onClick={() => setThingCaptureOpen((open) => !open)}>
-              {thingCaptureOpen ? 'Закрыть добавление' : 'Добавить вещь'}
-            </button>
-            <span>{formatCount(wantedWishlist.length, ['позиция', 'позиции', 'позиций'])}</span>
-          </div>
-
-          {thingCaptureOpen && <PaperSheet className="thing-capture">
-            <div className="section-title">
-              <div><span className="eyebrow">новая позиция</span><h3>Что нужно</h3></div>
-            </div>
-            <label>Название<input value={newWishTitle} onChange={(event) => setNewWishTitle(event.target.value)} placeholder="Например, адресник" /></label>
+        {hasDog && tab === 'things' && <ProductionJourney route="things" onBack={() => closeSecondaryFlow('all')} dogName={profile.dogName} breedLabel={breedLabel}
+          avatar={<GeneratedAvatar profile={profile} ready={Boolean(profile.avatarImageUrl) || demoMode} imageUrl={profile.avatarImageUrl} demo={demoMode} size="small" />}
+          onNavigate={setTab} onAskAssistant={openAssistantSheet}>
+          <fieldset className="things-write-scope" disabled={wishlistBusy} aria-busy={wishlistBusy}>
+          <form className="thing-capture" onSubmit={async event => { event.preventDefault(); const saved = await createWishlistItem(); if (saved) requestAnimationFrame(() => document.getElementById('wish-quick-title')?.focus()); }}>
+            <label htmlFor="wish-quick-title">Нужно купить</label>
+            <div className="thing-quick-row"><input id="wish-quick-title" value={newWishTitle} onChange={event => setNewWishTitle(event.target.value)} placeholder="Например, корм" maxLength={160} enterKeyHint="done" />
+            <button type="submit" aria-label={newWishNeedsReminder ? 'Добавить в вещи и план' : 'Добавить в вещи'} disabled={!newWishTitle.trim() || (newWishNeedsReminder && !newWishPlannedFor)}><Plus aria-hidden="true" /></button></div>
+            <details open={thingCaptureOpen} onToggle={event => setThingCaptureOpen(event.currentTarget.open)}><summary>Категория, пояснение и срок</summary>
             <label>Категория<select value={newWishCategory} onChange={(event) => setNewWishCategory(event.target.value)}>
               <option value="gear">амуниция</option>
               <option value="food">корм</option>
@@ -4747,54 +4981,59 @@ export default function Home() {
             <label>Зачем <span className="field-optional">необязательно</span><input value={newWishReason} onChange={(event) => setNewWishReason(event.target.value)} placeholder="Например, старый адресник потерялся" /></label>
             <label className="thing-plan-option">
               <input type="checkbox" checked={newWishNeedsReminder} onChange={(event) => setNewWishNeedsReminder(event.target.checked)} />
-              <span><b>Добавить в план</b><small>Псё напомнит купить к выбранной дате</small></span>
+              <span><b>Добавить в план</b><small>Покупка появится в плане на эту дату</small></span>
             </label>
             {newWishNeedsReminder && <label>Купить до<input type="date" min={dateInputValue(new Date())} value={newWishPlannedFor} onChange={(event) => setNewWishPlannedFor(event.target.value)} /></label>}
-            <button className="primary full" onClick={() => createWishlistItem()} disabled={!newWishTitle.trim() || (newWishNeedsReminder && !newWishPlannedFor)}>{newWishTitle.trim() ? newWishNeedsReminder ? 'Добавить в вещи и план' : 'Добавить в вещи' : 'Напиши название'}</button>
-          </PaperSheet>}
+            </details>
+            {wishlistError?.scope === 'create' && <p className="things-error" role="alert">{wishlistError.message}</p>}
+          </form>
 
-          {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <article className="empty-state"><b>Список пока пуст</b><p>Здесь можно держать покупки и услуги для {profile.dogName}.</p></article>}
+          {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <p className="things-empty">Пока ничего не нужно. Запиши здесь, когда что-то понадобится.</p>}
 
-          {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Вещи собаки">
-            {wantedWishlist.map((item) => <article key={item.id} className={`wishlist-item priority-${item.priority}`}>
-              {editingWishlistId === item.id ? <form className="wishlist-edit-form" onSubmit={async (event) => { event.preventDefault(); await updateWishlistItem(item.id, { title: wishlistTitleDraft.trim(), reason: wishlistReasonDraft.trim() || undefined }); }}><label>Название<input value={wishlistTitleDraft} maxLength={160} onChange={(event) => setWishlistTitleDraft(event.target.value)} /></label><label>Зачем <span className="field-optional">необязательно</span><input value={wishlistReasonDraft} maxLength={500} onChange={(event) => setWishlistReasonDraft(event.target.value)} /></label><div className="wishlist-actions"><button type="submit" disabled={!wishlistTitleDraft.trim()}>Сохранить</button><button type="button" onClick={() => setEditingWishlistId(null)}>Отмена</button></div></form> : <><div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div><div className="wishlist-actions">
+          {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Вещи собаки" aria-live="polite">
+            {wantedWishlist.map((item) => <article key={item.id} data-wishlist-id={item.id} className={`wishlist-item priority-${item.priority}`}>
+              {editingWishlistId === item.id ? <form className="wishlist-edit-form" onSubmit={async (event) => { event.preventDefault(); await updateWishlistItem(item.id, { title: wishlistTitleDraft.trim(), reason: wishlistReasonDraft.trim() }); }}><label>Название<input value={wishlistTitleDraft} maxLength={160} onChange={event => { setWishlistTitleDraft(event.target.value); wishlistEditDrafts.current.set(item.id,{title:event.target.value,reason:wishlistReasonDraft}); }} /></label><label>Зачем <span className="field-optional">необязательно</span><input value={wishlistReasonDraft} maxLength={500} onChange={event => { setWishlistReasonDraft(event.target.value); wishlistEditDrafts.current.set(item.id,{title:wishlistTitleDraft,reason:event.target.value}); }} /></label><div className="wishlist-actions"><button type="submit" disabled={!wishlistTitleDraft.trim()}>Сохранить</button><button type="button" onClick={() => setEditingWishlistId(null)}>Закрыть</button></div></form> : <><div className="thing-row"><button type="button" className="thing-title" aria-label={`Изменить: ${item.title}`} onClick={() => beginWishlistEdit(item)}><b>{item.title}</b></button><button type="button" className="thing-complete" onClick={() => completeWishlistItem(item)}>Куплено</button></div><details className="thing-details"><summary>Подробнее</summary>{(item.category !== 'other' || item.reason || item.priority !== 'medium') && <p>{formatWishlistMeta(item.category, item.priority === 'medium' ? undefined : item.priority, item.reason)}</p>}<div className="wishlist-actions">
                 {item.plannedFor && <p className="wishlist-plan-date"><CalendarBlank weight="bold" aria-hidden="true" />В плане на {new Date(`${item.plannedFor}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}
                 {item.url && <a href={item.url} target="_blank" rel="noreferrer">Открыть</a>}
                 {item.plannedFor && <button type="button" onClick={() => openWishlistPlan(item)}>Открыть в плане</button>}
-                <button onClick={() => { setEditingWishlistId(item.id); setWishlistTitleDraft(item.title); setWishlistReasonDraft(item.reason || ''); }}>Изменить</button>
-                <button onClick={() => completeWishlistItem(item)}>Куплено</button>
+                <button onClick={() => beginWishlistEdit(item)}>Изменить</button>
                 <button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button>
-              </div></>}
+              </div></details></>}
+              {wishlistError?.scope === item.id && <p className="things-error" role="alert">{wishlistError.message}</p>}
             </article>)}
           </section>}
 
 
-          {boughtWishlist.length > 0 && <section className="wishlist-list" aria-label="История вещей">
-            <div className="section-title"><div><span className="eyebrow">история</span><h3>Уже закрыто</h3></div></div>
-            {boughtWishlist.slice(0, 4).map((item) => <article key={item.id} className="wishlist-item">
-              <div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div>
-              <div className="wishlist-actions"><button onClick={() => updateWishlistItem(item.id, { status: 'wanted', plannedFor: undefined, reminderId: undefined })}>Вернуть</button><button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Удалить</button></div>
+          {boughtWishlist.length > 0 && <section className="wishlist-list" aria-label="История вещей" aria-live="polite">
+            <div className="section-title"><div><span className="eyebrow">история</span><h3>Куплено</h3></div></div>
+            {boughtWishlist.map((item) => <article key={item.id} data-wishlist-id={item.id} className="wishlist-item">
+              <div><b>{item.title}</b>{(item.category !== 'other' || item.reason || item.priority !== 'medium') && <p>{formatWishlistMeta(item.category, item.priority === 'medium' ? undefined : item.priority, item.reason)}</p>}</div>
+              <div className="wishlist-actions"><button onClick={() => updateWishlistItem(item.id, { status: 'wanted', plannedFor: undefined, reminderId: undefined })}>Вернуть</button><button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button></div>
+              {wishlistError?.scope === item.id && <p className="things-error" role="alert">{wishlistError.message}</p>}
             </article>)}
           </section>}
 
           {removedWishlistItem && <div className="restore-notice" role="status">
-            <span>Вещь убрана</span>
+            <span>Вещь убрана. Вернётся без срока.</span>
             <button type="button" onClick={restoreWishlistItem}>Вернуть</button>
+            {wishlistError?.scope === 'restore' && <p className="things-error" role="alert">{wishlistError.message}</p>}
           </div>}
+          </fieldset>
 
-        </WatercolorScreen>}
+        </ProductionJourney>}
 
         {error && <p className="error-text" role="alert">{error}</p>}
-        {notice !== 'idle' && !(tab === 'map' && notice === 'mapSaved') && <div className="toast" role="status" aria-live="polite">{notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
+        {notice !== 'idle' && !(tab === 'map' && notice === 'mapSaved') && <div className="toast" role="status" aria-live="polite">{notice === 'documentSaved' ? 'Документ сохранён' : notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
       </section>
 
       {hasDog && !(tab === 'map' && productionMapMode !== 'view') && <AppNavigation dogName={profile.dogName} active={activePrimaryRoute} onAskAssistant={openAssistantSheet} onNavigate={(route) => {
+        if (route === 'profile') { setProfileSurface('overview'); secondaryOrigins.current = []; }
         setJourneyDetail(null);
         setAssistantOpen(false);
         setTab(route);
       }} />}
 
-      <DesktopContextPanel
+      {tab !== 'today' && tab !== 'all' && <DesktopContextPanel
         mode={journeyDetail || tab}
         dogName={petName || 'собаки'}
         nearestTitle={nextBestAction.title}
@@ -4811,12 +5050,18 @@ export default function Home() {
         onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
         onOpenHistory={() => { setCareView('history'); setTab('calendar'); }}
         onOpenCard={() => setTab('card')}
-      />
+      />}
       <CareActionNotice
-        feedback={careFeedback}
+        feedback={careFeedback?.kind === 'observation-deleted' ? null : careFeedback}
         onUndo={undoLastCareCompletion}
         onDismiss={() => setCareFeedback(null)}
       />
+      {recordDetail && <RecordDetailDialog record={recordDetail} onClose={() => setRecordDetail(null)} />}
+      {profileConflict && <ProfileConflictDialog key={profileConflict.remote.profileVersion} conflict={profileConflict} onResolve={resolved => {
+        setProfileConflict(null);
+        profileConflictResolver.current?.(resolved);
+        profileConflictResolver.current = null;
+      }} />}
       <DeleteCareDialog
         reminder={pendingCareDeletion}
         busy={careDeletionBusy}

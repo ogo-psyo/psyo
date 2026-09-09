@@ -1,0 +1,26 @@
+[
+  {
+    "engine": "chromium",
+    "width": 320,
+    "passed": true,
+    "scope": "mock API/UI only"
+  },
+  {
+    "engine": "chromium",
+    "width": 390,
+    "passed": true,
+    "scope": "mock API/UI only"
+  },
+  {
+    "engine": "webkit",
+    "width": 320,
+    "passed": true,
+    "scope": "mock API/UI only"
+  },
+  {
+    "engine": "webkit",
+    "width": 390,
+    "passed": true,
+    "scope": "mock API/UI only"
+  }
+]

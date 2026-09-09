@@ -1,0 +1,56 @@
+[
+  {
+    "run": "compiled-mapflow",
+    "passed": true,
+    "engine": "webkit",
+    "width": 390,
+    "height": 720,
+    "failedMap": false,
+    "noGpu": false,
+    "errors": [],
+    "fixtures": true
+  },
+  {
+    "run": "compiled-desktop",
+    "passed": true,
+    "engine": "chromium",
+    "width": "1280",
+    "height": 720,
+    "failedMap": false,
+    "noGpu": false,
+    "errors": [],
+    "fixtures": true
+  },
+  {
+    "run": "compiled-no-gpu",
+    "passed": true,
+    "engine": "chromium",
+    "width": "320",
+    "height": "640",
+    "failedMap": true,
+    "noGpu": true,
+    "errors": [],
+    "fixtures": true
+  },
+  {
+    "run": "compiled-full",
+    "fixture": true,
+    "source": "working-tree",
+    "width": 390,
+    "engine": "webkit",
+    "proposals": 1,
+    "states": 26,
+    "passed": true
+  },
+  {
+    "run": "final-location-verified",
+    "passed": true,
+    "engine": "webkit",
+    "width": 390,
+    "height": 720,
+    "failedMap": false,
+    "noGpu": false,
+    "errors": [],
+    "fixtures": true
+  }
+]

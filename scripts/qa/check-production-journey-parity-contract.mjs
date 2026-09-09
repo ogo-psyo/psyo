@@ -41,7 +41,14 @@ requireText(shell, 'production-journey-woof', 'accepted Гав composition');
 requireText(shell, 'Покажем профиль тем, кто тоже ищет компанию поблизости.', 'gender-neutral Гав copy');
 rejectText(shell, 'Покажем {props.dogName}', 'uninflected dog name in Гав copy');
 requireText(css, '.production-journey-avatar .avatar-placeholder b', 'compact avatar label guard');
-requireText(shell, 'production-journey-shelf', 'accepted Things composition');
+// The old shelf routed every object to creation. Verify the real shared list instead.
+requireText(page, `tab === 'things' && <ProductionJourney`, 'single Things shell');
+requireText(page, 'wantedWishlist.map((item)', 'real wanted list');
+requireText(page, 'setEditingWishlistId(item.id)', 'entity-specific edit');
+requireText(page, '[newWishNeedsReminder, setNewWishNeedsReminder] = useState(false)', 'no implicit purchase plan');
+rejectText(shell, 'Любимые вещи', 'unsupported favorites shortcut');
+requireText(profileMemory, 'props.onOpenRecord(item.entityKind, item.entityId', 'exact history object');
+rejectText(profileMemory, 'traitPosition', 'invented numeric trait position');
 requireText(shell, 'map?: ReactNode', 'real map slot');
 requireText(globals, "@import '../components/journey/production-journey.css';", 'shared production style');
 requireText(css, '#cbfedb', 'approved mint');

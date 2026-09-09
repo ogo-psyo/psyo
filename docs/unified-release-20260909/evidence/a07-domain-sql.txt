@@ -1,0 +1,1 @@
+PASS production shared route service -> real SQL: geometry/GPS gaps/stops/metadata; edited canonical replay; conflict; deletion tombstone

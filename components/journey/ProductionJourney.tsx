@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import connected from '../app/ConnectedWorkspace.module.css';
 import { JournalMasthead } from '@/components/journal/JournalMasthead';
 import type { JournalEntry } from '@/lib/journal';
 import { wellbeingValue, type WellbeingMetric } from '@/lib/wellbeingScoring';
@@ -14,12 +15,9 @@ import {
   FirstAid,
   Heart,
   MapTrifold,
-  PaperPlaneTilt,
   PawPrint,
   PencilSimple,
-  Plus,
   ShieldCheck,
-  ShoppingBag,
   Sparkle,
   UsersThree,
   Warning,
@@ -75,6 +73,8 @@ type BaseProps = {
 
 type ProductionJourneyProps = BaseProps & {
   dayEntries?: JournalEntry[];
+  onBack?: () => void;
+  onOpenJournalEntry?: (entry: JournalEntry, trigger: HTMLButtonElement) => void;
   careTitle?: string;
   careDetail?: string;
   careActionLabel?: string;
@@ -306,18 +306,19 @@ function TodayScreen(props: ProductionJourneyProps) {
   const entries = props.dayEntries || [];
   const date = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
   return <main className="production-journey-screen journal-screen" data-production-journey="today" title={`${props.dogName} сегодня`}>
+    {props.onBack && <button type="button" className="journal-quiet" onClick={props.onBack}>← Назад</button>}
     <div data-all-profile data-parity="production-today-identity"><JournalMasthead dogName={props.dogName} avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} /></div>
-    <div className="journal-title"><h1>Сегодня</h1><p>{date}</p></div>
+    <div className="journal-title"><h1>Дела и записи</h1><p>{date}</p></div>
     <section className="journal-status" data-all-observation-trends aria-label="Самочувствие">
-      <div className="journal-status-line"><Heart aria-hidden="true" /><h2>Начнём с самочувствия</h2></div>
-      <p>Как сегодня чувствует себя {props.dogName}?<br />Ваши заметки помогут видеть изменения.</p>
+      <div className="journal-status-line"><Heart aria-hidden="true" /><h2>Запомнить важное</h2></div>
+      <p>Наблюдение, мысль или то, к чему хочется вернуться.</p>
       {!observationCaptureOpen && <button type="button" className="journal-primary" data-observation-composer aria-label={`Рассказать о состоянии ${props.dogName}`} aria-expanded="false" aria-controls="all-observation-capture" onClick={openObservationCapture}><PencilSimple aria-hidden="true" />Записать наблюдение</button>}
       {observationCaptureOpen && <div id="all-observation-capture" className="all-observation-capture"><button type="button" className="journal-quiet" onClick={() => setObservationCaptureOpen(false)}>Закрыть запись <X aria-hidden="true" /></button>{props.voiceCapture}</div>}
       <button type="button" className="journal-status-history" onClick={() => props.onNavigate('health')}>Посмотреть прошлые записи <CaretRight aria-hidden="true" /></button>
     </section>
     <section className="journal-day" aria-labelledby="journal-day-title">
       <div className="journal-section-title"><h2 id="journal-day-title">День по порядку</h2><button type="button" aria-label="Открыть план ухода" onClick={props.onOpenCare}><CalendarCheck aria-hidden="true" /></button></div>
-      {entries.length ? <ol className="journal-entries">{entries.slice(0, 4).map((entry) => <li key={entry.id} className="journal-entry"><time dateTime={entry.at}>{new Date(entry.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</time><span className={`journal-point${entry.completed ? ' done' : ''}`}>{entry.completed ? <Check aria-hidden="true" /> : <CalendarCheck aria-hidden="true" />}</span><button type="button" onClick={() => entry.kind === 'observation' ? props.onNavigate('health') : props.onOpenCare?.()}><b>{entry.title}</b><small>{entry.detail}</small></button></li>)}</ol> : <div className="journal-empty"><p>На сегодня пока нет записей и дел.</p><button type="button" className="journal-text-link" onClick={props.onOpenCare}>Открыть план ухода <CaretRight aria-hidden="true" /></button></div>}
+      {entries.length ? <ol className="journal-entries">{entries.slice(0, 4).map((entry) => <li key={entry.id} className="journal-entry"><time dateTime={entry.at}>{new Date(entry.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</time><span className={`journal-point${entry.completed ? ' done' : ''}`}>{entry.completed ? <Check aria-hidden="true" /> : <CalendarCheck aria-hidden="true" />}</span><button type="button" onClick={event => props.onOpenJournalEntry?.(entry, event.currentTarget)}><b>{entry.title}</b><small>{entry.detail}</small></button></li>)}</ol> : <div className="journal-empty"><p>На сегодня пока нет записей и дел.</p><button type="button" className="journal-text-link" onClick={props.onOpenCare}>Открыть план ухода <CaretRight aria-hidden="true" /></button></div>}
       {entries.length > 4 && <button type="button" className="journal-text-link" onClick={props.onOpenCare}>Весь план <CaretRight aria-hidden="true" /></button>}
     </section>
     <button type="button" className="journal-ask" onClick={props.onAskAssistant}><Sparkle aria-hidden="true" /><span><b>Есть вопрос о собаке?</b><small>Спросите Псё</small></span><CaretRight aria-hidden="true" /></button>
@@ -386,19 +387,21 @@ function ProfileScreen(props: ProductionJourneyProps) {
   </main>;
 }
 
-export function ProductionDocumentSheet({ dogName, onClose, returnFocusTo, children }: { dogName: string; onClose: () => void; returnFocusTo?: HTMLElement | null; children: ReactNode }) {
+export function ProductionDocumentSheet({ dogName, open = true, onClose, returnFocusTo, children }: { dogName: string; open?: boolean; onClose: () => void; returnFocusTo?: HTMLElement | null; children: ReactNode }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
-    triggerRef.current = returnFocusTo || document.activeElement as HTMLElement | null;
     const dialog = dialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
-    return () => {
-      const trigger = triggerRef.current;
-      window.requestAnimationFrame(() => trigger?.focus());
-    };
-  }, [returnFocusTo]);
-  const closeSheet = () => { dialogRef.current?.close(); onClose(); };
+    if (!dialog) return;
+    if (open && !dialog.open) {
+      triggerRef.current = returnFocusTo || document.activeElement as HTMLElement | null;
+      dialog.showModal();
+    } else if (!open && dialog.open) {
+      dialog.close();
+      window.requestAnimationFrame(() => triggerRef.current?.focus());
+    }
+  }, [open, returnFocusTo]);
+  const closeSheet = () => { dialogRef.current?.close(); onClose(); window.requestAnimationFrame(() => triggerRef.current?.focus()); };
   return <dialog ref={dialogRef} className="profile-document-dialog" aria-labelledby="profile-document-sheet-title" aria-describedby="profile-document-sheet-description" onCancel={(event) => { event.preventDefault(); closeSheet(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSheet(); }}>
     <section className="profile-document-sheet" data-slot="sheet-content">
       <header data-slot="sheet-header"><span className="profile-document-sheet-mark" aria-hidden="true"><FileArrowUp weight="regular" /></span><div><h2 id="profile-document-sheet-title">Добавить в историю</h2><p id="profile-document-sheet-description">Документ останется личным и будет рядом, когда понадобится</p></div><button type="button" aria-label="Закрыть" onClick={closeSheet}><X weight="regular" /></button></header>
@@ -441,18 +444,14 @@ function NearbyScreen(props: ProductionJourneyProps) {
 }
 
 function ThingsScreen(props: ProductionJourneyProps) {
-  const things = props.things || [];
-  return <main className="production-journey-screen journal-screen journal-things" data-production-journey="things">
-    <JournalMasthead dogName={props.dogName} avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
-    <div className="journal-title"><h1>Вещи</h1><p>Нужное и любимое — в одном списке.</p></div>
-    <section className="journal-record"><h2>Ничего не забыть</h2><p>Корм, амуниция, лекарства или услуги.</p><button type="button" className="journal-primary" onClick={props.onAddThing}><Plus aria-hidden="true" />Добавить в список</button></section>
-    <section className="production-journey-shelf journal-things-list"><div className="journal-section-title"><h2>Нужно купить</h2><button type="button" onClick={props.onAddThing}>Весь список <CaretRight aria-hidden="true" /></button></div>
-      {things.length ? things.map((thing) => <button type="button" className="journal-index-row" key={thing.id} onClick={props.onAddThing}><span className="journal-row-icon"><ShoppingBag aria-hidden="true" /></span><span><b>{thing.title}</b><small>{thing.detail}</small></span><CaretRight aria-hidden="true" /></button>) : <div className="journal-empty"><p>Список пока пуст. Добавьте то, что нужно купить или пополнить.</p></div>}
-    </section>
-    <button type="button" className="journal-ask" onClick={props.onAddThing}><Heart aria-hidden="true" /><span><b>Любимые вещи</b><small>То, что всегда берёте с собой</small></span><CaretRight aria-hidden="true" /></button>
-    {props.children && <section className="production-journey-details">{props.children}</section>}
+  return <main className={`production-journey-screen journal-screen journal-things ${connected.workspace}`} data-production-journey="things" data-things-workspace>
+    <header className={connected.header}>
+      {props.onBack && <button type="button" onClick={props.onBack}>← Назад</button>}
+      <button type="button" onClick={() => props.onNavigate('profile')} aria-label={`Открыть профиль ${props.dogName}`}>{props.dogName}</button>
+    </header>
+    <div className={connected.title}><h1 data-assistant-heading>Вещи и покупки</h1>{props.onAskAssistant && <button type="button" aria-label="Спросить Псё" onClick={props.onAskAssistant}><Sparkle aria-hidden="true" /></button>}</div>
+    {props.children}
   </main>;
-
 }
 
 export function ProductionJourney(props: ProductionJourneyProps) {
@@ -469,50 +468,4 @@ export function ProductionJourney(props: ProductionJourneyProps) {
   return <ThingsScreen {...props} />;
 }
 
-export function ProductionAssistantSheet({
-  dogName, avatar, question, answer, messages, loading, error, suggestions, actions, diagnostic, onQuestionChange, onAsk, onClose,
-}: {
-  dogName: string;
-  avatar: ReactNode;
-  question: string;
-  answer: string;
-  messages?: Array<{ role: 'user' | 'assistant'; content: string }>;
-  loading: boolean;
-  error?: string;
-  suggestions: string[];
-  actions?: ReactNode;
-  diagnostic?: { provider?: string; mode?: string };
-  onQuestionChange: (value: string) => void;
-  onAsk: (question?: string) => void;
-  onClose: () => void;
-}) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const triggerRef = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    triggerRef.current = document.activeElement as HTMLElement | null;
-    const dialog = dialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
-    window.requestAnimationFrame(() => inputRef.current?.focus());
-    return () => { const trigger = triggerRef.current; window.requestAnimationFrame(() => trigger?.focus()); };
-  }, []);
-  const closeSheet = () => { if (dialogRef.current?.open) dialogRef.current.close(); onClose(); };
-  return <dialog ref={dialogRef} className="v3-assistant-backdrop production-assistant-backdrop" aria-labelledby="production-assistant-title" aria-describedby="production-assistant-description" data-assistant-provider={diagnostic?.provider || 'pending'} data-assistant-mode={diagnostic?.mode || 'pending'} onCancel={(event) => { event.preventDefault(); closeSheet(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSheet(); }}>
-    <section className="v3-assistant-sheet">
-      <div className="v3-sheet-handle" />
-      <header><div className="v3-assistant-mark"><Sparkle weight="fill" /></div><div><h2 id="production-assistant-title">Спросить Псё</h2></div><button type="button" onClick={closeSheet} aria-label="Закрыть"><X weight="bold" /></button></header>
-      <div className="production-assistant-scroll">
-        <div className="v3-assistant-context"><DogAvatar avatar={avatar} small /><p id="production-assistant-description">Учту профиль {dogName}, дела, наблюдения, прогулки, документы и этот диалог. Не заменяю ветеринара.</p></div>
-        {suggestions.length > 0 && <div className="v3-prompt-list" aria-label="Подсказки для вопроса">{suggestions.slice(0, 3).map((suggestion) => <button key={suggestion} type="button" onClick={() => onAsk(suggestion)}>{suggestion}</button>)}</div>}
-        {messages?.length ? <div className="production-assistant-conversation" aria-live="polite">{messages.map((message, index) => <article className={message.role} key={`${message.role}-${index}`}><b>{message.role === 'assistant' ? 'Псё' : 'Вы'}</b><p>{message.content}</p></article>)}</div> : answer && <div className="production-assistant-answer" role="status">{answer}</div>}
-        {error && <div className="module-error" role="alert"><b>Псё не ответил</b><p>{error}</p></div>}
-        {actions}
-      </div>
-      <form className="production-assistant-composer" onSubmit={(event) => { event.preventDefault(); onAsk(); }}>
-        <label className="sr-only" htmlFor="production-assistant-question">Вопрос ассистенту</label>
-        <input id="production-assistant-question" ref={inputRef} value={question} onChange={(event) => onQuestionChange(event.target.value)} placeholder={`Спроси о ${dogName}…`} />
-        <button type="submit" disabled={loading || !question.trim()} aria-busy={loading} aria-label={loading ? 'Псё думает' : 'Отправить'}>{loading ? <Sparkle weight="fill" /> : <PaperPlaneTilt weight="fill" />}</button>
-      </form>
-    </section>
-  </dialog>;
-}
+export { ProductionAssistantSheet } from './ProductionAssistantSheet';

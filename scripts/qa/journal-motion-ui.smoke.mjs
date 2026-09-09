@@ -11,11 +11,11 @@ for(const engine of [chromium,webkit])for(const reducedMotion of ['no-preference
  assert.equal(await p.locator('html').getAttribute('data-pso-input'),null);
  const trigger=p.locator('.journal-ask');await trigger.focus();await trigger.hover();await p.evaluate(()=>document.fonts.ready);await p.waitForTimeout(300);const box=await trigger.boundingBox();await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();await p.waitForTimeout(160);
  const scale=await trigger.evaluate(e=>getComputedStyle(e).scale);assert.equal(scale,reducedMotion==='reduce'?'none':'0.96');await p.mouse.up();
- await p.locator('.v3-assistant-sheet').waitFor();
- const anim=await p.locator('.v3-assistant-sheet').evaluate(e=>({count:e.getAnimations().length,transition:getComputedStyle(e).transitionDuration}));
- assert.equal(anim.transition,reducedMotion==='reduce'?'0s':'0.2s, 0.2s');assert.equal(anim.count>0,reducedMotion==='no-preference');
- await p.keyboard.press('Escape');await p.locator('.v3-assistant-sheet').waitFor({state:'detached'});await p.waitForTimeout(60);await trigger.focus();
- await p.keyboard.press('Enter');await p.locator('.v3-assistant-sheet').waitFor();assert.equal(await p.locator('.v3-assistant-sheet').evaluate(e=>e.getAnimations().length),0);
+ await p.locator('dialog[aria-label="Спросить Псё"]').waitFor();
+ const anim=await p.locator('dialog[aria-label="Спросить Псё"]').evaluate(e=>({count:e.getAnimations().length,transition:getComputedStyle(e).animationDuration}));
+ assert.equal(anim.transition,reducedMotion==='reduce'?'0s':'0.18s');
+ await p.keyboard.press('Escape');await p.locator('dialog[aria-label="Спросить Псё"]').waitFor({state:'detached'});await p.waitForTimeout(60);await trigger.focus();
+ await p.keyboard.press('Enter');await p.locator('dialog[aria-label="Спросить Псё"]').waitFor();assert.equal(await p.locator('dialog[aria-label="Спросить Псё"]').evaluate(e=>getComputedStyle(e).animationDuration),'0s');
  await p.keyboard.press('Escape');await p.waitForTimeout(100);assert.equal(await trigger.evaluate(e=>e===document.activeElement),true);
  const summary=p.locator('.journal-disclosure').first().locator('summary');await summary.click();await p.waitForTimeout(250);assert.equal(await p.locator('.journal-disclosure').first().getAttribute('open'),'');
  await summary.click();await summary.click();await p.waitForTimeout(250);assert.equal(await p.locator('.journal-disclosure').first().getAttribute('open'),'');

@@ -1,3 +1,6 @@
+import {readOwnedMapRoute} from '@/lib/server/ownedMapRoute';
+import {principalsAgree} from '@/lib/socialCore';
+import {z} from 'zod';
 import {parseRoutePlanning} from '@/lib/routePlanning';
 import { routeEwkt,validRouteGaps,storedRoutePoints,measuredRouteDistance } from '@/lib/routeGeometry';
 import { NextResponse } from 'next/server';
@@ -90,4 +93,15 @@ export async function DELETE(request: Request, ctx: Ctx) {
   const { error } = await supabase.from('map_routes').delete().eq('id', id).eq('owner_id', ownerId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
+}
+
+export async function GET(request:Request,{params}:Ctx){
+  const auth=await getRequestAuth(request),session=getAppSessionFromRequest(request);
+  if(!principalsAgree({bearerOwnerId:auth.user?.id,sessionOwnerId:session?.ownerId}))return NextResponse.json({error:'IDENTITY_PRINCIPAL_MISMATCH'},{status:401});
+  const owner=auth.user?.id??session?.ownerId;
+  if(!owner)return NextResponse.json({error:'AUTH_REQUIRED'},{status:401});
+  const {id}=await params,pet=new URL(request.url).searchParams.get('petId');
+  if(!z.uuid().safeParse(id).success||!z.uuid().safeParse(pet).success)return NextResponse.json({error:'INVALID_ROUTE_REFERENCE'},{status:400});
+  try{return NextResponse.json({route:await readOwnedMapRoute(owner,pet!,id)},{headers:{'Cache-Control':'private, no-store'}});}
+  catch(error){const missing=error instanceof Error&&error.message==='ROUTE_NOT_FOUND';return NextResponse.json({error:missing?'ROUTE_NOT_FOUND':'ROUTE_READ_FAILED'},{status:missing?404:503,headers:{'Cache-Control':'private, no-store'}});}
 }

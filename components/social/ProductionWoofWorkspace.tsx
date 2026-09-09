@@ -120,6 +120,9 @@ export function ProductionWoofWorkspace(props: Props) {
   const selectedRequestId = chosenRequestId || (awaitingPartner ? props.requests.find(r => (r.status === 'pending' || r.status === 'accepted') && (r.senderPetId === awaitingPartner || r.recipientPetId === awaitingPartner))?.id : null) || null;
   const [requestsOpen, setRequestsOpen] = useState(props.recommendationEntry?.view === 'requests');
   const [manualArea, setManualArea] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(false);
+  const [mapPanel, setMapPanel] = useState<'selection' | 'list' | 'tools'>('selection');
+  const [liveMapState, setLiveMapState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [areaQuery, setAreaQuery] = useState('');
   const [areaLocateAttempted,setAreaLocateAttempted]=useState(false);
   const areaLocateError=areaLocateAttempted&&!props.locating&&!props.viewerLocation?'Не удалось определить район. Можно указать его вручную.':'';
@@ -219,8 +222,9 @@ export function ProductionWoofWorkspace(props: Props) {
   const activeModal = signalComposer ? 'composer' : profileEditor ? 'profile' : selectedCandidate ? 'candidate' : requestsOpen ? 'requests' : null;
 
   useEffect(() => {
-    if (props.viewerLocation && (!signalComposer || !location)) setLocation(props.viewerLocation);
-  }, [props.viewerLocation,signalComposer,location]);
+    const signalLocation = ownSignal?.approximateLocation ?? props.viewerLocation;
+    if (signalLocation && (!signalComposer || !location)) setLocation(signalLocation);
+  }, [props.viewerLocation, ownSignal, signalComposer, location]);
 
   useEffect(() => { refreshRef.current = props.onRefresh; }, [props.onRefresh]);
 
@@ -368,9 +372,9 @@ export function ProductionWoofWorkspace(props: Props) {
     {areaResults.map(result=><button type="button" key={result.id} onClick={()=>{props.onChooseViewerLocation(result.point);signalDraftRef.current=null;setLocation(result.point);setManualArea(false);}}>{result.title}{result.detail?` · ${result.detail}`:''}</button>)}
   </section>;
 
-  return <section ref={rootRef} onClickCapture={event=>{if(!activeModal){const button=(event.target as HTMLElement).closest<HTMLElement>("button");if(button)restoreFocusRef.current=button;}}} className="production-woof-workspace" data-view-mode={mode} data-needs-area={needsArea} data-production-journey="nearby" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
+  return <section ref={rootRef} onClickCapture={event=>{if(!activeModal){const button=(event.target as HTMLElement).closest<HTMLElement>("button");if(button)restoreFocusRef.current=button;}}} className="production-woof-workspace" data-view-mode={mode} data-map-state={liveMapState} data-map-expanded={mapExpanded} data-map-panel={mapPanel} data-needs-area={needsArea} data-production-journey="nearby" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
     <div className="woof-map-layer" hidden={needsArea} aria-hidden={mode !== 'live'||needsArea}>
-      {props.viewerLocation ? <WoofLiveMap signals={filteredLiveSignals} viewerLocation={props.viewerLocation} viewerRadiusMeters={props.viewerRadiusMeters} selectedId={selectedSignal?.id ?? null} onSelect={(id) => setSelectedSignalId(id)} />
+      {props.viewerLocation && mode === 'live' ? <WoofLiveMap expanded={mapExpanded} onToggleExpanded={()=>setMapExpanded(v=>!v)} searching={props.state==='loading'} onSearchHere={props.onChooseViewerLocation} onMapState={setLiveMapState} signals={filteredLiveSignals} viewerLocation={props.viewerLocation} viewerRadiusMeters={props.viewerRadiusMeters} selectedId={selectedSignal?.id ?? null} onSelect={(id) => {setSelectedSignalId(id);setMapPanel('selection');}} />
         : <div className="woof-map-await" aria-hidden="true" />}
     </div>
 
@@ -410,32 +414,40 @@ export function ProductionWoofWorkspace(props: Props) {
       {props.accessMessage&&<p className="woof-welcome-access">Карту можно посмотреть без входа. Для откликов нужен вход через Telegram.</p>}
     </main>}
     {mode === 'live' && !needsArea && <div className="woof-work-area">
-      <div className="woof-search-panel"><div className="woof-area-summary"><h1 className="sr-only">Гав</h1><p>{props.viewerLocation ? `${props.profile?.district || 'Выбранный центр на карте'} · ${props.viewerRadiusKm} км · примерная зона` : 'Область поиска ещё не выбрана'}</p><button type="button" onClick={()=>setManualArea(v=>!v)} aria-expanded={manualArea}>Выбрать район вручную</button></div>
-      {manualArea && manualAreaForm}
-      <details className="woof-live-filter-disclosure"><summary>Радиус и фильтры · {props.viewerRadiusKm} км · {liveWhen==='all'?'любое время':liveWhen==='now'?'сейчас':'позже'} · {livePace==='all'?'любой темп':paceCopy[livePace]}</summary><section className="woof-live-filters" aria-label="Фильтры поиска на карте">
-        <label><span>Радиус</span><select value={String(props.viewerRadiusKm)} onChange={(event) => props.onChangeViewerRadius(Number(event.target.value))}><option value="3">3 км</option><option value="5">5 км</option><option value="10">10 км</option><option value="15">15 км</option></select></label>
-        <label><span>Когда</span><select value={liveWhen} onChange={(event) => setLiveWhen(event.target.value as typeof liveWhen)}><option value="all">Любое</option><option value="now">Сейчас</option><option value="later">Позже</option></select></label>
-        <label><span>Темп</span><select value={livePace} onChange={(event) => setLivePace(event.target.value as typeof livePace)}><option value="all">Любой</option><option value="calm">Спокойно</option><option value="balanced">Обычный</option><option value="active">Активно</option></select></label>
-        <button type="button" onClick={props.onLocateViewer} disabled={props.locating}><Crosshair />{props.locating ? 'Определяю район…' : props.viewerLocation ? 'Обновить местоположение' : 'Определить местоположение'}</button>
-      </section></details>
-      <div className="woof-live-heading" role="status" aria-live="polite"><span className="woof-live-dot" />{props.accessMessage ? 'Знакомства доступны после входа' : props.locating || props.state === 'loading' ? 'Ищу ваш район…' : props.state === 'error' ? 'Не удалось обновить выдачу' : !props.viewerLocation ? 'Укажите область поиска' : `Других Гав поблизости: ${filteredLiveSignals.filter((signal) => !signal.isMine).length}`}</div></div>
+      {mapExpanded && <div className="woof-expanded-tools"><button type="button" aria-pressed={mapPanel==='list'} onClick={()=>setMapPanel(v=>v==='list'?'selection':'list')}>Список · {filteredLiveSignals.length}</button><button type="button" aria-pressed={mapPanel==='tools'} onClick={()=>setMapPanel(v=>v==='tools'?'selection':'tools')}>Район и фильтры</button></div>}
+      <div className="woof-search-panel">
+        <h1 className="sr-only">Компания для прогулки</h1>
+        <div className="woof-live-tools">
+          <button type="button" className="woof-area-change" onClick={()=>setManualArea(v=>!v)} aria-label="Выбрать район вручную" aria-expanded={manualArea}><Crosshair aria-hidden="true"/>Район</button>
+          <details className="woof-live-filter-disclosure" open={mapExpanded && mapPanel==='tools' ? true : undefined}><summary><Funnel aria-hidden="true"/>{props.viewerRadiusKm} км · фильтры{liveWhen!=='all'||livePace!=='all'?' · выбраны':''}</summary><section className="woof-live-filters" aria-label="Фильтры поиска на карте">
+            <label><span>Радиус</span><select value={String(props.viewerRadiusKm)} onChange={(event) => props.onChangeViewerRadius(Number(event.target.value))}><option value="3">3 км</option><option value="5">5 км</option><option value="10">10 км</option><option value="15">15 км</option></select></label>
+            <label><span>Когда</span><select value={liveWhen} onChange={(event) => setLiveWhen(event.target.value as typeof liveWhen)}><option value="all">Любое</option><option value="now">Сейчас</option><option value="later">Позже</option></select></label>
+            <label><span>Темп</span><select value={livePace} onChange={(event) => setLivePace(event.target.value as typeof livePace)}><option value="all">Любой</option><option value="calm">Спокойно</option><option value="balanced">Обычный</option><option value="active">Активно</option></select></label>
+            <button type="button" onClick={props.onLocateViewer} disabled={props.locating}><Crosshair />{props.locating ? 'Определяю район…' : 'Обновить местоположение'}</button>
+          </section></details>
+        </div>
+        {manualArea && <>{manualAreaForm}<button className="woof-area-done" type="button" onClick={()=>setManualArea(false)}>Закрыть выбор района</button></>}
+        {(props.locating || props.state === 'loading') && <p className="woof-live-heading" role="status">Обновляю Гав рядом…</p>}
+        {(filteredLiveSignals.length > 1 || (mapExpanded && mapPanel==='list')) && <div className="woof-signal-picker" aria-label="Гав рядом">{filteredLiveSignals.length===0 && <p>В этой области пока нет Гав.</p>}{filteredLiveSignals.map(signal=><button type="button" key={signal.id} aria-pressed={selectedSignal?.id===signal.id} onClick={()=>{setSelectedSignalId(signal.id);setMapPanel('selection');}}>{signal.name}{signal.isMine?' · ваш Гав':''}</button>)}</div>}
+      </div>
       {selectedSignal && <article className="woof-signal-card" aria-live="polite">
         <div className="woof-signal-main">
           <DogPortrait candidate={{ name: selectedSignal.name, avatarUrl: selectedSignal.avatarUrl }} />
-          <div><p><b>{selectedSignal.name}</b>{selectedSignal.isMine ? ' · ваш Гав' : ''}</p><span>{timeLabel(selectedSignal.startsAt)} · {paceCopy[selectedSignal.pace]}</span></div>
+          <div><p><b>{selectedSignal.name}</b>{selectedSignal.isMine ? ' · ваш Гав' : ''}</p><span>{selectedSignal.isMine ? `До ${new Date(selectedSignal.expiresAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}` : timeLabel(selectedSignal.startsAt)} · {paceCopy[selectedSignal.pace]}</span></div>
         </div>
-        {selectedSignal.isMine && <p>Активен до {new Date(selectedSignal.expiresAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</p>}
         {selectedSignal.note && <p className="woof-signal-note">«{selectedSignal.note}»</p>}
-        <p className="woof-location-copy"><ShieldCheck />{selectedSignal.district || 'Примерная зона'} · точное место скрыто</p>
+        <p className="woof-location-copy"><ShieldCheck />Точное место скрыто</p>
         {selectedSignal.isMine ? <div className="woof-signal-actions">
+          <button ref={composerTriggerRef} className="woof-primary" type="button" onClick={openSignalComposer}>Изменить Гав</button>
           <button type="button" disabled={props.busyId === 'signal'} onClick={() => props.onCloseSignal('completed')}>Завершить</button>
         </div> : <button className="woof-primary" type="button" disabled={props.busyId === selectedSignal.petId} onClick={() => respond(selectedSignal.petId, 'walk', selectedSignal.id)}>{activeRequests.some(r => r.senderPetId === selectedSignal.petId || r.recipientPetId === selectedSignal.petId) ? 'Продолжить знакомство' : 'Откликнуться'}</button>}
       </article>}
+      {selectedSignal?.isMine && props.state === 'ready' && !filteredLiveSignals.some(signal=>!signal.isMine) && <div className="woof-waiting-company"><p>{props.signals.some(signal=>!signal.isMine) ? 'Под эти фильтры других Гав нет.' : 'Рядом пока никто не дал Гав. Ваш уже виден другим.'}</p><button type="button" onClick={()=>setMode('meet')}>Посмотреть анкеты</button></div>}
       {props.accessMessage ? <article className="woof-empty-live woof-access-state" role="status"><PawPrint /><b>Познакомимся в Telegram</b><p>{props.accessMessage}</p></article> : props.state === 'error' ? <article className="woof-empty-live woof-error-state" role="alert"><PawPrint /><b>Район не загрузился</b><p>Проверьте соединение — Псё не будет выдавать ошибку за отсутствие собак.</p><button type="button" onClick={() => props.onRetry()}>Повторить</button></article>
         : props.signalReason === 'CITY_NOT_SUPPORTED' ? <article className="woof-empty-live"><PawPrint /><b>Здесь Гав ещё не работает</b><p>Сейчас живые сигналы доступны в Москве и Санкт-Петербурге.</p></article>
           : props.signalReason === 'VIEWER_LOCATION_REQUIRED' ? <article className="woof-empty-live woof-location-state"><Crosshair /><b>Покажите район рядом</b><p>Точная точка не сохраняется — для поиска используется округлённая зона.</p><button type="button" onClick={props.onLocateViewer} disabled={props.locating}>{props.locating ? 'Определяю…' : 'Показать рядом'}</button></article>
             : !selectedSignal && props.state !== 'loading' && <article className="woof-empty-live"><PawPrint /><b>{props.signals.some((signal) => !signal.isMine) ? 'Под эти фильтры пока тихо' : `В радиусе ${props.viewerRadiusKm} км пока тихо`}</b><p>{props.signals.some((signal) => !signal.isMine) ? 'Выберите любое время и темп или расширьте радиус.' : 'Ваш Гав станет первой живой точкой района.'}</p>{props.signals.some((signal) => !signal.isMine) && <button type="button" onClick={() => { setLiveWhen('all'); setLivePace('all'); props.onChangeViewerRadius(15); }}>Показать всех</button>}</article>}
-      {!props.accessMessage && props.signalReason !== 'CITY_NOT_SUPPORTED' && <button ref={composerTriggerRef} className="woof-give-button" type="button" onClick={openSignalComposer}>{ownSignal ? 'Изменить Гав' : 'Дать Гав'}<PawPrint weight="fill" /></button>}
+      {!props.accessMessage && props.signalReason !== 'CITY_NOT_SUPPORTED' && !selectedSignal?.isMine && <button ref={composerTriggerRef} className="woof-give-button" type="button" onClick={openSignalComposer}>{ownSignal ? 'Изменить Гав' : 'Дать Гав'}<PawPrint weight="fill" /></button>}
     </div>}
 
     {mode === 'meet' && <main ref={feedRef} onScroll={event=>{try{sessionStorage.setItem(`${viewKey}:scroll`,String(event.currentTarget.scrollTop));}catch{/* preference only */}}} className="woof-meet-feed">

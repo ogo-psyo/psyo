@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "baseRevision": "5c5dfed66575f3e9de6726f0a3cc5846700c55e7",
+  "surfaceFamilies": 59,
+  "apiFiles": 69,
+  "methodExports": 99,
+  "checks": [
+    "Unique surface IDs",
+    "All referenced source files and line positions exist",
+    "All API route files inventoried",
+    "HTTP method exports match",
+    "Local document links resolve"
+  ],
+  "issues": [],
+  "limits": "Documentation consistency, not semantic coverage proof or product acceptance"
+}

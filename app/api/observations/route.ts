@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
-import { abortCareMutation, beginCareMutation, careError, careMutationError, careRequestFingerprint, finishCareMutation, readCareIdempotencyKey } from '@/lib/server/careHttp';
+import { careError, careMutationError, careRequestFingerprint, readCareIdempotencyKey } from '@/lib/server/careHttp';
 
 export const runtime = 'nodejs';
 
@@ -130,12 +130,12 @@ export async function POST(request: Request) {
   const input = normalizeObservationInput(body);
   if (!input) return careError('OBSERVATION_VALUE_REQUIRED', 'Добавьте хотя бы одно наблюдение.', 400);
 
-  const observedAt = body.observedAt || body.createdAt ? parseDate(body.observedAt || body.createdAt) : new Date().toISOString();
-  if (!observedAt) return careError('INVALID_OBSERVED_AT', 'Проверьте дату наблюдения.', 400);
+  const observedAt = body.observedAt || body.createdAt ? parseDate(body.observedAt || body.createdAt) : null;
+  if ((body.observedAt || body.createdAt) && !observedAt) return careError('INVALID_OBSERVED_AT', 'Проверьте дату наблюдения.', 400);
 
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
-  const supabase = auth.supabase ?? getSupabaseAdmin();
+  const supabase = getSupabaseAdmin();
   const ownerId = auth.user?.id ?? appSession?.ownerId;
   const source = allowedSources.has(body.source) ? body.source : 'manual';
   const idempotencyKey = readCareIdempotencyKey(request, body);
@@ -150,7 +150,7 @@ export async function POST(request: Request) {
         type: input.type,
         value: input.value,
         note: typeof body.note === 'string' ? body.note.trim() || undefined : undefined,
-        observedAt,
+        observedAt: observedAt ?? now,
         mood: input.metadata.mood,
         appetite: input.metadata.appetite,
         stool: input.metadata.stool,
@@ -166,34 +166,19 @@ export async function POST(request: Request) {
 
   if (!ownerId) return careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401);
 
-  const { data: pet, error: petError } = await supabase.from('pets').select('id').eq('id', body.petId).eq('owner_id', ownerId).single();
-  if (petError || !pet) return careError('PET_NOT_FOUND', 'Эта собака не найдена или недоступна.', 404);
-
   const fingerprint = careRequestFingerprint({ petId: body.petId, input, observedAt, note: body.note ?? null, source });
   try {
-    const claim = await beginCareMutation({ supabase, ownerId, idempotencyKey, operation: 'observation:create', fingerprint });
-    if (claim.replayed) return NextResponse.json(claim.response);
-
-    const { data, error } = await supabase
-      .from('pet_observations')
-      .insert({
-        pet_id: body.petId,
-        type: input.type,
-        value: input.value,
+    const { data, error } = await supabase.rpc('care_observation_atomic', {
+      p_owner_id: ownerId, p_idempotency_key: idempotencyKey,
+      p_request_fingerprint: fingerprint, p_action: 'create', p_target_id: body.petId,
+      p_patch: { type: input.type, value: input.value,
         note: typeof body.note === 'string' ? body.note.trim() || null : null,
-        observed_at: observedAt,
-        source,
-        metadata: input.metadata,
-      })
-      .select('*')
-      .single();
-
+        observed_at: observedAt, source, metadata: input.metadata },
+    });
     if (error) throw error;
-    const response = { observation: mapObservation(data), mode: 'supabase' };
-    await finishCareMutation({ supabase, ownerId, idempotencyKey, response });
-    return NextResponse.json(response, { status: 201 });
+    // Receipts written by the previous API already contain the public DTO.
+    return NextResponse.json({ ...data, observation: data.observation?.pet_id ? mapObservation(data.observation) : data.observation }, { status: 201 });
   } catch (error) {
-    await abortCareMutation({ supabase, ownerId, idempotencyKey });
     return careMutationError(error);
   }
 }

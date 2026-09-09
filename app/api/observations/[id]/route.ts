@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
-import { abortCareMutation, beginCareMutation, careError, careMutationError, careRequestFingerprint, finishCareMutation, readCareIdempotencyKey } from '@/lib/server/careHttp';
+import { careError, careMutationError, careRequestFingerprint, readCareIdempotencyKey } from '@/lib/server/careHttp';
 
 export const runtime = 'nodejs';
 
@@ -30,7 +30,6 @@ const allowedTypes = new Set([
 
 const allowedSources = new Set(['manual', 'assistant', 'import', 'demo']);
 const quickMetricTypes = ['mood', 'appetite', 'stool', 'energy'] as const;
-type QuickMetricType = typeof quickMetricTypes[number];
 
 function mapObservation(row: any) {
   const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
@@ -59,23 +58,10 @@ function parseDate(value: unknown) {
   return date.toISOString();
 }
 
-async function ownedObservation(supabase: any, ownerId: string, id: string) {
-  return supabase
-    .from('pet_observations')
-    .select('id, metadata, pets!inner(owner_id)')
-    .eq('id', id)
-    .eq('pets.owner_id', ownerId)
-    .is('deleted_at', null)
-    .single();
-}
-
-function quickMetricValue(body: any, key: QuickMetricType) {
-  return typeof body?.[key] === 'string' && body[key].trim() ? body[key].trim() : null;
-}
-
 export async function PATCH(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const body = await request.json().catch(() => ({}));
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return careError('INVALID_BODY', 'Не удалось прочитать изменение записи.', 400);
   const idempotencyKey = readCareIdempotencyKey(request, body);
   if (!idempotencyKey) return careError('IDEMPOTENCY_KEY_REQUIRED', 'Не удалось безопасно сохранить запись.', 400);
   const patch: Record<string, unknown> = {};
@@ -106,17 +92,23 @@ export async function PATCH(request: Request, ctx: Ctx) {
     patch.metadata = body.metadata;
   }
 
-  const metricPatch = quickMetricTypes.reduce<Record<string, string>>((acc, key) => {
-    const value = quickMetricValue(body, key);
-    if (value) acc[key] = value;
-    return acc;
-  }, {});
+  const hasAllMetrics = quickMetricTypes.every(key => Object.hasOwn(body, key));
+  const metricPatch: Record<string, string> = {};
+  for (const key of quickMetricTypes) {
+    if (!Object.hasOwn(body, key)) continue;
+    if (typeof body[key] !== 'string') return careError('INVALID_METRIC', 'Показатель должен быть текстом.', 400);
+    const value = body[key].trim();
+    // Clearing needs a complete reviewed snapshot to derive a consistent primary value.
+    if (!value && !hasAllMetrics) return careError('INCOMPLETE_METRIC_CLEAR', 'Для изменения загрузите всю запись.', 400);
+    metricPatch[key] = value;
+  }
   if (Object.keys(metricPatch).length > 0) {
     patch.metadata = { ...(patch.metadata as Record<string, unknown> | undefined), ...metricPatch };
     if (body.type === undefined && body.value === undefined) {
-      const [primaryType, primaryValue] = Object.entries(metricPatch)[0];
-      patch.type = primaryType;
-      patch.value = primaryValue;
+      const primary = Object.entries(metricPatch).find(([, value]) => value);
+      if (primary) { patch.type = primary[0]; patch.value = primary[1]; }
+      else if (typeof body.note === 'string' && body.note.trim()) { patch.type = 'note'; patch.value = body.note.trim(); }
+      else return careError('EMPTY_OBSERVATION', 'Оставьте текст или хотя бы один показатель.', 400);
     }
   }
 
@@ -124,7 +116,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
 
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
-  const supabase = auth.supabase ?? getSupabaseAdmin();
+  const supabase = getSupabaseAdmin();
   const ownerId = auth.user?.id ?? appSession?.ownerId;
 
   if (!supabase) {
@@ -140,22 +132,15 @@ export async function PATCH(request: Request, ctx: Ctx) {
 
   if (!ownerId) return careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401);
 
-  const owned = await ownedObservation(supabase, ownerId, id);
-  if (owned.error?.code === '42P01') return NextResponse.json({ error: 'OBSERVATIONS_SCHEMA_NOT_READY' }, { status: 503 });
-  if (owned.error) return NextResponse.json({ error: 'OBSERVATION_NOT_FOUND' }, { status: 404 });
-  if (patch.metadata) patch.metadata = { ...(owned.data.metadata ?? {}), ...(patch.metadata as Record<string, unknown>) };
-
   const fingerprint = careRequestFingerprint({ id, patch });
   try {
-    const claim = await beginCareMutation({ supabase, ownerId, idempotencyKey, operation: 'observation:update', fingerprint });
-    if (claim.replayed) return NextResponse.json(claim.response);
-    const { data, error } = await supabase.from('pet_observations').update(patch).eq('id', id).select('*').single();
+    const { data, error } = await supabase.rpc('care_observation_atomic', {
+      p_owner_id: ownerId, p_idempotency_key: idempotencyKey,
+      p_request_fingerprint: fingerprint, p_action: 'update', p_target_id: id, p_patch: patch,
+    });
     if (error) throw error;
-    const response = { observation: mapObservation(data), mode: 'supabase' };
-    await finishCareMutation({ supabase, ownerId, idempotencyKey, response });
-    return NextResponse.json(response);
+    return NextResponse.json({ ...data, observation: data.observation?.pet_id ? mapObservation(data.observation) : data.observation });
   } catch (error) {
-    await abortCareMutation({ supabase, ownerId, idempotencyKey });
     return careMutationError(error);
   }
 }
@@ -163,32 +148,26 @@ export async function PATCH(request: Request, ctx: Ctx) {
 export async function DELETE(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const body = await request.json().catch(() => ({}));
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return careError('INVALID_BODY', 'Не удалось прочитать изменение записи.', 400);
   const idempotencyKey = readCareIdempotencyKey(request, body);
   if (!idempotencyKey) return careError('IDEMPOTENCY_KEY_REQUIRED', 'Не удалось безопасно убрать запись.', 400);
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
-  const supabase = auth.supabase ?? getSupabaseAdmin();
+  const supabase = getSupabaseAdmin();
   const ownerId = auth.user?.id ?? appSession?.ownerId;
 
   if (!supabase) return NextResponse.json({ ok: true, ...demoModeResponse('Connect Supabase to persist observations.') });
   if (!ownerId) return careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401);
 
-  const owned = await ownedObservation(supabase, ownerId, id);
-  if (owned.error?.code === '42P01') return NextResponse.json({ error: 'OBSERVATIONS_SCHEMA_NOT_READY' }, { status: 503 });
-  if (owned.error) return NextResponse.json({ error: 'OBSERVATION_NOT_FOUND' }, { status: 404 });
-
-  const deletedAt = new Date().toISOString();
   const fingerprint = careRequestFingerprint({ id });
   try {
-    const claim = await beginCareMutation({ supabase, ownerId, idempotencyKey, operation: 'observation:delete', fingerprint });
-    if (claim.replayed) return NextResponse.json(claim.response);
-    const result = await supabase.from('pet_observations').update({ deleted_at: deletedAt }).eq('id', id);
-    if (result.error) throw result.error;
-    const response = { ok: true, deletedAt, canRestore: true };
-    await finishCareMutation({ supabase, ownerId, idempotencyKey, response });
-    return NextResponse.json(response);
+    const { data, error } = await supabase.rpc('care_observation_atomic', {
+      p_owner_id: ownerId, p_idempotency_key: idempotencyKey,
+      p_request_fingerprint: fingerprint, p_action: 'delete', p_target_id: id, p_patch: {},
+    });
+    if (error) throw error;
+    return NextResponse.json(data);
   } catch (error) {
-    await abortCareMutation({ supabase, ownerId, idempotencyKey });
     return careMutationError(error);
   }
 }

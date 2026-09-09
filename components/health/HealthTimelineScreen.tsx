@@ -1,13 +1,16 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { ArrowLeft, CaretLeft, CaretRight, Heartbeat } from '@phosphor-icons/react';
+import { useMemo, useRef, useState } from 'react';
+import { ArrowLeft, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { ObservationEditor, type ObservationEditorDraft } from '@/components/care/ObservationEditor';
-import { ObservationMetricFields, observationMetricCount, observationMetricDefinitions } from '@/components/health/ObservationMetricFields';
+import { ObservationMetricFields, observationMetricDefinitions } from '@/components/health/ObservationMetricFields';
+import { isPrimaryObservationFact, observationTypeLabel } from '@/lib/observationLabels';
+import styles from './HealthTimeline.module.css';
 import { parasiteOptions, vaccineOptions } from '@/lib/data';
 
 export type HealthEntryView = {
   id: string;
+  type?:string;value?:string;
   mood?: string;
   appetite?: string;
   stool?: string;
@@ -73,6 +76,7 @@ export function HealthTimelineScreen({
   facts,
   onFactChange,
   onSaveFacts,
+  loading,hasMore,onLoadMore,captureOpen,onCaptureOpen,issue,recentlyDeleted,onRestore,factsError,factsSaving,
 }: {
   dogName: string;
   entries: HealthEntryView[];
@@ -81,7 +85,7 @@ export function HealthTimelineScreen({
   error?: string;
   onBack: () => void;
   onDraftChange: (patch: Partial<ObservationEditorDraft>) => void;
-  onSave: () => Promise<void>;
+  onSave: () => Promise<HealthEntryView|null>;
   onRetry: () => Promise<void>;
   editingId: string | null;
   editDraft: ObservationEditorDraft;
@@ -94,8 +98,14 @@ export function HealthTimelineScreen({
   facts: { allergies: string; medication: string; vaccineStatus: string; parasiteStatus: string; healthNotes: string };
   onFactChange: (patch: Partial<typeof facts>) => void;
   onSaveFacts: () => Promise<void>;
+  loading:boolean;hasMore:boolean;onLoadMore:()=>Promise<void>;
+  captureOpen:boolean;onCaptureOpen:(open:boolean)=>void;
+  issue:{scope:string;message:string}|null;
+  recentlyDeleted:boolean;onRestore:()=>Promise<void>;factsError:string;factsSaving:boolean;
 }) {
-  const selectedMetricCount = observationMetricCount(draft);
+  const captureTrigger=useRef<HTMLButtonElement>(null);
+  const [calendarOpen,setCalendarOpen]=useState(false);
+  const [savedMessage,setSavedMessage]=useState('');
   const [today] = useState(() => new Date());
   const latestDay = useMemo(() => entries.reduce<string | null>((latest, entry) => {
     const key = dayKey(entry.createdAt);
@@ -112,16 +122,15 @@ export function HealthTimelineScreen({
     return counts;
   }, new Map()), [entries]);
   const selectedDayEntries = useMemo(() => entries
-    .filter((entry) => dayKey(entry.createdAt) === selectedDay)
+    .filter((entry) => !calendarOpen || dayKey(entry.createdAt) === selectedDay)
     .slice()
-    .sort((left, right) => Date.parse(left.createdAt) - Date.parse(right.createdAt)), [entries, selectedDay]);
+    .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt)), [entries, selectedDay, calendarOpen]);
   const firstWeekday = (new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1).getDay() + 6) % 7;
   const daysInMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0).getDate();
 
   const selectDay = (date: Date) => {
     setSelectedDayOverride(dayKey(date));
     setVisibleMonthOverride(new Date(date.getFullYear(), date.getMonth(), 1));
-    onCancelEdit();
   };
 
   const moveMonth = (offset: number) => {
@@ -136,49 +145,40 @@ export function HealthTimelineScreen({
       .at(-1);
     setVisibleMonthOverride(nextMonth);
     setSelectedDayOverride(observedDay || dayKey(nextMonth));
-    onCancelEdit();
   };
 
   return (
-    <section className="module-screen health-screen" aria-labelledby="health-screen-title">
-      <button className="journal-screen-back" type="button" onClick={onBack}><ArrowLeft weight="bold" aria-hidden="true" /> На главную</button>
+    <section className={`module-screen health-screen ${styles.screen}`} aria-labelledby="health-screen-title">
+      <button className="journal-screen-back" type="button" onClick={onBack}><ArrowLeft weight="bold" aria-hidden="true" /> Назад</button>
       <header className="module-screen-heading">
-        <span className="module-screen-icon"><Heartbeat weight="duotone" aria-hidden="true" /></span>
-        <div><h1 id="health-screen-title">Здоровье {dogName}</h1><p>{entries.length ? `${observationCountLabel(entries.length)} владельца` : 'Наблюдений пока нет'}</p></div>
+        <div><p>{dogName}</p><h1 id="health-screen-title">Записи и здоровье</h1></div>
       </header>
-
-      {error && <div className="module-error" role="alert"><b>История не загрузилась</b><p>{error}</p><button type="button" onClick={() => void onRetry()}>Повторить</button></div>}
-
-      <form className="health-capture" onSubmit={async (event) => {
-        event.preventDefault();
-        await onSave();
-        const now = new Date();
-        setSelectedDayOverride(dayKey(now));
-        setVisibleMonthOverride(new Date(now.getFullYear(), now.getMonth(), 1));
+      <button ref={captureTrigger} className="health-add" type="button" aria-expanded={captureOpen} aria-controls="health-capture" onClick={()=>{setSavedMessage('');onCaptureOpen(!captureOpen);}}>{captureOpen?'Свернуть запись':'Добавить запись'}</button>
+      <p className="health-save-status" role="status">{savedMessage}</p>
+      {captureOpen && <form id="health-capture" className="health-capture" onSubmit={async event=>{
+        event.preventDefault();const saved=await onSave();
+        if(!saved)return;
+        selectDay(new Date(saved.createdAt));onCaptureOpen(false);setSavedMessage('Запись сохранена.');captureTrigger.current?.focus();
       }}>
-        <header className="health-capture-heading"><div><h3>Новая отметка</h3><p>Отметь только факты. Незаполненные показатели останутся пустыми.</p></div><span className="health-capture-progress" aria-label={`${selectedMetricCount} из 4 показателей отмечено`}>{selectedMetricCount}/4</span></header>
-        <ObservationMetricFields values={draft} onChange={onDraftChange} />
-        <details className="health-capture-context">
-          <summary><span>Добавить контекст</span><small>необязательно</small></summary>
-          <label><span className="sr-only">Контекст наблюдения</span><textarea value={draft.note || ''} onChange={(event) => onDraftChange({ note: event.target.value })} placeholder="Например, после долгой прогулки или смены корма" /></label>
-        </details>
-        <button className="primary" type="submit" disabled={saving || !draft.mood && !draft.appetite && !draft.stool && !draft.energy && !draft.note?.trim()}>{saving ? 'Сохраняю…' : 'Записать наблюдение'}</button>
-      </form>
+        <fieldset disabled={saving||mutationBusy}>
+          <label>Текст записи<textarea value={draft.note||''} maxLength={8000} onChange={event=>onDraftChange({note:event.target.value})} placeholder="Что хочется запомнить?" /></label>
+          <details className="health-capture-context"><summary>Показатели · по желанию</summary><ObservationMetricFields values={draft} onChange={onDraftChange}/></details>
+          {issue?.scope==='create'&&<p role="alert">{issue.message}</p>}
+          <button className="primary" type="submit" disabled={!draft.mood&&!draft.appetite&&!draft.stool&&!draft.energy&&!draft.note?.trim()}>{saving?'Сохраняю…':'Записать наблюдение'}</button>
+        </fieldset>
+      </form>}
+      {recentlyDeleted&&<div className="health-restore" role="status">Запись убрана. <button type="button" disabled={saving||mutationBusy} onClick={()=>void onRestore()}>Вернуть запись</button>{issue?.scope==='restore'&&<p role="alert">{issue.message}</p>}</div>}
 
-      <details className="health-facts">
-        <summary>Постоянные данные здоровья</summary>
-        <div className="module-form">
-          <label>Аллергии<input value={facts.allergies} onChange={(event) => onFactChange({ allergies: event.target.value })} placeholder="Если есть" /></label>
-          <label>Лекарства<input value={facts.medication} onChange={(event) => onFactChange({ medication: event.target.value })} placeholder="Только как заметка владельца" /></label>
-          <label>Прививки<select value={facts.vaccineStatus} onChange={(event) => onFactChange({ vaccineStatus: event.target.value })}><option value="">Не указано</option>{vaccineOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-          <label>Обработки<select value={facts.parasiteStatus} onChange={(event) => onFactChange({ parasiteStatus: event.target.value })}><option value="">Не указано</option>{parasiteOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-          <label>Заметки<textarea value={facts.healthNotes} onChange={(event) => onFactChange({ healthNotes: event.target.value })} placeholder="Факты владельца, без самодиагноза" /></label>
-          <button className="primary" type="button" disabled={saving} onClick={() => void onSaveFacts()}>Сохранить постоянные данные</button>
-        </div>
-      </details>
 
+
+      {editingId && !selectedDayEntries.some(entry => entry.id === editingId) && <aside role="status">
+        <p>Черновик записи остался здесь.</p>
+        <button type="button" onClick={() => { const entry = entries.find(item => item.id === editingId); if (entry) selectDay(new Date(entry.createdAt)); }}>Вернуться к редактированию</button>
+      </aside>}
       <section className="health-timeline health-calendar" aria-label="История наблюдений" data-observation-calendar>
-        <header className="health-timeline-heading"><div><h3>Календарь наблюдений</h3><p>{entries.length ? 'Выбери день — ниже будут только его отметки.' : 'Первая отметка появится в календаре.'}</p></div>{entries.length > 0 && <span>{entries.length}</span>}</header>
+        <header className="health-timeline-heading"><h2>История</h2>{loading&&<span role="status">Загружаю…</span>}</header>
+        {error&&<div className="module-error" role="alert"><p>{error}</p><button type="button" disabled={loading} onClick={()=>void onRetry()}>Повторить загрузку</button></div>}
+        <details className="health-date-filter" onToggle={event=>setCalendarOpen(event.currentTarget.open)}><summary>Выбрать день</summary>
         <div className="health-calendar-panel">
           <header className="health-calendar-toolbar">
             <button type="button" aria-label="Предыдущий месяц" onClick={() => moveMonth(-1)}><CaretLeft weight="bold" aria-hidden="true" /></button>
@@ -198,7 +198,7 @@ export function HealthTimelineScreen({
                 type="button"
                 key={key}
                 className={`${isSelected ? 'is-selected' : ''}${count ? ' has-observations' : ''}`}
-                aria-label={`${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}${count ? `, наблюдений: ${count}` : ', наблюдений нет'}`}
+                aria-label={`${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}${count ? `, наблюдений: ${count}` : hasMore ? ', старые записи могут быть не загружены' : ', наблюдений нет'}`}
                 aria-pressed={isSelected}
                 data-today={isToday || undefined}
                 onClick={() => selectDay(date)}
@@ -207,24 +207,40 @@ export function HealthTimelineScreen({
           </div>
         </div>
 
-        <header className="health-selected-day-heading">
-          <div><h4>{capitalizeFirst(selectedDate.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }))}</h4><p>{selectedDayEntries.length ? observationCountLabel(selectedDayEntries.length) : 'Без отметок'}</p></div>
-        </header>
-        {!error && selectedDayEntries.length ? selectedDayEntries.map((entry) => {
-          const recorded = observationMetricCount(entry);
+        </details>
+        {calendarOpen&&<header className="health-selected-day-heading">
+          <div><h4>{capitalizeFirst(selectedDate.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }))}</h4><p>{selectedDayEntries.length ? observationCountLabel(selectedDayEntries.length) : hasMore?'Старые записи ещё могут быть не загружены':'Без записей'}</p></div>
+        </header>}
+        {selectedDayEntries.length ? selectedDayEntries.map((entry) => {
           const when = observationDate(entry.createdAt);
-          return <article key={entry.id}>
-          {editingId === entry.id ? <ObservationEditor draft={editDraft} busy={mutationBusy} onChange={onEditDraftChange} onCancel={onCancelEdit} onSave={() => onSaveEdit(entry.id)} /> : <>
-            <header className="health-observation-heading"><time dateTime={entry.createdAt}><b>{when.time}</b></time><span>{recorded ? `${recorded} из 4` : 'без показателей'}</span></header>
-            <dl className="health-observation-grid" data-observation-metrics>
-              {observationMetricDefinitions.map(({ key, label }) => <div key={key} data-state={entry[key] ? 'recorded' : 'empty'}><dt>{label}</dt><dd>{entry[key] || 'не отмечено'}</dd></div>)}
-            </dl>
-            {entry.note && <details className="health-observation-context"><summary>Контекст владельца <span>открыть</span></summary><p>{entry.note}</p></details>}
-            <div className="care-row-actions health-observation-actions"><button type="button" disabled={mutationBusy} onClick={() => onStartEdit(entry)}>Изменить</button><button type="button" className="danger-action" disabled={mutationBusy} onClick={() => void onDelete(entry.id)}>Убрать</button></div>
+          return <article key={entry.id} data-observation-id={entry.id}>
+          {editingId === entry.id ? <ObservationEditor draft={editDraft} busy={mutationBusy||saving} onChange={onEditDraftChange} onCancel={onCancelEdit} onSave={() => onSaveEdit(entry.id)} /> : <>
+            <header className="health-observation-heading"><time dateTime={entry.createdAt}>{when.date} · {when.time}</time></header>
+            {entry.note&&<p className="health-record-text">{entry.note}</p>}
+            {isPrimaryObservationFact(entry.type)&&entry.value&&<p className="health-record-text"><span>{observationTypeLabel(entry.type)}: </span>{entry.value}</p>}
+            {observationMetricDefinitions.some(({key})=>entry[key])&&<dl className="health-observation-grid" data-observation-metrics>
+              {observationMetricDefinitions.filter(({key})=>entry[key]).map(({ key, label }) => <div key={key} data-state={entry[key] ? 'recorded' : 'empty'}><dt>{label}</dt><dd>{entry[key]}</dd></div>)}
+            </dl>}
+
+            <div className="care-row-actions health-observation-actions"><button type="button" disabled={mutationBusy||saving} onClick={() => onStartEdit(entry)}>Изменить</button><button type="button" className="danger-action" disabled={mutationBusy||saving} onClick={() => void onDelete(entry.id)}>Убрать</button></div>
           </>}
+          {issue?.scope===entry.id&&<p role="alert">{issue.message}</p>}
         </article>;
-        }) : !error ? <div className="module-empty"><b>В этот день отметок нет</b><p>Можно выбрать другой день или добавить новую отметку выше.</p></div> : null}
+        }) : !error&&!loading ? <div className="module-empty"><p>{hasMore?'В загруженных записях этого дня нет. Можно открыть более ранние.':calendarOpen?'В этот день записей нет.':'Записей пока нет. Сохраните то, что важно вам.'}</p></div> : null}
+        {hasMore&&<button className="health-more" type="button" disabled={loading||saving||mutationBusy} onClick={()=>void onLoadMore()}>{loading?'Загружаю…':'Загрузить более ранние'}</button>}
       </section>
+      <details className="health-facts">
+        <summary>Постоянные данные здоровья</summary>
+        <fieldset className="module-form" disabled={factsSaving}>
+          <label>Аллергии<input value={facts.allergies} onChange={(event) => onFactChange({ allergies: event.target.value })} placeholder="Если есть" /></label>
+          <label>Лекарства<input value={facts.medication} onChange={(event) => onFactChange({ medication: event.target.value })} placeholder="Только как заметка владельца" /></label>
+          <label>Прививки<select value={facts.vaccineStatus} onChange={(event) => onFactChange({ vaccineStatus: event.target.value })}><option value="">Не указано</option>{vaccineOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+          <label>Обработки<select value={facts.parasiteStatus} onChange={(event) => onFactChange({ parasiteStatus: event.target.value })}><option value="">Не указано</option>{parasiteOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+          <label>Заметки<textarea value={facts.healthNotes} onChange={(event) => onFactChange({ healthNotes: event.target.value })} placeholder="Факты владельца, без самодиагноза" /></label>
+          <button className="primary" type="button" disabled={factsSaving} onClick={() => void onSaveFacts()}>Сохранить постоянные данные</button>
+          {factsError&&<p role="alert">{factsError}</p>}
+        </fieldset>
+      </details>
     </section>
   );
 }
