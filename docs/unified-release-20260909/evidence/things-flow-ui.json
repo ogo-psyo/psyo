@@ -1,0 +1,38 @@
+[
+  {
+    "engine": "chromium",
+    "width": 320,
+    "pass": true,
+    "api": "synthetic, real client flow; not cloud/RLS/provider proof"
+  },
+  {
+    "engine": "chromium",
+    "width": 390,
+    "pass": true,
+    "api": "synthetic, real client flow; not cloud/RLS/provider proof"
+  },
+  {
+    "engine": "chromium",
+    "width": 1280,
+    "pass": true,
+    "api": "synthetic, real client flow; not cloud/RLS/provider proof"
+  },
+  {
+    "engine": "webkit",
+    "width": 320,
+    "pass": true,
+    "api": "synthetic, real client flow; not cloud/RLS/provider proof"
+  },
+  {
+    "engine": "webkit",
+    "width": 390,
+    "pass": true,
+    "api": "synthetic, real client flow; not cloud/RLS/provider proof"
+  },
+  {
+    "engine": "webkit",
+    "width": 1280,
+    "pass": true,
+    "api": "synthetic, real client flow; not cloud/RLS/provider proof"
+  }
+]

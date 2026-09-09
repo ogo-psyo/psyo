@@ -7,6 +7,7 @@ import { ChangeEvent, type FormEvent, useCallback, useEffect, useLayoutEffect, u
 import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, CopySimple, FilePdf, Files, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning, TextT, UploadSimple } from '@phosphor-icons/react';
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { WatercolorScreen } from '@/components/watercolor';
+import { normalizeWishlistReceipt, type WishlistView } from '@/lib/wishlistView';
 import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
 import { journalDayEntries } from '@/lib/journal';
 import { ConnectedHome, ConnectedTools } from '@/components/app/ConnectedHome';
@@ -83,7 +84,6 @@ type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' 
 type ReminderTimeMode = 'exact' | 'flexible' | 'approximate';
 type ReminderView = { id: string; petId: string; type: string; title: string; dueAt: string; recurrence?: ReminderRecurrence; status: string; snoozedUntil?: string; completedAt?: string; nextDueAt?: string };
 type ReminderHistoryItem = { id: string; eventType?: string; payload?: { dueAt?: string; completedAt?: string; nextDueAt?: string | null }; createdAt: string };
-type WishlistView = { id: string; petId: string; title: string; category: string; reason?: string; url?: string; priority: string; status: string; plannedFor?: string; reminderId?: string; createdAt?: string; created_at?: string };
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; visibility?: 'private' | 'shared' | 'public'; share_token?: string | null; created_at?: string };
 type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; avatar_source?: 'none' | 'uploaded' | 'generated'; active_avatar_asset_id?: string | null; photo_urls?: string[] };
 type AuthSession = { access_token: string; user: { email?: string } };
@@ -537,9 +537,14 @@ export default function Home() {
   const [reminders, setReminders] = useState<ReminderView[]>([]);
   const [wishlist, setWishlist] = useState<WishlistView[]>([]);
   const [zones, setZones] = useState<ZoneView[]>([]);
+  type WishlistOperation = { petId: string; scope: string; token: string };
+  const wishlistOperation = useRef<WishlistOperation | null>(null);
+  const [wishlistWriting, setWishlistWriting] = useState<WishlistOperation | null>(null);
+  const [wishlistIssue, setWishlistIssue] = useState<{petId: string; scope: string; message: string} | null>(null);
   const [removedWishlistItem, setRemovedWishlistItem] = useState<WishlistView | null>(null);
   const [removedZone, setRemovedZone] = useState<ZoneView | null>(null);
   const [editingWishlistId, setEditingWishlistId] = useState<string | null>(null);
+  const wishlistEditDrafts = useRef(new Map<string,{title:string;reason:string}>());
   const [wishlistTitleDraft, setWishlistTitleDraft] = useState('');
   const [wishlistReasonDraft, setWishlistReasonDraft] = useState('');
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
@@ -632,7 +637,7 @@ export default function Home() {
   const [pendingRouteDeletion, setPendingRouteDeletion] = useState<OwnerRouteView | null>(null);
   const [newWishTitle, setNewWishTitle] = useState('');
   const [newWishReason, setNewWishReason] = useState('');
-  const [newWishCategory, setNewWishCategory] = useState('gear');
+  const [newWishCategory, setNewWishCategory] = useState('other');
   const [newWishNeedsReminder, setNewWishNeedsReminder] = useState(false);
   const [newWishPlannedFor, setNewWishPlannedFor] = useState(() => dateAfterDays(1));
   const [thingCaptureOpen, setThingCaptureOpen] = useState(false);
@@ -1748,6 +1753,8 @@ export default function Home() {
   const isJourneyRoute = ['today', 'all', 'diary', 'profile', 'map', 'nearby', 'things'].includes(tab) && journeyDetail !== tab;
   const activeReminders = useMemo(() => reminders.filter((reminder) => reminder.status !== 'done'), [reminders]);
   const doneReminders = useMemo(() => reminders.filter((reminder) => reminder.status === 'done'), [reminders]);
+  const wishlistBusy = wishlistWriting?.petId === (profile.backendPetId || activePetId || 'guest');
+  const wishlistError = wishlistIssue?.petId === (profile.backendPetId || activePetId || 'guest') ? wishlistIssue : null;
   const wantedWishlist = useMemo(() => wishlist.filter((item) => item.status !== 'bought' && item.status !== 'not_suitable'), [wishlist]);
   const boughtWishlist = useMemo(() => wishlist.filter((item) => item.status === 'bought'), [wishlist]);
   const profileChecklist = useMemo(() => [
@@ -1966,6 +1973,7 @@ export default function Home() {
     : billing?.upgrade?.available ? 'Оплата готова через Telegram.' : 'Оплата пока недоступна.';
 
   function resetPetScopedDrafts() {
+    wishlistOperation.current = null; wishlistEditDrafts.current.clear(); setWishlistWriting(null); setWishlistIssue(null); setEditingWishlistId(null); setRemovedWishlistItem(null);
     setRecordDetail(null);
     setProfileSurface('overview');
     secondaryOrigins.current = [];
@@ -1997,7 +2005,7 @@ export default function Home() {
     setRoutePoints([]);
     setMapRouteMeta(null);
     setNewWishTitle('');
-    setNewWishReason('');
+    setNewWishReason(''); setNewWishCategory('other'); setNewWishNeedsReminder(false); setNewWishPlannedFor(dateAfterDays(1));
     setThingCaptureOpen(false);
     setSocialProfile(null);
     setSocialCandidates({ nearby: [], city: [] });
@@ -2879,6 +2887,7 @@ export default function Home() {
     }
   }
   async function signOut() {
+    wishlistOperation.current = null; setWishlistWriting(null); setWishlistIssue(null);
     await getSupabaseBrowser()?.auth.signOut();
     await fetch('/api/v1/session/logout', { method: 'POST', credentials: 'include' }).catch(() => null);
     setSession(null);
@@ -2948,34 +2957,54 @@ export default function Home() {
     }
   }
 
+  async function performWishlistChange(scope: string, task: (isCurrent: () => boolean) => Promise<boolean>) {
+    const petId = profile.backendPetId || activePetId || 'guest';
+    if (wishlistOperation.current?.petId === petId) return false;
+    const operation = {petId, scope, token: crypto.randomUUID()};
+    const originalPet = profile.backendPetId;
+    wishlistOperation.current = operation; setWishlistWriting(operation); setWishlistIssue(null);
+    const isCurrent = () => wishlistOperation.current?.token === operation.token && documentActivePet.current === originalPet;
+    try { return await task(isCurrent); }
+    catch { if (isCurrent()) setWishlistIssue({petId,scope,message:'Не удалось подтвердить изменение. Ввод сохранён — проверь связь и повтори.'}); return false; }
+    finally { if (wishlistOperation.current?.token === operation.token) { wishlistOperation.current = null; setWishlistWriting(null); } }
+  }
+
+  function reportWishlistError(message: string) {
+    const operation = wishlistOperation.current;
+    if (operation) setWishlistIssue({petId:operation.petId,scope:operation.scope,message});
+  }
+
   async function createWishlistItem(preset?: { title: string; category?: string; reason?: string; priority?: string; plannedFor?: string; source?: 'assistant' | 'manual' }) {
+    return performWishlistChange(preset ? 'assistant:create' : 'create', async isCurrent => {
     const title = (preset?.title || newWishTitle).trim();
-    if (!title) { setError('Добавь название позиции.'); return false; }
-    setError('');
-    const plannedFor = preset?.plannedFor || (newWishNeedsReminder ? newWishPlannedFor : undefined);
+    if (!title) { reportWishlistError('Добавь название позиции.'); return false; }
+    setWishlistIssue(null);
+    const plannedFor = preset ? preset.plannedFor : (newWishNeedsReminder ? newWishPlannedFor : undefined);
     const dueAt = plannedFor ? reminderDueAt(plannedFor, '12:00', 'flexible') : undefined;
     if (!profile.backendPetId) {
-      if (!isGuestMode()) { setError('Сначала сохрани профиль собаки.'); return false; }
+      if (!isGuestMode()) { reportWishlistError('Сначала сохрани профиль собаки.'); return false; }
       ensureGuestPetId();
     }
     if (isGuestMode()) {
       const petId = ensureGuestPetId();
       const reminderId = plannedFor ? guestId('reminder') : undefined;
-      const wishlistItem: WishlistView = { id: guestId('wish'), petId, title, category: preset?.category || newWishCategory, reason: preset?.reason || newWishReason || undefined, priority: preset?.priority || 'medium', status: 'wanted', plannedFor, reminderId, createdAt: new Date().toISOString() };
+      const wishlistItem: WishlistView = { id: guestId('wish'), petId, title, category: preset?.category || (preset ? 'other' : newWishCategory), reason: preset ? preset.reason : newWishReason || undefined, priority: preset?.priority || 'medium', status: 'wanted', plannedFor, reminderId, createdAt: new Date().toISOString() };
       setWishlist((current) => [wishlistItem, ...current]);
       if (plannedFor && reminderId && dueAt) {
         setReminders((current) => [{ id: reminderId, petId, type: wishlistItem.category === 'food' ? 'food' : 'custom', title: wishlistReminderTitle(title), dueAt, recurrence: 'none', status: 'active' }, ...current]);
       }
+      if (!preset) {
       setNewWishTitle('');
       setNewWishReason('');
       setNewWishNeedsReminder(false);
       setNewWishPlannedFor(dateAfterDays(1));
       setThingCaptureOpen(false);
+      }
       return true;
     }
     try {
-      const category = preset?.category || newWishCategory;
-      const reason = preset?.reason || newWishReason || null;
+      const category = preset?.category || (preset ? 'other' : newWishCategory);
+      const reason = preset ? preset.reason || null : newWishReason || null;
       const recommendationId = mainRecommendation?.status === 'accepted'
         && mainRecommendation.primaryAction.intent === 'add_wishlist'
         && mainRecommendation.primaryAction.draft.title === title
@@ -2983,22 +3012,29 @@ export default function Home() {
         && mainRecommendation.primaryAction.draft.reason === reason
         ? mainRecommendation.id
         : undefined;
-      const scope = `wishlist:create:${profile.backendPetId}:${title}:${category}:${plannedFor || 'unplanned'}`;
+      const scope = `wishlist:create:${JSON.stringify([profile.backendPetId,title,category,reason,preset?.priority || 'medium',plannedFor,dueAt])}`;
       const response = await fetch('/api/wishlist', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
         body: JSON.stringify({ petId: profile.backendPetId, title, category, reason, priority: preset?.priority || 'medium', plannedFor, dueAt, recommendationId, source: preset?.source || 'manual' }),
       });
-      await response.json().catch(() => ({}));
-      if (!response.ok) { setError('Покупка не сохранилась. Всё введённое осталось в форме — проверь связь и попробуй снова.'); return false; }
-      setNewWishTitle(''); setNewWishReason(''); setNewWishNeedsReminder(false); setNewWishPlannedFor(dateAfterDays(1)); setThingCaptureOpen(false);
-      await loadBootstrap();
+      const payload = await response.json().catch(() => ({}));
+      if (!isCurrent()) return false;
+      if (!response.ok) { reportWishlistError('Не удалось подтвердить покупку. Ввод сохранён — повтори попытку.'); return false; }
+      if (payload.mode === 'demo') throw new Error('PERSISTENCE_UNAVAILABLE');
+      const saved = normalizeWishlistReceipt(payload.item, profile.backendPetId!);
+      if (!saved) throw new Error('INVALID_WISHLIST_RECEIPT');
+      setWishlist(current => [saved, ...current.filter(item => item.id !== saved.id)]);
+      if (payload.reminder?.id && payload.reminder?.petId === profile.backendPetId) setReminders(current => [payload.reminder, ...current.filter(item => item.id !== payload.reminder.id)]);
+      if (!preset) { setNewWishTitle(''); setNewWishCategory('other'); setNewWishReason(''); setNewWishNeedsReminder(false); setNewWishPlannedFor(dateAfterDays(1)); setThingCaptureOpen(false); }
       finishCareMutation(scope);
       finishRecommendationOutcome(recommendationId);
       return true;
     } catch {
-      setError('Покупка не сохранилась. Всё введённое осталось в форме — проверь связь и попробуй снова.');
+      if (!isCurrent()) return false;
+      reportWishlistError('Не удалось подтвердить покупку. Ввод сохранён — повтори попытку.');
       return false;
     }
+    });
   }
 
   function openWishlistPlan(item: WishlistView) {
@@ -3015,11 +3051,7 @@ export default function Home() {
 
   async function completeWishlistItem(item: WishlistView) {
     if (!item.reminderId) return updateWishlistItem(item.id, { status: 'bought' });
-    const completed = await completeReminder(item.reminderId);
-    if (completed && isGuestMode()) {
-      setWishlist((current) => current.map((entry) => entry.id === item.id ? { ...entry, status: 'bought' } : entry));
-    }
-    return completed;
+    return performWishlistChange(item.id, isCurrent => completeReminder(item.reminderId!, reportWishlistError, isCurrent));
   }
 
   async function createZone(preset?: { title: string; type?: string; note?: string; radiusMeters?: number; approximateLat?: number; approximateLng?: number }) {
@@ -3331,10 +3363,17 @@ export default function Home() {
     await loadBootstrap();
   }
 
+  function beginWishlistEdit(item: WishlistView) {
+    const draft = wishlistEditDrafts.current.get(item.id);
+    setEditingWishlistId(item.id); setWishlistTitleDraft(draft?.title ?? item.title); setWishlistReasonDraft(draft?.reason ?? item.reason ?? '');
+    requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.wishlist-edit-form input')?.focus());
+  }
+
   async function updateWishlistItem(id: string, patch: Partial<WishlistView>) {
+    return performWishlistChange(id, async isCurrent => {
     if (isGuestMode()) {
       setWishlist((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
-      setEditingWishlistId(null);
+      wishlistEditDrafts.current.delete(id); setEditingWishlistId(null);
       return true;
     }
     try {
@@ -3343,21 +3382,27 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(patch),
       });
-      await response.json().catch(() => ({}));
+      const payload = await response.json().catch(() => ({}));
+      if (!isCurrent()) return false;
       if (!response.ok) {
-        setError('Не удалось обновить вещь. Изменения остались в форме.');
+        reportWishlistError('Не удалось подтвердить изменение вещи. Ввод сохранён — повтори попытку.');
         return false;
       }
-      await loadBootstrap();
-      setEditingWishlistId(null);
+      const saved = normalizeWishlistReceipt(payload.item, profile.backendPetId!, id);
+      if (!saved) throw new Error('INVALID_WISHLIST_RECEIPT');
+      setWishlist(current => current.map(item => item.id === id ? saved : item));
+      wishlistEditDrafts.current.delete(id); setEditingWishlistId(null);
       return true;
     } catch {
-      setError('Не удалось обновить вещь. Проверь соединение и попробуй снова.');
+      if (!isCurrent()) return false;
+      reportWishlistError('Не удалось подтвердить изменение вещи. Ввод сохранён — повтори попытку.');
       return false;
     }
+    });
   }
 
   async function deleteWishlistItem(id: string) {
+    return performWishlistChange(id, async isCurrent => {
     const item = wishlist.find((entry) => entry.id === id);
     if (isGuestMode()) {
       setWishlist((current) => current.filter((entry) => entry.id !== id));
@@ -3365,27 +3410,37 @@ export default function Home() {
         setReminders((current) => current.filter((reminder) => reminder.id !== item.reminderId));
       }
       if (item) setRemovedWishlistItem({ ...item, plannedFor: undefined, reminderId: undefined });
-      return;
+      return true;
     }
     const response = await fetch(`/api/wishlist/${id}`, { method: 'DELETE', headers: authHeaders() });
     await response.json().catch(() => ({}));
-    if (!response.ok) return setError('Не удалось удалить вещь');
-    if (item) setRemovedWishlistItem(item);
-    await loadBootstrap();
+      if (!isCurrent()) return false;
+    if (!response.ok) { reportWishlistError('Не удалось убрать вещь. Попробуй ещё раз.'); return false; }
+    if (item) setRemovedWishlistItem({...item, plannedFor:undefined, reminderId:undefined});
+    setWishlist(current => current.filter(entry => entry.id !== id));
+    if (item?.reminderId) setReminders(current => current.filter(entry => entry.id !== item.reminderId));
+    return true;
+    });
   }
 
   async function restoreWishlistItem() {
-    if (!removedWishlistItem) return;
+    return performWishlistChange('restore', async isCurrent => {
+    if (!removedWishlistItem) return false;
     if (isGuestMode()) {
       setWishlist((current) => [removedWishlistItem, ...current.filter((item) => item.id !== removedWishlistItem.id)]);
       setRemovedWishlistItem(null);
-      return;
+      return true;
     }
     const response = await fetch(`/api/wishlist/${removedWishlistItem.id}/restore`, { method: 'POST', headers: authHeaders() });
-    await response.json().catch(() => ({}));
-    if (!response.ok) return setError('Не удалось вернуть вещь');
+    const payload = await response.json().catch(() => ({}));
+      if (!isCurrent()) return false;
+    if (!response.ok) { reportWishlistError('Не удалось вернуть вещь. Попробуй ещё раз.'); return false; }
+    const saved = normalizeWishlistReceipt(payload.item, profile.backendPetId!, removedWishlistItem.id);
+    if (!saved) throw new Error('INVALID_WISHLIST_RECEIPT');
+    setWishlist(current => [saved, ...current.filter(item => item.id !== saved.id)]);
     setRemovedWishlistItem(null);
-    await loadBootstrap();
+    return true;
+    });
   }
 
   async function updateReminder(id: string, patch: Partial<ReminderView>) {
@@ -3444,10 +3499,12 @@ export default function Home() {
     }
   }
 
-  async function completeReminder(id: string) {
+  async function completeReminder(id: string, issue: (message: string) => void = setError, stillCurrent?: () => boolean) {
+    const petId = profile.backendPetId;
+    const isCurrent = stillCurrent || (() => documentActivePet.current === petId);
     const reminder = reminders.find((item) => item.id === id);
     if (!reminder) {
-      setError('Не удалось найти дело в плане.');
+      issue('Не удалось найти дело в плане.');
       return false;
     }
     if (isGuestMode()) {
@@ -3467,11 +3524,17 @@ export default function Home() {
         body: JSON.stringify({ completedAt, recommendationId }),
       });
       const payload = await response.json().catch(() => ({}));
+      if (!isCurrent()) return false;
       if (!response.ok) {
-        setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
+        issue('Не удалось подтвердить выполнение. Повтори — уже выполненное дело не запишется второй раз.');
         return false;
       }
-      await loadBootstrap();
+      const row = payload.reminder;
+      if (!row || row.id !== id || (row.petId ?? row.pet_id) !== reminder.petId || typeof (row.dueAt ?? row.due_at) !== 'string' || !Number.isFinite(new Date(row.dueAt ?? row.due_at).getTime()) || !['active','done'].includes(row.status)) throw new Error('INVALID_REMINDER_RECEIPT');
+      const updated: ReminderView = { ...reminder, title:typeof row.title==='string'?row.title:reminder.title, status:row.status, dueAt:row.dueAt??row.due_at,
+        recurrence:row.recurrence??reminder.recurrence, completedAt:row.completedAt??row.completed_at??undefined, snoozedUntil:row.snoozedUntil??row.snoozed_until??undefined, nextDueAt:row.nextDueAt??row.next_due_at??undefined };
+      setReminders(current => current.map(item => item.id === id ? updated : item));
+      if (updated.status === 'done') setWishlist(current => current.map(item => item.reminderId === id && item.status === 'wanted' ? {...item,status:'bought'} : item));
       if (payload.historyOccurrence) {
         setReminderHistory((current) => ({
           ...current,
@@ -3483,7 +3546,8 @@ export default function Home() {
       setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
       return true;
     } catch {
-      setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
+      if (!isCurrent()) return false;
+      issue('Не удалось подтвердить выполнение. Повтори — уже выполненное дело не запишется второй раз.');
       return false;
     } finally {
       setReminderMutationBusy(null);
@@ -4914,19 +4978,12 @@ export default function Home() {
         {hasDog && tab === 'things' && <ProductionJourney route="things" onBack={() => closeSecondaryFlow('all')} dogName={profile.dogName} breedLabel={breedLabel}
           avatar={<GeneratedAvatar profile={profile} ready={Boolean(profile.avatarImageUrl) || demoMode} imageUrl={profile.avatarImageUrl} demo={demoMode} size="small" />}
           onNavigate={setTab} onAskAssistant={openAssistantSheet}>
-          <div className="screen-primary-action">
-            <button className="primary" type="button" aria-expanded={thingCaptureOpen} onClick={() => setThingCaptureOpen((open) => !open)}>
-              {thingCaptureOpen ? 'Закрыть добавление' : 'Добавить вещь'}
-            </button>
-            <span>{formatCount(wantedWishlist.length, ['позиция', 'позиции', 'позиций'])}</span>
-          </div>
-
-          {thingCaptureOpen && <form className="thing-capture" onSubmit={event => { event.preventDefault(); void createWishlistItem(); }}>
-            <div className="section-title">
-              <div><span className="eyebrow">новая позиция</span><h3>Что нужно</h3></div>
-            </div>
-            <label>Название<input value={newWishTitle} onChange={(event) => setNewWishTitle(event.target.value)} placeholder="Например, адресник" /></label>
-            <details><summary>Категория, пояснение и срок</summary>
+          <fieldset className="things-write-scope" disabled={wishlistBusy} aria-busy={wishlistBusy}>
+          <form className="thing-capture" onSubmit={async event => { event.preventDefault(); const saved = await createWishlistItem(); if (saved) requestAnimationFrame(() => document.getElementById('wish-quick-title')?.focus()); }}>
+            <label htmlFor="wish-quick-title">Нужно купить</label>
+            <div className="thing-quick-row"><input id="wish-quick-title" value={newWishTitle} onChange={event => setNewWishTitle(event.target.value)} placeholder="Например, корм" maxLength={160} enterKeyHint="done" />
+            <button type="submit" aria-label={newWishNeedsReminder ? 'Добавить в вещи и план' : 'Добавить в вещи'} disabled={!newWishTitle.trim() || (newWishNeedsReminder && !newWishPlannedFor)}><Plus aria-hidden="true" /></button></div>
+            <details open={thingCaptureOpen} onToggle={event => setThingCaptureOpen(event.currentTarget.open)}><summary>Категория, пояснение и срок</summary>
             <label>Категория<select value={newWishCategory} onChange={(event) => setNewWishCategory(event.target.value)}>
               <option value="gear">амуниция</option>
               <option value="food">корм</option>
@@ -4944,37 +5001,40 @@ export default function Home() {
             </label>
             {newWishNeedsReminder && <label>Купить до<input type="date" min={dateInputValue(new Date())} value={newWishPlannedFor} onChange={(event) => setNewWishPlannedFor(event.target.value)} /></label>}
             </details>
-            <button type="submit" className="primary full" disabled={!newWishTitle.trim() || (newWishNeedsReminder && !newWishPlannedFor)}>{newWishTitle.trim() ? newWishNeedsReminder ? 'Добавить в вещи и план' : 'Добавить в вещи' : 'Напиши название'}</button>
-          </form>}
+            {wishlistError?.scope === 'create' && <p className="things-error" role="alert">{wishlistError.message}</p>}
+          </form>
 
-          {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <article className="empty-state"><b>Список пока пуст</b><p>Здесь можно держать покупки и услуги для {profile.dogName}.</p></article>}
+          {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <p className="things-empty">Пока ничего не нужно. Запиши здесь, когда что-то понадобится.</p>}
 
-          {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Вещи собаки">
-            {wantedWishlist.map((item) => <article key={item.id} className={`wishlist-item priority-${item.priority}`}>
-              {editingWishlistId === item.id ? <form className="wishlist-edit-form" onSubmit={async (event) => { event.preventDefault(); await updateWishlistItem(item.id, { title: wishlistTitleDraft.trim(), reason: wishlistReasonDraft.trim() || undefined }); }}><label>Название<input value={wishlistTitleDraft} maxLength={160} onChange={(event) => setWishlistTitleDraft(event.target.value)} /></label><label>Зачем <span className="field-optional">необязательно</span><input value={wishlistReasonDraft} maxLength={500} onChange={(event) => setWishlistReasonDraft(event.target.value)} /></label><div className="wishlist-actions"><button type="submit" disabled={!wishlistTitleDraft.trim()}>Сохранить</button><button type="button" onClick={() => setEditingWishlistId(null)}>Отмена</button></div></form> : <><div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div><div className="wishlist-actions">
+          {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Вещи собаки" aria-live="polite">
+            {wantedWishlist.map((item) => <article key={item.id} data-wishlist-id={item.id} className={`wishlist-item priority-${item.priority}`}>
+              {editingWishlistId === item.id ? <form className="wishlist-edit-form" onSubmit={async (event) => { event.preventDefault(); await updateWishlistItem(item.id, { title: wishlistTitleDraft.trim(), reason: wishlistReasonDraft.trim() }); }}><label>Название<input value={wishlistTitleDraft} maxLength={160} onChange={event => { setWishlistTitleDraft(event.target.value); wishlistEditDrafts.current.set(item.id,{title:event.target.value,reason:wishlistReasonDraft}); }} /></label><label>Зачем <span className="field-optional">необязательно</span><input value={wishlistReasonDraft} maxLength={500} onChange={event => { setWishlistReasonDraft(event.target.value); wishlistEditDrafts.current.set(item.id,{title:wishlistTitleDraft,reason:event.target.value}); }} /></label><div className="wishlist-actions"><button type="submit" disabled={!wishlistTitleDraft.trim()}>Сохранить</button><button type="button" onClick={() => setEditingWishlistId(null)}>Закрыть</button></div></form> : <><div className="thing-row"><button type="button" className="thing-title" aria-label={`Изменить: ${item.title}`} onClick={() => beginWishlistEdit(item)}><b>{item.title}</b></button><button type="button" className="thing-complete" onClick={() => completeWishlistItem(item)}>Куплено</button></div><details className="thing-details"><summary>Подробнее</summary>{(item.category !== 'other' || item.reason || item.priority !== 'medium') && <p>{formatWishlistMeta(item.category, item.priority === 'medium' ? undefined : item.priority, item.reason)}</p>}<div className="wishlist-actions">
                 {item.plannedFor && <p className="wishlist-plan-date"><CalendarBlank weight="bold" aria-hidden="true" />В плане на {new Date(`${item.plannedFor}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}
                 {item.url && <a href={item.url} target="_blank" rel="noreferrer">Открыть</a>}
                 {item.plannedFor && <button type="button" onClick={() => openWishlistPlan(item)}>Открыть в плане</button>}
-                <button onClick={() => { setEditingWishlistId(item.id); setWishlistTitleDraft(item.title); setWishlistReasonDraft(item.reason || ''); }}>Изменить</button>
-                <button onClick={() => completeWishlistItem(item)}>Куплено</button>
+                <button onClick={() => beginWishlistEdit(item)}>Изменить</button>
                 <button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button>
-              </div></>}
+              </div></details></>}
+              {wishlistError?.scope === item.id && <p className="things-error" role="alert">{wishlistError.message}</p>}
             </article>)}
           </section>}
 
 
-          {boughtWishlist.length > 0 && <section className="wishlist-list" aria-label="История вещей">
-            <div className="section-title"><div><span className="eyebrow">история</span><h3>Уже закрыто</h3></div></div>
-            {boughtWishlist.map((item) => <article key={item.id} className="wishlist-item">
-              <div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div>
-              <div className="wishlist-actions"><button onClick={() => updateWishlistItem(item.id, { status: 'wanted', plannedFor: undefined, reminderId: undefined })}>Вернуть</button><button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Удалить</button></div>
+          {boughtWishlist.length > 0 && <section className="wishlist-list" aria-label="История вещей" aria-live="polite">
+            <div className="section-title"><div><span className="eyebrow">история</span><h3>Куплено</h3></div></div>
+            {boughtWishlist.map((item) => <article key={item.id} data-wishlist-id={item.id} className="wishlist-item">
+              <div><b>{item.title}</b>{(item.category !== 'other' || item.reason || item.priority !== 'medium') && <p>{formatWishlistMeta(item.category, item.priority === 'medium' ? undefined : item.priority, item.reason)}</p>}</div>
+              <div className="wishlist-actions"><button onClick={() => updateWishlistItem(item.id, { status: 'wanted', plannedFor: undefined, reminderId: undefined })}>Вернуть</button><button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button></div>
+              {wishlistError?.scope === item.id && <p className="things-error" role="alert">{wishlistError.message}</p>}
             </article>)}
           </section>}
 
           {removedWishlistItem && <div className="restore-notice" role="status">
-            <span>Вещь убрана</span>
+            <span>Вещь убрана. Вернётся без срока.</span>
             <button type="button" onClick={restoreWishlistItem}>Вернуть</button>
+            {wishlistError?.scope === 'restore' && <p className="things-error" role="alert">{wishlistError.message}</p>}
           </div>}
+          </fieldset>
 
         </ProductionJourney>}
 

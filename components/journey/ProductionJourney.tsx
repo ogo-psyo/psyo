@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import connected from '../app/ConnectedWorkspace.module.css';
 import { JournalMasthead } from '@/components/journal/JournalMasthead';
 import type { JournalEntry } from '@/lib/journal';
 import { wellbeingValue, type WellbeingMetric } from '@/lib/wellbeingScoring';
@@ -443,10 +444,12 @@ function NearbyScreen(props: ProductionJourneyProps) {
 }
 
 function ThingsScreen(props: ProductionJourneyProps) {
-  return <main className="production-journey-screen journal-screen journal-things" data-production-journey="things">
-    {props.onBack && <button type="button" className="journal-quiet" onClick={props.onBack}>← Назад</button>}
-    <JournalMasthead dogName={props.dogName} avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
-    <div className="journal-title"><h1>Вещи</h1><p>Что нужно купить и что уже куплено.</p>{props.onAskAssistant&&<button type="button" className="journal-quiet" aria-label="Спросить Псё" onClick={props.onAskAssistant}>Спросить Псё</button>}</div>
+  return <main className={`production-journey-screen journal-screen journal-things ${connected.workspace}`} data-production-journey="things" data-things-workspace>
+    <header className={connected.header}>
+      {props.onBack && <button type="button" onClick={props.onBack}>← Назад</button>}
+      <button type="button" onClick={() => props.onNavigate('profile')} aria-label={`Открыть профиль ${props.dogName}`}>{props.dogName}</button>
+    </header>
+    <div className={connected.title}><h1 data-assistant-heading>Вещи и покупки</h1>{props.onAskAssistant && <button type="button" aria-label="Спросить Псё" onClick={props.onAskAssistant}><Sparkle aria-hidden="true" /></button>}</div>
     {props.children}
   </main>;
 }

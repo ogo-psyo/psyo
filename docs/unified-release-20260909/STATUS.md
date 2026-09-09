@@ -114,3 +114,9 @@ See [AGENT-MAP.md](AGENT-MAP.md). Shared map search/API/tool, real typed provide
 [APP-SHELL.md](APP-SHELL.md): grouped real text→assistant; actual recent run; five primary tabs with direct All destinations; original day/voice/care flow preserved as diary. Day rows open exact canonical records. Main/All no longer display the competing desktop care sidebar. All→passport and secondary return restore original entry/focus, including WebKit.
 
 204 tests, build/contracts/lint217; 6 main/direct-entry browser paths plus8 assistant/map regression paths pass. Final screenshots compared with the grouped Naris direction. Synthetic API evidence only; full inner UI and all live release gates remain open.
+
+## U-02: direct purchase flow and scoped receipts
+
+[THINGS-FLOW.md](THINGS-FLOW.md): immediate title, optional details, same-row edit, bought history/remove/restore. Request-start lock, pet/ID-checked receipts, scoped errors and preserved manual/edit drafts; assistant suggestion no longer inherits a manual deadline. Linked reminder completion uses its real transaction receipt, not a fallible subsequent bootstrap.
+
+204 tests/build/contracts/lint217;6 final Things cases across2browsers×3widths, plus8 prior assistant/interaction regression cases. Foreign/demo receipts rejected; assistant-action retry preserves unrelated manual composer. UI screenshots visually reviewed. API/browser fixtures only. Restoring a deleted planned item does not restore its deleted reminder (existing DB behavior, explicit UI copy, still open for full reversible-plan scope). No production/cloud/provider changes.

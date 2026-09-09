@@ -1,0 +1,47 @@
+.workspace {--connected-ink:#3e3b47;--connected-muted:#756a80;}
+:global(body.companion-app main.app-canvas) .workspace {background:radial-gradient(ellipse at 100% 0,#eeebf599,transparent 60%),#f9f9fb!important;padding:20px 24px calc(112px + env(safe-area-inset-bottom))!important;min-height:calc(100dvh - 36px);color:var(--connected-ink);}
+.header {display:flex;align-items:center;justify-content:space-between;gap:24px;}
+:global(body.companion-app main.app-canvas) .workspace button {font:400 16px/1.4 var(--font-pouf);color:var(--connected-ink)!important;min-height:44px;border:0;background:transparent;box-shadow:none;cursor:pointer;}
+.header button {max-width:65%;overflow-wrap:anywhere;text-align:start;}
+.title {display:flex;align-items:center;justify-content:space-between;gap:16px;margin:24px 0;}
+:global(body.companion-app main.app-canvas) .workspace h1 {font:400 clamp(36px,9vw,48px)/1.15 PsoHandwritten,sans-serif!important;letter-spacing:0!important;margin:0;}
+.title button {flex-shrink:0;width:44px;}
+.title svg {width:24px;height:24px;}
+.workspace :global(.things-write-scope) {border:0;padding:0;margin:0;min-width:0;display:grid;gap:28px;}
+:global(body.companion-app main.app-canvas) .workspace :global(.thing-capture),:global(body.companion-app main.app-canvas) .workspace :global(.wishlist-edit-form) {display:grid;gap:14px;padding:18px;border-radius:26px!important;border:1px solid #fff!important;background:linear-gradient(135deg,#ffffffed,#efebf766)!important;box-shadow:0 10px 28px #63527012!important;margin:0;}
+.workspace :global(.thing-capture) label,.workspace :global(.wishlist-edit-form) label {display:grid;gap:8px;font:400 14px/1.4 var(--font-pouf);color:var(--connected-muted);}
+:global(body.companion-app main.app-canvas) .workspace :is(input:not([type=checkbox]),select) {background:#fff9!important;border:1px solid #dad3e4!important;border-radius:12px!important;box-shadow:none!important;color:var(--connected-ink)!important;font:400 16px/1.45 var(--font-pouf)!important;padding:10px 12px!important;min-height:44px;min-width:0;width:100%;}
+.workspace :global(.thing-quick-row) {display:flex;align-items:center;gap:12px;}
+:global(body.companion-app main.app-canvas) .workspace :global(.thing-quick-row) input {background:transparent!important;border:0!important;border-radius:8px!important;font-size:20px!important;padding:8px 0!important;}
+:global(body.companion-app main.app-canvas) .workspace :global(.thing-quick-row) button {display:grid;place-items:center;width:46px;height:46px;flex-shrink:0;background:linear-gradient(135deg,#fff,#e2dcea)!important;border:1px solid #fff!important;border-radius:50%!important;}
+.workspace :global(.thing-quick-row) svg {width:22px;height:22px;}
+.workspace details summary {min-height:44px;display:flex;align-items:center;cursor:pointer;font:400 14px/1.4 var(--font-pouf);color:var(--connected-muted);}
+.workspace details summary::after {content:'＋';margin-inline-start:auto;padding-inline-start:12px;}
+.workspace details[open]>summary::after {content:'−';}
+.workspace details[open]>label {margin-block:14px;}
+.workspace :global(.thing-plan-option) {display:flex!important;align-items:center;gap:12px!important;}
+.workspace :global(.thing-plan-option) input {width:20px;height:20px;accent-color:#76628c;}
+.workspace :global(.thing-plan-option) span {display:grid;gap:4px;}
+.workspace :global(.things-empty) {font-size:16px;line-height:1.55;color:var(--connected-muted);margin:0;}
+:global(body.companion-app main.app-canvas) .workspace :global(.things-masonry),:global(body.companion-app main.app-canvas) .workspace :global(.wishlist-list) {display:grid;grid-template-columns:1fr;gap:20px;margin:0;padding:0;}
+:global(body.companion-app main.app-canvas) .workspace :global(.wishlist-item) {padding:0 0 20px;border:0!important;border-bottom:1px solid #e4dfea!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;display:block;}
+.workspace :global(.thing-row) {display:flex;align-items:center;gap:16px;justify-content:space-between;}
+:global(body.companion-app main.app-canvas) .workspace :global(.thing-title) {text-align:start;flex:1;min-width:0;padding:6px 0;overflow-wrap:anywhere;font-size:20px;}
+.workspace :global(.thing-title) b {font-weight:500;}
+:global(body.companion-app main.app-canvas) .workspace :global(.thing-complete) {border:1px solid #e0d8e8!important;border-radius:18px;padding:8px 14px;background:#efebf5!important;}
+.workspace :global(.wishlist-actions) {display:flex;flex-wrap:wrap;gap:12px;}
+.workspace :global(.wishlist-actions) p {flex-basis:100%;}
+:global(body.companion-app main.app-canvas) .workspace :global(.danger-action) {color:#963d51!important;}
+:global(body.companion-app main.app-canvas) .workspace :global(.things-error) {color:#963d51!important;font-size:15px;line-height:1.5;overflow-wrap:anywhere;}
+.workspace :focus-visible {outline:3px solid #76628c!important;outline-offset:3px;}
+.workspace button:disabled {opacity:.45;cursor:default;}
+@media(max-width:360px){:global(body.companion-app main.app-canvas) .workspace {padding-inline:20px!important;}.title{gap:8px;}.workspace :global(.thing-capture){padding:14px;}}
+
+:global(body.companion-app main.app-canvas) .workspace :global(.wishlist-item) {height:auto!important;min-height:0!important;padding:0 0 16px!important;}
+:global(body.companion-app main.app-canvas) .workspace :global(.thing-title) b {font:500 20px/1.4 var(--font-pouf)!important;color:var(--connected-ink)!important;}
+:global(body.companion-app main.app-canvas) .workspace :global(.wishlist-actions) button {font:400 16px/1.4 var(--font-pouf)!important;background:#eeebf4!important;border:0!important;border-radius:16px!important;padding:9px 12px!important;}
+:global(body.companion-app main.app-canvas) .workspace :global(.wishlist-actions) button:disabled {opacity:.45;}
+:global(body.companion-app main.app-canvas) .workspace :global(.wishlist-list) h3 {font:400 24px/1.2 PsoHandwritten,sans-serif!important;color:var(--connected-ink)!important;}
+:global(body.companion-app main.app-canvas) .workspace :global(.wishlist-list) :global(.eyebrow) {display:none;}
+:global(body.companion-app main.app-canvas) .workspace :global(.wishlist-item)>div>b {font:500 18px/1.4 var(--font-pouf)!important;color:var(--connected-ink)!important;}
+:global(body.companion-app main.app-canvas) .workspace :global(.wishlist-item) p {font:400 14px/1.5 var(--font-pouf)!important;color:var(--connected-muted)!important;}
