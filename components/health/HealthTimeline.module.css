@@ -39,3 +39,6 @@
 :global(body.companion-app main.app-canvas) .screen summary {font:400 16px/1.4 var(--font-pouf)!important;color:#65546f!important;background:transparent!important;}
 :global(body.companion-app main.app-canvas) .screen :global(.health-facts) {background:transparent!important;border:0!important;border-bottom:1px solid #e4dfea!important;box-shadow:none!important;border-radius:0!important;}
 :global(body.companion-app main.app-canvas) .screen button {color:#4d405b!important;}
+:global(body.companion-app main.app-canvas) .screen :global(.health-observation-grid) div {background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;}
+:global(body.companion-app main.app-canvas) .screen :global(.health-observation-grid) dt {font:400 13px/1.4 var(--font-pouf)!important;color:#71677a!important;}
+:global(body.companion-app main.app-canvas) .screen :global(.health-observation-grid) dd {font:400 16px/1.5 var(--font-pouf)!important;color:#3e3b47!important;margin:4px 0!important;}

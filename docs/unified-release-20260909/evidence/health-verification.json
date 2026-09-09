@@ -25,7 +25,11 @@
     "lib/server/healthTimelineService.ts": "3cc5346633acf6ab37e1b7398ba09a745534b45cb1e73357d2d213fe690a5103",
     "lib/observationLabels.ts": "a36ebcde60701797b6031b472879ae4d5b7333df8edaf96c62c525b68211d6e6",
     "components/health/HealthTimelineScreen.tsx": "187cd74a40cbd8be123927fc178a3134eb9fac0bf3f6f068dc5171dcbeccc509",
-    "components/health/HealthTimeline.module.css": "9ad517b39f5a9464b5f9360729a5cd4a67b8a2aa49b4e43b8287e722a2fa7797",
+    "components/health/HealthTimeline.module.css": "1234647330f848bf5f2d96b9223238e94e7bdce5160ff3453c64b157656e49f0",
     "components/care/ObservationEditor.tsx": "bcf498f65fece74ce51a0b4184fdeef2b0c9318cb148fc71b1e7ea81cc711273"
-  }
+  },
+  "functionalRevision": "85bd09cc6a366f7341fe36cd5a3e236d8890b184",
+  "postFunctionalChange": "CSS-only metric row override",
+  "finalVisualCases": 2,
+  "visualBuildLog": "/tmp/pso-u03-style-build.log"
 }
