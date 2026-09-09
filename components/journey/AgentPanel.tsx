@@ -1,4 +1,5 @@
 "use client";
+import {isAgentWalk,type AgentWalk} from "@/lib/agentWalk";
 import {isMapSearchPlace,type MapSearchPlace} from "@/lib/mapSearchPlace";
 import { useEffect, useRef, useState } from "react";
 import { AgentAuxiliaryDialog } from "./ProductionAssistantSheet";
@@ -9,6 +10,7 @@ import type { ReviewedObservation, AgentObservationRecord } from "@/lib/agentObs
 export type AgentResult = {
   observationDraftId?: string;
   places?:MapSearchPlace[];
+  walk?:AgentWalk;
   answer: string;
   threadId: string;
   runId: string;
@@ -25,8 +27,9 @@ export function AgentPanel({
   onResult,
   onBusy,
   onRetry,
-  observationEdits, onObservationSaved, onOpenObservation, onOpenPlace,
+  observationEdits, onObservationSaved, onOpenObservation, onOpenPlace, onOpenWalk,
 }: {
+  onOpenWalk?:(walk:AgentWalk)=>void;
   onOpenPlace?:(place:MapSearchPlace,places:MapSearchPlace[])=>void;
   observationEdits?: Map<string,ReviewedObservation>;
   onObservationSaved?: (record:AgentObservationRecord)=>void;
@@ -202,6 +205,12 @@ export function AgentPanel({
       {result?.observationDraftId && result.runId===active && status==='succeeded' && onOpenObservation && onObservationSaved &&
         <AgentObservationDraft key={result.observationDraftId} id={result.observationDraftId} petId={petId}
           headers={headers} edits={observationEdits??fallbackEdits} onSaved={onObservationSaved} onOpen={onOpenObservation}/>}
+      {status==='succeeded'&&result?.runId===active&&onOpenWalk&&isAgentWalk(result.walk)&&<section className={surface.places} aria-label="Рассчитанная прогулка">
+        <h3 data-assistant-heading>{result.walk.title}</h3>
+        <p>{(result.walk.distanceMeters/1000).toLocaleString('ru-RU',{maximumFractionDigits:1})} км · ≈ {result.walk.estimatedMinutes} мин без остановок</p>
+        <p>Это рассчитанный путь, ещё не сохранённый. Доступ с собакой не проверен.</p>
+        <button type="button" onClick={()=>onOpenWalk(result.walk!)}>Посмотреть прогулку</button>
+      </section>}
       {status==='succeeded'&&result?.runId===active&&onOpenPlace&&result.places?.some(isMapSearchPlace)&&<section className={surface.places} aria-label="Найденные места">
         <h3 data-assistant-heading>Места на карте</h3>
         <p>Доступ с собакой и условия пока не проверены.</p>

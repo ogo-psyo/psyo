@@ -22,7 +22,7 @@ User decision 2026-09-09: the entire product, including the live agent and its a
 
 Remaining gates are tracked in the table below. Local B03 and targeted interaction fixes are implemented; live Storage, broad inner-state acceptance and complete chosen-design transfer are not finished.
 
-Groq Free/search entitlement unknown. User asked for plan metadata this turn; no response yet. No paid calls, no new secret requests. Agent PR29 source is now merged locally, not live verified. No new production deployment.
+Groq Free/search entitlement unknown. Groq console navigation was blocked by the managed browser policy; no bypass attempted. No paid calls, no new secret requests. Agent PR29 source is now merged locally, not live verified. No new production deployment.
 
 ## B03 local candidate
 
@@ -93,4 +93,12 @@ Local build/186tests/contracts/lint216 passed. Chromium/WebKit320/390 passed new
 
 See [AGENT-MAP.md](AGENT-MAP.md). Shared map search/API/tool, real typed provider points persisted in completed run, exact map selection and existing save/append actions. Real provider/library ID-collapse defect fixed; load/save failures preserve the selected result. Current two-stop plan, title and note survive adding the chosen third point and reload.
 
-191 tests/build/contracts and lint216 passed. Chromium/WebKit320/390 complete agent-map path passed with synthetic API/source and actual client library reducer. Observation and legacy action regressions passed. No new map provider, paid call, cloud migration or deployment. Autonomous route calculation/save/read tools, remaining full-product design and live gates still open.
+191 tests/build/contracts and lint216 passed. Chromium/WebKit320/390 complete agent-map path passed with synthetic API/source and actual client library reducer. Observation and legacy action regressions passed. No new map provider, paid call, cloud migration or deployment. Route calculation follows in A05 below; autonomous save/read, remaining full-product design and live gates stay open.
+
+## A-04: truthful private context reads
+
+[AGENT-CONTEXT.md](AGENT-CONTEXT.md): canonical route_source instead of nonexistent activity_type; context/history failures stop before generation; original notes and ready-only document metadata. 23 source-derived SQL projections compile in local fixture (not REST/cloud); 20 route behavior tests and 193 full QA pass. Committed b7cea13.
+
+## A-05: calculated route proposal → Map → saved canonical route
+
+[AGENT-WALK.md](AGENT-WALK.md): actual ID-only route tool shares bounded Map routing; proposal survives reopening; original stops/snaps and constraints shown before existing private save. Unrelated active draft cannot be overwritten. 199 QA tests/build/contracts; four browser combinations with failed-save/retry, same canonical ID/path/stops after reload and source draft preservation. Source/provider/HTTP fixtures, not cloud or live model proof. No paid calls/deployment. Autonomous saving/recall of canonical routes remains next work, not silently substituted by saved answer text.

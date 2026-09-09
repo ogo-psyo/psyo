@@ -1,4 +1,5 @@
 'use client';
+import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
 import {isMapSearchPlace,type MapSearchPlace} from '@/lib/mapSearchPlace';
 import {downloadRouteGpx,type RoutePlanning} from '@/lib/routePlanning';
 
@@ -601,6 +602,7 @@ export default function Home() {
   const calendarAutoSelectedPetRef = useRef<string | null>(null);
   const [careView, setCareView] = useState<'active' | 'history'>('active');
   const [mapVisited, setMapVisited] = useState(false);
+  const [agentWalkSelection,setAgentWalkSelection]=useState<{token:string;petId:string;walk:AgentWalk}|null>(null);
   const [agentMapSelection,setAgentMapSelection]=useState<{token:string;petId:string;place:MapSearchPlace;places:MapSearchPlace[]}|null>(null);
   const [mapActivity, setMapActivity] = useState<'recording'|'paused'|null>(null);
   useEffect(() => {if (tab === 'map') setMapVisited(true);}, [tab]);
@@ -1957,7 +1959,7 @@ export default function Home() {
     setHealthFactsDraft(null);
     observationEditDrafts.current.clear();
     agentObservationEdits.current.clear();
-    setAgentMapSelection(null);
+    setAgentMapSelection(null);setAgentWalkSelection(null);
     setJourneyDetail(null);
     setTabState('today');
     if (typeof window !== 'undefined') {
@@ -4484,6 +4486,7 @@ export default function Home() {
             savedRevision={mapSavedRevision}
             routeEditSeed={routeEditSeed}
             agentSelection={agentMapSelection}
+            agentWalkSelection={agentWalkSelection}
             onReturnToAssistant={openAssistantSheet}
             editingRouteId={editingRouteGeometryId}
             onActivityChange={setMapActivity}
@@ -4518,9 +4521,15 @@ export default function Home() {
           actions={<>
             {!isGuestMode()&&profile.backendPetId&&<AgentPanel key={profile.backendPetId} petId={profile.backendPetId} runId={agentRunId} headers={authHeaders}
               observationEdits={agentObservationEdits.current}
+              onOpenWalk={walk=>{
+                if(!isAgentWalk(walk)||!profile.backendPetId)return;
+                setAgentMapSelection(null);setAgentWalkSelection({token:crypto.randomUUID(),petId:profile.backendPetId,walk});
+                setAssistantOpen(false);setJourneyDetail(null);setTabState('map');
+                const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
+              }}
               onOpenPlace={(place,places)=>{
                 if(!isMapSearchPlace(place)||!profile.backendPetId)return;
-                setAgentMapSelection({token:crypto.randomUUID(),petId:profile.backendPetId,place,places:places.filter(isMapSearchPlace)});
+                setAgentWalkSelection(null);setAgentMapSelection({token:crypto.randomUUID(),petId:profile.backendPetId,place,places:places.filter(isMapSearchPlace)});
                 setAssistantOpen(false);setJourneyDetail(null);setTabState('map');
                 const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
               }}

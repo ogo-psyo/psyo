@@ -3064,3 +3064,11 @@
   border:0;border-radius:12px;background:transparent;color:inherit;font:inherit;cursor:pointer;
 }
 .production-map-workspace .agent-map-return:focus-visible {outline:2px solid currentColor;outline-offset:2px;}
+
+/* Agent calculation is reviewed on the existing map before becoming its draft. */
+.agent-walk-preview { display:grid; gap:12px; padding:20px; color:var(--text); }
+.agent-walk-preview h3,.agent-walk-preview p { margin:0; }
+.agent-walk-preview ol { margin:0; padding-inline-start:24px; display:grid; gap:8px; }
+.agent-walk-preview button { min-height:44px; border:0; border-radius:16px; padding:10px 16px; background:#edf0fa; color:#30374b; font:inherit; }
+.agent-walk-preview button + button { background:transparent; }
+.agent-walk-preview button:disabled { opacity:.5; }

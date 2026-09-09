@@ -1,3 +1,5 @@
+import {calculateWalkingPath} from '@/lib/server/walkingRoute';
+import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
 import {searchMapPlaces} from "@/lib/server/mapPlaceSearch";
 import type {MapSearchPlace} from "@/lib/mapSearchPlace";
 import { tool } from "@openai/agents";
@@ -13,9 +15,10 @@ export function makePrivateTools(
   evidence: AgentSource[] = [],
   places:MapSearchPlace[] = [],
   signal?:AbortSignal,
+  walkState:{previousPlaces:MapSearchPlace[];preview?:AgentWalk}={previousPlaces:[]},
 ) {
   const db = agentDatabase();
-  let placeSearches=0;
+  let placeSearches=0,walkCalculations=0;
   async function guard() {
     signal?.throwIfAborted();
     const run = await ownedRun(owner, runId);
@@ -24,6 +27,29 @@ export function makePrivateTools(
     return run;
   }
   return [
+    tool({
+      name:'recall_places',description:'Read actual place references from recent completed results in this private conversation. Use their exact IDs for calculate_walk; this does not refresh conditions, search elsewhere or save anything.',
+      parameters:z.object({}),execute:async()=>{await guard();return {places:[...new Map([...walkState.previousPlaces,...places].map(p=>[p.id,p])).values()],conditionsVerified:false};},
+    }),
+    tool({
+      name:'calculate_walk',
+      description:'Calculate an actual walking path through 2–8 distinct exact place IDs returned by search_places or recall_places, in visit order. Do not invent coordinates or use map viewport as user location. Clarify the start if necessary. roundTrip returns to the first point, not a target duration. Returns a proposal with path/snaps for the Map, NOT a saved walk. Dog access unknown, places may be object centers. Max two calculations per run.',
+      parameters:z.object({placeIds:z.array(z.string().min(1).max(180)).min(2).max(8),title:z.string().trim().min(1).max(160),roundTrip:z.boolean()}),
+      execute:async({placeIds,title,roundTrip})=>{
+        await guard();
+        const available=new Map([...walkState.previousPlaces,...places].map(p=>[p.id,p]));
+        if(new Set(placeIds).size!==placeIds.length||placeIds.some(id=>!available.has(id)))throw new Error('KNOWN_DISTINCT_PLACES_REQUIRED');
+        if(walkCalculations>=2)throw new Error('WALK_CALCULATION_LIMIT');walkCalculations++;
+        const chosen=placeIds.map(id=>available.get(id)!);if(roundTrip)chosen.push(chosen[0]);
+        const stops=chosen.map(p=>({point:[p.point.lng,p.point.lat] as [number,number],title:p.title,placeId:p.id}));
+        const outcome=await calculateWalkingPath(stops.map(s=>s.point),signal);
+        await guard();if(outcome.status!==200)throw new Error(outcome.error);
+        const preview={...outcome.result,title,stops};
+        if(!isAgentWalk(preview))throw new Error('INVALID_WALK_RESULT');
+        walkState.preview=preview;
+        return {title,stops,distanceMeters:preview.distanceMeters,estimatedMinutes:preview.estimatedMinutes,stairs:preview.stairs,snaps:preview.snaps,source:preview.source,calculatedAt:preview.calculatedAt,saved:false,dogAccess:'unknown',mapPreviewAvailable:true};
+      },
+    }),
     tool({
       name:'search_places',
       description:'Find a real named place or address in OpenStreetMap. Include the city/district from the user; clarify an unknown location for nearby requests. Never send private notes, names of owner/dog, IDs or medical facts as query. Returned points may be object centers, not verified entrances. Dog access, quietness and suitability are unknown. The actual results are shown in the UI and can be opened on the map; this does not save a place or calculate a walk. Max two searches per run.',
