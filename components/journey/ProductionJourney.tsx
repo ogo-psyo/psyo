@@ -14,7 +14,6 @@ import {
   FirstAid,
   Heart,
   MapTrifold,
-  PaperPlaneTilt,
   PawPrint,
   PencilSimple,
   ShieldCheck,
@@ -443,7 +442,7 @@ function NearbyScreen(props: ProductionJourneyProps) {
 function ThingsScreen(props: ProductionJourneyProps) {
   return <main className="production-journey-screen journal-screen journal-things" data-production-journey="things">
     <JournalMasthead dogName={props.dogName} avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
-    <div className="journal-title"><h1>Вещи</h1><p>Что нужно купить и что уже куплено.</p></div>
+    <div className="journal-title"><h1>Вещи</h1><p>Что нужно купить и что уже куплено.</p>{props.onAskAssistant&&<button type="button" className="journal-quiet" aria-label="Спросить Псё" onClick={props.onAskAssistant}>Спросить Псё</button>}</div>
     {props.children}
   </main>;
 }
@@ -462,50 +461,4 @@ export function ProductionJourney(props: ProductionJourneyProps) {
   return <ThingsScreen {...props} />;
 }
 
-export function ProductionAssistantSheet({
-  dogName, avatar, question, answer, messages, loading, error, suggestions, actions, diagnostic, onQuestionChange, onAsk, onClose,
-}: {
-  dogName: string;
-  avatar: ReactNode;
-  question: string;
-  answer: string;
-  messages?: Array<{ role: 'user' | 'assistant'; content: string }>;
-  loading: boolean;
-  error?: string;
-  suggestions: string[];
-  actions?: ReactNode;
-  diagnostic?: { provider?: string; mode?: string };
-  onQuestionChange: (value: string) => void;
-  onAsk: (question?: string) => void;
-  onClose: () => void;
-}) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const triggerRef = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    triggerRef.current = document.activeElement as HTMLElement | null;
-    const dialog = dialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
-    window.requestAnimationFrame(() => inputRef.current?.focus());
-    return () => { const trigger = triggerRef.current; window.requestAnimationFrame(() => trigger?.focus()); };
-  }, []);
-  const closeSheet = () => { if (dialogRef.current?.open) dialogRef.current.close(); onClose(); };
-  return <dialog ref={dialogRef} className="v3-assistant-backdrop production-assistant-backdrop" aria-labelledby="production-assistant-title" aria-describedby="production-assistant-description" data-assistant-provider={diagnostic?.provider || 'pending'} data-assistant-mode={diagnostic?.mode || 'pending'} onCancel={(event) => { event.preventDefault(); closeSheet(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSheet(); }}>
-    <section className="v3-assistant-sheet">
-      <div className="v3-sheet-handle" />
-      <header><div className="v3-assistant-mark"><Sparkle weight="fill" /></div><div><h2 id="production-assistant-title">Спросить Псё</h2></div><button type="button" onClick={closeSheet} aria-label="Закрыть"><X weight="bold" /></button></header>
-      <div className="production-assistant-scroll">
-        <div className="v3-assistant-context"><DogAvatar avatar={avatar} small /><p id="production-assistant-description">Учту профиль {dogName}, дела, наблюдения, прогулки, документы и этот диалог. Не заменяю ветеринара.</p></div>
-        {suggestions.length > 0 && <div className="v3-prompt-list" aria-label="Подсказки для вопроса">{suggestions.slice(0, 3).map((suggestion) => <button key={suggestion} type="button" onClick={() => onAsk(suggestion)}>{suggestion}</button>)}</div>}
-        {messages?.length ? <div className="production-assistant-conversation" aria-live="polite">{messages.map((message, index) => <article className={message.role} key={`${message.role}-${index}`}><b>{message.role === 'assistant' ? 'Псё' : 'Вы'}</b><p>{message.content}</p></article>)}</div> : answer && <div className="production-assistant-answer" role="status">{answer}</div>}
-        {error && <div className="module-error" role="alert"><b>Псё не ответил</b><p>{error}</p></div>}
-        {actions}
-      </div>
-      <form className="production-assistant-composer" onSubmit={(event) => { event.preventDefault(); onAsk(); }}>
-        <label className="sr-only" htmlFor="production-assistant-question">Вопрос ассистенту</label>
-        <input id="production-assistant-question" ref={inputRef} value={question} onChange={(event) => onQuestionChange(event.target.value)} placeholder={`Спроси о ${dogName}…`} />
-        <button type="submit" disabled={loading || !question.trim()} aria-busy={loading} aria-label={loading ? 'Псё думает' : 'Отправить'}>{loading ? <Sparkle weight="fill" /> : <PaperPlaneTilt weight="fill" />}</button>
-      </form>
-    </section>
-  </dialog>;
-}
+export { ProductionAssistantSheet } from './ProductionAssistantSheet';

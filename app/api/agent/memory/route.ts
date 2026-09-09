@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     await ownedPet(owner, pet);
     const result = await agentDatabase()
       .from("agent_memories")
-      .select("id,memory_key,content,updated_at")
+      .select("id,memory_key,content,updated_at,source_run_id")
       .eq("owner_id", owner)
       .eq("pet_id", pet)
       .not("content", "is", null)

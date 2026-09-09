@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { AgentAuxiliaryDialog } from "./ProductionAssistantSheet";
+import surface from "./AssistantSurface.module.css";
 import { AgentObservationDraft } from "./AgentObservationDraft";
 import type { ReviewedObservation, AgentObservationRecord } from "@/lib/agentObservation";
 
@@ -12,7 +14,7 @@ export type AgentResult = {
   sources?: Array<{ url: string; title: string }>;
 };
 type Saved = { id: string; title: string; content: string };
-type Memory = { id: string; memory_key: string; content: string };
+type Memory = { id: string; memory_key: string; content: string; updated_at?:string; source_run_id?:string|null };
 
 export function AgentPanel({
   petId,
@@ -45,6 +47,13 @@ export function AgentPanel({
   const [memoryKey, setMemoryKey] = useState("");
   const [memoryText, setMemoryText] = useState("");
   const [writing, setWriting] = useState(false);
+  const [paneTrigger,setPaneTrigger]=useState<HTMLElement|null>(null);
+  const [pane,setPane]=useState<'saved'|'memory'|null>(null);
+  const [reading,setReading]=useState(false),[readError,setReadError]=useState('');
+  const [editing,setEditing]=useState(false),[editingExisting,setEditingExisting]=useState(false);
+  const editor=useRef<HTMLTextAreaElement>(null),readEpoch=useRef(0);
+  useEffect(()=>()=>{readEpoch.current++;},[]);
+  useEffect(()=>{if(editing&&pane==='memory')editor.current?.focus();},[editing,pane]);
   const callbacks = useRef({ headers, onResult, onBusy });
   useEffect(() => {
     callbacks.current = { headers, onResult, onBusy };
@@ -100,7 +109,7 @@ export function AgentPanel({
         if (body.status === "succeeded" && body.result) {
           setResult(body.result);
           callbacks.current.onResult(body.result);
-          setNote("Ответ готов.");
+          setNote("");
         } else if (body.status === "failed")
           setNote(
             "Не удалось закончить ответ. Вопрос сохранён; можно повторить запрос.",
@@ -138,21 +147,34 @@ export function AgentPanel({
     if (!response.ok) throw new Error("REQUEST_FAILED");
     return response.json();
   }
-  async function act(action: () => Promise<void>) {
+  async function act(action: () => Promise<void>, failure="Не удалось сохранить изменение. Попробуй ещё раз.") {
+    if(writing)return;
     setWriting(true);
     setNote("");
     try {
       await action();
     } catch {
-      setNote("Не удалось сохранить изменение. Попробуй ещё раз.");
+      setNote(failure);
     } finally {
       setWriting(false);
     }
   }
+  async function openPane(next:'saved'|'memory',trigger?:HTMLElement) {
+    if(trigger)setPaneTrigger(trigger);
+    const epoch=++readEpoch.current;
+    setPane(next);setReading(true);setReadError('');setNote('');
+    try {
+      const body=await api(`/api/agent/${next==='saved'?'results':'memory'}?petId=${encodeURIComponent(petId)}`);
+      if(epoch!==readEpoch.current)return;
+      if(next==='saved')setSaved(body.results??[]);else setMemories(body.memories??[]);
+    } catch {if(epoch===readEpoch.current)setReadError('Не удалось загрузить. Попробуйте ещё раз.');}
+    finally {if(epoch===readEpoch.current)setReading(false);}
+  }
+  function closePane(){readEpoch.current++;setPane(null);}
   if (!enabled) return null;
   return (
     <section className="pso-agent-panel" aria-label="Результаты и память Псё">
-      <p role="status">{note}</p>
+      <p role="status" className={surface.status}>{pane?'':note}</p>
       {status === "failed" && failedQuestion && (
         <button type="button" onClick={() => onRetry(failedQuestion)}>
           Повторить запрос
@@ -168,7 +190,7 @@ export function AgentPanel({
               setStatus("cancelled");
               callbacks.current.onBusy(false);
               setNote("Запрошена остановка задания.");
-            })
+            },"Не удалось остановить задание. Повторите попытку.")
           }
         >
           Остановить
@@ -205,50 +227,33 @@ export function AgentPanel({
           Сохранить ответ
         </button>
       )}
-      <details
-        onToggle={(event) => {
-          if (event.currentTarget.open)
-            void act(async () => {
-              const data = await api(`/api/agent/results?petId=${petId}`);
-              setSaved(data.results ?? []);
-            });
-        }}
-      >
-        <summary>Сохранённые ответы</summary>
-        {saved.length ? (
-          saved.map((item) => (
-            <details key={item.id}>
-              <summary>{item.title}</summary>
-              <p style={{ whiteSpace: "pre-wrap" }}>{item.content}</p>
-            </details>
-          ))
-        ) : (
-          <p>Пока нет сохранённых ответов.</p>
-        )}
-      </details>
-      <details
-        onToggle={(event) => {
-          if (event.currentTarget.open)
-            void act(async () => {
-              const data = await api(`/api/agent/memory?petId=${petId}`);
-              setMemories(data.memories ?? []);
-            });
-        }}
-      >
-        <summary>Что Псё помнит</summary>
+      <div className={surface.tools}>
+        <button type="button" disabled={writing} onClick={event=>void openPane('saved',event.currentTarget)}>Сохранённые ответы</button>
+        <button type="button" disabled={writing} onClick={event=>void openPane('memory',event.currentTarget)}>Что Псё помнит</button>
+      </div>
+      {pane&&<AgentAuxiliaryDialog title={pane==='saved'?'Сохранённые ответы':'Что Псё помнит'} onClose={closePane} returnFocusTo={paneTrigger}>
+        <div className={surface.library}>
+        {reading&&<p role="status">Загружаю…</p>}
+        {readError&&<div><p role="alert">{readError}</p><button type="button" onClick={()=>void openPane(pane)}>Повторить загрузку</button></div>}
+        {note&&<p role="status">{note}</p>}
+        {!reading&&!readError&&pane==='saved'&&(saved.length?saved.map(item=><details key={item.id}><summary>{item.title}</summary><p className={surface.savedText}>{item.content}</p></details>):<p>Пока нет сохранённых ответов.</p>)}
+        {!reading&&!readError&&pane==='memory'&&<>
         <p>
           Сведения для следующих ответов. Профиль собаки редактируется отдельно.
         </p>
+        {!memories.length&&<p>Пока нет сохранённых сведений.</p>}
         {memories.map((memory) => (
           <div key={memory.id}>
             <p>
               <b>{memory.memory_key}</b> — {memory.content}
             </p>
+            <small>{memory.source_run_id?'Из разговора':'Без ссылки на разговор'}{memory.updated_at&&Number.isFinite(Date.parse(memory.updated_at))?` · ${new Date(memory.updated_at).toLocaleDateString('ru-RU')}`:''}</small>
             <button
-              type="button"
+              type="button" disabled={writing}
               onClick={() => {
                 setMemoryKey(memory.memory_key);
-                setMemoryText(memory.content);
+                setMemoryText(memory.content);setEditingExisting(true);setEditing(true);
+                requestAnimationFrame(()=>editor.current?.focus());
               }}
             >
               Изменить
@@ -265,6 +270,7 @@ export function AgentPanel({
                   setMemories((current) =>
                     current.filter((item) => item.id !== memory.id),
                   );
+                  if(memoryKey===memory.memory_key){setMemoryKey('');setMemoryText('');setEditing(false);setEditingExisting(false);}
                   setNote(
                     "Убрано из памяти. Предыдущий диалог больше не используется для новых ответов.",
                   );
@@ -275,7 +281,8 @@ export function AgentPanel({
             </button>
           </div>
         ))}
-        <form
+        {!editing&&<button type="button" disabled={writing} onClick={()=>setEditing(true)}>{memoryText||memoryKey?'Продолжить редактирование':'Добавить сведение'}</button>}
+        {editing&&<form
           onSubmit={(event) => {
             event.preventDefault();
             void act(async () => {
@@ -289,15 +296,17 @@ export function AgentPanel({
                 ...current.filter((item) => item.memory_key !== memoryKey),
               ]);
               setMemoryKey("");
-              setMemoryText("");
+              setMemoryText("");setEditing(false);setEditingExisting(false);
               setNote("Память обновлена.");
             });
           }}
         >
+          <fieldset disabled={writing}>
           <label>
             О чём запомнить
             <input
               required
+              readOnly={editingExisting}
               maxLength={120}
               value={memoryKey}
               onChange={(event) => setMemoryKey(event.target.value)}
@@ -305,7 +314,7 @@ export function AgentPanel({
           </label>
           <label>
             Что важно
-            <textarea
+            <textarea ref={editor}
               required
               maxLength={2000}
               value={memoryText}
@@ -315,8 +324,12 @@ export function AgentPanel({
           <button type="submit" disabled={writing}>
             Запомнить
           </button>
-        </form>
-      </details>
+          <button type="button" disabled={writing} onClick={()=>setEditing(false)}>Закрыть редактирование</button>
+          </fieldset>
+        </form>}
+        </>}
+        </div>
+      </AgentAuxiliaryDialog>}
     </section>
   );
 }

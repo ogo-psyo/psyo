@@ -58,11 +58,11 @@ export function AgentObservationDraft({id,petId,headers,edits,onSaved,onOpen}: {
     {!draft&&!error&&<p role="status">Открываю черновик…</p>}
     {draft?.status==='discarded'&&<p role="status">Черновик убран. Запись не создавалась.</p>}
     {draft?.status==='saved'&&<>
-      <h3>Запись сохранена</h3>
+      <h3 data-assistant-heading>Запись сохранена</h3>
       {record?<><p className={styles.note}>{record.note||record.value}</p><button type="button" className={styles.primary} onClick={event=>callbacks.current.onOpen(record,event.currentTarget)}>Открыть запись</button></>:<p>Эта запись больше недоступна в истории.</p>}
     </>}
     {draft?.status==='draft'&&review&&<form onSubmit={event=>{event.preventDefault();void submit();}}>
-      <h3>Запись о собаке</h3>
+      <h3 data-assistant-heading>Запись о собаке</h3>
       <fieldset disabled={busy}>
         <label htmlFor={`agent-note-${id}`}>Что сохранить</label>
         <textarea ref={text} id={`agent-note-${id}`} value={review.note} maxLength={8000} required onChange={event=>change({...review,note:event.target.value})}/>

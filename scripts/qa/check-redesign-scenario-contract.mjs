@@ -35,7 +35,7 @@ rejectText(page, "tab === 'assistant'", 'single assistant surface');
 rejectText(page, 'false && hasDog', 'dead duplicate screen');
 rejectText(page, 'Boolean(0)', 'dead duplicate screen');
 requireText(page, '<ProductionAssistantSheet', 'assistant sheet');
-requireText(journey, 'error?: string', 'assistant in-context failure');
+requireText(source('components/journey/ProductionAssistantSheet.tsx'), 'error?: string', 'assistant in-context failure');
 requireText(page, "state: 'loading'", 'assistant action loading state');
 requireText(page, "state: 'success'", 'assistant action success state');
 requireText(page, "state: 'error'", 'assistant action recovery state');

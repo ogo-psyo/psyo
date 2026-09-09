@@ -41,6 +41,7 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
       let saves = 0;
       let saveAttempts = 0;
       let memory = [];
+      let memoryReads=0,memoryWrites=0;
       const json = (route, body, status = 200) =>
         route.fulfill({
           status,
@@ -121,6 +122,8 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
         const method = r.request().method();
         if (method === "POST") {
           const body = r.request().postDataJSON();
+          memoryWrites++;
+          if(memoryWrites===1)return json(r,{error:'fixture_failure'},503);
           const item = {
             id: "memory-one",
             memory_key: body.key,
@@ -133,6 +136,8 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
           memory = [];
           return json(r, { forgotten: true });
         }
+        memoryReads++;
+        if(memoryReads===1)return json(r,{error:'fixture_failure'},503);
         return json(r, { memories: memory });
       });
       await page.goto(base);
@@ -188,18 +193,40 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
         .click();
       await dialog.getByText("Результат сохранён.", { exact: true }).waitFor();
       assert.equal(saves, 1);
-      await dialog.getByText("Сохранённые ответы", { exact: true }).click();
-      await dialog.getByText("Поездка с Мятой", { exact: true }).click();
-      await dialog.getByText("Что Псё помнит", { exact: true }).click();
-      await dialog.getByLabel("О чём запомнить").fill("Прогулки");
-      await dialog.getByLabel("Что важно").fill("Не любит велосипеды");
-      await dialog
-        .getByRole("button", { name: "Запомнить", exact: true })
-        .click();
-      await dialog.getByText("Память обновлена.", { exact: true }).waitFor();
-      await dialog.getByRole("button", { name: "Забыть", exact: true }).click();
-      await dialog.getByText("Убрано из памяти.", { exact: false }).waitFor();
-      assert.equal(memory.length, 0);
+      await dialog.getByRole('button',{name:'Сохранённые ответы',exact:true}).click();
+      const savedDialog=page.getByRole('dialog',{name:'Сохранённые ответы',exact:true});
+      await savedDialog.getByText('Поездка с Мятой',{exact:true}).click();
+      await savedDialog.getByText('План с проверенными источниками.',{exact:true}).waitFor();
+      await page.screenshot({path:`artifacts/agent-ui/saved-${engine}-${width}.png`});
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(()=>document.activeElement?.textContent==='Сохранённые ответы');
+      await dialog.getByRole('button',{name:'Что Псё помнит',exact:true}).click();
+      const memoryDialog=page.getByRole('dialog',{name:'Что Псё помнит',exact:true});
+      await memoryDialog.getByRole('alert').waitFor();
+      assert.equal(await memoryDialog.getByText('Пока нет сохранённых сведений.').count(),0);
+      await memoryDialog.getByRole('button',{name:'Повторить загрузку'}).click();
+      await memoryDialog.getByRole('button',{name:'Добавить сведение'}).click();
+      await memoryDialog.getByLabel('О чём запомнить').fill('Прогулки');
+      await memoryDialog.getByLabel('Что важно').fill('Не любит велосипеды');
+      await memoryDialog.getByRole('button',{name:'Запомнить',exact:true}).click();
+      await memoryDialog.getByText('Не удалось сохранить изменение.',{exact:false}).waitFor();
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(()=>document.activeElement?.textContent==='Что Псё помнит');
+      await dialog.getByRole('button',{name:'Что Псё помнит',exact:true}).click();
+      assert.equal(await memoryDialog.getByLabel('Что важно').inputValue(),'Не любит велосипеды');
+      await memoryDialog.getByRole('button',{name:'Запомнить',exact:true}).click();
+      await memoryDialog.getByText('Память обновлена.',{exact:true}).waitFor();
+      await memoryDialog.getByRole('button',{name:'Изменить',exact:true}).click();
+      assert.equal(await memoryDialog.getByLabel('О чём запомнить').getAttribute('readonly'),'');
+      await memoryDialog.getByLabel('Что важно').fill('Держимся подальше от велосипедов');
+      await memoryDialog.getByRole('button',{name:'Запомнить',exact:true}).click();
+      await memoryDialog.getByText('Память обновлена.',{exact:true}).waitFor();
+      assert.equal(memory[0].content,'Держимся подальше от велосипедов');
+      await page.screenshot({path:`artifacts/agent-ui/memory-${engine}-${width}.png`});
+      await memoryDialog.getByRole('button',{name:'Забыть',exact:true}).click();
+      await memoryDialog.getByText('Убрано из памяти.',{exact:false}).waitFor();
+      assert.equal(memory.length,0);
+      await page.keyboard.press('Escape');
       await dialog
         .getByLabel("Вопрос ассистенту")
         .fill("Помоги выбрать шлейку");

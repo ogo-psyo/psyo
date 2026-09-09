@@ -1,0 +1,54 @@
+[
+  {
+    "engine": "chromium",
+    "reducedMotion": "no-preference",
+    "scale": "0.96",
+    "anim": {
+      "count": 1,
+      "transition": "0.18s"
+    },
+    "disclosure": {
+      "height": 385.5625,
+      "content": "visible"
+    }
+  },
+  {
+    "engine": "chromium",
+    "reducedMotion": "reduce",
+    "scale": "none",
+    "anim": {
+      "count": 0,
+      "transition": "0s"
+    },
+    "disclosure": {
+      "height": 385.5625,
+      "content": "visible"
+    }
+  },
+  {
+    "engine": "webkit",
+    "reducedMotion": "no-preference",
+    "scale": "0.96",
+    "anim": {
+      "count": 1,
+      "transition": "0.18s"
+    },
+    "disclosure": {
+      "height": 385.5625,
+      "content": "visible"
+    }
+  },
+  {
+    "engine": "webkit",
+    "reducedMotion": "reduce",
+    "scale": "none",
+    "anim": {
+      "count": 0,
+      "transition": "0s"
+    },
+    "disclosure": {
+      "height": 385.5625,
+      "content": "visible"
+    }
+  }
+]

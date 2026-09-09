@@ -642,6 +642,8 @@ export default function Home() {
   const [publicCardLinkBusy, setPublicCardLinkBusy] = useState(false);
   const [publicCardRevokeConfirm, setPublicCardRevokeConfirm] = useState(false);
   const [assistantQuestion, setAssistantQuestion] = useState('');
+  const [assistantError,setAssistantError]=useState('');
+  const [assistantReturnFocus,setAssistantReturnFocus]=useState<HTMLElement|null>(null);
   const [assistantAnswer, setAssistantAnswer] = useState('');
   const [assistantActions, setAssistantActions] = useState<ActionSuggestion[]>([]);
   const [assistantActionStatuses, setAssistantActionStatuses] = useState<Record<string, AssistantActionStatus>>({});
@@ -776,8 +778,8 @@ export default function Home() {
     window.history.replaceState({ tab: target, detail: valid?.detail }, '', nextUrl);
   }
 
-  function openAssistantSheet() {
-    setError('');
+  function openAssistantSheet(event?:{currentTarget:EventTarget|null}) {
+    setAssistantReturnFocus(event?.currentTarget instanceof HTMLElement?event.currentTarget:document.activeElement as HTMLElement|null);
     setAssistantOpen(true);
     const nextUrl = new URL(window.location.href);
     window.history.pushState({ tab, overlay: 'assistant' }, '', nextUrl);
@@ -1961,7 +1963,7 @@ export default function Home() {
       window.history.replaceState({ tab: 'today' }, '', nextUrl);
     }
     setAssistantOpen(false);
-    setAssistantQuestion('');
+    setAssistantQuestion('');setAssistantError('');
     setAssistantAnswer('');
     setAssistantActions([]);
     setAssistantActionStatuses({});
@@ -3541,13 +3543,14 @@ export default function Home() {
     const requestEpoch=agentRequestEpoch.current;
     const question = (preset || assistantQuestion).trim();
     if(assistantLoading) return;
-    if (!question) return setError('Напиши вопрос ассистенту.');
+    if (!question) return setAssistantError('Напиши вопрос ассистенту.');
     if (!profile.backendPetId) {
-      if (!isGuestMode()) return setError('Сначала сохрани профиль собаки — ассистенту нужен контекст.');
+      if (!isGuestMode()) return setAssistantError('Сначала сохрани профиль собаки — ассистенту нужен контекст.');
       ensureGuestPetId();
     }
     if(agentRequest.current?.question!==question||agentRequest.current?.pet!==profile.backendPetId) agentRequest.current={pet:profile.backendPetId||'guest',question,id:crypto.randomUUID()};
-    setAssistantLoading(true); setAssistantActions([]); setAssistantActionStatuses({}); setError('');
+    setAssistantQuestion(question);
+    setAssistantLoading(true); setAssistantActions([]); setAssistantActionStatuses({}); setAssistantError('');
     setAssistantMessages((current) => [...current, { role: 'user', content: question }]);
     let response: Response;
     try {
@@ -3597,7 +3600,7 @@ export default function Home() {
       if(requestEpoch!==agentRequestEpoch.current) return;
       setAssistantLoading(false);
       setAssistantMessages((current) => current.slice(0, -1));
-      setError('Псё не ответил. Проверь связь и попробуй ещё раз.');
+      setAssistantError('Псё не ответил. Проверь связь и попробуй ещё раз.');
       return;
     }
     const result = await response.json().catch(() => ({}));
@@ -3606,20 +3609,20 @@ export default function Home() {
       agentRequest.current=null;
       setAgentRunId(result.runId);
       setAssistantThreadId(result.threadId);
-      setAssistantQuestion('');
+      setAssistantQuestion('');setAssistantError('');
       return;
     }
     setAssistantLoading(false);
     if (!response.ok) {
       setAssistantMessages((current) => current.slice(0, -1));
-      return setError('Псё не ответил. Проверь связь и попробуй ещё раз.');
+      return setAssistantError('Псё не ответил. Проверь связь и попробуй ещё раз.');
     }
     if(result.mode==='agent'&&typeof result.runId==='string') {
       agentDelivered.current=result.runId;
       setAgentRunId(result.runId);
       agentRequest.current=null;
     }
-    setAssistantQuestion('');
+    setAssistantQuestion('');setAssistantError('');
     setAssistantAnswer(result.answer || 'Не получилось составить ответ. Уточни вопрос.');
     setAssistantMessages((current) => [...current, { role: 'assistant', content: result.answer || 'Не получилось составить ответ. Уточни вопрос.' }]);
     setAssistantActions(Array.isArray(result.actionSuggestions) ? result.actionSuggestions : []);
@@ -4498,13 +4501,14 @@ export default function Home() {
         /></div>}
 
         {hasDog && assistantOpen && <ProductionAssistantSheet
+          returnFocusTo={assistantReturnFocus}
           dogName={profile.dogName}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
           question={assistantQuestion}
           answer={assistantAnswer}
           messages={assistantMessages}
           loading={assistantLoading}
-          error={error}
+          error={assistantError}
           suggestions={assistantSuggestedQuestions.length ? assistantSuggestedQuestions : contextualAssistantSuggestions}
           actions={<>
             {!isGuestMode()&&profile.backendPetId&&<AgentPanel key={profile.backendPetId} petId={profile.backendPetId} runId={agentRunId} headers={authHeaders}
@@ -4856,7 +4860,7 @@ export default function Home() {
 
         {hasDog && tab === 'things' && <ProductionJourney route="things" dogName={profile.dogName} breedLabel={breedLabel}
           avatar={<GeneratedAvatar profile={profile} ready={Boolean(profile.avatarImageUrl) || demoMode} imageUrl={profile.avatarImageUrl} demo={demoMode} size="small" />}
-          onNavigate={setTab}>
+          onNavigate={setTab} onAskAssistant={openAssistantSheet}>
           <div className="screen-primary-action">
             <button className="primary" type="button" aria-expanded={thingCaptureOpen} onClick={() => setThingCaptureOpen((open) => !open)}>
               {thingCaptureOpen ? 'Закрыть добавление' : 'Добавить вещь'}

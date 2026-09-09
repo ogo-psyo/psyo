@@ -18,10 +18,10 @@ body.companion-app, .companion-app .app-canvas { background: var(--companion-mis
 .companion-app .phone-shell, .companion-app .watercolor-screen,
 .companion-app [data-profile-memory], .companion-app .production-journey-screen { background: transparent !important; }
 .companion-app .phone-shell { background: var(--companion-mist) !important; }
-.companion-app :is(h1,h2,h3) { text-wrap: balance; letter-spacing: -.025em !important; }
+.companion-app :is(h1,h2,h3):not([data-assistant-heading]) { text-wrap: balance; letter-spacing: -.025em !important; }
 .companion-app h1 { font-size: 30px !important; line-height: 1.15 !important; font-weight: 550 !important; }
-.companion-app h2 { font-size: 19px !important; line-height: 1.22 !important; font-weight: 600 !important; }
-.companion-app h3 { font-size: 18px !important; line-height: 1.3 !important; }
+.companion-app h2:not([data-assistant-heading]) { font-size: 19px !important; line-height: 1.22 !important; font-weight: 600 !important; }
+.companion-app h3:not([data-assistant-heading]) { font-size: 18px !important; line-height: 1.3 !important; }
 .companion-app :is(input,textarea,select) { font-size: 16px !important; }
 .companion-app button { font-weight: 600; }
 .companion-app :is(.primary,.ui-button-primary,.ui-button-care) { color: #fffefa !important; background: var(--companion-forest) !important; border-color: transparent !important; box-shadow: 0 4px 12px rgb(36 90 64 / 10%) !important; }
