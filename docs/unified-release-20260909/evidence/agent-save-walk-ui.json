@@ -1,0 +1,26 @@
+[
+  {
+    "engine": "chromium",
+    "width": 320,
+    "pass": true,
+    "scope": "real built UI, synthetic APIs; SQL write tested separately"
+  },
+  {
+    "engine": "chromium",
+    "width": 390,
+    "pass": true,
+    "scope": "real built UI, synthetic APIs; SQL write tested separately"
+  },
+  {
+    "engine": "webkit",
+    "width": 320,
+    "pass": true,
+    "scope": "real built UI, synthetic APIs; SQL write tested separately"
+  },
+  {
+    "engine": "webkit",
+    "width": 390,
+    "pass": true,
+    "scope": "real built UI, synthetic APIs; SQL write tested separately"
+  }
+]

@@ -1,0 +1,4 @@
+BEGIN
+DO
+NOTICE:  PASS whole additive migration: preexisting route seeded, replay unchanged, deleted replay rejected
+ROLLBACK

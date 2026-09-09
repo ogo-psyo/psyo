@@ -49,6 +49,7 @@ export function AgentPanel({
   const [status, setStatus] = useState("");
   const [failedQuestion, setFailedQuestion] = useState("");
   const [result, setResult] = useState<AgentResult | null>(null);
+  const [committed,setCommitted]=useState<{id:string;title:string;available:boolean}|null>(null);
   const [note, setNote] = useState("");
   const [saved, setSaved] = useState<Saved[]>([]);
   const [memories, setMemories] = useState<Memory[]>([]);
@@ -85,7 +86,7 @@ export function AgentPanel({
   useEffect(() => {
     if (runId) {
       setEnabled(true);
-      setResult(null);
+      setResult(null);setCommitted(null);
       setStatus("queued");
       setActive(runId);
     }
@@ -102,7 +103,7 @@ export function AgentPanel({
           signal: controller.signal,
         });
         if ([401, 404].includes(response.status)) {
-          setStatus("unavailable");
+          setStatus("unavailable");setCommitted(null);setResult(null);
           callbacks.current.onBusy(false);
           setNote("Это задание недоступно.");
           return;
@@ -111,6 +112,7 @@ export function AgentPanel({
         const body = await response.json();
         if (stopped) return;
         setStatus(body.status);
+        setCommitted(body.committedWalk&&typeof body.committedWalk.id==='string'&&typeof body.committedWalk.title==='string'?body.committedWalk:null);
         setFailedQuestion(body.question ?? "");
         const busy = body.status === "queued" || body.status === "running";
         callbacks.current.onBusy(busy);
@@ -194,7 +196,8 @@ export function AgentPanel({
           disabled={writing}
           onClick={() =>
             void act(async () => {
-              await api(`/api/agent/runs/${active}`, "DELETE");
+              const stopped=await api(`/api/agent/runs/${active}`, "DELETE");
+              setCommitted(stopped.committedWalk??null);
               setStatus("cancelled");
               callbacks.current.onBusy(false);
               setNote("Запрошена остановка задания.");
@@ -207,7 +210,12 @@ export function AgentPanel({
       {result?.observationDraftId && result.runId===active && status==='succeeded' && onOpenObservation && onObservationSaved &&
         <AgentObservationDraft key={result.observationDraftId} id={result.observationDraftId} petId={petId}
           headers={headers} edits={observationEdits??fallbackEdits} onSaved={onObservationSaved} onOpen={onOpenObservation}/>}
-      {status==='succeeded'&&result?.runId===active&&onOpenSavedWalk&&Array.isArray(result.savedWalks)&&result.savedWalks.map(route=>typeof route?.id==='string'&&typeof route?.title==='string'?<div className={surface.places} key={route.id}>
+      {committed&&<div className={surface.places} aria-label="Результат сохранения прогулки">
+        <h3 data-assistant-heading>{committed.title}</h3>
+        <p>{committed.available?'Прогулка сохранена.': 'Прогулка была сохранена, но теперь удалена или недоступна.'}</p>
+        {committed.available&&onOpenSavedWalk&&<button type="button" disabled={writing} onClick={()=>void act(async()=>{const error=await onOpenSavedWalk(committed.id);if(error)setNote(error==='missing'?'Эта прогулка удалена или больше недоступна.':'Не удалось загрузить прогулку. Попробуйте ещё раз.');})}>Открыть сохранённую прогулку</button>}
+      </div>}
+      {status==='succeeded'&&result?.runId===active&&onOpenSavedWalk&&Array.isArray(result.savedWalks)&&result.savedWalks.filter(route=>route?.id!==committed?.id).map(route=>typeof route?.id==='string'&&typeof route?.title==='string'?<div className={surface.places} key={route.id}>
         <h3 data-assistant-heading>{route.title}</h3>
         <button type="button" disabled={writing} onClick={()=>void act(async()=>{const error=await onOpenSavedWalk(route.id);if(error)setNote(error==='missing'?'Эта прогулка удалена или больше недоступна.':'Не удалось загрузить прогулку. Попробуйте ещё раз.');},'Не удалось загрузить прогулку. Попробуйте ещё раз.')}>Открыть сохранённую прогулку</button>
       </div>:null)}

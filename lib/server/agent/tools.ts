@@ -1,3 +1,4 @@
+import {saveAgentWalk,permitsWalkSave,type WalkProposal} from './walkSave';
 import {readOwnedMapRoute} from '@/lib/server/ownedMapRoute';
 import {calculateWalkingPath} from '@/lib/server/walkingRoute';
 import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
@@ -18,6 +19,7 @@ export function makePrivateTools(
   signal?:AbortSignal,
   walkState:{previousPlaces:MapSearchPlace[];preview?:AgentWalk}={previousPlaces:[]},
   savedWalks:Array<{id:string;title:string}>=[],
+  proposals:WalkProposal[]=[],
 ) {
   const db = agentDatabase();
   let placeSearches=0,walkCalculations=0;
@@ -29,6 +31,16 @@ export function makePrivateTools(
     return run;
   }
   return [
+    tool({name:'recall_walk_proposals',description:'List real calculated proposals from this conversation, newest first. A proposal is not saved. Use exact sourceRunId with save_walk only on an explicit save command; clarify which when ambiguous.',parameters:z.object({}),execute:async()=>{await guard();return {proposals};}}),
+    tool({name:'save_walk',description:'Save a previously reviewed calculated walk to the actual private Map library. sourceRunId must come from recall_walk_proposals. Only explicit CURRENT «сохрани прогулку/маршрут» or bare «сохрани» immediately after a walk proposal; never save answer text instead. Clarify ambiguous references. No invented coordinates, publication or messages. Repeat reuses the same route; removed routes are not recreated.',parameters:z.object({sourceRunId:z.uuid()}),execute:async({sourceRunId})=>{
+      const run=await guard();
+      if(!permitsWalkSave(run.question))throw new Error('EXPLICIT_WALK_SAVE_REQUIRED');
+      if(!proposals.some(p=>p.sourceRunId===sourceRunId && (/прогулк|маршрут/iu.test(run.question)||p.immediate)))throw new Error('PROPOSAL_NOT_AVAILABLE');
+      const saved=await saveAgentWalk(owner,pet,runId,sourceRunId);
+      // Do not erase a committed receipt if cancellation wins after the transaction.
+      if(!savedWalks.some(r=>r.id===saved.id))savedWalks.push({id:saved.id,title:saved.title});
+      return {...saved,saved:true,mapLinkAvailable:true};
+    }}),
     tool({name:'read_walk',description:'Read an existing saved walk by exact UUID from search_private_records. Current owner/pet checked. Returns actual metadata and adds an openable canonical Map link. Does not recreate, edit or save a route. A deleted/unavailable route is an error, not a blank route.',parameters:z.object({id:z.uuid()}),execute:async({id})=>{
       await guard();const route=await readOwnedMapRoute(owner,pet,id);await guard();
       if(!savedWalks.some(r=>r.id===route.id))savedWalks.push({id:route.id,title:route.title});
@@ -89,7 +101,7 @@ export function makePrivateTools(
       parameters: z.object({}),
       async execute() {
         const run = await guard();
-        if (!permitsAgentWrite(run.question, "save"))
+        if (!permitsAgentWrite(run.question, "save") || /прогулк|маршрут/iu.test(run.question) || (proposals.length>0 && !/ответ|текст|сообщени/iu.test(run.question)))
           return {
             error: "EXPLICIT_SAVE_REQUIRED",
             message:

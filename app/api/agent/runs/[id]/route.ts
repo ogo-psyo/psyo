@@ -1,3 +1,4 @@
+import {committedWalk} from '@/lib/server/agent/walkSave';
 import {
   agentDatabase,
   agentError,
@@ -20,6 +21,7 @@ export async function GET(request: Request, context: Context) {
         status: run.status,
         result: run.result,
         error: run.error_code,
+        committedWalk: await committedWalk(run),
       },
       { headers: { "Cache-Control": "private, no-store" } },
     );
@@ -38,7 +40,7 @@ export async function DELETE(request: Request, context: Context) {
       .eq("owner_id", owner)
       .in("status", ["queued", "running"]);
     if (result.error) throw new Error("CANCEL_FAILED");
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, committedWalk: await committedWalk(run) },{headers:{"Cache-Control":"private, no-store"}});
   } catch (error) {
     return agentError(error);
   }

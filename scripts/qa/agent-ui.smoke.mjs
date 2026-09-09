@@ -150,7 +150,8 @@ for (const [engine, browserType] of Object.entries({ chromium, webkit })) {
         path: `artifacts/agent-ui/start-${engine}-${width}.png`,
       });
       const open = async () => {
-        await page.getByText("Спросите Псё", { exact: true }).first().click();
+        await page.locator('.app-tabs button[data-route="profile"]').click();
+        await page.locator(".journal-masthead").getByRole("button",{name:"Спросить Псё",exact:true}).click();
         await page.getByRole("dialog", { name: "Спросить Псё" }).waitFor();
       };
       await open();

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 const files = {
   page: readFileSync('app/page.tsx', 'utf8'),
   mapApi: readFileSync('app/api/map/features/route.ts', 'utf8'),
+  routeSave: readFileSync('lib/server/mapRouteSave.ts','utf8'),
   mapItemApi: readFileSync('app/api/map/features/[id]/route.ts', 'utf8'),
   bootstrapApi: readFileSync('app/api/app/bootstrap/route.ts', 'utf8'),
   mapSharePage: readFileSync('app/map/share/[id]/page.tsx', 'utf8'),
@@ -37,11 +38,13 @@ for (const token of [
   'blurPublicZoneInput',
   "requesting_owner_id: ownerId ?? null",
   "shareUrl: visibility === 'shared' ? shareUrl(request, data.share_token) : null",
-  "routeSource === 'recorded'",
-  'duration_seconds: durationSeconds',
-  'distance_meters: distanceMeters',
+  'saveOwnedMapRoute(supabase,ownerId,body,request.headers.get(',
 ]) {
   if (!files.mapApi.includes(token)) failures.push(`map feature API privacy boundary missing: ${token}`);
+}
+
+for(const token of ["body.routeSource==='recorded'",'duration_seconds:durationSeconds','distance_meters:distanceMeters',"db.rpc('map_save_route_atomic'","db.rpc('agent_save_walk_atomic'"]){
+ if(!files.routeSave.includes(token))failures.push(`shared route persistence missing: ${token}`);
 }
 
 for (const token of [

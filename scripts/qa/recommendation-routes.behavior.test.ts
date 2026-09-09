@@ -1,3 +1,4 @@
+import {buildRouteSave} from '@/lib/server/mapRouteSave';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -303,10 +304,11 @@ describe('domain outcome post-success linking', () => {
   });
 
   test('opening the map is not completion, while saving a route is', async () => {
+    const routeId=buildRouteSave('owner-auth',{title:'Маршрут',path:[[37.61,55.75],[37.62,55.76]]},'route-key-1').id;
     const db = fakeDatabase({
       'rpc:get_map_features_in_bounds': { data: [], error: null },
       pets: { data: { id: 'pet-1' }, error: null },
-      map_routes: { data: { id: 'route-1', share_token: null }, error: null },
+      'rpc:map_save_route_atomic': {data:{feature:{id:routeId,owner_id:'owner-auth',share_token:null,path:{type:'LineString',coordinates:[[37.61,55.75],[37.62,55.76]]}}},error:null},
     });
     state.admin = db.client;
     const opened = await GET_MAP(request('/api/map/features?bounds=55,37,56,38'));
@@ -320,7 +322,7 @@ describe('domain outcome post-success linking', () => {
       },
     }));
     expect(saved.status).toBe(201);
-    expect(state.link).toHaveBeenCalledWith(expect.objectContaining({ domainType: 'route', domainId: 'route-1' }));
+    expect(state.link).toHaveBeenCalledWith(expect.objectContaining({ domainType: 'route', domainId: routeId }));
   });
 
   test('domain replay reuses the same derived outcome key', async () => {
