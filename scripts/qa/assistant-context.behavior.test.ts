@@ -5,18 +5,18 @@ import { createAppSessionToken } from '../../lib/server/appSession';
 
 process.env.PSYO_SESSION_SIGNING_KEY = 'qa-assistant-context-key';
 
-function query(data: unknown) {
+function query(data: unknown, error: unknown = null) {
   const value: any = {
     select: () => value, eq: () => value, neq: () => value, is: () => value,
     order: () => value, limit: () => value,
-    maybeSingle: async () => ({ data, error: null }),
-    single: async () => ({ data, error: null }),
-    then: (resolve: (result: unknown) => void) => resolve({ data, error: null }),
+    maybeSingle: async () => ({ data, error }),
+    single: async () => ({ data, error }),
+    then: (resolve: (result: unknown) => void) => resolve({ data, error }),
   };
   return value;
 }
 
-function fixtureSupabase() {
+function fixtureSupabase(failingTable?: string, petMissing = false) {
   const tables: string[] = [];
   let threadInserts = 0;
   const messageInserts: unknown[] = [];
@@ -34,9 +34,9 @@ function fixtureSupabase() {
       play_style: 'нюховые игры', trainability: 'работает за еду', triggers: ['шум'],
     },
     reminders: [{ id: 'reminder-1', title: 'Обработка', status: 'active' }],
-    pet_observations: [{ type: 'energy', value: 'бодрая', observed_at: '2026-08-21T09:00:00Z' }],
+    pet_observations: [{ type: 'energy', value: 'бодрая', note: 'Увидел сыпь после прогулки', observed_at: '2026-08-21T09:00:00Z' }],
     pet_documents: [{ title: 'Общий анализ крови', kind: 'analysis', document_date: '2026-08-20' }],
-    map_routes: [{ title: 'Вечерний маршрут', activity_type: 'walk', distance_meters: 1800, started_at: '2026-08-20T18:00:00Z' }],
+    map_routes: [{ title: 'Вечерний маршрут', route_source: 'recorded', distance_meters: 1800, started_at: '2026-08-20T18:00:00Z' }],
     assistant_threads: { id: 'thread-existing', pet_id: 'pet-1', kind: 'training' },
     assistant_messages: [
       { role: 'user', content: 'Мята тянет вечером' },
@@ -46,6 +46,8 @@ function fixtureSupabase() {
   const supabase = {
     from(table: string) {
       tables.push(table);
+      if (table === failingTable) return query(null, {code:'TEST_READ_FAILURE'});
+      if (table === 'pets' && petMissing) return query(null);
       if (table === 'assistant_threads') {
         return { ...query(data[table]), insert: () => { threadInserts += 1; return query({ id: 'thread-new' }); } };
       }
@@ -85,6 +87,8 @@ test('builds context from observations, documents, walks and recent thread histo
   assert.equal(fixture.threadInserts, 0);
   assert.ok(['pet_observations', 'pet_documents', 'map_routes'].every((table) => fixture.tables.includes(table)));
   assert.match(generatedInput.prompt, /бодрая/);
+  assert.match(generatedInput.prompt, /Увидел сыпь после прогулки/);
+  assert.match(generatedInput.prompt, /содержимое файлов не прочитано/);
   assert.match(generatedInput.prompt, /Общий анализ крови/);
   assert.match(generatedInput.prompt, /Вечерний маршрут/);
   assert.match(generatedInput.prompt, /Мята тянет вечером/);
@@ -108,4 +112,23 @@ test('rules fallback translates database enums and never leaks internal product 
   assert.match(body.answer, /не указано/);
   assert.match(body.answer, /сначала спросить/);
   assert.match(body.answer, /порода: Ксолоитцкуинтли \/ ксоло/);
+});
+
+for (const table of ['pets','pet_passports','social_profiles','reminders','pet_observations','pet_documents','map_routes','assistant_threads','assistant_messages']) {
+  test(`failed ${table} read is retryable, not missing context`, async () => {
+    const fixture = fixtureSupabase(table);
+    let calls = 0;
+    const POST = createAssistantPostHandler({admin:()=>fixture.supabase as never, generate:async()=>{calls++;throw new Error('must not generate');}});
+    const response = await POST(ownerRequest({petId:'pet-1',threadId:'thread-existing',question:'Что было на прошлой прогулке?'}));
+    assert.equal(response.status,503);
+    assert.equal((await response.json()).error,'ASSISTANT_CONTEXT_UNAVAILABLE');
+    assert.equal(calls,0);assert.equal(fixture.messageInserts.length,0);
+    if(table==='pets') assert.deepEqual(fixture.tables,['pets']);
+  });
+}
+test('unavailable pet stops before private context reads or generation',async()=>{
+  const fixture=fixtureSupabase(undefined,true);
+  const POST=createAssistantPostHandler({admin:()=>fixture.supabase as never,generate:async()=>{throw new Error('must not generate');}});
+  const response=await POST(ownerRequest({petId:'pet-1',question:'Что было вчера?'}));
+  assert.equal(response.status,404);assert.deepEqual(fixture.tables,['pets']);
 });

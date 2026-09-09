@@ -1,13 +1,13 @@
 import { expect, test, vi } from 'vitest';
 import { RunContext } from '@openai/agents';
-const state=vi.hoisted(()=>({ rows: [] as Record<string, unknown>[] }));
+const state=vi.hoisted(()=>({ error: null as null | {code:string}, rows: [] as Record<string, unknown>[] }));
 vi.mock('@/lib/server/agent/access',()=>({
   ownedRun: async()=>({status:'running',pet_id:'pet-a'}), ownedPet: async()=>({id:'pet-a'}),
   agentDatabase:()=>({ from:()=>{
     let fields: string[]=[]; const filters: ((row:Record<string,unknown>)=>boolean)[]=[];
     const q={select:(names:string)=>{fields=names.split(',');return q;},eq:(name:string,value:unknown)=>{filters.push(row=>row[name]===value);return q;},
       is:(name:string,value:unknown)=>{filters.push(row=>row[name]===value);return q;}, order:()=>q,limit:()=>q,
-      then:(resolve:(result:unknown)=>unknown)=>Promise.resolve(resolve({data:state.rows.filter(row=>filters.every(f=>f(row))).map(row=>Object.fromEntries(fields.map(name=>[name,row[name]]))),error:null})),
+      then:(resolve:(result:unknown)=>unknown)=>Promise.resolve(resolve({data:state.rows.filter(row=>filters.every(f=>f(row))).map(row=>Object.fromEntries(fields.map(name=>[name,row[name]]))),error:state.error})),
     };return q;
   } }),
 }));
@@ -27,4 +27,15 @@ test('agent can find the original observation note, but not deleted notes',async
     {id:'deleted',pet_id:'pet-a',note:'сыпь',deleted_at:'2026-09-09'}];
   const result=await search('observations','сыпь');
   expect(result.records.map(row=>row.id)).toEqual(['note-a']);expect(result.records[0].note).toContain('после прогулки');
+});
+
+test('saved walk search returns the canonical route source and dates',async()=>{
+  state.rows=[{id:'walk-a',pet_id:'pet-a',title:'Вечерний маршрут',route_source:'planned',distance_meters:1800,created_at:'2026-09-09'}];
+  const result=await search('walks','Вечерний');
+  expect(result.records).toHaveLength(1);expect(result.records[0]).toMatchObject({id:'walk-a',route_source:'planned',created_at:'2026-09-09'});
+});
+test('a storage failure is not an empty search result',async()=>{
+  state.rows=[];state.error={code:'42703'};
+  try { expect(await search('walks','')).toContain('READ_FAILED'); }
+  finally {state.error=null;}
 });

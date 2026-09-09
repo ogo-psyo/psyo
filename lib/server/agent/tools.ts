@@ -181,7 +181,7 @@ export function makePrivateTools(
           ],
           walks: [
             "map_routes",
-            "id,title,distance_meters,activity_type",
+            "id,title,distance_meters,route_source,started_at,created_at",
             "created_at",
           ],
         }[kind];
