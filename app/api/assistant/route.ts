@@ -9,6 +9,8 @@ import {
   type AssistantKind,
 } from '@/lib/server/assistantAnswerService';
 import { buildAssistantProfileFacts, humanAssistantProfileValue } from '@/lib/server/assistantProfileContext';
+import { agentEnabled } from '@/lib/server/agent/access';
+import { submitAgent } from '@/lib/server/agent/submit';
 
 export const runtime = 'nodejs';
 
@@ -191,6 +193,7 @@ export function createAssistantPostHandler(dependencies: AssistantRouteDependenc
 
 async function assistantPost(request: Request, dependencies: AssistantRouteDependencies) {
   const body = await request.json().catch(() => null);
+  if (agentEnabled() && body?.petId) return submitAgent(request,body);
   const question = String(body?.question || '').trim();
 
   if (!question) {

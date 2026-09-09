@@ -33,3 +33,12 @@ Groq Free/search entitlement unknown. User asked for plan metadata this turn; no
 - Form keeps text and the File object across close/back within the mounted app, clears on pet switch/explicit reset; domain-scoped error; specific size/type errors; same key for exact file+form retry; correct success text; deduplicated UI result. Refresh still requires choosing the local file again (browser security), not claimed persistent file storage.
 - Full qa:local passed with 162 tests/build/contracts, then one additional tombstone-retention test passed after hardening reconciliation. Browser `evidence/document-flow.cjs` passed Chromium/WebKit × 320/390: draft+file retention, scoped 503, retry key, success text, overflow; synthetic APIs only.
 - Remaining: live isolated Storage/API/cron integration and process termination tests, production migration/rollback compatibility with old code (old server does not filter lifecycle states; do not roll back to old document handlers while unfinished operations exist).
+
+## Agent integrated into the candidate (still disabled by default)
+
+- Merged PR29 source `98785bf` into the unified branch, with new save/document changes retained. Added integration fixes: agent document search only reads ready documents; observation search includes original note text, not only metric values.
+- Unified `qa:local`: 178 tests/build/contracts passed. Two additional private-search behavior tests passed after the integration fixes.
+- Actual local Postgres `agent_foundation.sql` passed: owner admission, same-request replay, mismatch rejection, correction/forgetting/privacy epoch, saved-result idempotency, cancellation write refusal and authenticated two-owner RLS. Initial RLS run failed because the schema-only fixture omitted base table grants; copied the base ACL definitions and repeated successfully. This was test setup, not a product RLS defect.
+- Agent browser smoke passed Chromium/WebKit × 320/390: reopen/reload, save failure/retry, saved result, memory correction/forgetting, cancellation. Fixture required `connected:true` to represent a connected owner; first run correctly stayed on onboarding without it. All model/API responses mocked.
+- Groq account Free/search entitlement remains unanswered; Secret Store metadata is empty. Existing key remains in Vercel. No secret export, paid provider call, cloud Workflow/source check or production change.
+- Missing tools (e.g. observation draft/write, map route calculation), complete design transfer and live quality must not be inferred from this foundation merge.

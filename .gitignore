@@ -14,3 +14,7 @@ out/
 tmp-*.png
 prod-*.png
 *.log
+/.swc
+/app/.well-known/workflow/
+/.workflow-data/
+/artifacts/agent-ui/
