@@ -2,9 +2,9 @@
 import {downloadRouteGpx,type RoutePlanning} from '@/lib/routePlanning';
 
 import { ChangeEvent, type FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, CopySimple, FilePdf, Files, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning, ShoppingBag, Sparkle, TextT, Trash, UploadSimple } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, CopySimple, FilePdf, Files, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning, TextT, UploadSimple } from '@phosphor-icons/react';
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
-import { PaperSheet, WatercolorScreen } from '@/components/watercolor';
+import { WatercolorScreen } from '@/components/watercolor';
 import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
 import { journalDayEntries } from '@/lib/journal';
 import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
@@ -13,19 +13,19 @@ import { VoiceObservationCapture, type PrivateVoiceNoteInput } from '@/component
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
 import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';
 import { RouteDeleteDialog } from '@/components/journey/RouteDeleteDialog';
+import { RecordDetailDialog, type RecordDetail } from '@/components/profile/RecordDetailDialog';
 import { ProfileConflictDialog } from '@/components/profile/ProfileConflictDialog';
 import { mergeProfileDraft, type ProfileMerge } from '@/lib/profileMerge';
 import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
 import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
-import { ObservationEditor, type ObservationEditorDraft } from '@/components/care/ObservationEditor';
+import { type ObservationEditorDraft } from '@/components/care/ObservationEditor';
 import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
 import type { DogModuleSummary } from '@/components/home/AllFunctionsHub';
 import { HabitScreen, type HabitDraft, type HabitView } from '@/components/habits/HabitScreen';
 import { HealthTimelineScreen } from '@/components/health/HealthTimelineScreen';
 import { RecommendationCard } from '@/components/recommendations/RecommendationCard';
-import { ProfileMemoryWorkspace } from '@/components/profile/ProfileMemoryWorkspace';
-import { NextCareCard } from '@/components/today/NextCareCard';
+import { ProfileMemoryWorkspace, type ProfileSurface } from '@/components/profile/ProfileMemoryWorkspace';
 import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
 import { CandidateCard } from '@/components/social/CandidateCard';
 import { CityCommunities, type CityCommunity } from '@/components/social/CityCommunities';
@@ -83,7 +83,7 @@ type WishlistView = { id: string; petId: string; title: string; category: string
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; visibility?: 'private' | 'shared' | 'public'; share_token?: string | null; created_at?: string };
 type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; avatar_source?: 'none' | 'uploaded' | 'generated'; active_avatar_asset_id?: string | null; photo_urls?: string[] };
 type AuthSession = { access_token: string; user: { email?: string } };
-type ObservationView = { id: string; petId?: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
+type ObservationView = { id: string; type?: string; value?: string; petId?: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
 type ObservationDraft = { mood: string; appetite: string; stool: string; energy: string; note?: string };
 type DocumentView = { id: string; petId: string; kind: string; title: string; clinic?: string | null; documentDate?: string | null; originalName: string; mimeType: string; sizeBytes: number; createdAt: string };
 type SocialInviteView = { token: string; scenario: SocialScenario; petName: string | null; expiresAt: string };
@@ -512,9 +512,20 @@ export default function Home() {
   const [avatarComposerOpen, setAvatarComposerOpen] = useState(false);
   const [avatarCapabilities, setAvatarCapabilities] = useState({ identityEnabled: false, uploadsEnabled: false, generationEnabled: false, providerReady: false });
   const [demoMode, setDemoMode] = useState(false);
-  const [notice, setNotice] = useState<Notice>('idle');
-  const [error, setError] = useState('');
   const [tab, setTabState] = useState<Tab>('today');
+  const [noticeState, setNoticeState] = useState<{ tab: Tab; value: Notice }>({ tab: 'today', value: 'idle' });
+  const setNotice = useCallback((value: Notice) => setNoticeState({ tab, value }), [tab]);
+  const notice: Notice = noticeState.tab === tab ? noticeState.value : 'idle';
+  const [errorState, setErrorState] = useState<{ tab: Tab; message: string }>({ tab: 'today', message: '' });
+  const setError = useCallback((message: string) => setErrorState({ tab, message }), [tab]);
+  const [storageError, setStorageError] = useState('');
+  const error = (errorState.tab === tab ? errorState.message : '') || storageError;
+  const [healthFactsDraft, setHealthFactsDraft] = useState<DogProfile | null>(null);
+  const [recordDetail, setRecordDetail] = useState<RecordDetail | null>(null);
+  const [profileSurface, setProfileSurface] = useState<ProfileSurface>('overview');
+  type FlowOrigin = { from: Tab; to: Tab; detail: PrimaryRoute | null; shellScroll: number; windowScroll: number; focusText: string };
+  const secondaryOrigins = useRef<FlowOrigin[]>([]);
+  const pendingViewRestore = useRef<FlowOrigin | null>(null);
   const [journeyDetail, setJourneyDetail] = useState<PrimaryRoute | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -569,6 +580,7 @@ export default function Home() {
   const [observationDraft, setObservationDraft] = useState<ObservationDraft>(defaultObservationDraft);
   const [observationSaving, setObservationSaving] = useState(false);
   const [editingObservationId, setEditingObservationId] = useState<string | null>(null);
+  const observationEditDrafts = useRef(new Map<string, ObservationEditorDraft>());
   const [observationEditDraft, setObservationEditDraft] = useState<ObservationEditorDraft>(defaultObservationDraft);
   const [observationMutationBusy, setObservationMutationBusy] = useState(false);
   const [recentlyDeletedObservation, setRecentlyDeletedObservation] = useState<ObservationView | null>(null);
@@ -611,7 +623,7 @@ export default function Home() {
   const [newWishTitle, setNewWishTitle] = useState('');
   const [newWishReason, setNewWishReason] = useState('');
   const [newWishCategory, setNewWishCategory] = useState('gear');
-  const [newWishNeedsReminder, setNewWishNeedsReminder] = useState(true);
+  const [newWishNeedsReminder, setNewWishNeedsReminder] = useState(false);
   const [newWishPlannedFor, setNewWishPlannedFor] = useState(() => dateAfterDays(1));
   const [thingCaptureOpen, setThingCaptureOpen] = useState(false);
   const [mainRecommendation, setMainRecommendation] = useState<Recommendation | null>(null);
@@ -739,6 +751,9 @@ export default function Home() {
 
   function setTab(nextTab: Tab) {
     if (nextTab === tab) return;
+    if (['calendar', 'habits', 'health', 'card'].includes(nextTab)) {
+      secondaryOrigins.current.push({ from: tab, to: nextTab, detail: journeyDetail, shellScroll: phoneShellRef.current?.scrollTop ?? 0, windowScroll: window.scrollY, focusText: document.activeElement instanceof HTMLButtonElement ? document.activeElement.textContent?.trim() ?? '' : '' });
+    } else secondaryOrigins.current = [];
     setTabState(nextTab);
     if (typeof window !== 'undefined') {
       const nextUrl = new URL(window.location.href);
@@ -748,10 +763,15 @@ export default function Home() {
   }
 
   function closeSecondaryFlow(parent: 'today' | 'profile') {
-    setTabState(parent);
+    const origin = secondaryOrigins.current.at(-1);
+    const valid = origin?.to === tab ? secondaryOrigins.current.pop() : undefined;
+    const target = valid?.from ?? parent;
+    pendingViewRestore.current = valid ?? null;
+    setTabState(target);
+    setJourneyDetail(valid?.detail ?? null);
     const nextUrl = new URL(window.location.href);
-    nextUrl.hash = parent;
-    window.history.replaceState({ tab: parent }, '', nextUrl);
+    nextUrl.hash = target;
+    window.history.replaceState({ tab: target, detail: valid?.detail }, '', nextUrl);
   }
 
   function openAssistantSheet() {
@@ -789,14 +809,21 @@ export default function Home() {
   }, [assistantOpen, journeyDetail]);
 
   useEffect(() => {
-    resetViewScroll();
+    const origin = pendingViewRestore.current;
+    pendingViewRestore.current = null;
+    if (!origin) { resetViewScroll(); return; }
+    window.requestAnimationFrame(() => {
+      phoneShellRef.current?.scrollTo({ top: origin.shellScroll, behavior: 'auto' });
+      window.scrollTo({ top: origin.windowScroll, behavior: 'auto' });
+      if (origin.focusText) [...document.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === origin.focusText)?.focus({ preventScroll: true });
+    });
   }, [tab, journeyDetail]);
 
   useEffect(() => {
     if (notice === 'idle') return;
     const timer = window.setTimeout(() => setNotice('idle'), 1600);
     return () => window.clearTimeout(timer);
-  }, [notice]);
+  }, [notice, setNotice]);
 
   useEffect(() => {
     if (tab !== 'nearby') return;
@@ -1647,7 +1674,7 @@ export default function Home() {
   useEffect(() => {
     if (!profileHydrated) return;
     const result = saveProfile(profile);
-    if (!result.ok) setError(result.message);
+    setStorageError(result.ok ? '' : result.message);
   }, [profile, profileHydrated]);
   useEffect(() => {
     const explicitGuestMode = !session?.access_token && (telegramSession.mode === 'browser' || telegramSession.mode === 'error');
@@ -1660,7 +1687,7 @@ export default function Home() {
         routes: ownerRoutes,
       });
     } catch {
-      setError('Не удалось сохранить изменения на устройстве. Освободи место в браузере и попробуй снова.');
+      setStorageError('Не удалось сохранить изменения на устройстве. Освободи место в браузере и попробуй снова.');
     }
   }, [ownerRoutes, profile.backendPetId, profileHydrated, reminders, session?.access_token, telegramSession.mode, wishlist, zones]);
   useEffect(() => {
@@ -1918,6 +1945,11 @@ export default function Home() {
     : billing?.upgrade?.available ? 'Оплата готова через Telegram.' : 'Оплата пока недоступна.';
 
   function resetPetScopedDrafts() {
+    setRecordDetail(null);
+    setProfileSurface('overview');
+    secondaryOrigins.current = [];
+    setHealthFactsDraft(null);
+    observationEditDrafts.current.clear();
     setJourneyDetail(null);
     setTabState('today');
     if (typeof window !== 'undefined') {
@@ -2056,7 +2088,8 @@ export default function Home() {
       appetite: String(raw.appetite || metadata.appetite || (type === 'appetite' ? value : '')).trim() || undefined,
       stool: String(raw.stool || metadata.stool || (type === 'stool' ? value : '')).trim() || undefined,
       energy: String(raw.energy || metadata.energy || (type === 'energy' ? value : '')).trim() || undefined,
-      note: note || undefined,
+      type, value,
+      note: note || (type === 'note' ? value : '') || undefined,
       createdAt: Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString(),
       syncStatus: raw.syncStatus === 'saved' ? 'saved' : 'local',
     };
@@ -2419,7 +2452,7 @@ export default function Home() {
 
   function startObservationEdit(observation: ObservationView) {
     setEditingObservationId(observation.id);
-    setObservationEditDraft({
+    setObservationEditDraft(observationEditDrafts.current.get(observation.id) ?? {
       mood: observation.mood || '',
       appetite: observation.appetite || '',
       stool: observation.stool || '',
@@ -2433,6 +2466,7 @@ export default function Home() {
     const scope = `observation:update:${id}:${JSON.stringify(observationEditDraft)}`;
     if (isGuestMode()) {
       setObservations((current) => current.map((item) => item.id === id ? { ...item, ...observationEditDraft } : item));
+      observationEditDrafts.current.delete(id);
       setEditingObservationId(null);
       return;
     }
@@ -2448,6 +2482,7 @@ export default function Home() {
       const saved = normalizeObservation(payload.observation);
       if (saved) setObservations((current) => current.map((item) => item.id === id ? { ...saved, syncStatus: 'saved' as const } : item));
       finishCareMutation(scope);
+      observationEditDrafts.current.delete(id);
       setEditingObservationId(null);
     } catch {
       setError('Не получилось сохранить запись. Изменения остались в форме.');
@@ -2893,6 +2928,7 @@ export default function Home() {
   async function createWishlistItem(preset?: { title: string; category?: string; reason?: string; priority?: string; plannedFor?: string; source?: 'assistant' | 'manual' }) {
     const title = (preset?.title || newWishTitle).trim();
     if (!title) { setError('Добавь название позиции.'); return false; }
+    setError('');
     const plannedFor = preset?.plannedFor || (newWishNeedsReminder ? newWishPlannedFor : undefined);
     const dueAt = plannedFor ? reminderDueAt(plannedFor, '12:00', 'flexible') : undefined;
     if (!profile.backendPetId) {
@@ -2909,6 +2945,7 @@ export default function Home() {
       }
       setNewWishTitle('');
       setNewWishReason('');
+      setNewWishNeedsReminder(false);
       setNewWishPlannedFor(dateAfterDays(1));
       setThingCaptureOpen(false);
       return true;
@@ -2930,7 +2967,7 @@ export default function Home() {
       });
       await response.json().catch(() => ({}));
       if (!response.ok) { setError('Покупка не сохранилась. Всё введённое осталось в форме — проверь связь и попробуй снова.'); return false; }
-      setNewWishTitle(''); setNewWishReason(''); setNewWishPlannedFor(dateAfterDays(1)); setThingCaptureOpen(false);
+      setNewWishTitle(''); setNewWishReason(''); setNewWishNeedsReminder(false); setNewWishPlannedFor(dateAfterDays(1)); setThingCaptureOpen(false);
       await loadBootstrap();
       finishCareMutation(scope);
       finishRecommendationOutcome(recommendationId);
@@ -4324,7 +4361,9 @@ export default function Home() {
         />}
 
         {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ProfileMemoryWorkspace
-          key={profile.backendPetId || activePetId}
+          surface={profileSurface}
+          onSurfaceChange={setProfileSurface}
+          key={`profile:${profile.backendPetId || activePetId}`}
           profile={profile}
           breedLabel={breedLabel}
           imageUrl={generatedAvatarUrl || profile.avatarImageUrl || (demoMode ? '/demo-avatar.png' : '')}
@@ -4368,6 +4407,19 @@ export default function Home() {
             documentUploadTriggerRef.current = trigger;
             setDocumentUploadOpen(true);
           }}
+          onOpenRecord={(kind, id, trigger) => {
+            if (kind === 'observation') {
+              const item = observations.find(entry => entry.id === id);
+              if (!item) return;
+              setRecordDetail({ id, trigger, title: `Запись о ${petNameGent}`, date: item.createdAt, text: item.note || item.value || '',
+                facts: [item.mood && `Состояние: ${item.mood}`, item.appetite && `Аппетит: ${item.appetite}`, item.stool && `Пищеварение: ${item.stool}`, item.energy && `Энергия: ${item.energy}`].filter((value): value is string => Boolean(value)) });
+            } else {
+              const item = reminders.find(entry => entry.id === id);
+              if (!item) return;
+              setRecordDetail({ id, trigger, title: item.title, date: item.completedAt || item.dueAt, text: item.completedAt || item.status === 'done' || item.status === 'completed' ? 'Дело выполнено' : 'Запланировано',
+                facts: item.nextDueAt ? [`Следующий срок: ${new Date(item.nextDueAt).toLocaleString('ru-RU')}`] : [] });
+            }
+          }}
           onOpenDocument={(id) => window.open(`/api/documents/${id}`, '_blank', 'noopener,noreferrer')}
           onDeleteDocument={(id) => void deletePetDocument(id)}
           documentBusyId={documentBusyId}
@@ -4379,7 +4431,7 @@ export default function Home() {
           onOpenSettings={() => openJourneyDetail('profile')}
         />}
 
-        {hasDog && <ProductionDocumentSheet key={profile.backendPetId} open={tab === 'profile' && documentUploadOpen} dogName={petNameGent} returnFocusTo={documentUploadTriggerRef.current} onClose={() => setDocumentUploadOpen(false)}>
+        {hasDog && <ProductionDocumentSheet key={`document:${profile.backendPetId}`} open={tab === 'profile' && documentUploadOpen} dogName={petNameGent} returnFocusTo={documentUploadTriggerRef.current} onClose={() => setDocumentUploadOpen(false)}>
           <form className="profile-life-document-form" data-slot="field-group" onSubmit={uploadPetDocument} onReset={() => { setDocumentFileName(''); setDocumentError(''); documentSaveAttempt.current = null; }}>
             <fieldset disabled={documentUploading} style={{ border: 0, padding: 0, margin: 0, minWidth: 0, display: 'grid', gap: 16 }}>
             <label data-slot="field"><span data-slot="field-label">Что это</span><span className="document-field-control"><TextT weight="regular" aria-hidden="true" /><input data-slot="input" name="title" required placeholder="Например, общий анализ крови" /></span></label>
@@ -4437,23 +4489,6 @@ export default function Home() {
           onNavigate={(route) => { setJourneyDetail(null); setTab(route); }}
         /></div>}
 
-        {hasDog && tab === 'things' && journeyDetail !== 'things' && <ProductionJourney route="things"
-          dogName={profile.dogName}
-          breedLabel={breedLabel}
-          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
-          things={wantedWishlist.slice(0, 3).map((item, index) => ({
-            id: item.id,
-            title: item.title,
-            detail: item.reason || (item.priority === 'high' ? 'важно купить' : 'в личном списке'),
-            tone: index === 1 ? 'rose' : index === 2 ? 'green' : 'mint',
-          }))}
-          onAddThing={() => { openJourneyDetail('things'); setThingCaptureOpen(true); }}
-          onNavigate={(route) => {
-            if (route === 'things') openJourneyDetail('things');
-            else { setJourneyDetail(null); setTab(route); }
-          }}
-        />}
-
         {hasDog && assistantOpen && <ProductionAssistantSheet
           dogName={profile.dogName}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
@@ -4509,13 +4544,13 @@ export default function Home() {
           editDraft={observationEditDraft}
           mutationBusy={observationMutationBusy}
           onStartEdit={startObservationEdit}
-          onEditDraftChange={(patch) => setObservationEditDraft((current) => ({ ...current, ...patch }))}
+          onEditDraftChange={(patch) => setObservationEditDraft(current => { const next = { ...current, ...patch }; if (editingObservationId) observationEditDrafts.current.set(editingObservationId, next); return next; })}
           onSaveEdit={editObservation}
-          onCancelEdit={() => setEditingObservationId(null)}
+          onCancelEdit={() => { if (editingObservationId) observationEditDrafts.current.delete(editingObservationId); setEditingObservationId(null); }}
           onDelete={deleteObservation}
-          facts={{ allergies: profile.allergies, medication: profile.medication, vaccineStatus: profile.vaccineStatus, parasiteStatus: profile.parasiteStatus, healthNotes: profile.healthNotes }}
-          onFactChange={(patch) => updateProfile(patch)}
-          onSaveFacts={async () => { await savePrivateProfile(); }}
+          facts={healthFactsDraft ?? profile}
+          onFactChange={(patch) => setHealthFactsDraft(current => ({ ...(current ?? profile), ...patch }))}
+          onSaveFacts={async () => { if (await savePrivateProfile(healthFactsDraft ?? profile)) setHealthFactsDraft(null); }}
         />}
 
         {hasDog && tab === 'nearby' && <ProductionWoofWorkspace
@@ -4561,13 +4596,14 @@ export default function Home() {
           onRetry={() => loadSocialSurface().catch(() => setNearbyState('error'))}
         />}
 
-        {hasDog && tab === 'calendar' && <WatercolorScreen onBack={() => closeSecondaryFlow('today')} backLabel="На главную" className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Дела, напоминания и история ухода." aside={<CalendarDots className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'calendar' && <WatercolorScreen onBack={() => closeSecondaryFlow('today')} backLabel="Назад" className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Дела, напоминания и история ухода." aside={<CalendarDots className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
           <section className="care-workbench" aria-label="Дела ухода">
             <div className="care-workbench-head">
               <div><span className="eyebrow">сейчас в плане</span><h3>{activeReminders.length ? formatCount(activeReminders.length, ['активное дело', 'активных дела', 'активных дел']) : 'Добавь первое дело'}</h3></div>
               <button className="primary" onClick={() => {
                 setNewReminderDueDate(selectedCalendarDate);
-                document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus();
+                setCareView('active');
+                requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus());
               }}>Добавить дело</button>
             </div>
             <div className="care-view-toggle" aria-label="Раздел плана ухода">
@@ -4682,8 +4718,9 @@ export default function Home() {
               <b>Что нужно не забыть</b>
               <p>Название, тип и дата. Всё остальное можно поправить прямо в списке.</p>
             </div>
+            <label htmlFor="care-new-title">Название дела</label>
             <div className="quick-add today-quick-add">
-              <input value={newReminderTitle} onChange={(event) => setNewReminderTitle(event.target.value)} placeholder="Например: обработка от клещей" />
+              <input id="care-new-title" value={newReminderTitle} onChange={(event) => setNewReminderTitle(event.target.value)} placeholder="Например: обработка от клещей" />
               <button aria-label="Добавить дело" onClick={() => createReminder()}><Plus aria-hidden="true" /></button>
             </div>
             <div className="care-form-row">
@@ -4805,7 +4842,9 @@ export default function Home() {
           </section>
         </WatercolorScreen>}
 
-        {hasDog && tab === 'things' && journeyDetail === 'things' && <WatercolorScreen onBack={closeJourneyDetail} backLabel="К вещам" className="things-composition" tone="gold" eyebrow="вещи" title={`Что нужно ${petNameDatv}`} caption="Личный список покупок и того, что заканчивается." aside={<ShoppingBag className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'things' && <ProductionJourney route="things" dogName={profile.dogName} breedLabel={breedLabel}
+          avatar={<GeneratedAvatar profile={profile} ready={Boolean(profile.avatarImageUrl) || demoMode} imageUrl={profile.avatarImageUrl} demo={demoMode} size="small" />}
+          onNavigate={setTab}>
           <div className="screen-primary-action">
             <button className="primary" type="button" aria-expanded={thingCaptureOpen} onClick={() => setThingCaptureOpen((open) => !open)}>
               {thingCaptureOpen ? 'Закрыть добавление' : 'Добавить вещь'}
@@ -4813,11 +4852,12 @@ export default function Home() {
             <span>{formatCount(wantedWishlist.length, ['позиция', 'позиции', 'позиций'])}</span>
           </div>
 
-          {thingCaptureOpen && <PaperSheet className="thing-capture">
+          {thingCaptureOpen && <form className="thing-capture" onSubmit={event => { event.preventDefault(); void createWishlistItem(); }}>
             <div className="section-title">
               <div><span className="eyebrow">новая позиция</span><h3>Что нужно</h3></div>
             </div>
             <label>Название<input value={newWishTitle} onChange={(event) => setNewWishTitle(event.target.value)} placeholder="Например, адресник" /></label>
+            <details><summary>Категория, пояснение и срок</summary>
             <label>Категория<select value={newWishCategory} onChange={(event) => setNewWishCategory(event.target.value)}>
               <option value="gear">амуниция</option>
               <option value="food">корм</option>
@@ -4831,11 +4871,12 @@ export default function Home() {
             <label>Зачем <span className="field-optional">необязательно</span><input value={newWishReason} onChange={(event) => setNewWishReason(event.target.value)} placeholder="Например, старый адресник потерялся" /></label>
             <label className="thing-plan-option">
               <input type="checkbox" checked={newWishNeedsReminder} onChange={(event) => setNewWishNeedsReminder(event.target.checked)} />
-              <span><b>Добавить в план</b><small>Псё напомнит купить к выбранной дате</small></span>
+              <span><b>Добавить в план</b><small>Покупка появится в плане на эту дату</small></span>
             </label>
             {newWishNeedsReminder && <label>Купить до<input type="date" min={dateInputValue(new Date())} value={newWishPlannedFor} onChange={(event) => setNewWishPlannedFor(event.target.value)} /></label>}
-            <button className="primary full" onClick={() => createWishlistItem()} disabled={!newWishTitle.trim() || (newWishNeedsReminder && !newWishPlannedFor)}>{newWishTitle.trim() ? newWishNeedsReminder ? 'Добавить в вещи и план' : 'Добавить в вещи' : 'Напиши название'}</button>
-          </PaperSheet>}
+            </details>
+            <button type="submit" className="primary full" disabled={!newWishTitle.trim() || (newWishNeedsReminder && !newWishPlannedFor)}>{newWishTitle.trim() ? newWishNeedsReminder ? 'Добавить в вещи и план' : 'Добавить в вещи' : 'Напиши название'}</button>
+          </form>}
 
           {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <article className="empty-state"><b>Список пока пуст</b><p>Здесь можно держать покупки и услуги для {profile.dogName}.</p></article>}
 
@@ -4855,7 +4896,7 @@ export default function Home() {
 
           {boughtWishlist.length > 0 && <section className="wishlist-list" aria-label="История вещей">
             <div className="section-title"><div><span className="eyebrow">история</span><h3>Уже закрыто</h3></div></div>
-            {boughtWishlist.slice(0, 4).map((item) => <article key={item.id} className="wishlist-item">
+            {boughtWishlist.map((item) => <article key={item.id} className="wishlist-item">
               <div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div>
               <div className="wishlist-actions"><button onClick={() => updateWishlistItem(item.id, { status: 'wanted', plannedFor: undefined, reminderId: undefined })}>Вернуть</button><button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Удалить</button></div>
             </article>)}
@@ -4866,7 +4907,7 @@ export default function Home() {
             <button type="button" onClick={restoreWishlistItem}>Вернуть</button>
           </div>}
 
-        </WatercolorScreen>}
+        </ProductionJourney>}
 
         {error && <p className="error-text" role="alert">{error}</p>}
         {notice !== 'idle' && !(tab === 'map' && notice === 'mapSaved') && <div className="toast" role="status" aria-live="polite">{notice === 'documentSaved' ? 'Документ сохранён' : notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
@@ -4901,6 +4942,7 @@ export default function Home() {
         onUndo={undoLastCareCompletion}
         onDismiss={() => setCareFeedback(null)}
       />
+      {recordDetail && <RecordDetailDialog record={recordDetail} onClose={() => setRecordDetail(null)} />}
       {profileConflict && <ProfileConflictDialog key={profileConflict.remote.profileVersion} conflict={profileConflict} onResolve={resolved => {
         setProfileConflict(null);
         profileConflictResolver.current?.(resolved);

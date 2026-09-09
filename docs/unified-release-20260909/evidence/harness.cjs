@@ -13,7 +13,7 @@ async function setup(engine='chromium',width=390){
   state.requests.push({path:u.pathname,method:req.method(),body:req.postData()});
   const json=(body,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
   if(u.pathname.includes('/session/telegram')||u.pathname==='/api/telegram/session')return json({mode:'telegram',session:{psyoUserId:pet.owner_id,ownerId:pet.owner_id,firstName:'QA'}});
-  if(u.pathname==='/api/app/bootstrap')return json({mode:'owner',connected:true,activePetId:pet.id,pet,pets:[pet],profile,social:{alone_time_note:state.remoteAlone||'Исходное'},observations:state.observations,documents:state.documents,reminders:state.reminders,wishlist:state.wishlist,zones:[],routes:[],avatarCapabilities:{identityEnabled:true,uploadsEnabled:true,generationEnabled:false,providerReady:false}});
+  if(u.pathname==='/api/app/bootstrap')return json({mode:'owner',connected:true,activePetId:pet.id,pet,pets:[pet],profile,social:{alone_time_note:state.remoteAlone||'Исходное',...state.social},observations:state.observations,documents:state.documents,reminders:state.reminders,wishlist:state.wishlist,zones:[],routes:[],avatarCapabilities:{identityEnabled:true,uploadsEnabled:true,generationEnabled:false,providerReady:false}});
   if(req.method()!=='GET'&&state.fail)return json({error:'QA_SAVE_FAILURE',message:'Контрольный сбой сохранения'},503);
   if(u.pathname==='/api/observations')return json({observations:state.observations});
   if(u.pathname==='/api/habits')return json({habits:[]});

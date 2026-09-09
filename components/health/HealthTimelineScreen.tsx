@@ -121,7 +121,6 @@ export function HealthTimelineScreen({
   const selectDay = (date: Date) => {
     setSelectedDayOverride(dayKey(date));
     setVisibleMonthOverride(new Date(date.getFullYear(), date.getMonth(), 1));
-    onCancelEdit();
   };
 
   const moveMonth = (offset: number) => {
@@ -136,12 +135,11 @@ export function HealthTimelineScreen({
       .at(-1);
     setVisibleMonthOverride(nextMonth);
     setSelectedDayOverride(observedDay || dayKey(nextMonth));
-    onCancelEdit();
   };
 
   return (
     <section className="module-screen health-screen" aria-labelledby="health-screen-title">
-      <button className="journal-screen-back" type="button" onClick={onBack}><ArrowLeft weight="bold" aria-hidden="true" /> На главную</button>
+      <button className="journal-screen-back" type="button" onClick={onBack}><ArrowLeft weight="bold" aria-hidden="true" /> Назад</button>
       <header className="module-screen-heading">
         <span className="module-screen-icon"><Heartbeat weight="duotone" aria-hidden="true" /></span>
         <div><h1 id="health-screen-title">Здоровье {dogName}</h1><p>{entries.length ? `${observationCountLabel(entries.length)} владельца` : 'Наблюдений пока нет'}</p></div>
@@ -177,6 +175,10 @@ export function HealthTimelineScreen({
         </div>
       </details>
 
+      {editingId && !selectedDayEntries.some(entry => entry.id === editingId) && <aside role="status">
+        <p>Черновик записи остался здесь.</p>
+        <button type="button" onClick={() => { const entry = entries.find(item => item.id === editingId); if (entry) selectDay(new Date(entry.createdAt)); }}>Вернуться к редактированию</button>
+      </aside>}
       <section className="health-timeline health-calendar" aria-label="История наблюдений" data-observation-calendar>
         <header className="health-timeline-heading"><div><h3>Календарь наблюдений</h3><p>{entries.length ? 'Выбери день — ниже будут только его отметки.' : 'Первая отметка появится в календаре.'}</p></div>{entries.length > 0 && <span>{entries.length}</span>}</header>
         <div className="health-calendar-panel">

@@ -14,7 +14,7 @@ const {setup,fs,out}=require('./harness.cjs');
    await nav('profile');
    await page.getByRole('button',{name:/Паспорт и привычки/}).click();
    await page.getByRole('button',{name:'Характер',exact:true}).click();
-   const trigger=page.getByRole('button',{name:/Общительность/});await trigger.click();
+   const trigger=page.getByRole('button',{name:'Уточнить портрет',exact:true});await trigger.click();
    const editor=page.locator('dialog[aria-labelledby="profile-editor-title"]');
    await editor.getByLabel('Как остаётся один').fill('Мой важный ввод');
    await editor.getByRole('button',{name:'Сохранить',exact:true}).click();

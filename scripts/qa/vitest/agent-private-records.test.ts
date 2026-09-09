@@ -14,7 +14,7 @@ vi.mock('@/lib/server/agent/access',()=>({
 import { makePrivateTools } from '@/lib/server/agent/tools';
 async function search(kind:string,query:string){
   const tool=makePrivateTools('owner-a','pet-a','run-a').find(item=>item.name==='search_private_records')!;
-  return await tool.invoke(new RunContext(),JSON.stringify({kind,query})) as {records:Record<string,unknown>[];fileContentsRead:boolean};
+  return await tool.invoke(new RunContext(),JSON.stringify({kind,query})) as unknown as {records:Record<string,unknown>[];fileContentsRead:boolean};
 }
 test('agent search only surfaces ready documents for the current pet',async()=>{
   state.rows=['pending','ready','deleting','deleted'].map(lifecycle=>({id:lifecycle,pet_id:'pet-a',lifecycle,title:'Analysis'}));

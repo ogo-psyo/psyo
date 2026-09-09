@@ -17,9 +17,7 @@ import {
   PaperPlaneTilt,
   PawPrint,
   PencilSimple,
-  Plus,
   ShieldCheck,
-  ShoppingBag,
   Sparkle,
   UsersThree,
   Warning,
@@ -443,18 +441,11 @@ function NearbyScreen(props: ProductionJourneyProps) {
 }
 
 function ThingsScreen(props: ProductionJourneyProps) {
-  const things = props.things || [];
   return <main className="production-journey-screen journal-screen journal-things" data-production-journey="things">
     <JournalMasthead dogName={props.dogName} avatar={props.avatar} onOpenProfile={() => props.onNavigate('profile')} />
-    <div className="journal-title"><h1>Вещи</h1><p>Нужное и любимое — в одном списке.</p></div>
-    <section className="journal-record"><h2>Ничего не забыть</h2><p>Корм, амуниция, лекарства или услуги.</p><button type="button" className="journal-primary" onClick={props.onAddThing}><Plus aria-hidden="true" />Добавить в список</button></section>
-    <section className="production-journey-shelf journal-things-list"><div className="journal-section-title"><h2>Нужно купить</h2><button type="button" onClick={props.onAddThing}>Весь список <CaretRight aria-hidden="true" /></button></div>
-      {things.length ? things.map((thing) => <button type="button" className="journal-index-row" key={thing.id} onClick={props.onAddThing}><span className="journal-row-icon"><ShoppingBag aria-hidden="true" /></span><span><b>{thing.title}</b><small>{thing.detail}</small></span><CaretRight aria-hidden="true" /></button>) : <div className="journal-empty"><p>Список пока пуст. Добавьте то, что нужно купить или пополнить.</p></div>}
-    </section>
-    <button type="button" className="journal-ask" onClick={props.onAddThing}><Heart aria-hidden="true" /><span><b>Любимые вещи</b><small>То, что всегда берёте с собой</small></span><CaretRight aria-hidden="true" /></button>
-    {props.children && <section className="production-journey-details">{props.children}</section>}
+    <div className="journal-title"><h1>Вещи</h1><p>Что нужно купить и что уже куплено.</p></div>
+    {props.children}
   </main>;
-
 }
 
 export function ProductionJourney(props: ProductionJourneyProps) {

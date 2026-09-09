@@ -20,9 +20,9 @@ User decision 2026-09-09: the entire product, including the live agent and its a
 
 ## Still open (not exhaustive replacement for existing audit)
 
-B03 Storage/document lifecycle; 11 audited interaction defects and complete chosen-design transfer; entity-aware navigation/drafts; real owner/RLS/cloud integration; live agent/provider/search/tools/memory and background tasks; physical Telegram iOS/Android; fresh release backup/restore, migration and both-alias rollout.
+Remaining gates are tracked in the table below. Local B03 and targeted interaction fixes are implemented; live Storage, broad inner-state acceptance and complete chosen-design transfer are not finished.
 
-Groq Free/search entitlement unknown. User asked for plan metadata this turn; no response yet. No paid calls, no new secret requests. Agent PR29 remains separate source pending integration, not live verified. No new production deployment.
+Groq Free/search entitlement unknown. User asked for plan metadata this turn; no response yet. No paid calls, no new secret requests. Agent PR29 source is now merged locally, not live verified. No new production deployment.
 
 ## B03 local candidate
 
@@ -42,3 +42,37 @@ Groq Free/search entitlement unknown. User asked for plan metadata this turn; no
 - Agent browser smoke passed Chromium/WebKit × 320/390: reopen/reload, save failure/retry, saved result, memory correction/forgetting, cancellation. Fixture required `connected:true` to represent a connected owner; first run correctly stayed on onboarding without it. All model/API responses mocked.
 - Groq account Free/search entitlement remains unanswered; Secret Store metadata is empty. Existing key remains in Vercel. No secret export, paid provider call, cloud Workflow/source check or production change.
 - Missing tools (e.g. observation draft/write, map route calculation), complete design transfer and live quality must not be inferred from this foundation merge.
+
+## Interaction slice (local verification passed; release gates remain)
+
+- Real categorical editing for temperament, contact rule, energy and trainability; no fake numeric scale. The contact rule is not renamed “sociability”. Inline save keeps the choice after failure; general portrait editor retains its per-domain draft across closing within the mounted profile.
+- Exact observation/completed-care detail from profile history uses the original entity ID/text/date; not a new observation form or active calendar.
+- Health facts are a draft, not canonical profile/localStorage before successful save. Observation editing retains per-ID values when switching month; a return action restores the selected entry.
+- Things uses one real list/edit/create surface. Removed the unsupported favorites shortcut, hid optional classification/planning inside disclosure, default planning off; all bought items in the loaded list remain reachable. No notification-delivery promise.
+- In-app Back from health/habits/calendar preserves entry tab/profile sub-surface and restores scroll/focus. Browser/Telegram history gestures and every secondary branch still require explicit acceptance.
+- Errors and success notices are scoped to their originating tab; document upload has its own error state. A successful purchase retry clears the earlier error. New care title has a visible persistent label.
+- Browser found a real integration regression: profile and always-mounted document dialog had the same sibling React key. Old profile DOM accumulated after transitions. Namespaced keys; regression now asserts exactly one profile root. No production version was changed.
+- Browser QA uses synthetic, intercepted API responses and blocks external requests. SQL evidence is separate. During test refinement, a stale Things item text selector, a hidden checkbox locator and a fixture missing social fields were corrected; these are harness problems, not product failures. A dev-server run never reached navigation due dev resource/origin behavior; acceptance uses `next build` + `next start` instead.
+
+## Remaining release gates — cannot declare “all checked”
+
+| Gate | Current evidence | Still required |
+| --- | --- | --- |
+| Atomic data | Real local Postgres faults, owner boundaries, retries/concurrency; HTTP/service tests | Isolated deployment + actual authenticated API, second device |
+| Documents | Local SQL reservations, mocked Storage lifecycle and UI | Actual isolated Storage bytes/cron/process termination; compatible rollback |
+| Interaction audit Q1–Q11 | Targeted fixes and browser regression subset | Q8 full chosen-design transfer; broader Q2/Q5/Q9 branches, physical controls |
+| Agent foundation | Merged, local RLS and mocked runner/tools/UI | Live free Groq and Compound source shape, actual latency/usage/quality |
+| Agent product actions | Read/search, remember, save answer | Observation draft/write and map/action integrations are missing, not “tested” |
+| Background work/knowledge | Source/permissions tests | Cloud Workflow resumption/cancel, real source ingestion/refresh |
+| Complete UI | Existing product functions retained and repaired | Selected NarisovanniySANS connected design across all inner states is not transferred |
+| Release | Stable production unchanged | Physical Telegram iPhone/Android, fresh backup and compatible migration/rollback, both-alias limited rollout |
+
+Do not turn this document into a release certificate based on aggregate test counts. Groq free entitlement remains a real external dependency, but it does not make the unfinished UI/tools complete.
+
+### Final evidence for the interaction slice
+
+- `npm run qa:local` passed: 180 behavior tests, build/TypeScript and contracts; ESLint 216 warnings vs existing budget220 (no budget increase).
+- Immutable local build (`next build` + `next start`, port3285): `interaction-regressions.cjs` passed Chromium/WebKit ×320/390, including visible care label after typing, successful persisted trait reflection, no cross-tab success toast, failed purchase retry/error clearing, singular profile DOM, exact entity and draft/back checks.
+- Final profile-conflict retest passed both engines390. Final document-flow and agent-ui smoke passed both engines ×320/390. API replies mocked in every browser run; the agent test makes no inference call.
+- Reviewed source for field/owner scoping, draft/reset semantics, focus, error branches, retained functions and incremental render cost. Visually inspected320px trait and Things screenshots; existing theme remains, not approval of the new design.
+- Product code and additive migrations are local candidate only; no deployment, cloud migration, real message or paid provider call.
