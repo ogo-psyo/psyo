@@ -11,6 +11,7 @@ export type AgentResult = {
   observationDraftId?: string;
   places?:MapSearchPlace[];
   walk?:AgentWalk;
+  savedWalks?:Array<{id:string;title:string}>;
   answer: string;
   threadId: string;
   runId: string;
@@ -27,8 +28,9 @@ export function AgentPanel({
   onResult,
   onBusy,
   onRetry,
-  observationEdits, onObservationSaved, onOpenObservation, onOpenPlace, onOpenWalk,
+  observationEdits, onObservationSaved, onOpenObservation, onOpenPlace, onOpenWalk, onOpenSavedWalk,
 }: {
+  onOpenSavedWalk?:(id:string)=>Promise<'missing'|'failed'|void>;
   onOpenWalk?:(walk:AgentWalk)=>void;
   onOpenPlace?:(place:MapSearchPlace,places:MapSearchPlace[])=>void;
   observationEdits?: Map<string,ReviewedObservation>;
@@ -205,6 +207,10 @@ export function AgentPanel({
       {result?.observationDraftId && result.runId===active && status==='succeeded' && onOpenObservation && onObservationSaved &&
         <AgentObservationDraft key={result.observationDraftId} id={result.observationDraftId} petId={petId}
           headers={headers} edits={observationEdits??fallbackEdits} onSaved={onObservationSaved} onOpen={onOpenObservation}/>}
+      {status==='succeeded'&&result?.runId===active&&onOpenSavedWalk&&Array.isArray(result.savedWalks)&&result.savedWalks.map(route=>typeof route?.id==='string'&&typeof route?.title==='string'?<div className={surface.places} key={route.id}>
+        <h3 data-assistant-heading>{route.title}</h3>
+        <button type="button" disabled={writing} onClick={()=>void act(async()=>{const error=await onOpenSavedWalk(route.id);if(error)setNote(error==='missing'?'Эта прогулка удалена или больше недоступна.':'Не удалось загрузить прогулку. Попробуйте ещё раз.');},'Не удалось загрузить прогулку. Попробуйте ещё раз.')}>Открыть сохранённую прогулку</button>
+      </div>:null)}
       {status==='succeeded'&&result?.runId===active&&onOpenWalk&&isAgentWalk(result.walk)&&<section className={surface.places} aria-label="Рассчитанная прогулка">
         <h3 data-assistant-heading>{result.walk.title}</h3>
         <p>{(result.walk.distanceMeters/1000).toLocaleString('ru-RU',{maximumFractionDigits:1})} км · ≈ {result.walk.estimatedMinutes} мин без остановок</p>

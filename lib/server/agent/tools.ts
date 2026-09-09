@@ -1,3 +1,4 @@
+import {readOwnedMapRoute} from '@/lib/server/ownedMapRoute';
 import {calculateWalkingPath} from '@/lib/server/walkingRoute';
 import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
 import {searchMapPlaces} from "@/lib/server/mapPlaceSearch";
@@ -16,6 +17,7 @@ export function makePrivateTools(
   places:MapSearchPlace[] = [],
   signal?:AbortSignal,
   walkState:{previousPlaces:MapSearchPlace[];preview?:AgentWalk}={previousPlaces:[]},
+  savedWalks:Array<{id:string;title:string}>=[],
 ) {
   const db = agentDatabase();
   let placeSearches=0,walkCalculations=0;
@@ -27,6 +29,11 @@ export function makePrivateTools(
     return run;
   }
   return [
+    tool({name:'read_walk',description:'Read an existing saved walk by exact UUID from search_private_records. Current owner/pet checked. Returns actual metadata and adds an openable canonical Map link. Does not recreate, edit or save a route. A deleted/unavailable route is an error, not a blank route.',parameters:z.object({id:z.uuid()}),execute:async({id})=>{
+      await guard();const route=await readOwnedMapRoute(owner,pet,id);await guard();
+      if(!savedWalks.some(r=>r.id===route.id))savedWalks.push({id:route.id,title:route.title});
+      return {id:route.id,title:route.title,description:route.description,routeSource:route.routeSource,startedAt:route.startedAt,distanceMeters:route.distanceMeters,stops:route.planning?.stops.map(s=>s.title||'Без названия'),hasGpsGaps:Boolean(route.pathGaps?.length),saved:true,mapLinkAvailable:true};
+    }}),
     tool({
       name:'recall_places',description:'Read actual place references from recent completed results in this private conversation. Use their exact IDs for calculate_walk; this does not refresh conditions, search elsewhere or save anything.',
       parameters:z.object({}),execute:async()=>{await guard();return {places:[...new Map([...walkState.previousPlaces,...places].map(p=>[p.id,p])).values()],conditionsVerified:false};},

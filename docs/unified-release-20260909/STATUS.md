@@ -102,3 +102,9 @@ See [AGENT-MAP.md](AGENT-MAP.md). Shared map search/API/tool, real typed provide
 ## A-05: calculated route proposal → Map → saved canonical route
 
 [AGENT-WALK.md](AGENT-WALK.md): actual ID-only route tool shares bounded Map routing; proposal survives reopening; original stops/snaps and constraints shown before existing private save. Unrelated active draft cannot be overwritten. 199 QA tests/build/contracts; four browser combinations with failed-save/retry, same canonical ID/path/stops after reload and source draft preservation. Source/provider/HTTP fixtures, not cloud or live model proof. No paid calls/deployment. Autonomous saving/recall of canonical routes remains next work, not silently substituted by saved answer text.
+
+## A-06: agent recall → fresh canonical saved-route view
+
+[AGENT-SAVED-WALK.md](AGENT-SAVED-WALK.md): read_walk collects an owned ID; opening re-reads the canonical record through shared service/API. Missing/failed reads are distinct. Map shows path, note, stops, date/GPS gaps and exports correct GPX without creating a clone or replacing an active route. Viewing hides unrelated browsing controls until close.
+
+204 full QA tests/build/contracts; lint217/220. Final build and 8 browser combinations (saved read + calculated walk regression) pass. 25 read-only SQL projections compile after applying the two existing route migrations only to the isolated local fixture. Still no live inference/cloud/device acceptance or production changes.

@@ -8,7 +8,7 @@ import subprocess
 
 root = Path(__file__).resolve().parents[2]
 files = ["app/api/assistant/route.ts", "lib/server/agent/tools.ts",
-         "lib/server/agent/access.ts", "lib/server/agent/runner.ts"]
+         "lib/server/agent/access.ts", "lib/server/agent/runner.ts", "lib/server/ownedMapRoute.ts"]
 queries = set()
 for file in files:
     source = (root / file).read_text()

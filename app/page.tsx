@@ -602,6 +602,9 @@ export default function Home() {
   const calendarAutoSelectedPetRef = useRef<string | null>(null);
   const [careView, setCareView] = useState<'active' | 'history'>('active');
   const [mapVisited, setMapVisited] = useState(false);
+  const [agentSavedRouteSelection,setAgentSavedRouteSelection]=useState<{token:string;petId:string;route:OwnerRouteView}|null>(null);
+  const agentMapRead=useRef<AbortController|null>(null);
+  useEffect(()=>()=>{agentMapRead.current?.abort();},[profile.backendPetId,assistantOpen]);
   const [agentWalkSelection,setAgentWalkSelection]=useState<{token:string;petId:string;walk:AgentWalk}|null>(null);
   const [agentMapSelection,setAgentMapSelection]=useState<{token:string;petId:string;place:MapSearchPlace;places:MapSearchPlace[]}|null>(null);
   const [mapActivity, setMapActivity] = useState<'recording'|'paused'|null>(null);
@@ -1959,7 +1962,7 @@ export default function Home() {
     setHealthFactsDraft(null);
     observationEditDrafts.current.clear();
     agentObservationEdits.current.clear();
-    setAgentMapSelection(null);setAgentWalkSelection(null);
+    setAgentMapSelection(null);setAgentWalkSelection(null);setAgentSavedRouteSelection(null);
     setJourneyDetail(null);
     setTabState('today');
     if (typeof window !== 'undefined') {
@@ -4487,6 +4490,7 @@ export default function Home() {
             routeEditSeed={routeEditSeed}
             agentSelection={agentMapSelection}
             agentWalkSelection={agentWalkSelection}
+            agentSavedRouteSelection={agentSavedRouteSelection}
             onReturnToAssistant={openAssistantSheet}
             editingRouteId={editingRouteGeometryId}
             onActivityChange={setMapActivity}
@@ -4521,15 +4525,27 @@ export default function Home() {
           actions={<>
             {!isGuestMode()&&profile.backendPetId&&<AgentPanel key={profile.backendPetId} petId={profile.backendPetId} runId={agentRunId} headers={authHeaders}
               observationEdits={agentObservationEdits.current}
+              onOpenSavedWalk={async id=>{
+                const pet=profile.backendPetId;if(!pet)return 'missing';
+                agentMapRead.current?.abort();const controller=new AbortController();agentMapRead.current=controller;
+                const response=await fetch(`/api/map/features/${encodeURIComponent(id)}?petId=${encodeURIComponent(pet)}`,{headers:authHeaders(),signal:controller.signal});
+                const body=await response.json();if(controller.signal.aborted)return;
+                if(!response.ok){if(response.status===404){setAgentSavedRouteSelection(null);setOwnerRoutes(current=>current.filter(route=>route.id!==id));return 'missing';}return 'failed';}
+                const route=normalizeOwnerRoutes([body.route])[0];if(!route||route.id!==id||route.petId!==pet)return 'failed';
+                setOwnerRoutes(current=>upsertOwnerRoute(current,route));setAgentMapSelection(null);setAgentWalkSelection(null);
+                setAgentSavedRouteSelection({token:crypto.randomUUID(),petId:pet,route});
+                setAssistantOpen(false);setJourneyDetail(null);setTabState('map');
+                const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
+              }}
               onOpenWalk={walk=>{
                 if(!isAgentWalk(walk)||!profile.backendPetId)return;
-                setAgentMapSelection(null);setAgentWalkSelection({token:crypto.randomUUID(),petId:profile.backendPetId,walk});
+                setAgentSavedRouteSelection(null);setAgentMapSelection(null);setAgentWalkSelection({token:crypto.randomUUID(),petId:profile.backendPetId,walk});
                 setAssistantOpen(false);setJourneyDetail(null);setTabState('map');
                 const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
               }}
               onOpenPlace={(place,places)=>{
                 if(!isMapSearchPlace(place)||!profile.backendPetId)return;
-                setAgentWalkSelection(null);setAgentMapSelection({token:crypto.randomUUID(),petId:profile.backendPetId,place,places:places.filter(isMapSearchPlace)});
+                setAgentSavedRouteSelection(null);setAgentWalkSelection(null);setAgentMapSelection({token:crypto.randomUUID(),petId:profile.backendPetId,place,places:places.filter(isMapSearchPlace)});
                 setAssistantOpen(false);setJourneyDetail(null);setTabState('map');
                 const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
               }}
