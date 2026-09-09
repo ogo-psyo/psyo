@@ -62,7 +62,7 @@ Groq Free/search entitlement unknown. User asked for plan metadata this turn; no
 | Documents | Local SQL reservations, mocked Storage lifecycle and UI | Actual isolated Storage bytes/cron/process termination; compatible rollback |
 | Interaction audit Q1–Q11 | Targeted fixes and browser regression subset | Q8 full chosen-design transfer; broader Q2/Q5/Q9 branches, physical controls |
 | Agent foundation | Merged, local RLS and mocked runner/tools/UI | Live free Groq and Compound source shape, actual latency/usage/quality |
-| Agent product actions | Read/search, remember, save answer | Observation draft/write and map/action integrations are missing, not “tested” |
+| Agent product actions | Read/search, remember, save answer | Observation draft/write is locally verified (A-01); map/action integrations and live execution remain open |
 | Background work/knowledge | Source/permissions tests | Cloud Workflow resumption/cancel, real source ingestion/refresh |
 | Complete UI | Existing product functions retained and repaired | Selected NarisovanniySANS connected design across all inner states is not transferred |
 | Release | Stable production unchanged | Physical Telegram iPhone/Android, fresh backup and compatible migration/rollback, both-alias limited rollout |
@@ -76,3 +76,9 @@ Do not turn this document into a release certificate based on aggregate test cou
 - Final profile-conflict retest passed both engines390. Final document-flow and agent-ui smoke passed both engines ×320/390. API replies mocked in every browser run; the agent test makes no inference call.
 - Reviewed source for field/owner scoping, draft/reset semantics, focus, error branches, retained functions and incremental render cost. Visually inspected320px trait and Things screenshots; existing theme remains, not approval of the new design.
 - Product code and additive migrations are local candidate only; no deployment, cloud migration, real message or paid provider call.
+
+## A-01: agent → canonical observation
+
+See [AGENT-OBSERVATION.md](AGENT-OBSERVATION.md) for state, access, migration and evidence. Model prepares exact-source draft; owner reviews text/date/metrics; confirmation shares the atomic observation service. Eight concurrent saves create one record, post-write fault rolls everything back, foreign/cancelled/deleted cases reject. Saved record opens directly and after reload in history; discard creates nothing. HTTP200 completed-run replay now restores its real action reference.
+
+`qa:local`:186 tests and build/contracts, lint216/220. New complete browser path and existing agent UI passed Chromium/WebKit ×320/390; profile conflict passed both engines. Real local SQL tests are distinct from mocked browser/API/provider evidence. Additive migration applied only to disposable local DB, not cloud. Groq/live search still unverified; complete selected design and overall release gates remain open.

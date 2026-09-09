@@ -2,7 +2,7 @@ import { expect, test, vi } from 'vitest';
 import { RunContext } from '@openai/agents';
 const state=vi.hoisted(()=>({ rows: [] as Record<string, unknown>[] }));
 vi.mock('@/lib/server/agent/access',()=>({
-  ownedRun: async()=>({status:'running'}), ownedPet: async()=>({id:'pet-a'}),
+  ownedRun: async()=>({status:'running',pet_id:'pet-a'}), ownedPet: async()=>({id:'pet-a'}),
   agentDatabase:()=>({ from:()=>{
     let fields: string[]=[]; const filters: ((row:Record<string,unknown>)=>boolean)[]=[];
     const q={select:(names:string)=>{fields=names.split(',');return q;},eq:(name:string,value:unknown)=>{filters.push(row=>row[name]===value);return q;},

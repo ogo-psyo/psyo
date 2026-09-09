@@ -1,5 +1,6 @@
 import { tool } from "@openai/agents";
 import { z } from "zod";
+import { agentObservationMetrics } from "@/lib/agentObservation";
 import { agentDatabase, ownedPet, ownedRun } from "./access";
 import { permitsAgentWrite, saveAgentResult } from "./mutations";
 
@@ -12,10 +13,23 @@ export function makePrivateTools(
   const db = agentDatabase();
   async function guard() {
     const run = await ownedRun(owner, runId);
+    if (run.pet_id !== pet) throw new Error("RUN_NOT_FOUND");
     if (run.status !== "running") throw new Error("RUN_STOPPED");
     return run;
   }
   return [
+    tool({
+      name: "prepare_observation",
+      description: "Prepare one reviewable observation from the CURRENT owner message. Use for an actual report about the dog, or a request to record a note, not a hypothetical/general question. quote must be an exact excerpt of this message. The server keeps the entire original text. Only suggest metrics supported by the text, use empty strings for unknown values. This does NOT save an observation or change the profile. The owner reviews and saves in the interface.",
+      parameters: z.object({ quote: z.string().min(1).max(8000), metrics: agentObservationMetrics }),
+      async execute({quote,metrics}) {
+        const run = await guard();
+        if (!run.question.includes(quote)) return {error: "CURRENT_MESSAGE_REQUIRED"};
+        const result = await db.rpc("agent_prepare_observation", {p_owner:owner,p_run:runId,p_metrics:metrics});
+        if(result.error) throw new Error("DRAFT_PREPARATION_FAILED");
+        return {draftId:result.data.id,status:result.data.status,observationSaved:false,reviewRequired:true};
+      },
+    }),
     tool({
       name: "save_last_answer",
       description:

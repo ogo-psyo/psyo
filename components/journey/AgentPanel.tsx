@@ -1,7 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { AgentObservationDraft } from "./AgentObservationDraft";
+import type { ReviewedObservation, AgentObservationRecord } from "@/lib/agentObservation";
 
 export type AgentResult = {
+  observationDraftId?: string;
   answer: string;
   threadId: string;
   runId: string;
@@ -18,7 +21,11 @@ export function AgentPanel({
   onResult,
   onBusy,
   onRetry,
+  observationEdits, onObservationSaved, onOpenObservation,
 }: {
+  observationEdits?: Map<string,ReviewedObservation>;
+  onObservationSaved?: (record:AgentObservationRecord)=>void;
+  onOpenObservation?: (record:AgentObservationRecord,trigger:HTMLButtonElement)=>void;
   petId: string;
   runId: string;
   headers: () => Record<string, string>;
@@ -26,6 +33,7 @@ export function AgentPanel({
   onBusy: (busy: boolean) => void;
   onRetry: (question: string) => void;
 }) {
+  const [fallbackEdits]=useState(()=>new Map<string,ReviewedObservation>());
   const [enabled, setEnabled] = useState(false);
   const [active, setActive] = useState("");
   const [status, setStatus] = useState("");
@@ -166,6 +174,9 @@ export function AgentPanel({
           Остановить
         </button>
       )}
+      {result?.observationDraftId && result.runId===active && status==='succeeded' && onOpenObservation && onObservationSaved &&
+        <AgentObservationDraft key={result.observationDraftId} id={result.observationDraftId} petId={petId}
+          headers={headers} edits={observationEdits??fallbackEdits} onSaved={onObservationSaved} onOpen={onOpenObservation}/>}
       {result?.sources?.length ? (
         <details>
           <summary>Источники ответа</summary>

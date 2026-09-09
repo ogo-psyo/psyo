@@ -9,6 +9,7 @@ import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation
 import { journalDayEntries } from '@/lib/journal';
 import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
 import { AgentPanel } from '@/components/journey/AgentPanel';
+import type { ReviewedObservation } from '@/lib/agentObservation';
 import { VoiceObservationCapture, type PrivateVoiceNoteInput } from '@/components/journey/VoiceObservationCapture';
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
 import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';
@@ -580,6 +581,7 @@ export default function Home() {
   const [observationDraft, setObservationDraft] = useState<ObservationDraft>(defaultObservationDraft);
   const [observationSaving, setObservationSaving] = useState(false);
   const [editingObservationId, setEditingObservationId] = useState<string | null>(null);
+  const agentObservationEdits = useRef(new Map<string,ReviewedObservation>());
   const observationEditDrafts = useRef(new Map<string, ObservationEditorDraft>());
   const [observationEditDraft, setObservationEditDraft] = useState<ObservationEditorDraft>(defaultObservationDraft);
   const [observationMutationBusy, setObservationMutationBusy] = useState(false);
@@ -1950,6 +1952,7 @@ export default function Home() {
     secondaryOrigins.current = [];
     setHealthFactsDraft(null);
     observationEditDrafts.current.clear();
+    agentObservationEdits.current.clear();
     setJourneyDetail(null);
     setTabState('today');
     if (typeof window !== 'undefined') {
@@ -3611,6 +3614,11 @@ export default function Home() {
       setAssistantMessages((current) => current.slice(0, -1));
       return setError('Псё не ответил. Проверь связь и попробуй ещё раз.');
     }
+    if(result.mode==='agent'&&typeof result.runId==='string') {
+      agentDelivered.current=result.runId;
+      setAgentRunId(result.runId);
+      agentRequest.current=null;
+    }
     setAssistantQuestion('');
     setAssistantAnswer(result.answer || 'Не получилось составить ответ. Уточни вопрос.');
     setAssistantMessages((current) => [...current, { role: 'assistant', content: result.answer || 'Не получилось составить ответ. Уточни вопрос.' }]);
@@ -4499,7 +4507,11 @@ export default function Home() {
           error={error}
           suggestions={assistantSuggestedQuestions.length ? assistantSuggestedQuestions : contextualAssistantSuggestions}
           actions={<>
-            {!isGuestMode()&&profile.backendPetId&&<AgentPanel key={profile.backendPetId} petId={profile.backendPetId} runId={agentRunId} headers={authHeaders} onBusy={setAssistantLoading} onRetry={question=>void askAssistant(question)} onResult={result=>{
+            {!isGuestMode()&&profile.backendPetId&&<AgentPanel key={profile.backendPetId} petId={profile.backendPetId} runId={agentRunId} headers={authHeaders}
+              observationEdits={agentObservationEdits.current}
+              onObservationSaved={record=>{const entry=normalizeObservation(record);if(entry)setObservations(current=>[{...entry,syncStatus:'saved' as const},...current.filter(item=>item.id!==entry.id)]);}}
+              onOpenObservation={(record,trigger)=>setRecordDetail({id:record.id,title:`Запись о ${petNameGent}`,text:record.note||record.value,date:record.observed_at,facts:[],trigger})}
+              onBusy={setAssistantLoading} onRetry={question=>void askAssistant(question)} onResult={result=>{
               if(agentDelivered.current===result.runId) return;
               agentDelivered.current=result.runId;
               setAssistantAnswer(result.answer);setAssistantThreadId(result.threadId);
