@@ -8,7 +8,7 @@ const liveMap = fs.readFileSync('components/LiveMapClient.tsx', 'utf8');
 const liveMapTypes = fs.readFileSync('components/LiveMap.tsx', 'utf8');
 const page = fs.readFileSync('app/page.tsx', 'utf8');
 const css = fs.readFileSync('components/journey/production-journey.css', 'utf8');
-const mapSearchRoute = fs.readFileSync('app/api/map/search/route.ts', 'utf8');
+const mapSearchRoute = fs.readFileSync('app/api/map/search/route.ts', 'utf8') + fs.readFileSync('lib/server/mapPlaceSearch.ts','utf8');
 
 for (const requirement of [
   'data-production-map-workspace',
@@ -52,12 +52,12 @@ for (const requirement of ['useMap', 'MapViewport', 'MapAccessibility', 'moveend
 for (const requirement of [
   'nominatim.openstreetmap.org/search',
   "'User-Agent': 'PsoApp/0.2 (https://pso-mvp.vercel.app)'",
-  "query.length < 2",
+  "q.length < 2",
   "slice(0, 120)",
   "'Cache-Control': 'public, max-age=60, s-maxage=3600, stale-while-revalidate=86400'",
   "error: 'search_unavailable'",
 ]) {
-  if (!mapSearchRoute.includes(requirement)) throw new Error(`Map search API is missing: ${requirement}`);
+  if (!mapSearchRoute.replace(/\s/g,'').includes(requirement.replace(/\s/g,''))) throw new Error(`Map search API is missing: ${requirement}`);
 }
 
 for (const requirement of [

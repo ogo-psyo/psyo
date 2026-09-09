@@ -1,0 +1,26 @@
+[
+  {
+    "engine": "chromium",
+    "width": 320,
+    "pass": true,
+    "scope": "synthetic provider/API; real client library reducer, persisted route draft, no live map/API claim"
+  },
+  {
+    "engine": "chromium",
+    "width": 390,
+    "pass": true,
+    "scope": "synthetic provider/API; real client library reducer, persisted route draft, no live map/API claim"
+  },
+  {
+    "engine": "webkit",
+    "width": 320,
+    "pass": true,
+    "scope": "synthetic provider/API; real client library reducer, persisted route draft, no live map/API claim"
+  },
+  {
+    "engine": "webkit",
+    "width": 390,
+    "pass": true,
+    "scope": "synthetic provider/API; real client library reducer, persisted route draft, no live map/API claim"
+  }
+]

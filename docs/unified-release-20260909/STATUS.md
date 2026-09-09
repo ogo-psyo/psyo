@@ -88,3 +88,9 @@ See [AGENT-OBSERVATION.md](AGENT-OBSERVATION.md) for state, access, migration an
 See [ASSISTANT-INTERFACE.md](ASSISTANT-INTERFACE.md). Scoped near-white/handwritten interface, plain responses, grouped question/input, native memory/saved-result dialogs. Read failures are not false empty states; memory editing opens explicitly and retains failed input; source/date metadata is shown when available. Old global typography no longer overrides marked headings. Assistant errors are scoped; failed suggested question stays in input. Things has a direct entry with the original form retained.
 
 Local build/186tests/contracts/lint216 passed. Chromium/WebKit320/390 passed new surface (also480px height), memory read/write failures/correction/forgetting, exact observation results and legacy reminder/map actions. Both engines passed motion and reduced-motion/keyboard checks. WebKit focus bug corrected by explicit trigger capture. Final entry grouping visually inspected. Every browser response is synthetic; no claim of actual keyboard/provider/cloud acceptance. Broader product UI, remaining tools and global gates stay open.
+
+## A-03: actual place references from agent to map
+
+See [AGENT-MAP.md](AGENT-MAP.md). Shared map search/API/tool, real typed provider points persisted in completed run, exact map selection and existing save/append actions. Real provider/library ID-collapse defect fixed; load/save failures preserve the selected result. Current two-stop plan, title and note survive adding the chosen third point and reload.
+
+191 tests/build/contracts and lint216 passed. Chromium/WebKit320/390 complete agent-map path passed with synthetic API/source and actual client library reducer. Observation and legacy action regressions passed. No new map provider, paid call, cloud migration or deployment. Autonomous route calculation/save/read tools, remaining full-product design and live gates still open.

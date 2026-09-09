@@ -1,3 +1,5 @@
+import {searchMapPlaces} from "@/lib/server/mapPlaceSearch";
+import type {MapSearchPlace} from "@/lib/mapSearchPlace";
 import { tool } from "@openai/agents";
 import { z } from "zod";
 import { agentObservationMetrics } from "@/lib/agentObservation";
@@ -9,15 +11,32 @@ export function makePrivateTools(
   pet: string,
   runId: string,
   evidence: AgentSource[] = [],
+  places:MapSearchPlace[] = [],
+  signal?:AbortSignal,
 ) {
   const db = agentDatabase();
+  let placeSearches=0;
   async function guard() {
+    signal?.throwIfAborted();
     const run = await ownedRun(owner, runId);
     if (run.pet_id !== pet) throw new Error("RUN_NOT_FOUND");
     if (run.status !== "running") throw new Error("RUN_STOPPED");
     return run;
   }
   return [
+    tool({
+      name:'search_places',
+      description:'Find a real named place or address in OpenStreetMap. Include the city/district from the user; clarify an unknown location for nearby requests. Never send private notes, names of owner/dog, IDs or medical facts as query. Returned points may be object centers, not verified entrances. Dog access, quietness and suitability are unknown. The actual results are shown in the UI and can be opened on the map; this does not save a place or calculate a walk. Max two searches per run.',
+      parameters:z.object({query:z.string().trim().min(2).max(120)}),
+      execute:async({query})=>{
+        await guard();if(placeSearches>=2)throw new Error('PLACE_SEARCH_LIMIT');placeSearches++;
+        const found=await searchMapPlaces(query,{signal});
+        await guard();
+        if(found.status!==200)throw new Error(found.error||'PLACE_SEARCH_FAILED');
+        for(const place of found.results){const index=places.findIndex(p=>p.id===place.id);if(index<0)places.push(place);else places[index]=place;evidence.push({url:place.sourceUrl,title:place.title});}
+        return {places:found.results,source:'OpenStreetMap',saved:false,unverified:['dog_access','quietness','entrance']};
+      },
+    }),
     tool({
       name: "prepare_observation",
       description: "Prepare one reviewable observation from the CURRENT owner message. Use for an actual report about the dog, or a request to record a note, not a hypothetical/general question. quote must be an exact excerpt of this message. The server keeps the entire original text. Only suggest metrics supported by the text, use empty strings for unknown values. This does NOT save an observation or change the profile. The owner reviews and saves in the interface.",

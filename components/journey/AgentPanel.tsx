@@ -1,4 +1,5 @@
 "use client";
+import {isMapSearchPlace,type MapSearchPlace} from "@/lib/mapSearchPlace";
 import { useEffect, useRef, useState } from "react";
 import { AgentAuxiliaryDialog } from "./ProductionAssistantSheet";
 import surface from "./AssistantSurface.module.css";
@@ -7,6 +8,7 @@ import type { ReviewedObservation, AgentObservationRecord } from "@/lib/agentObs
 
 export type AgentResult = {
   observationDraftId?: string;
+  places?:MapSearchPlace[];
   answer: string;
   threadId: string;
   runId: string;
@@ -23,8 +25,9 @@ export function AgentPanel({
   onResult,
   onBusy,
   onRetry,
-  observationEdits, onObservationSaved, onOpenObservation,
+  observationEdits, onObservationSaved, onOpenObservation, onOpenPlace,
 }: {
+  onOpenPlace?:(place:MapSearchPlace,places:MapSearchPlace[])=>void;
   observationEdits?: Map<string,ReviewedObservation>;
   onObservationSaved?: (record:AgentObservationRecord)=>void;
   onOpenObservation?: (record:AgentObservationRecord,trigger:HTMLButtonElement)=>void;
@@ -199,6 +202,11 @@ export function AgentPanel({
       {result?.observationDraftId && result.runId===active && status==='succeeded' && onOpenObservation && onObservationSaved &&
         <AgentObservationDraft key={result.observationDraftId} id={result.observationDraftId} petId={petId}
           headers={headers} edits={observationEdits??fallbackEdits} onSaved={onObservationSaved} onOpen={onOpenObservation}/>}
+      {status==='succeeded'&&result?.runId===active&&onOpenPlace&&result.places?.some(isMapSearchPlace)&&<section className={surface.places} aria-label="Найденные места">
+        <h3 data-assistant-heading>Места на карте</h3>
+        <p>Доступ с собакой и условия пока не проверены.</p>
+        {result.places.filter(isMapSearchPlace).map(place=><article key={place.id}><h4>{place.title}</h4><p>{place.detail}</p><button type="button" onClick={()=>onOpenPlace(place,result.places!.filter(isMapSearchPlace))}>Показать на карте</button></article>)}
+      </section>}
       {result?.sources?.length ? (
         <details>
           <summary>Источники ответа</summary>

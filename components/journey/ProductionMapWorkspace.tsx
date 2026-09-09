@@ -1,8 +1,9 @@
 'use client';
 
+import {isMapSearchPlace,type MapSearchPlace} from '@/lib/mapSearchPlace';
 import { MapPlacesPanel, type MapPlaceChoice } from '@/components/map/MapPlacesPanel';
 import { dogAccessLabel } from '@/lib/placeDiscovery';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowCounterClockwise,
   CaretDown,
@@ -51,6 +52,7 @@ type SearchResult = {
   category?: string;
   accuracyMeters?:number;
   privateNote?:string;
+  sourceUrl?:string;retrievedAt?:string;
   dogAccess?:string;
   pointIsCenter?:boolean;
   kind: 'route' | 'risk' | 'place' | 'organization';
@@ -58,6 +60,8 @@ type SearchResult = {
 };
 
 type ProductionMapWorkspaceProps = {
+  agentSelection?:{token:string;petId:string;place:MapSearchPlace;places:MapSearchPlace[]}|null;
+  onReturnToAssistant?:()=>void;
   petId: string;
   guest: boolean;
   authHeaders: () => Record<string,string>;
@@ -137,7 +141,7 @@ function formatPointCount(count: number) {
 }
 
 export function ProductionMapWorkspace({
-  petId, guest, authHeaders,
+  petId, guest, authHeaders, agentSelection, onReturnToAssistant,
   draftTitle = '', draftNote = '', editingRouteId, onRestoreDraftText, savedRevision = 0, onActivityChange, routeEditSeed, onReuseRoute,
   dogName,
   actionNotice,
@@ -178,6 +182,8 @@ export function ProductionMapWorkspace({
   function selectLayerPreset(preset:MapLayerFilter){setFilter(preset);setLayers({routes:preset==='all'||preset==='routes',places:preset==='all'||preset==='places',risks:preset==='all'||preset==='risks'});}
   const isRisk=(type?:string|null)=>type==='risk'||type==='risk_zone';
   const [savedExpanded, setSavedExpanded] = useState(false);
+  const [agentPlaces,setAgentPlaces]=useState<MapSearchPlace[]>([]);
+  const consumedAgentPlace=useRef('');
   const [workspaceTab,setWorkspaceTab]=useState<'places'|'walks'|'saved'>('places');
   const [query, setQuery] = useState('');
   const [searchRequest, setSearchRequest] = useState<{query:string;lat:number;lng:number;revision:number;bounds?:MapBounds} | null>(null);
@@ -456,6 +462,7 @@ export function ProductionMapWorkspace({
 
   function searchArea() {
     if (query.trim().length < 2) return;
+    setAgentPlaces([]);
     setSelectedSearchPoint(null); setSearchOpen(true);
     setSearchRequest({query:query.trim(),...mapCenter,revision:Date.now(),bounds:mapBounds||undefined});
   }
@@ -709,10 +716,19 @@ export function ProductionMapWorkspace({
   const mapResultPlaces:MapPlaceChoice[]=searchResults.filter((p):p is SearchResult&{point:{lat:number;lng:number};kind:'place'|'organization'}=>!!p.point&&(p.kind==='place'||p.kind==='organization'));
   const knownMapPlaces:MapPlaceChoice[]=[...libraryStore.library.places.map(p=>({id:p.id,title:p.title,detail:p.detail,category:p.category,accuracyMeters:p.accuracyMeters,privateNote:p.note,kind:p.source.provider==='osm'?'organization' as const:'place' as const,point:p.point})),...features.filter(f=>f.type==='point'&&!isRisk(f.zone_type)&&numberOrNull(f.lat)!==null&&numberOrNull(f.lng)!==null).map(f=>({id:f.id,title:f.title,category:f.zone_type||'Место',accuracyMeters:Math.max(500,f.radiusMeters||500),kind:'place' as const,point:{lat:Number(f.lat),lng:Number(f.lng)}})),...zones.filter(z=>!isRisk(z.type)&&numberOrNull(z.approximate_lat)!==null&&numberOrNull(z.approximate_lng)!==null).map(z=>({id:z.id,title:z.title,category:z.type,accuracyMeters:Math.max(500,z.radius_meters||z.radiusMeters||500),privateNote:z.note,kind:'place' as const,point:{lat:Number(z.approximate_lat),lng:Number(z.approximate_lng)}}))];
   const allMapPlaces=[...new Map(knownMapPlaces.map(p=>[p.id,p])).values()];
-  const placeSearchActive=Boolean(searchRequest&&query.trim()===searchRequest.query);
-  const visibleMapPlaces=(placeSearchActive?mapResultPlaces:allMapPlaces.filter(p=>!mapBounds||(p.point.lat>=mapBounds.south&&p.point.lat<=mapBounds.north&&p.point.lng>=mapBounds.west&&p.point.lng<=mapBounds.east)));
+  const placeSearchActive=Boolean(agentPlaces.length||(searchRequest&&query.trim()===searchRequest.query));
+  const visibleMapPlaces=(placeSearchActive?(agentPlaces.length?agentPlaces:mapResultPlaces):allMapPlaces.filter(p=>!mapBounds||(p.point.lat>=mapBounds.south&&p.point.lat<=mapBounds.north&&p.point.lng>=mapBounds.west&&p.point.lng<=mapBounds.east)));
+  const selectedLibraryPlace=libraryStore.library.places.find(p=>p.id===selectedSearchPoint?.id||(p.source.provider==='osm'&&p.source.id===selectedSearchPoint?.id));
+  const selectedVisiblePlaceId=visibleMapPlaces.find(p=>p.id===selectedSearchPoint?.id||(selectedLibraryPlace?.source.provider==='osm'&&p.id===selectedLibraryPlace.source.id))?.id;
   const hiddenPlaceCount=placeSearchActive?0:allMapPlaces.length-visibleMapPlaces.length;
   function showAllMapPlaces(){if(!allMapPlaces.length)return;const south=Math.min(...allMapPlaces.map(p=>p.point.lat)),north=Math.max(...allMapPlaces.map(p=>p.point.lat)),west=Math.min(...allMapPlaces.map(p=>p.point.lng)),east=Math.max(...allMapPlaces.map(p=>p.point.lng));setLayers(v=>({...v,places:true}));setFocusPoint({lat:(south+north)/2,lng:(west+east)/2,token:Date.now(),bounds:{south,north,west,east}});}
+  const acceptAgentSelection=useEffectEvent(()=>{
+    if(!agentSelection||agentSelection.petId!==petId||consumedAgentPlace.current===agentSelection.token||!isMapSearchPlace(agentSelection.place))return;
+    consumedAgentPlace.current=agentSelection.token;
+    setAgentPlaces(agentSelection.places.filter(isMapSearchPlace));setQuery('');setSearchRequest(null);setSearchState('ready');setWorkspaceTab('places');
+    setFolded(true);onModeChange('view');chooseSearchResult(agentSelection.place);setPlaceOrigin('map');
+  });
+  useEffect(()=>{acceptAgentSelection();},[agentSelection?.token,petId]);
   const selectedPlacePanel=selectedSearchPoint&&<article className="map-place-panel" aria-label="Выбранное место" onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();closeSelectedPlace();}}}>
         <button type="button" className="place-back" onClick={closeSelectedPlace}>{placeOrigin==='library'?'К подборке':placeOrigin==='map'?'К местам':'К результатам'}</button>
         <h2>{selectedSearchPoint.title}</h2>
@@ -741,7 +757,7 @@ export function ProductionMapWorkspace({
           <p role="status">{savedPlaceNotice}</p>
           {placeUndo&&<button type="button" disabled={libraryStore.busy} onClick={async()=>{if(await libraryStore.mutate({id:crypto.randomUUID(),kind:'membership',...placeUndo,present:false})){setPlaceUndo(null);setSavedPlaceNotice('Добавление отменено');}}}>Отменить добавление</button>}
         </section>}
-        <p className="place-data-source">{selectedSearchPoint.kind==='organization'?'Источник: OpenStreetMap':'Сохранённая запись Псё'}</p>
+        <p className="place-data-source">{selectedSearchPoint.sourceUrl?.startsWith('https://www.openstreetmap.org/')?<a href={selectedSearchPoint.sourceUrl} target="_blank" rel="noopener noreferrer">Источник: OpenStreetMap</a>:selectedSearchPoint.kind==='organization'?'Источник: OpenStreetMap':'Сохранённая запись Псё'}</p>
       </article>;
   return <section className={`production-map-workspace${routeFocused ? ' route-focus' : ''}`} data-production-map-workspace data-production-journey="map" data-route-flow={routeFlow}>
 <div className="map-workspace-tools">      {(!routeFocused || routeFlow === 'planning') && <>
@@ -778,7 +794,7 @@ export function ProductionMapWorkspace({
     <section className="production-map-canvas" aria-label={`Карта прогулок ${dogName}`}>
       <LiveMap
         zones={zones.filter(z=>isRisk(z.type)?layers.risks:layers.places)}
-        features={[...features.filter(f=>f.type==='route'?layers.routes:isRisk(f.zone_type)?layers.risks:layers.places&&workspaceTab!=='saved'),...(layers.places?(workspaceTab==='saved'?collectionPlaces:libraryStore.library.places).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:p.accuracyMeters?'area' as const:'ownerPlace' as const,radiusMeters:p.accuracyMeters,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'private' as const})):[]),...(layers.places&&workspaceTab==='places'&&placeSearchActive?mapResultPlaces.filter(p=>p.kind==='organization'&&!libraryStore.library.places.some(l=>l.id===p.id||l.source.id===p.id)).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:'ownerPlace' as const,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'public' as const})):[])]}
+        features={[...features.filter(f=>f.type==='route'?layers.routes:isRisk(f.zone_type)?layers.risks:layers.places&&workspaceTab!=='saved'),...(layers.places?(workspaceTab==='saved'?collectionPlaces:libraryStore.library.places).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:p.accuracyMeters?'area' as const:'ownerPlace' as const,radiusMeters:p.accuracyMeters,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'private' as const})):[]),...(layers.places&&workspaceTab==='places'&&placeSearchActive?visibleMapPlaces.filter(p=>p.kind==='organization'&&!libraryStore.library.places.some(l=>l.id===p.id||l.source.id===p.id)).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:'ownerPlace' as const,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'public' as const})):[])]}
         picked={candidate?{lng:candidate.point[0],lat:candidate.point[1]}:mapSelection||pickedPoint}
         routePoints={calculationState==='preview'&&walkResult?walkResult.path:routePoints}
         routeStops={routeFlow==='planning'||routeFlow==='plan-review'?activeStops.map(s=>s.point):[]}
@@ -789,7 +805,7 @@ export function ProductionMapWorkspace({
         onBoundsChange={setMapBounds}
         searchBounds={workspaceTab==='saved'?null:searchRequest?.bounds}
         filter="all"
-        selectedFeatureId={selectedSearchPoint?.id}
+        selectedFeatureId={selectedLibraryPlace?.id||selectedSearchPoint?.id}
         onSelectFeature={id=>{
           if(routeFocused)return;
           const found=visibleMapPlaces.find(p=>p.id===id);if(workspaceTab==='places'&&found){chooseMapPlace(found,document.querySelector<HTMLElement>(`.map-place-row[data-place-id="${CSS.escape(id)}"]`)||document.activeElement as HTMLElement);return;}
@@ -894,8 +910,9 @@ export function ProductionMapWorkspace({
       <div className="production-map-sheet-body">{composer}</div>
     </section> : <section className={`production-map-snap-sheet home-sheet${savedExpanded ? ' expanded' : ''}`} data-map-snap-sheet>
 
+      {agentPlaces.length>0&&onReturnToAssistant&&<button type="button" className="agent-map-return" onClick={onReturnToAssistant}><span aria-hidden="true">←</span> К разговору</button>}
       <nav className="map-home-tabs" aria-label="Работа с картой">{(['places','walks','saved'] as const).map(t=><button key={t} type="button" aria-pressed={workspaceTab===t} onClick={()=>{setWorkspaceTab(t);setSavedExpanded(t==='saved');if(t==='saved')openCollection(collection?.id||'saved');}}>{t==='places'?'Места':t==='walks'?'Прогулки':'Сохранённое'}</button>)}</nav>
-      <div hidden={workspaceTab!=='places'}><MapPlacesPanel places={layers.places?visibleMapPlaces:[]} selectedId={placeOrigin==='map'?selectedSearchPoint?.id:undefined} selectedContent={selectedPlacePanel} onChoose={chooseMapPlace} loading={libraryStore.state==='loading'||(placeSearchActive&&searchState==='loading')} error={libraryStore.error||(placeSearchActive&&['error','quota'].includes(searchState)?'Не удалось обновить поиск. Сохранённые места не изменились.':undefined)} onRetry={()=>{libraryStore.reload();if(placeSearchActive)searchArea();}} hiddenCount={hiddenPlaceCount} onShowAll={showAllMapPlaces} inRoute={new Set(activeStops.flatMap(s=>s.placeId?[s.placeId]:[]))} savedIds={new Set(libraryStore.library.places.flatMap(p=>[p.id,p.source.id]))} searching={placeSearchActive}/>{!layers.places&&<button type="button" onClick={()=>setLayers(v=>({...v,places:true}))}>Показать слой мест</button>}</div>
+      <div hidden={workspaceTab!=='places'}><MapPlacesPanel places={layers.places?visibleMapPlaces:[]} selectedId={placeOrigin==='map'?selectedVisiblePlaceId:undefined} selectedContent={selectedPlacePanel} onChoose={chooseMapPlace} loading={libraryStore.state==='loading'||(placeSearchActive&&searchState==='loading')} error={libraryStore.error||(placeSearchActive&&['error','quota'].includes(searchState)?'Не удалось обновить поиск. Сохранённые места не изменились.':undefined)} onRetry={()=>{libraryStore.reload();if(placeSearchActive&&!agentPlaces.length)searchArea();}} hiddenCount={hiddenPlaceCount} onShowAll={showAllMapPlaces} inRoute={new Set(activeStops.flatMap(s=>s.placeId?[s.placeId]:[]))} savedIds={new Set(libraryStore.library.places.flatMap(p=>[p.id,p.source.id]))} searching={placeSearchActive}/>{!layers.places&&<button type="button" onClick={()=>setLayers(v=>({...v,places:true}))}>Показать слой мест</button>}</div>
       <div hidden={workspaceTab!=='walks'}>
       <section className="production-route-launch" aria-label="Прогулки и маршруты">
         <button type="button" className="production-route-start" data-route-action="start" onClick={startWalk}><NavigationArrow weight="fill" aria-hidden="true" /><span>Начать прогулку</span></button>

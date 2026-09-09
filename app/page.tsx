@@ -1,4 +1,5 @@
 'use client';
+import {isMapSearchPlace,type MapSearchPlace} from '@/lib/mapSearchPlace';
 import {downloadRouteGpx,type RoutePlanning} from '@/lib/routePlanning';
 
 import { ChangeEvent, type FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -600,6 +601,7 @@ export default function Home() {
   const calendarAutoSelectedPetRef = useRef<string | null>(null);
   const [careView, setCareView] = useState<'active' | 'history'>('active');
   const [mapVisited, setMapVisited] = useState(false);
+  const [agentMapSelection,setAgentMapSelection]=useState<{token:string;petId:string;place:MapSearchPlace;places:MapSearchPlace[]}|null>(null);
   const [mapActivity, setMapActivity] = useState<'recording'|'paused'|null>(null);
   useEffect(() => {if (tab === 'map') setMapVisited(true);}, [tab]);
   const [routeEditSeed,setRouteEditSeed] = useState<{token:number;points:number[][];planning?:RoutePlanning;review?:boolean;pathGaps?:number[];routeSource?:'recorded'|'planned';durationSeconds?:number;startedAt?:string}|null>(null);
@@ -1955,6 +1957,7 @@ export default function Home() {
     setHealthFactsDraft(null);
     observationEditDrafts.current.clear();
     agentObservationEdits.current.clear();
+    setAgentMapSelection(null);
     setJourneyDetail(null);
     setTabState('today');
     if (typeof window !== 'undefined') {
@@ -4480,6 +4483,8 @@ export default function Home() {
             draftNote={newZoneNote}
             savedRevision={mapSavedRevision}
             routeEditSeed={routeEditSeed}
+            agentSelection={agentMapSelection}
+            onReturnToAssistant={openAssistantSheet}
             editingRouteId={editingRouteGeometryId}
             onActivityChange={setMapActivity}
             onReuseRoute={id=>{const route=ownerRoutes.find(r=>r.id===id);if(route)planSavedRoute(route,false);}}
@@ -4513,6 +4518,12 @@ export default function Home() {
           actions={<>
             {!isGuestMode()&&profile.backendPetId&&<AgentPanel key={profile.backendPetId} petId={profile.backendPetId} runId={agentRunId} headers={authHeaders}
               observationEdits={agentObservationEdits.current}
+              onOpenPlace={(place,places)=>{
+                if(!isMapSearchPlace(place)||!profile.backendPetId)return;
+                setAgentMapSelection({token:crypto.randomUUID(),petId:profile.backendPetId,place,places:places.filter(isMapSearchPlace)});
+                setAssistantOpen(false);setJourneyDetail(null);setTabState('map');
+                const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
+              }}
               onObservationSaved={record=>{const entry=normalizeObservation(record);if(entry)setObservations(current=>[{...entry,syncStatus:'saved' as const},...current.filter(item=>item.id!==entry.id)]);}}
               onOpenObservation={(record,trigger)=>setRecordDetail({id:record.id,title:`Запись о ${petNameGent}`,text:record.note||record.value,date:record.observed_at,facts:[],trigger})}
               onBusy={setAssistantLoading} onRetry={question=>void askAssistant(question)} onResult={result=>{
