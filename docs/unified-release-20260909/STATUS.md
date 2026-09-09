@@ -23,3 +23,13 @@ User decision 2026-09-09: the entire product, including the live agent and its a
 B03 Storage/document lifecycle; 11 audited interaction defects and complete chosen-design transfer; entity-aware navigation/drafts; real owner/RLS/cloud integration; live agent/provider/search/tools/memory and background tasks; physical Telegram iOS/Android; fresh release backup/restore, migration and both-alias rollout.
 
 Groq Free/search entitlement unknown. User asked for plan metadata this turn; no response yet. No paid calls, no new secret requests. Agent PR29 remains separate source pending integration, not live verified. No new production deployment.
+
+## B03 local candidate
+
+- `20260909012000_document_lifecycle.sql`: reservation before Storage, stable owner/key/fingerprint/content hash and UUID path; pending/ready/deleting/deleted states. Existing rows default ready. Upload replay after deletion is rejected, not silently recreated.
+- `documentLifecycle.ts`: exact-content retry verification, ready only after successful file upload; recoverable delete with scrubbed tombstone/path; bounded reconciliation (20 entries) in the existing protected avatar-retention cron. Pending uploaded files can recover after process termination; transient read errors never justify deletion. Old tombstones remain for idempotency but stop rescanning after a week.
+- `supabase/tests/document_reservations.sql`: actual local Postgres stable ID/path, mismatched fingerprint, foreign owner, no resurrection, RPC grants passed. Real Storage bytes/cron delivery are **not** verified by this test.
+- Six stateful service tests: failures after upload/before ready, same-key retry, failed deletion, recovery, late-object cleanup, retained old tombstone. Storage/DB client are mocked here.
+- Form keeps text and the File object across close/back within the mounted app, clears on pet switch/explicit reset; domain-scoped error; specific size/type errors; same key for exact file+form retry; correct success text; deduplicated UI result. Refresh still requires choosing the local file again (browser security), not claimed persistent file storage.
+- Full qa:local passed with 162 tests/build/contracts, then one additional tombstone-retention test passed after hardening reconciliation. Browser `evidence/document-flow.cjs` passed Chromium/WebKit × 320/390: draft+file retention, scoped 503, retry key, success text, overflow; synthetic APIs only.
+- Remaining: live isolated Storage/API/cron integration and process termination tests, production migration/rollback compatibility with old code (old server does not filter lifecycle states; do not roll back to old document handlers while unfinished operations exist).

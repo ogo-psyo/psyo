@@ -73,7 +73,7 @@ import type { Recommendation, RecommendationAction, RecommendationLifecycleComma
 import { loadMainRecommendation, RecommendationRequestError, transitionRecommendation } from '@/lib/recommendations/client';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
-type Notice = 'idle' | 'saved' | 'mapSaved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
+type Notice = 'documentSaved' | 'idle' | 'saved' | 'mapSaved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
 type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 type ReminderTimeMode = 'exact' | 'flexible' | 'approximate';
 type ReminderView = { id: string; petId: string; type: string; title: string; dueAt: string; recurrence?: ReminderRecurrence; status: string; snoozedUntil?: string; completedAt?: string; nextDueAt?: string };
@@ -536,6 +536,10 @@ export default function Home() {
   const [documentUploadOpen, setDocumentUploadOpen] = useState(false);
   const [documentUploading, setDocumentUploading] = useState(false);
   const [documentFileName, setDocumentFileName] = useState('');
+  const [documentError, setDocumentError] = useState('');
+  const documentSaveAttempt = useRef<{ signature: string; key: string } | null>(null);
+  const documentActivePet = useRef(profile.backendPetId);
+  useEffect(() => { documentActivePet.current = profile.backendPetId; setDocumentError(''); setDocumentFileName(''); documentSaveAttempt.current = null; }, [profile.backendPetId]);
   const [documentBusyId, setDocumentBusyId] = useState<string | null>(null);
   const documentUploadTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [habits, setHabits] = useState<HabitView[]>([]);
@@ -2474,26 +2478,37 @@ export default function Home() {
   async function uploadPetDocument(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!profile.backendPetId || documentUploading) return;
+    const petId = profile.backendPetId;
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-    form.set('petId', profile.backendPetId);
+    form.set('petId', petId);
+    const file = form.get('file');
+    if (!(file instanceof File) || !file.size) { setDocumentError('Выберите PDF или фото.'); return; }
     setDocumentUploading(true);
-    setError('');
+    setDocumentError('');
     try {
-      const response = await fetch('/api/documents', { method: 'POST', headers: authHeaders(), body: form });
+      const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', await file.arrayBuffer()))].map(byte => byte.toString(16).padStart(2, '0')).join('');
+      const signature = JSON.stringify({ fields: [...form.entries()].filter(([key]) => key !== 'file'), name: file.name, type: file.type, hash });
+      if (documentSaveAttempt.current?.signature !== signature) documentSaveAttempt.current = { signature, key: `document:${crypto.randomUUID()}` };
+      const response = await fetch('/api/documents', { method: 'POST', headers: { ...authHeaders(), 'Idempotency-Key': documentSaveAttempt.current.key }, body: form });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.error || 'UPLOAD_FAILED');
-      setDocuments((current) => [payload.document, ...current]);
+      if (documentActivePet.current !== petId) return;
+      setDocuments(current => [payload.document, ...current.filter(item => item.id !== payload.document.id)]);
+      documentSaveAttempt.current = null;
       setDocumentUploadOpen(false);
       setDocumentFileName('');
       formElement.reset();
-      setNotice('saved');
+      setNotice('documentSaved');
       window.setTimeout(() => setNotice('idle'), 1400);
-    } catch {
-      setError('Не удалось сохранить документ. Проверь формат и размер файла — до 4 МБ.');
-    } finally {
-      setDocumentUploading(false);
-    }
+    } catch (error) {
+      if (documentActivePet.current !== petId) return;
+      const code = error instanceof Error ? error.message : '';
+      setDocumentError(code === 'FILE_TOO_LARGE' ? 'Файл больше 4 МБ. Выберите файл поменьше.'
+        : code === 'FILE_TYPE_NOT_ALLOWED' ? 'Подойдёт PDF или изображение JPEG, PNG, WebP.'
+        : code === 'DOCUMENT_REMOVED' ? 'Этот документ уже удалён. Выберите файл заново, если хотите добавить его снова.'
+        : 'Не удалось подтвердить сохранение. Ввод и файл остались здесь — повторите попытку.');
+    } finally { setDocumentUploading(false); }
   }
 
   async function deletePetDocument(id: string) {
@@ -2505,7 +2520,7 @@ export default function Home() {
       if (!response.ok) throw new Error('DELETE_FAILED');
       setDocuments((current) => current.filter((item) => item.id !== id));
     } catch {
-      setError('Не удалось удалить документ. Ничего не изменилось — попробуй ещё раз.');
+      setError('Удаление документа не завершено. Повторите попытку; повтор не затронет другие файлы.');
     } finally {
       setDocumentBusyId(null);
     }
@@ -4328,7 +4343,6 @@ export default function Home() {
               return;
             }
             documentUploadTriggerRef.current = trigger;
-            setDocumentFileName('');
             setDocumentUploadOpen(true);
           }}
           onOpenDocument={(id) => window.open(`/api/documents/${id}`, '_blank', 'noopener,noreferrer')}
@@ -4342,15 +4356,18 @@ export default function Home() {
           onOpenSettings={() => openJourneyDetail('profile')}
         />}
 
-        {hasDog && tab === 'profile' && documentUploadOpen && <ProductionDocumentSheet dogName={petNameGent} returnFocusTo={documentUploadTriggerRef.current} onClose={() => { setDocumentUploadOpen(false); setDocumentFileName(''); }}>
-          <form className="profile-life-document-form" data-slot="field-group" onSubmit={uploadPetDocument}>
+        {hasDog && <ProductionDocumentSheet key={profile.backendPetId} open={tab === 'profile' && documentUploadOpen} dogName={petNameGent} returnFocusTo={documentUploadTriggerRef.current} onClose={() => setDocumentUploadOpen(false)}>
+          <form className="profile-life-document-form" data-slot="field-group" onSubmit={uploadPetDocument} onReset={() => { setDocumentFileName(''); setDocumentError(''); documentSaveAttempt.current = null; }}>
+            <fieldset disabled={documentUploading} style={{ border: 0, padding: 0, margin: 0, minWidth: 0, display: 'grid', gap: 16 }}>
             <label data-slot="field"><span data-slot="field-label">Что это</span><span className="document-field-control"><TextT weight="regular" aria-hidden="true" /><input data-slot="input" name="title" required placeholder="Например, общий анализ крови" /></span></label>
             <label data-slot="field"><span data-slot="field-label">Тип документа</span><span className="document-field-control document-select-control"><Files weight="regular" aria-hidden="true" /><select data-slot="input" name="kind" defaultValue="analysis"><option value="analysis">Анализ</option><option value="prescription">Назначение</option><option value="vaccination">Вакцинация</option><option value="other">Другое</option></select><CaretDown className="document-field-action" weight="regular" aria-hidden="true" /></span></label>
             <label data-slot="field"><span data-slot="field-label">Дата документа <small>необязательно</small></span><span className="document-field-control"><CalendarBlank weight="regular" aria-hidden="true" /><input data-slot="input" name="documentDate" type="date" /></span></label>
             <label data-slot="field"><span data-slot="field-label">Клиника <small>необязательно</small></span><span className="document-field-control"><Buildings weight="regular" aria-hidden="true" /><input data-slot="input" name="clinic" placeholder="Название клиники" /></span></label>
-            <label className="document-file-drop" data-slot="field"><input data-slot="input" name="file" type="file" required accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(event) => setDocumentFileName(event.currentTarget.files?.[0]?.name || '')} aria-describedby={`profile-document-help${error ? ' profile-document-error' : ''}`} /><span className="document-file-drop-media" aria-hidden="true">{documentFileName ? <CheckCircle weight="fill" /> : <UploadSimple weight="regular" />}</span><span className="document-file-drop-copy"><b data-document-file-name>{documentFileName || 'Выбрать PDF или фото'}</b><small data-slot="field-description" id="profile-document-help">До 4 МБ · файл останется приватным</small></span><span className="document-file-drop-action" aria-hidden="true">{documentFileName ? 'Готово' : 'Выбрать'}</span></label>
-            {error && <p className="profile-life-form-error" data-slot="field-error" id="profile-document-error" role="alert">{error}</p>}
+            <label className="document-file-drop" data-slot="field"><input data-slot="input" name="file" type="file" required accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(event) => setDocumentFileName(event.currentTarget.files?.[0]?.name || '')} aria-describedby={`profile-document-help${documentError ? ' profile-document-error' : ''}`} /><span className="document-file-drop-media" aria-hidden="true">{documentFileName ? <CheckCircle weight="fill" /> : <UploadSimple weight="regular" />}</span><span className="document-file-drop-copy"><b data-document-file-name>{documentFileName || 'Выбрать PDF или фото'}</b><small data-slot="field-description" id="profile-document-help">До 4 МБ · файл останется приватным</small></span><span className="document-file-drop-action" aria-hidden="true">{documentFileName ? 'Готово' : 'Выбрать'}</span></label>
+            {documentError && <p className="profile-life-form-error" data-slot="field-error" id="profile-document-error" role="alert">{documentError}</p>}
             <button className="primary" data-slot="button" type="submit" disabled={documentUploading}>{documentUploading ? 'Добавляю…' : <><CheckCircle weight="regular" /> Добавить в историю {petNameGent}</>}</button>
+            <button type="reset">Очистить черновик</button>
+            </fieldset>
           </form>
         </ProductionDocumentSheet>}
 
@@ -4820,7 +4837,7 @@ export default function Home() {
         </WatercolorScreen>}
 
         {error && <p className="error-text" role="alert">{error}</p>}
-        {notice !== 'idle' && !(tab === 'map' && notice === 'mapSaved') && <div className="toast" role="status" aria-live="polite">{notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
+        {notice !== 'idle' && !(tab === 'map' && notice === 'mapSaved') && <div className="toast" role="status" aria-live="polite">{notice === 'documentSaved' ? 'Документ сохранён' : notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
       </section>
 
       {hasDog && !(tab === 'map' && productionMapMode !== 'view') && <AppNavigation dogName={profile.dogName} active={activePrimaryRoute} onAskAssistant={openAssistantSheet} onNavigate={(route) => {

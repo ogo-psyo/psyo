@@ -31,6 +31,7 @@ export async function listPetDocuments(supabase: SupabaseClient, ownerId: string
     .from('pet_documents')
     .select('*')
     .eq('pet_id', petId)
+    .eq('lifecycle', 'ready')
     .order('created_at', { ascending: false });
   if (result.error) throw result.error;
   return (result.data ?? []).map(mapPetDocument);

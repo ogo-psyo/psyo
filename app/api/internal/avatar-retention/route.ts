@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
 
+import { reconcileDocuments } from '@/lib/server/documentLifecycle';
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -65,9 +67,12 @@ export async function GET(request: Request) {
     .lt('retention_until', now).is('deleted_at', null).neq('status', 'active');
   if (backlog.error) failures.push('avatar_backlog');
 
+  const documents = await reconcileDocuments(supabase).catch(() => ({ scanned: 0, recovered: 0, removed: 0, failed: 1 }));
+  if (documents.failed) failures.push('documents');
   const unhealthy = failures.length > 0 || (backlog.count ?? 0) > 0;
   return NextResponse.json({
     ok: !unhealthy,
+    documents,
     scanned,
     objectsDeleted,
     rowsDeleted,

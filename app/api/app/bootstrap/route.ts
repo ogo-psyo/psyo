@@ -103,7 +103,7 @@ export async function GET(request: Request) {
     supabase.from('map_routes').select('*').eq('owner_id', ownerId).eq('pet_id', petId).order('created_at', { ascending: false }),
     supabase.from('wishlist_items').select('*').eq('pet_id', petId).is('deleted_at', null).order('created_at', { ascending: false }),
     supabase.from('pet_observations').select('*').eq('pet_id', petId).is('deleted_at', null).order('observed_at', { ascending: false }).limit(20),
-    supabase.from('pet_documents').select('id, pet_id, kind, title, clinic, document_date, original_name, mime_type, size_bytes, created_at').eq('pet_id', petId).order('created_at', { ascending: false }),
+    supabase.from('pet_documents').select('id, pet_id, kind, title, clinic, document_date, original_name, mime_type, size_bytes, created_at').eq('pet_id', petId).eq('lifecycle', 'ready').order('created_at', { ascending: false }),
   ]);
 
   return NextResponse.json({

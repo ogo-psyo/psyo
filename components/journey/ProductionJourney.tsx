@@ -386,19 +386,21 @@ function ProfileScreen(props: ProductionJourneyProps) {
   </main>;
 }
 
-export function ProductionDocumentSheet({ dogName, onClose, returnFocusTo, children }: { dogName: string; onClose: () => void; returnFocusTo?: HTMLElement | null; children: ReactNode }) {
+export function ProductionDocumentSheet({ dogName, open = true, onClose, returnFocusTo, children }: { dogName: string; open?: boolean; onClose: () => void; returnFocusTo?: HTMLElement | null; children: ReactNode }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
-    triggerRef.current = returnFocusTo || document.activeElement as HTMLElement | null;
     const dialog = dialogRef.current;
-    if (dialog && !dialog.open) dialog.showModal();
-    return () => {
-      const trigger = triggerRef.current;
-      window.requestAnimationFrame(() => trigger?.focus());
-    };
-  }, [returnFocusTo]);
-  const closeSheet = () => { dialogRef.current?.close(); onClose(); };
+    if (!dialog) return;
+    if (open && !dialog.open) {
+      triggerRef.current = returnFocusTo || document.activeElement as HTMLElement | null;
+      dialog.showModal();
+    } else if (!open && dialog.open) {
+      dialog.close();
+      window.requestAnimationFrame(() => triggerRef.current?.focus());
+    }
+  }, [open, returnFocusTo]);
+  const closeSheet = () => { dialogRef.current?.close(); onClose(); window.requestAnimationFrame(() => triggerRef.current?.focus()); };
   return <dialog ref={dialogRef} className="profile-document-dialog" aria-labelledby="profile-document-sheet-title" aria-describedby="profile-document-sheet-description" onCancel={(event) => { event.preventDefault(); closeSheet(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSheet(); }}>
     <section className="profile-document-sheet" data-slot="sheet-content">
       <header data-slot="sheet-header"><span className="profile-document-sheet-mark" aria-hidden="true"><FileArrowUp weight="regular" /></span><div><h2 id="profile-document-sheet-title">Добавить в историю</h2><p id="profile-document-sheet-description">Документ останется личным и будет рядом, когда понадобится</p></div><button type="button" aria-label="Закрыть" onClick={closeSheet}><X weight="regular" /></button></header>
