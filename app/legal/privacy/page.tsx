@@ -1,8 +1,9 @@
+import { ExactPublicLayout } from '@/components/exact/ExactPublicLayout';
 import Link from 'next/link';
 
 export default function PrivacyPage() {
   return (
-    <main className="legal-page">
+    <ExactPublicLayout>
       <section>
         <p className="eyebrow">Псё</p>
         <h1>Конфиденциальность</h1>
@@ -26,6 +27,6 @@ export default function PrivacyPage() {
         </div>
         <Link href="/">Вернуться в Псё</Link>
       </section>
-    </main>
+    </ExactPublicLayout>
   );
 }

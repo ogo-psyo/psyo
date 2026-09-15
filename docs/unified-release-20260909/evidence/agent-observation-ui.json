@@ -1,0 +1,26 @@
+[
+  {
+    "engine": "chromium",
+    "width": 320,
+    "pass": true,
+    "scope": "intercepted API only; separate real local SQL test"
+  },
+  {
+    "engine": "chromium",
+    "width": 390,
+    "pass": true,
+    "scope": "intercepted API only; separate real local SQL test"
+  },
+  {
+    "engine": "webkit",
+    "width": 320,
+    "pass": true,
+    "scope": "intercepted API only; separate real local SQL test"
+  },
+  {
+    "engine": "webkit",
+    "width": 390,
+    "pass": true,
+    "scope": "intercepted API only; separate real local SQL test"
+  }
+]

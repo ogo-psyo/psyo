@@ -9,6 +9,8 @@ import {
   type AssistantKind,
 } from '@/lib/server/assistantAnswerService';
 import { buildAssistantProfileFacts, humanAssistantProfileValue } from '@/lib/server/assistantProfileContext';
+import { agentEnabled } from '@/lib/server/agent/access';
+import { submitAgent } from '@/lib/server/agent/submit';
 
 export const runtime = 'nodejs';
 
@@ -161,8 +163,8 @@ function buildAssistantPrompt(question: string, context: any, reminders: any[], 
   const facts = [
     ...buildAssistantProfileFacts(context ?? {}),
     reminders.length ? `задачи: ${reminders.slice(0, 3).map((item) => item.title).join('; ')}` : null,
-    context?.observations?.length ? `наблюдения: ${context.observations.slice(0, 5).map((item: any) => `${humanAssistantProfileValue(item.type)} — ${humanAssistantProfileValue(item.value)}`).join('; ')}` : null,
-    context?.documents?.length ? `документы: ${context.documents.slice(0, 4).map((item: any) => item.title).join('; ')}` : null,
+    context?.observations?.length ? `наблюдения: ${context.observations.slice(0, 5).map((item: any) => `${String(item.observed_at || '').slice(0, 10)}: ${humanAssistantProfileValue(item.type)} — ${humanAssistantProfileValue(item.value)}${item.note ? `; исходная запись: ${String(item.note).slice(0, 1200)}` : ''}`).join('; ')}` : null,
+    context?.documents?.length ? `документы (только названия, содержимое файлов не прочитано): ${context.documents.slice(0, 4).map((item: any) => item.title).join('; ')}` : null,
     context?.routes?.length ? `прогулки: ${context.routes.slice(0, 4).map((item: any) => `${item.title || 'маршрут'}${item.distance_meters ? `, ${Math.round(item.distance_meters / 100) / 10} км` : ''}`).join('; ')}` : null,
   ].filter(Boolean).join('; ');
 
@@ -191,6 +193,7 @@ export function createAssistantPostHandler(dependencies: AssistantRouteDependenc
 
 async function assistantPost(request: Request, dependencies: AssistantRouteDependencies) {
   const body = await request.json().catch(() => null);
+  if (agentEnabled() && body?.petId) return submitAgent(request,body);
   const question = String(body?.question || '').trim();
 
   if (!question) {
@@ -213,24 +216,30 @@ async function assistantPost(request: Request, dependencies: AssistantRouteDepen
 
   if (body?.petId) {
     if (!supabase) return NextResponse.json({ error: 'ASSISTANT_STORAGE_UNAVAILABLE' }, { status: 503 });
-    const [pet, passport, social, reminderResult, observationResult, documentResult, routeResult] = await Promise.all([
-      supabase.from('pets').select('id,name,breed_id,breed_group_id,custom_breed,sex,life_stage,weight_kg').eq('id', body.petId).eq('owner_id', ownerId!).maybeSingle(),
+    const pet = await supabase.from('pets').select('id,name,breed_id,breed_group_id,custom_breed,sex,life_stage,weight_kg').eq('id', body.petId).eq('owner_id', ownerId!).maybeSingle();
+    if (pet.error) return NextResponse.json({ error: 'ASSISTANT_CONTEXT_UNAVAILABLE' }, { status: 503 });
+    if (!pet.data) return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
+    const [passport, social, reminderResult, observationResult, documentResult, routeResult] = await Promise.all([
       supabase.from('pet_passports').select('diet,allergies,medication,health_notes,vaccine_status,parasite_status').eq('pet_id', body.petId).maybeSingle(),
       supabase.from('social_profiles').select('temperament,energy_level,play_style,trainability,social_mode,child_friendly,dog_friendly,cat_friendly,triggers,alone_time_note').eq('pet_id', body.petId).maybeSingle(),
       supabase.from('reminders').select('id,title,type,due_at,status').eq('pet_id', body.petId).neq('status', 'done').order('due_at', { ascending: true }).limit(5),
-      supabase.from('pet_observations').select('id,type,value,observed_at,source,metadata').eq('pet_id', body.petId).is('deleted_at', null).order('observed_at', { ascending: false }).limit(8),
-      supabase.from('pet_documents').select('id,title,kind,document_date,created_at').eq('pet_id', body.petId).order('created_at', { ascending: false }).limit(5),
-      supabase.from('map_routes').select('id,title,activity_type,distance_meters,started_at,created_at').eq('pet_id', body.petId).order('created_at', { ascending: false }).limit(5),
+      supabase.from('pet_observations').select('id,type,value,note,observed_at,source,metadata').eq('pet_id', body.petId).is('deleted_at', null).order('observed_at', { ascending: false }).limit(8),
+      supabase.from('pet_documents').select('id,title,kind,document_date,created_at').eq('pet_id', body.petId).eq('lifecycle', 'ready').order('created_at', { ascending: false }).limit(5),
+      supabase.from('map_routes').select('id,title,route_source,distance_meters,started_at,created_at').eq('pet_id', body.petId).order('created_at', { ascending: false }).limit(5),
     ]);
-    if (!pet.data) return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
+    if ([passport, social, reminderResult, observationResult, documentResult, routeResult].some(result => result.error)) {
+      return NextResponse.json({ error: 'ASSISTANT_CONTEXT_UNAVAILABLE' }, { status: 503 });
+    }
     context = { pet: pet.data, passport: passport.data, social: social.data, observations: observationResult.data ?? [], documents: documentResult.data ?? [], routes: routeResult.data ?? [] };
     reminders = reminderResult.data ?? [];
 
     if (body?.threadId) {
       const existingThread = await supabase.from('assistant_threads').select('id,pet_id,kind').eq('id', body.threadId).eq('pet_id', body.petId).maybeSingle();
+      if (existingThread.error) return NextResponse.json({ error: 'ASSISTANT_CONTEXT_UNAVAILABLE' }, { status: 503 });
       if (existingThread.data?.id) {
         threadId = existingThread.data.id;
         const previousMessages = await supabase.from('assistant_messages').select('role,content,created_at').eq('thread_id', threadId).order('created_at', { ascending: false }).limit(8);
+        if (previousMessages.error) return NextResponse.json({ error: 'ASSISTANT_CONTEXT_UNAVAILABLE' }, { status: 503 });
         history = [...(previousMessages.data ?? [])].reverse();
       }
     }

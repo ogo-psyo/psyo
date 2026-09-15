@@ -1,69 +1,71 @@
 'use client';
+
+import {nextReminderDueAt} from '@/lib/reminderRecurrence';
+import {reminderTiming,reminderReceipt,reminderCalendarText,type ReminderRecord} from '@/lib/reminder';
+import {ReminderEditor,type ReminderDraft} from '@/components/care/ReminderEditor';
+import { isPrimaryObservationFact } from '@/lib/observationLabels';
+import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
+import {isMapSearchPlace,type MapSearchPlace} from '@/lib/mapSearchPlace';
 import {downloadRouteGpx,type RoutePlanning} from '@/lib/routePlanning';
 
 import { ChangeEvent, type FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, CopySimple, FilePdf, Files, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning, ShoppingBag, Sparkle, TextT, Trash, UploadSimple } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowRight, CheckCircle, CopySimple, FilePdf, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning } from '@phosphor-icons/react';
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
-import { PaperSheet, WatercolorScreen } from '@/components/watercolor';
-import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
+import { normalizeWishlistReceipt, type WishlistView } from '@/lib/wishlistView';
+import { type PrimaryRoute } from '@/components/app/AppNavigation';
 import { journalDayEntries } from '@/lib/journal';
-import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
+import { ConnectedHome, ConnectedTools } from '@/components/app/ConnectedHome';
+import { ExactHeader, ExactNavigation, ExactScope, ExactPage } from '@/components/exact/ExactShell';
+import { ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
+import { AgentObservationDraft } from '@/components/journey/AgentObservationDraft';
+import { AgentPanel } from '@/components/journey/AgentPanel';
+import type { ReviewedObservation } from '@/lib/agentObservation';
 import { VoiceObservationCapture, type PrivateVoiceNoteInput } from '@/components/journey/VoiceObservationCapture';
+import { ExactVoice } from '@/components/exact/ExactVoice';
+import { ExactCare } from '@/components/exact/ExactCare';
+import { ExactConversation } from '@/components/exact/ExactConversation';
+import { ExactThings } from '@/components/exact/ExactThings';
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
 import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';
 import { RouteDeleteDialog } from '@/components/journey/RouteDeleteDialog';
+import { RecordDetailDialog, type RecordDetail } from '@/components/profile/RecordDetailDialog';
+import { ProfileConflictDialog } from '@/components/profile/ProfileConflictDialog';
+import { mergeProfileDraft, type ProfileMerge } from '@/lib/profileMerge';
 import { DesktopContextPanel } from '@/components/app/DesktopContextPanel';
 import { CareActionNotice, type CareFeedback } from '@/components/care/CareActionNotice';
 import { DeleteCareDialog, type PendingCareDeletion } from '@/components/care/DeleteCareDialog';
-import { ObservationEditor, type ObservationEditorDraft } from '@/components/care/ObservationEditor';
+import { type ObservationEditorDraft } from '@/components/care/ObservationEditor';
 import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
 import type { DogModuleSummary } from '@/components/home/AllFunctionsHub';
 import { HabitScreen, type HabitDraft, type HabitView } from '@/components/habits/HabitScreen';
-import { HealthTimelineScreen } from '@/components/health/HealthTimelineScreen';
+import { ExactProfile, type ExactProfileView } from '@/components/exact/ExactProfile';
+import { ExactRecords } from '@/components/exact/ExactRecords';
 import { RecommendationCard } from '@/components/recommendations/RecommendationCard';
-import { ProfileMemoryWorkspace } from '@/components/profile/ProfileMemoryWorkspace';
-import { NextCareCard } from '@/components/today/NextCareCard';
-import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
-import { CandidateCard } from '@/components/social/CandidateCard';
-import { CityCommunities, type CityCommunity } from '@/components/social/CityCommunities';
-import { RequestsPanel, type SocialRequestView } from '@/components/social/RequestsPanel';
-import { SocialProfileSheet } from '@/components/social/SocialProfileSheet';
+import { type ProfileSurface } from '@/components/profile/ProfileMemoryWorkspace';
+import { type CityCommunity } from '@/components/social/CityCommunities';
+import { type SocialRequestView } from '@/components/social/RequestsPanel';
 import { ProductionWoofWorkspace, type WoofRecommendationEntry } from '@/components/social/ProductionWoofWorkspace';
 import { SelectField } from '@/components/ui/FormControls';
 import {
-  anchorCards,
   avatarStyles,
   breedCatalog,
-  breedGroups,
-  coatOptions,
   defaultProfile,
-  energyOptions,
-  friendlinessOptions,
   getBreedGroup,
   getBreedLabel,
   getBreedCare,
   lifeStageOptions,
-  maxPhotos,
-  parasiteOptions,
-  playStyleOptions,
   sexOptions,
-  sizeOptions,
-  socialOptions,
-  temperamentOptions,
-  vaccineOptions,
-  type AvatarStyleId,
   type BreedGroupId,
   type BreedId,
   type DogProfile,
 } from '@/lib/data';
 import { getSupabaseBrowser } from '@/lib/clientSupabase';
-import { formatCount, formatReadinessLabel, formatReminderGroupLine, formatTodayTitle, formatWishlistMeta, formatZoneMeta, inflectPetName } from '@/lib/copy';
-import { fileToLocalAvatarDataUrl, filesToPhotos, loadProfile, resetProfileStorage, saveProfile } from '@/lib/profileStorage';
+import { formatCount, formatReadinessLabel, formatZoneMeta, inflectPetName } from '@/lib/copy';
+import { fileToLocalAvatarDataUrl, loadProfile, resetProfileStorage, saveProfile } from '@/lib/profileStorage';
 import { loadGuestEntityState, resetAllLocalPsoData, resetGuestEntityStorage, saveGuestEntityState } from '@/lib/guestEntityStorage';
 import { buildAppReadiness, type ReadinessLevel } from '@/lib/readiness';
 import { buildTodayCareView } from '@/lib/today';
 import { normalizeOwnerRoutes, removeOwnerRoute, upsertOwnerRoute, type OwnerRouteView } from '@/lib/mapUi';
-import { rc1Config } from '@/lib/rc1';
 import { extractObservationCandidates, ingestionFingerprint, type IngestionDecision, type ObservationCandidate } from '@/lib/observationIngestion';
 import type { CandidateGroup, CoarseLocation, SocialProfile, SocialScenario, WalkPace, WalkSignal } from '@/lib/socialCore';
 import type { ActionSuggestion } from '@/packages/contracts';
@@ -71,20 +73,19 @@ import type { Recommendation, RecommendationAction, RecommendationLifecycleComma
 import { loadMainRecommendation, RecommendationRequestError, transitionRecommendation } from '@/lib/recommendations/client';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
-type Notice = 'idle' | 'saved' | 'mapSaved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
+type Notice = 'documentSaved' | 'idle' | 'saved' | 'mapSaved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
 type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 type ReminderTimeMode = 'exact' | 'flexible' | 'approximate';
-type ReminderView = { id: string; petId: string; type: string; title: string; dueAt: string; recurrence?: ReminderRecurrence; status: string; snoozedUntil?: string; completedAt?: string; nextDueAt?: string };
+type ReminderView = ReminderRecord;
 type ReminderHistoryItem = { id: string; eventType?: string; payload?: { dueAt?: string; completedAt?: string; nextDueAt?: string | null }; createdAt: string };
-type WishlistView = { id: string; petId: string; title: string; category: string; reason?: string; url?: string; priority: string; status: string; plannedFor?: string; reminderId?: string; createdAt?: string; created_at?: string };
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; visibility?: 'private' | 'shared' | 'public'; share_token?: string | null; created_at?: string };
 type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; avatar_source?: 'none' | 'uploaded' | 'generated'; active_avatar_asset_id?: string | null; photo_urls?: string[] };
 type AuthSession = { access_token: string; user: { email?: string } };
-type ObservationView = { id: string; petId?: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
+type ObservationView = { id: string; type?: string; value?: string; petId?: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
 type ObservationDraft = { mood: string; appetite: string; stool: string; energy: string; note?: string };
 type DocumentView = { id: string; petId: string; kind: string; title: string; clinic?: string | null; documentDate?: string | null; originalName: string; mimeType: string; sizeBytes: number; createdAt: string };
 type SocialInviteView = { token: string; scenario: SocialScenario; petName: string | null; expiresAt: string };
-type Tab = 'today' | 'calendar' | 'habits' | 'health' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
+type Tab = 'today' | 'all' | 'diary' | 'calendar' | 'habits' | 'health' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
 type DrawMode = 'none' | 'point' | 'route';
 type MapSaveMode = 'private' | 'shared';
 type ViralCardFormat = 'story' | 'square' | 'poster';
@@ -255,12 +256,12 @@ function AssistantActionButtons({ actions, statuses, onApply, onOpen }: {
         if (status.state === 'success') return <div className="assistant-action-result" key={key} role="status">
           <span>{status.message || 'Действие сохранено'}</span>
           <div className="assistant-action-links">
-            <button type="button" onClick={() => onOpen(action)}>{action.intent === 'add_wishlist' ? 'Открыть вещи' : 'Открыть'}</button>
-            {action.intent === 'add_wishlist' && status.plannedFor && <button type="button" onClick={() => onOpen(action, 'calendar')}>Открыть план</button>}
+            <button className="secondary" type="button" onClick={() => onOpen(action)}>{action.intent === 'add_wishlist' ? 'Открыть вещи' : 'Открыть'}</button>
+            {action.intent === 'add_wishlist' && status.plannedFor && <button className="secondary" type="button" onClick={() => onOpen(action, 'calendar')}>Открыть план</button>}
           </div>
         </div>;
-        if (status.state === 'error') return <div key={key} role="alert"><span>{status.message || 'Не удалось выполнить действие.'}</span><button type="button" onClick={() => onApply(action, key)}>Повторить</button></div>;
-        return <button key={key} type="button" disabled={status.state === 'loading'} aria-busy={status.state === 'loading'} onClick={() => onApply(action, key)}>
+        if (status.state === 'error') return <div key={key} role="alert"><span>{status.message || 'Не удалось выполнить действие.'}</span><button className="secondary" type="button" onClick={() => onApply(action, key)}>Повторить</button></div>;
+        return <button className="primary" key={key} type="button" disabled={status.state === 'loading'} aria-busy={status.state === 'loading'} onClick={() => onApply(action, key)}>
           {status.state === 'loading' ? `${action.humanLabel}…` : action.humanLabel}
         </button>;
       })}
@@ -380,32 +381,23 @@ function observationSummary(item: ObservationView) {
 }
 
 function reminderDueAt(date: string, time: string, mode: ReminderTimeMode) {
-  const fallbackTime = mode === 'flexible' ? '12:00' : mode === 'approximate' ? '10:00' : '09:00';
-  const value = `${date || dateInputValue(new Date())}T${mode === 'exact' ? (time || fallbackTime) : fallbackTime}:00`;
+  const fallbackTime = mode === 'flexible' ? '12:00' : '09:00';
+  const value = `${date || dateInputValue(new Date())}T${mode !== 'flexible' ? (time || fallbackTime) : fallbackTime}:00`;
   const parsed = new Date(value);
-  return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
+  return Number.isFinite(parsed.getTime()) && dateInputValue(parsed)===date ? parsed.toISOString() : '';
 }
 
 function reminderRecurrenceLabel(recurrence?: ReminderRecurrence) {
   return reminderRecurrenceOptions.find((option) => option.value === recurrence)?.label ?? 'Не повторяется';
 }
 
-function reminderTimeLabel(reminder: ReminderView) {
-  const date = new Date(reminder.snoozedUntil || reminder.dueAt);
-  if (!Number.isFinite(date.getTime())) return 'Дата не указана';
-  const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  const timing = time === '12:00' ? 'в течение дня' : time === '10:00' ? 'примерно' : `в ${time}`;
-  return `${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'short' })}, ${timing}`;
-}
+function reminderTimeLabel(reminder:ReminderView){return reminderTiming(reminder);}
 
 function reminderDateInputValue(reminder: ReminderView) {
   const date = new Date(reminder.snoozedUntil || reminder.dueAt);
   return Number.isFinite(date.getTime()) ? dateInputValue(date) : dateInputValue(new Date());
 }
 
-function calendarStamp(date: Date) {
-  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
-}
 
 function dbToProfile(payload: any, preferredPetId?: string): Partial<DogProfile> | null {
   const selectedDemoPet = payload?.mode === 'demo' && preferredPetId
@@ -424,6 +416,7 @@ function dbToProfile(payload: any, preferredPetId?: string): Partial<DogProfile>
       : avatarSource === 'uploaded' ? pet.avatar_url || pet.avatarUrl || '' : '';
   return {
     backendPetId: pet.id,
+    profileVersion: pet.profile_version ?? pet.profileVersion,
     avatarImageUrl,
     avatarSource,
     photoUrls: avatarSource === 'none' ? [] : Array.isArray(pet.photo_urls || pet.photoUrls) ? (pet.photo_urls || pet.photoUrls).filter(Boolean) : pet.avatar_url || pet.avatarUrl ? [pet.avatar_url || pet.avatarUrl] : [],
@@ -508,19 +501,43 @@ export default function Home() {
   const [avatarComposerOpen, setAvatarComposerOpen] = useState(false);
   const [avatarCapabilities, setAvatarCapabilities] = useState({ identityEnabled: false, uploadsEnabled: false, generationEnabled: false, providerReady: false });
   const [demoMode, setDemoMode] = useState(false);
-  const [notice, setNotice] = useState<Notice>('idle');
-  const [error, setError] = useState('');
   const [tab, setTabState] = useState<Tab>('today');
-  const [journeyDetail, setJourneyDetail] = useState<PrimaryRoute | null>(null);
+  const [noticeState, setNoticeState] = useState<{ tab: Tab; value: Notice }>({ tab: 'today', value: 'idle' });
+  const setNotice = useCallback((value: Notice) => setNoticeState({ tab, value }), [tab]);
+  const notice: Notice = noticeState.tab === tab ? noticeState.value : 'idle';
+  const [errorState, setErrorState] = useState<{ tab: Tab; message: string }>({ tab: 'today', message: '' });
+  const setError = useCallback((message: string) => setErrorState({ tab, message }), [tab]);
+  const [storageError, setStorageError] = useState('');
+  const error = (errorState.tab === tab ? errorState.message : '') || storageError;
+  const [healthFactsDraft, setHealthFactsDraft] = useState<DogProfile | null>(null);
+  const [recordDetail, setRecordDetail] = useState<RecordDetail | null>(null);
+  const [exactDocumentId, setExactDocumentId] = useState<string | null>(null);
+  const exactMemoryDrafts = useRef(new Map<string,string>());
+  const [exactAgentObservationId, setExactAgentObservationId] = useState<string | null>(null);
+  const [exactRecordId, setExactRecordId] = useState<string | null>(null);
+  const [exactProfileView, setExactProfileView] = useState<ExactProfileView>('profile');
+  const [exactProfileDraft, setExactProfileDraft] = useState<DogProfile | null>(null);
+  const [mapExactNavigation, setMapExactNavigation] = useState(0);
+  const [mapExactScreen, setMapExactScreen] = useState<'map' | 'library'>('map');
+  const [profileSurface, setProfileSurface] = useState<ProfileSurface>('overview');
+  type FlowOrigin = { from: Tab; to: Tab; detail: Tab | null; shellScroll: number; windowScroll: number; focusText: string };
+  const secondaryOrigins = useRef<FlowOrigin[]>([]);
+  const pendingViewRestore = useRef<FlowOrigin | null>(null);
+  const [journeyDetail, setJourneyDetail] = useState<Tab | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [reminders, setReminders] = useState<ReminderView[]>([]);
   const [wishlist, setWishlist] = useState<WishlistView[]>([]);
   const [zones, setZones] = useState<ZoneView[]>([]);
+  type WishlistOperation = { petId: string; scope: string; token: string };
+  const wishlistOperation = useRef<WishlistOperation | null>(null);
+  const [wishlistWriting, setWishlistWriting] = useState<WishlistOperation | null>(null);
+  const [wishlistIssue, setWishlistIssue] = useState<{petId: string; scope: string; message: string} | null>(null);
   const [removedWishlistItem, setRemovedWishlistItem] = useState<WishlistView | null>(null);
   const [removedZone, setRemovedZone] = useState<ZoneView | null>(null);
   const [editingWishlistId, setEditingWishlistId] = useState<string | null>(null);
+  const wishlistEditDrafts = useRef(new Map<string,{title:string;reason:string}>());
   const [wishlistTitleDraft, setWishlistTitleDraft] = useState('');
   const [wishlistReasonDraft, setWishlistReasonDraft] = useState('');
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
@@ -533,6 +550,10 @@ export default function Home() {
   const [documentUploadOpen, setDocumentUploadOpen] = useState(false);
   const [documentUploading, setDocumentUploading] = useState(false);
   const [documentFileName, setDocumentFileName] = useState('');
+  const [documentError, setDocumentError] = useState('');
+  const documentSaveAttempt = useRef<{ signature: string; key: string } | null>(null);
+  const documentActivePet = useRef(profile.backendPetId);
+  useEffect(() => { documentActivePet.current = profile.backendPetId; setDocumentError(''); setDocumentFileName(''); documentSaveAttempt.current = null; }, [profile.backendPetId]);
   const [documentBusyId, setDocumentBusyId] = useState<string | null>(null);
   const documentUploadTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [habits, setHabits] = useState<HabitView[]>([]);
@@ -560,7 +581,17 @@ export default function Home() {
   const [socialInviteState, setSocialInviteState] = useState<'idle' | 'loading' | 'ready' | 'gone' | 'error'>('idle');
   const [observationDraft, setObservationDraft] = useState<ObservationDraft>(defaultObservationDraft);
   const [observationSaving, setObservationSaving] = useState(false);
+  const [observationCaptureOpen, setObservationCaptureOpen] = useState(false);
+  const [observationIssue, setObservationIssue] = useState<{scope:string;message:string}|null>(null);
+  const [healthFactsError, setHealthFactsError] = useState('');
+  const [healthNextCursor, setHealthNextCursor] = useState<string|null>(null);
+  const [healthLoading, setHealthLoading] = useState(false);
+  const healthReadVersion = useRef(0);
+  const healthLoadedPet = useRef<string|null>(null);
+  const observationWrite = useRef<symbol|null>(null);
   const [editingObservationId, setEditingObservationId] = useState<string | null>(null);
+  const agentObservationEdits = useRef(new Map<string,ReviewedObservation>());
+  const observationEditDrafts = useRef(new Map<string, ObservationEditorDraft>());
   const [observationEditDraft, setObservationEditDraft] = useState<ObservationEditorDraft>(defaultObservationDraft);
   const [observationMutationBusy, setObservationMutationBusy] = useState(false);
   const [recentlyDeletedObservation, setRecentlyDeletedObservation] = useState<ObservationView | null>(null);
@@ -572,12 +603,23 @@ export default function Home() {
   const [newReminderRecurrence, setNewReminderRecurrence] = useState<ReminderRecurrence>('none');
   const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
   const [reminderMutationBusy, setReminderMutationBusy] = useState<string | null>(null);
+  const reminderOperation=useRef<{petId:string;scope:string;token:string}|null>(null);
+  const reminderDrafts=useRef(new Map<string,ReminderDraft>());
+  const [reminderIssue,setReminderIssue]=useState<{petId:string;scope:string;message:string}|null>(null);
+  const [careCalendarOpen,setCareCalendarOpen]=useState(false);
+  const [careFilterDate,setCareFilterDate]=useState(false);
+  const guestCareUndo = useRef(new Map<string, {before: ReminderView; after: ReminderView; wishlist: WishlistView[]}>());
   const [reminderHistory, setReminderHistory] = useState<Record<string, ReminderHistoryItem[]>>({});
   const [calendarCursor, setCalendarCursor] = useState(() => new Date());
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => dateInputValue(new Date()));
   const calendarAutoSelectedPetRef = useRef<string | null>(null);
   const [careView, setCareView] = useState<'active' | 'history'>('active');
   const [mapVisited, setMapVisited] = useState(false);
+  const [agentSavedRouteSelection,setAgentSavedRouteSelection]=useState<{token:string;petId:string;route:OwnerRouteView}|null>(null);
+  const agentMapRead=useRef<AbortController|null>(null);
+  useEffect(()=>()=>{agentMapRead.current?.abort();},[profile.backendPetId,assistantOpen]);
+  const [agentWalkSelection,setAgentWalkSelection]=useState<{token:string;petId:string;walk:AgentWalk}|null>(null);
+  const [agentMapSelection,setAgentMapSelection]=useState<{token:string;petId:string;place:MapSearchPlace;places:MapSearchPlace[]}|null>(null);
   const [mapActivity, setMapActivity] = useState<'recording'|'paused'|null>(null);
   useEffect(() => {if (tab === 'map') setMapVisited(true);}, [tab]);
   const [routeEditSeed,setRouteEditSeed] = useState<{token:number;points:number[][];planning?:RoutePlanning;review?:boolean;pathGaps?:number[];routeSource?:'recorded'|'planned';durationSeconds?:number;startedAt?:string}|null>(null);
@@ -602,8 +644,8 @@ export default function Home() {
   const [pendingRouteDeletion, setPendingRouteDeletion] = useState<OwnerRouteView | null>(null);
   const [newWishTitle, setNewWishTitle] = useState('');
   const [newWishReason, setNewWishReason] = useState('');
-  const [newWishCategory, setNewWishCategory] = useState('gear');
-  const [newWishNeedsReminder, setNewWishNeedsReminder] = useState(true);
+  const [newWishCategory, setNewWishCategory] = useState('other');
+  const [newWishNeedsReminder, setNewWishNeedsReminder] = useState(false);
   const [newWishPlannedFor, setNewWishPlannedFor] = useState(() => dateAfterDays(1));
   const [thingCaptureOpen, setThingCaptureOpen] = useState(false);
   const [mainRecommendation, setMainRecommendation] = useState<Recommendation | null>(null);
@@ -620,11 +662,19 @@ export default function Home() {
   const [publicCardLinkBusy, setPublicCardLinkBusy] = useState(false);
   const [publicCardRevokeConfirm, setPublicCardRevokeConfirm] = useState(false);
   const [assistantQuestion, setAssistantQuestion] = useState('');
+  const [exactVoiceOpen,setExactVoiceOpen]=useState(false);
+  const [exactVoiceDraft,setExactVoiceDraft]=useState('');
+  const [assistantError,setAssistantError]=useState('');
+  const [assistantReturnFocus,setAssistantReturnFocus]=useState<HTMLElement|null>(null);
   const [assistantAnswer, setAssistantAnswer] = useState('');
   const [assistantActions, setAssistantActions] = useState<ActionSuggestion[]>([]);
   const [assistantActionStatuses, setAssistantActionStatuses] = useState<Record<string, AssistantActionStatus>>({});
   const [assistantSuggestedQuestions, setAssistantSuggestedQuestions] = useState<string[]>([]);
   const [assistantThreadId, setAssistantThreadId] = useState('');
+  const [agentRunId,setAgentRunId]=useState('');
+  const agentDelivered=useRef('');
+  const agentRequestEpoch=useRef(0);
+  const agentRequest=useRef<{pet:string;question:string;id:string}|null>(null);
   const [assistantDiagnostic, setAssistantDiagnostic] = useState<{ provider?: string; mode?: string }>({});
   const [assistantMessages, setAssistantMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [breedSearch, setBreedSearch] = useState('');
@@ -644,15 +694,28 @@ export default function Home() {
 
   useEffect(() => {
     setAssistantThreadId('');
+    agentRequestEpoch.current+=1;
+    setAgentRunId('');
+    agentDelivered.current='';
+    agentRequest.current=null;
+    setAssistantLoading(false);
     setAssistantMessages([]);
     setAssistantAnswer('');
     setAssistantActions([]);
     setAssistantActionStatuses({});
     setAssistantSuggestedQuestions([]);
     setAssistantDiagnostic({});
-  }, [profile.backendPetId]);
+  }, [profile.backendPetId,session?.access_token,telegramSession.ownerId]);
   const [billing, setBilling] = useState<BillingView | null>(null);
   const [careFeedback, setCareFeedback] = useState<CareFeedback>(null);
+  const reminderHistoryLoading=useRef(new Set<string>());
+  const [reminderHistoryErrors,setReminderHistoryErrors]=useState<Record<string,string>>({});
+  useEffect(()=>{
+    reminderOperation.current=null;reminderDrafts.current.clear();guestCareUndo.current.clear();reminderHistoryLoading.current.clear();
+    setReminderMutationBusy(null);setReminderIssue(null);setReminderHistory({});setReminderHistoryErrors({});setCareFeedback(null);setPendingCareDeletion(null);setEditingReminderId(null);
+    setNewReminderTitle('');setNewReminderDueDate(dateInputValue(new Date()));setNewReminderDueTime('09:00');setNewReminderTimeMode('flexible');setNewReminderRecurrence('none');setNewReminderType('custom');
+  },[profile.backendPetId]);
+
   const [pendingCareDeletion, setPendingCareDeletion] = useState<PendingCareDeletion>(null);
   const [careDeletionBusy, setCareDeletionBusy] = useState(false);
   const guestPetIdRef = useRef<string | null>(null);
@@ -722,6 +785,9 @@ export default function Home() {
 
   function setTab(nextTab: Tab) {
     if (nextTab === tab) return;
+    if (['calendar', 'habits', 'health', 'card', 'diary', 'things'].includes(nextTab)) {
+      secondaryOrigins.current.push({ from: tab, to: nextTab, detail: journeyDetail, shellScroll: phoneShellRef.current?.scrollTop ?? 0, windowScroll: window.scrollY, focusText: document.activeElement instanceof HTMLButtonElement ? document.activeElement.textContent?.trim() ?? '' : '' });
+    } else secondaryOrigins.current = [];
     setTabState(nextTab);
     if (typeof window !== 'undefined') {
       const nextUrl = new URL(window.location.href);
@@ -730,15 +796,34 @@ export default function Home() {
     }
   }
 
-  function closeSecondaryFlow(parent: 'today' | 'profile') {
-    setTabState(parent);
+  function closeSecondaryFlow(parent: 'today' | 'profile' | 'all') {
+    const origin = secondaryOrigins.current.at(-1);
+    const valid = origin?.to === tab ? secondaryOrigins.current.pop() : undefined;
+    const target = valid?.from ?? parent;
+    pendingViewRestore.current = valid ?? null;
+    setTabState(target);
+    setJourneyDetail(valid?.detail ?? null);
     const nextUrl = new URL(window.location.href);
-    nextUrl.hash = parent;
-    window.history.replaceState({ tab: parent }, '', nextUrl);
+    nextUrl.hash = target;
+    window.history.replaceState({ tab: target, detail: valid?.detail }, '', nextUrl);
   }
 
-  function openAssistantSheet() {
-    setError('');
+  function openPrivateRecord(kind: 'observation' | 'reminder', id: string, trigger: HTMLButtonElement) {
+            if (kind === 'observation') {
+              const item = observations.find(entry => entry.id === id);
+              if (!item) return;
+              setRecordDetail({ id, trigger, title: `Запись о ${petNameGent}`, date: item.createdAt, text: item.note || item.value || '',
+                facts: [item.mood && `Состояние: ${item.mood}`, item.appetite && `Аппетит: ${item.appetite}`, item.stool && `Пищеварение: ${item.stool}`, item.energy && `Энергия: ${item.energy}`].filter((value): value is string => Boolean(value)) });
+            } else {
+              const item = reminders.find(entry => entry.id === id);
+              if (!item) return;
+              setRecordDetail({ id, trigger, title: item.title, date: item.completedAt || item.dueAt, text: item.completedAt || item.status === 'done' || item.status === 'completed' ? 'Дело выполнено' : 'Запланировано',
+                facts: item.nextDueAt ? [`Следующий срок: ${new Date(item.nextDueAt).toLocaleString('ru-RU')}`] : [] });
+            }
+          }
+
+  function openAssistantSheet(event?:{currentTarget:EventTarget|null}) {
+    setAssistantReturnFocus(event?.currentTarget instanceof HTMLElement?event.currentTarget:document.activeElement as HTMLElement|null);
     setAssistantOpen(true);
     const nextUrl = new URL(window.location.href);
     window.history.pushState({ tab, overlay: 'assistant' }, '', nextUrl);
@@ -756,7 +841,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    const knownTabs: Tab[] = ['today', 'calendar', 'habits', 'health', 'nearby', 'map', 'card', 'profile', 'things'];
+    const knownTabs: Tab[] = ['today', 'all', 'diary', 'calendar', 'habits', 'health', 'nearby', 'map', 'card', 'profile', 'things'];
     const syncTabFromLocation = () => {
       const requested = window.location.hash.replace(/^#/, '') as Tab;
       setTabState(knownTabs.includes(requested) ? requested : 'today');
@@ -772,14 +857,21 @@ export default function Home() {
   }, [assistantOpen, journeyDetail]);
 
   useEffect(() => {
-    resetViewScroll();
+    const origin = pendingViewRestore.current;
+    pendingViewRestore.current = null;
+    if (!origin) { resetViewScroll(); return; }
+    window.requestAnimationFrame(() => {
+      phoneShellRef.current?.scrollTo({ top: origin.shellScroll, behavior: 'auto' });
+      window.scrollTo({ top: origin.windowScroll, behavior: 'auto' });
+      if (origin.focusText) [...document.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === origin.focusText)?.focus({ preventScroll: true });
+    });
   }, [tab, journeyDetail]);
 
   useEffect(() => {
     if (notice === 'idle') return;
     const timer = window.setTimeout(() => setNotice('idle'), 1600);
     return () => window.clearTimeout(timer);
-  }, [notice]);
+  }, [notice, setNotice]);
 
   useEffect(() => {
     if (tab !== 'nearby') return;
@@ -1467,6 +1559,10 @@ export default function Home() {
       providerReady: payload?.avatarCapabilities?.providerReady === true,
     });
     const dbProfile = dbToProfile(payload, petId);
+    if (dbProfile?.backendPetId && dbProfile.profileVersion !== undefined) {
+      profileBaselines.current.set(`${dbProfile.backendPetId}:${dbProfile.profileVersion}`, dbProfile);
+      if (profileBaselines.current.size > 20) profileBaselines.current.delete(profileBaselines.current.keys().next().value!);
+    }
     const selectedPetId = String(petId || payload.activePetId || dbProfile?.backendPetId || payload.pet?.id || '');
     const belongsToSelectedPet = (item: any) => {
       const itemPetId = String(item?.petId || item?.pet_id || '');
@@ -1505,9 +1601,10 @@ export default function Home() {
       setWishlist((payload.wishlist ?? []).filter(belongsToSelectedPet));
       setZones((payload.zones ?? []).filter(belongsToSelectedPet));
       setOwnerRoutes(normalizeOwnerRoutes((payload.routes ?? []).filter(belongsToSelectedPet)));
-      if (Array.isArray(payload.observations)) {
+      // Bootstrap is a profile snapshot, not a replacement for an already paged history.
+      if (Array.isArray(payload.observations) && healthLoadedPet.current !== selectedPetId) {
         const bootObservations = payload.observations.filter(belongsToSelectedPet).map(normalizeObservation).filter(Boolean) as ObservationView[];
-        setObservations(bootObservations.slice(0, 12));
+        setObservations(bootObservations);
       }
       setDocuments(Array.isArray(payload.documents) ? payload.documents.filter(belongsToSelectedPet) : []);
     } else if (!preserveLocalGuest && payload.empty && payload.user?.id) {
@@ -1546,7 +1643,7 @@ export default function Home() {
     setHeroNameDraft(hydratedLocal.dogName || '');
     try {
       const savedObservations = JSON.parse(window.localStorage.getItem(observationsStorageKey(hydratedLocal.backendPetId)) || '[]');
-      if (Array.isArray(savedObservations)) setObservations(savedObservations.map(normalizeObservation).filter(Boolean).slice(0, 12) as ObservationView[]);
+      if (Array.isArray(savedObservations)) setObservations(savedObservations.map(normalizeObservation).filter(Boolean) as ObservationView[]);
     } catch {}
     observationsLoadedRef.current = true;
     const supabase = getSupabaseBrowser();
@@ -1626,7 +1723,7 @@ export default function Home() {
   useEffect(() => {
     if (!profileHydrated) return;
     const result = saveProfile(profile);
-    if (!result.ok) setError(result.message);
+    setStorageError(result.ok ? '' : result.message);
   }, [profile, profileHydrated]);
   useEffect(() => {
     const explicitGuestMode = !session?.access_token && (telegramSession.mode === 'browser' || telegramSession.mode === 'error');
@@ -1639,7 +1736,7 @@ export default function Home() {
         routes: ownerRoutes,
       });
     } catch {
-      setError('Не удалось сохранить изменения на устройстве. Освободи место в браузере и попробуй снова.');
+      setStorageError('Не удалось сохранить изменения на устройстве. Освободи место в браузере и попробуй снова.');
     }
   }, [ownerRoutes, profile.backendPetId, profileHydrated, reminders, session?.access_token, telegramSession.mode, wishlist, zones]);
   useEffect(() => {
@@ -1670,15 +1767,12 @@ export default function Home() {
   const breedLabel = useMemo(() => getBreedLabel(profile), [profile]);
   const avatarReady = avatarState === 'ready';
   const hasDog = Boolean(profile.dogName.trim());
-  const activePrimaryRoute: PrimaryRoute = tab === 'calendar' || tab === 'habits' || tab === 'health'
-    ? 'today'
-    : tab === 'card'
-      ? 'profile'
-      : tab as PrimaryRoute;
-  const isJourneyRoute = (['today', 'profile', 'map', 'nearby', 'things'] as const).includes(tab as PrimaryRoute)
-    && journeyDetail !== tab;
+  const activePrimaryRoute: PrimaryRoute = ['calendar', 'habits', 'health', 'card', 'diary', 'things'].includes(tab) ? 'all' : tab as PrimaryRoute;
+  const isJourneyRoute = ['today', 'all', 'diary', 'profile', 'map', 'nearby', 'things'].includes(tab) && journeyDetail !== tab;
   const activeReminders = useMemo(() => reminders.filter((reminder) => reminder.status !== 'done'), [reminders]);
   const doneReminders = useMemo(() => reminders.filter((reminder) => reminder.status === 'done'), [reminders]);
+  const wishlistBusy = wishlistWriting?.petId === (profile.backendPetId || activePetId || 'guest');
+  const wishlistError = wishlistIssue?.petId === (profile.backendPetId || activePetId || 'guest') ? wishlistIssue : null;
   const wantedWishlist = useMemo(() => wishlist.filter((item) => item.status !== 'bought' && item.status !== 'not_suitable'), [wishlist]);
   const boughtWishlist = useMemo(() => wishlist.filter((item) => item.status === 'bought'), [wishlist]);
   const profileChecklist = useMemo(() => [
@@ -1897,6 +1991,19 @@ export default function Home() {
     : billing?.upgrade?.available ? 'Оплата готова через Telegram.' : 'Оплата пока недоступна.';
 
   function resetPetScopedDrafts() {
+    setExactAgentObservationId(null); setExactRecordId(null);setExactVoiceOpen(false);setExactVoiceDraft(''); setExactDocumentId(null); exactMemoryDrafts.current.clear();
+    setExactProfileDraft(null); setExactProfileView('profile'); setMapExactScreen('map');
+    healthReadVersion.current++; healthLoadedPet.current=null; observationWrite.current=null;
+    setHealthNextCursor(null); setHealthLoading(false); setObservationIssue(null); setHealthFactsError('');
+    setObservationSaving(false); setObservationMutationBusy(false); setObservationCaptureOpen(false);
+    wishlistOperation.current = null; wishlistEditDrafts.current.clear(); setWishlistWriting(null); setWishlistIssue(null); setEditingWishlistId(null); setRemovedWishlistItem(null);
+    setRecordDetail(null);
+    setProfileSurface('overview');
+    secondaryOrigins.current = [];
+    setHealthFactsDraft(null);
+    observationEditDrafts.current.clear();
+    agentObservationEdits.current.clear();
+    setAgentMapSelection(null);setAgentWalkSelection(null);setAgentSavedRouteSelection(null);
     setJourneyDetail(null);
     setTabState('today');
     if (typeof window !== 'undefined') {
@@ -1905,7 +2012,7 @@ export default function Home() {
       window.history.replaceState({ tab: 'today' }, '', nextUrl);
     }
     setAssistantOpen(false);
-    setAssistantQuestion('');
+    setAssistantQuestion('');setAssistantError('');
     setAssistantAnswer('');
     setAssistantActions([]);
     setAssistantActionStatuses({});
@@ -1921,7 +2028,7 @@ export default function Home() {
     setRoutePoints([]);
     setMapRouteMeta(null);
     setNewWishTitle('');
-    setNewWishReason('');
+    setNewWishReason(''); setNewWishCategory('other'); setNewWishNeedsReminder(false); setNewWishPlannedFor(dateAfterDays(1));
     setThingCaptureOpen(false);
     setSocialProfile(null);
     setSocialCandidates({ nearby: [], city: [] });
@@ -2028,14 +2135,19 @@ export default function Home() {
     const date = new Date(createdAt);
     const type = String(raw.type || '');
     const value = String(raw.value || '');
+    const metric=(key:string)=> {
+      const stored=typeof raw[key]==='string'?raw[key]:typeof metadata[key]==='string'?metadata[key]:type===key?value:'';
+      return stored.trim()||undefined;
+    };
     return {
       id: id || guestId('observation'),
       petId: raw.petId || raw.pet_id ? String(raw.petId || raw.pet_id) : undefined,
-      mood: String(raw.mood || metadata.mood || (type === 'mood' ? value : '')).trim() || undefined,
-      appetite: String(raw.appetite || metadata.appetite || (type === 'appetite' ? value : '')).trim() || undefined,
-      stool: String(raw.stool || metadata.stool || (type === 'stool' ? value : '')).trim() || undefined,
-      energy: String(raw.energy || metadata.energy || (type === 'energy' ? value : '')).trim() || undefined,
-      note: note || undefined,
+      mood: metric('mood'),
+      appetite: metric('appetite'),
+      stool: metric('stool'),
+      energy: metric('energy'),
+      type, value,
+      note: note || (type === 'note' ? value : '') || undefined,
       createdAt: Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString(),
       syncStatus: raw.syncStatus === 'saved' ? 'saved' : 'local',
     };
@@ -2043,23 +2155,35 @@ export default function Home() {
 
   function updateObservationDraft(patch: Partial<ObservationDraft>) {
     setObservationDraft((current) => ({ ...current, ...patch }));
-    setError('');
+    if (observationIssue?.scope === 'create') setObservationIssue(null);
   }
 
-  async function loadObservations() {
-    const params = new URLSearchParams({ limit: '12' });
-    if (profile.backendPetId) params.set('petId', profile.backendPetId);
-    const response = await fetch(`/api/observations?${params.toString()}`, { headers: authHeaders() });
-    if (!response.ok) return;
-    const payload = await response.json().catch(() => ({}));
-    const source = Array.isArray(payload?.observations) ? payload.observations : Array.isArray(payload) ? payload : [];
-    const remote = source.map(normalizeObservation).filter(Boolean) as ObservationView[];
-    if (!remote.length) return;
-    setObservations((current) => {
-      const byId = new Map<string, ObservationView>();
-      [...remote.map((item) => ({ ...item, syncStatus: 'saved' as const })), ...current].forEach((item) => byId.set(item.id, item));
-      return Array.from(byId.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 12);
-    });
+  async function loadObservations() { await loadHealthTimeline(); }
+
+  async function loadHealthTimeline(before?: string, signal?: AbortSignal) {
+    const petId=profile.backendPetId;
+    if (!petId || isGuestMode() || observationWrite.current) return;
+    const version=++healthReadVersion.current;
+    const current=()=>version===healthReadVersion.current && documentActivePet.current===petId && !signal?.aborted;
+    setHealthLoading(true);
+    setModuleErrors(value=>({...value,health:undefined}));
+    try {
+      const params=new URLSearchParams({petId}); if(before)params.set('before',before);
+      const response=await fetch(`/api/health?${params}`,{headers:authHeaders(),credentials:'include',signal});
+      const payload=await response.json();
+      if(!current())return;
+      if(!response.ok || !Array.isArray(payload.entries))throw new Error('HEALTH_READ_FAILED');
+      const entries=payload.entries.map((entry:unknown)=>observationReceipt(entry,petId)) as ObservationView[];
+      setObservations(previous=>{
+        // A fresh read starts a new cursor chain; only the actively edited draft stays visible.
+        const retained=before?previous:previous.filter(item=>item.id===editingObservationId);
+        return [...new Map([...retained,...entries.map(item=>({...item,syncStatus:'saved' as const}))].map(item=>[item.id,item])).values()].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
+      });
+      healthLoadedPet.current=petId;
+      setHealthNextCursor(payload.hasMore && typeof payload.nextCursor==='string'?payload.nextCursor:null);
+    } catch {
+      if(current())setModuleErrors(value=>({...value,health:'Не удалось загрузить записи. Уже открытые остались здесь.'}));
+    } finally {if(current())setHealthLoading(false);}
   }
 
   async function loadRealModules(petId = profile.backendPetId, signal?: AbortSignal) {
@@ -2070,33 +2194,25 @@ export default function Home() {
       return;
     }
     setHabitLoading(true);
-    setModuleErrors({});
+    setModuleErrors(value=>({...value,habits:undefined}));
     const request = { headers: authHeaders(), credentials: 'include' as const, signal };
     try {
-      const [habitResponse, healthResponse, summaryResponse] = await Promise.all([
+      const [habitResponse, summaryResponse] = await Promise.all([
         fetch(`/api/habits?petId=${encodeURIComponent(petId)}`, request),
-        fetch(`/api/health?petId=${encodeURIComponent(petId)}`, request),
         fetch(`/api/pets/${encodeURIComponent(petId)}/summary`, request),
       ]);
-      const [habitPayload, healthPayload, summaryPayload] = await Promise.all([
+      const [habitPayload, summaryPayload] = await Promise.all([
         habitResponse.json().catch(() => ({})),
-        healthResponse.json().catch(() => ({})),
         summaryResponse.json().catch(() => ({})),
       ]);
+      if(signal?.aborted || documentActivePet.current!==petId)return;
       if (habitResponse.ok) setHabits(Array.isArray(habitPayload.habits) ? habitPayload.habits : []);
-      if (healthResponse.ok && Array.isArray(healthPayload.entries)) {
-        const entries = healthPayload.entries.map(normalizeObservation).filter(Boolean) as ObservationView[];
-        setObservations(entries.slice(0, 50));
-      }
       if (summaryResponse.ok && summaryPayload.summary) setDogSummary(summaryPayload.summary);
-      setModuleErrors({
-        habits: habitResponse.ok ? undefined : 'Проверь соединение и попробуй снова.',
-        health: healthResponse.ok ? undefined : 'Проверь соединение и попробуй снова.',
-      });
+      setModuleErrors(value=>({...value,habits:habitResponse.ok?undefined:'Проверь соединение и попробуй снова.'}));
       if (!summaryResponse.ok) setDogSummary(null);
     } catch (loadError) {
-      if (!(loadError instanceof DOMException && loadError.name === 'AbortError')) {
-        setModuleErrors({ habits: 'Проверь соединение и попробуй снова.', health: 'Проверь соединение и попробуй снова.' });
+      if (!signal?.aborted && documentActivePet.current===petId && !(loadError instanceof DOMException && loadError.name === 'AbortError')) {
+        setModuleErrors(value=>({...value,habits:'Проверь соединение и попробуй снова.'}));
       }
     } finally {
       if (!signal?.aborted) setHabitLoading(false);
@@ -2107,6 +2223,7 @@ export default function Home() {
     if (!profile.backendPetId || isGuestMode()) return;
     const controller = new AbortController();
     void loadRealModules(profile.backendPetId, controller.signal);
+    void loadHealthTimeline(undefined, controller.signal);
     return () => controller.abort();
   }, [profile.backendPetId, session?.access_token, telegramSession.ownerId]);
 
@@ -2218,93 +2335,75 @@ export default function Home() {
     }
   }
 
-  async function loadReminderHistory(reminderId: string) {
-    if (isGuestMode()) return;
-    const response = await fetch(`/api/reminders/${reminderId}/history`, { headers: authHeaders() });
-    if (!response.ok) return;
-    const payload = await response.json().catch(() => ({}));
-    const history = Array.isArray(payload.history) ? payload.history.map((item: any) => ({
-      id: String(item.id),
-      eventType: String(item.event_type || ''),
-      payload: item.payload && typeof item.payload === 'object' ? item.payload : {},
-      createdAt: String(item.created_at || new Date().toISOString()),
-    })) : [];
-    setReminderHistory((current) => ({ ...current, [reminderId]: history }));
+  async function loadReminderHistory(reminderId:string){
+    if(isGuestMode()||reminderHistoryLoading.current.has(reminderId))return;
+    const petId=profile.backendPetId;reminderHistoryLoading.current.add(reminderId);
+    try{
+      const response=await fetch(`/api/reminders/${reminderId}/history`,{headers:authHeaders()});
+      const payload=await response.json().catch(()=>({}));if(documentActivePet.current!==petId)return;
+      if(!response.ok||!Array.isArray(payload.history))throw new Error('HISTORY_NOT_CONFIRMED');
+      const history:ReminderHistoryItem[]=payload.history.map((item:Record<string,unknown>)=>{
+        if(typeof item.id!=='string'||typeof item.created_at!=='string'||!Number.isFinite(Date.parse(item.created_at)))throw new Error('INVALID_HISTORY');
+        return {id:item.id,eventType:String(item.event_type||''),payload:item.payload&&typeof item.payload==='object'?item.payload:{},createdAt:item.created_at};
+      });
+      setReminderHistory(current=>({...current,[reminderId]:history}));setReminderHistoryErrors(current=>{const next={...current};delete next[reminderId];return next;});
+    }catch{if(documentActivePet.current===petId)setReminderHistoryErrors(current=>({...current,[reminderId]:'Не удалось загрузить историю этого дела.'}));}
+    finally{if(documentActivePet.current===petId)reminderHistoryLoading.current.delete(reminderId);}
   }
 
   useEffect(() => {
-    if (careView !== 'history' || isGuestMode()) return;
+    if ((tab !== 'calendar' && careView !== 'history') || isGuestMode()) return;
     reminders.forEach((reminder) => {
       if (reminder.recurrence && reminder.recurrence !== 'none' && reminderHistory[reminder.id] === undefined) {
         void loadReminderHistory(reminder.id);
       }
     });
-  }, [careView, reminders, reminderHistory]);
+  }, [tab, careView, reminders, reminderHistory]);
 
-  async function submitObservation() {
-    if (observationSaving) return;
-    const note = observationDraft.note?.trim();
-    if (!observationDraft.mood && !observationDraft.appetite && !observationDraft.stool && !observationDraft.energy && !note) {
-      setError('Выбери то, что заметил, или добавь короткую заметку.');
-      return;
-    }
-    const petId = profile.backendPetId || (isGuestMode() ? ensureGuestPetId() : undefined);
-    const payloadFingerprint = JSON.stringify({ petId, ...observationDraft, note });
-    const mutationScope = `observation:create:${payloadFingerprint}`;
-    const createdAt = careMutationTime(mutationScope, () => new Date().toISOString());
-    const draft: ObservationView = {
-      id: guestId('observation'),
-      petId,
-      mood: observationDraft.mood,
-      appetite: observationDraft.appetite,
-      stool: observationDraft.stool,
-      energy: observationDraft.energy,
-      note: note || undefined,
-      createdAt,
-      syncStatus: 'local',
-    };
-    setObservationSaving(true);
-    setError('');
+  function observationReceipt(value: unknown, petId: string, expectedId?: string): ObservationView {
+    if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('INVALID_OBSERVATION_RECEIPT');
+    const raw=value as Record<string,unknown>;
+    const id=raw?.id, ownerPet=raw?.petId??raw?.pet_id, date=raw?.observedAt??raw?.observed_at??raw?.createdAt??raw?.created_at;
+    if(typeof id!=='string'||!id||ownerPet!==petId||(expectedId&&id!==expectedId)||typeof date!=='string'||!Number.isFinite(Date.parse(date))||raw.source==='demo'||raw.deleted_at)throw new Error('INVALID_OBSERVATION_RECEIPT');
+    const saved=normalizeObservation(raw); if(!saved)throw new Error('INVALID_OBSERVATION_RECEIPT');
+    return {...saved,syncStatus:'saved'};
+  }
 
-    if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) {
-      setObservations((current) => [draft, ...current].slice(0, 12));
-      setObservationDraft(defaultObservationDraft);
-      finishCareMutation(mutationScope);
-      setObservationSaving(false);
-      return;
-    }
+  async function writeObservation<T>(scope:string, task:(current:()=>boolean)=>Promise<T>):Promise<T|null> {
+    if(observationWrite.current)return null;
+    const token=Symbol(scope), petId=profile.backendPetId;
+    observationWrite.current=token;
+    const current=()=>observationWrite.current===token && documentActivePet.current===petId;
+    // Ignore an older in-flight read; the mutation receipt is newer than that snapshot.
+    healthReadVersion.current++; setHealthLoading(false);
+    setObservationIssue(null);
+    if(scope==='create')setObservationSaving(true);else setObservationMutationBusy(true);
+    try{return await task(current);}
+    catch{if(current())setObservationIssue({scope,message:'Не удалось подтвердить изменение. Ввод остался здесь — повторите попытку.'});return null;}
+    finally{if(current()){observationWrite.current=null;setObservationSaving(false);setObservationMutationBusy(false);}}
+  }
 
-    try {
-      const response = await fetch('/api/observations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(mutationScope), ...authHeaders() },
-        body: JSON.stringify({
-          petId: profile.backendPetId,
-          ...(draft.note && !draft.mood && !draft.appetite && !draft.stool && !draft.energy ? { type: 'note', value: draft.note } : {}),
-          mood: draft.mood || undefined,
-          appetite: draft.appetite || undefined,
-          stool: draft.stool || undefined,
-          energy: draft.energy || undefined,
-          note: draft.note || null,
-          observedAt: createdAt,
-          source: 'manual',
-        }),
-      });
-      if (!response.ok) {
-        setError('Запись не сохранилась. Текст остался здесь — проверь связь и попробуй снова.');
-        return;
+  async function submitObservation():Promise<ObservationView|null> {
+    const note=observationDraft.note?.trim();
+    if(!observationDraft.mood&&!observationDraft.appetite&&!observationDraft.stool&&!observationDraft.energy&&!note)return null;
+    const guest=isGuestMode(),petId=profile.backendPetId||(guest?ensureGuestPetId():undefined);
+    if(!petId){setObservationIssue({scope:'create',message:'Сначала выберите собаку. Текст остался здесь.'});return null;}
+    const scope=`observation:create:${JSON.stringify({petId,...observationDraft,note})}`;
+    const createdAt=careMutationTime(scope,()=>new Date().toISOString());
+    return writeObservation('create',async current=>{
+      let saved:ObservationView={id:guestId('observation'),petId,...observationDraft,note:note||undefined,createdAt,syncStatus:'local'};
+      if(!guest){
+        const response=await fetch('/api/observations',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify({petId,...observationDraft,note:note||null,observedAt:createdAt,source:'manual',...(note&&!observationDraft.mood&&!observationDraft.appetite&&!observationDraft.stool&&!observationDraft.energy?{type:'note',value:note}:{})})});
+        const payload=await response.json();
+        if(!current())return null;
+        if(!response.ok||payload.mode==='demo')throw new Error('SAVE_FAILED');
+        saved=observationReceipt(payload.observation,petId);
       }
-      const payload = await response.json().catch(() => ({}));
-      const saved = normalizeObservation(payload?.observation || payload);
-      if (saved) setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
-      setObservationDraft(defaultObservationDraft);
-      finishCareMutation(mutationScope);
-      await loadRealModules(profile.backendPetId);
-    } catch {
-      setError('Запись не сохранилась. Текст остался здесь — проверь связь и попробуй снова.');
-    } finally {
-      setObservationSaving(false);
-    }
+      if(!current())return null;
+      setObservations(previous=>[saved,...previous.filter(item=>item.id!==saved.id)]);
+      setObservationDraft(defaultObservationDraft);finishCareMutation(scope);
+      return saved;
+    });
   }
 
   async function transcribeVoiceObservation(audio: Blob) {
@@ -2360,7 +2459,7 @@ export default function Home() {
     if (!response.ok) throw new Error(String(payload.error || 'OBSERVATION_SAVE_FAILED'));
     const saved = normalizeObservation(payload.observation || payload);
     if (!saved) throw new Error('OBSERVATION_SAVE_FAILED');
-    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
+    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)]);
     finishCareMutation(scope);
     await loadRealModules(profile.backendPetId);
     return { decisions: Array.isArray(payload.decisions) ? payload.decisions as IngestionDecision[] : [], summary: payload.summary || {} };
@@ -2375,7 +2474,7 @@ export default function Home() {
       const draft: ObservationView = {
         id: guestId('observation'), petId, note: text, createdAt, syncStatus: 'local',
       };
-      setObservations((current) => [draft, ...current].slice(0, 12));
+      setObservations((current) => [draft, ...current]);
       return;
     }
     const scope = `observation:voice-note:${petId}:${createdAt}:${text}`;
@@ -2392,145 +2491,130 @@ export default function Home() {
     if (!response.ok) throw new Error(String(payload.error || 'PRIVATE_NOTE_SAVE_FAILED'));
     const saved = normalizeObservation(payload.observation || payload);
     if (!saved) throw new Error('PRIVATE_NOTE_SAVE_FAILED');
-    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 12));
+    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)]);
     finishCareMutation(scope);
   }
 
   function startObservationEdit(observation: ObservationView) {
     setEditingObservationId(observation.id);
-    setObservationEditDraft({
+    setObservationEditDraft(observationEditDrafts.current.get(observation.id) ?? {
       mood: observation.mood || '',
       appetite: observation.appetite || '',
       stool: observation.stool || '',
       energy: observation.energy || '',
       note: observation.note || '',
+      ...(isPrimaryObservationFact(observation.type)?{type:observation.type,value:observation.value}:{}),
     });
     setError('');
   }
 
   async function editObservation(id: string) {
-    const scope = `observation:update:${id}:${JSON.stringify(observationEditDraft)}`;
-    if (isGuestMode()) {
-      setObservations((current) => current.map((item) => item.id === id ? { ...item, ...observationEditDraft } : item));
-      setEditingObservationId(null);
-      return;
-    }
-    setObservationMutationBusy(true);
-    try {
-      const response = await fetch(`/api/observations/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify(observationEditDraft),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) return setError('Не получилось сохранить запись. Изменения остались в форме.');
-      const saved = normalizeObservation(payload.observation);
-      if (saved) setObservations((current) => current.map((item) => item.id === id ? { ...saved, syncStatus: 'saved' as const } : item));
-      finishCareMutation(scope);
-      setEditingObservationId(null);
-    } catch {
-      setError('Не получилось сохранить запись. Изменения остались в форме.');
-    } finally {
-      setObservationMutationBusy(false);
-    }
+    const scope=`observation:update:${id}:${JSON.stringify(observationEditDraft)}`;
+    const original=observations.find(item=>item.id===id),petId=profile.backendPetId;
+    if(!original)return;
+    await writeObservation(id,async current=>{
+      let saved:ObservationView={...original,...observationEditDraft};
+      if(!isGuestMode()){
+        const response=await fetch(`/api/observations/${id}`,{method:'PATCH',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify(observationEditDraft)});
+        const payload=await response.json();if(!current())return;
+        if(!response.ok||!petId)throw new Error('SAVE_FAILED');
+        saved=observationReceipt(payload.observation,petId,id);
+      }
+      if(!current())return;
+      setObservations(previous=>previous.map(item=>item.id===id?saved:item));
+      finishCareMutation(scope);observationEditDrafts.current.delete(id);setEditingObservationId(null);
+    });
   }
 
-  async function deleteObservation(id: string) {
-    const observation = observations.find((item) => item.id === id);
-    if (!observation || observationMutationBusy) return;
-    if (isGuestMode()) {
-      setObservations((current) => current.filter((item) => item.id !== id));
-      setRecentlyDeletedObservation(observation);
-      setCareFeedback({ kind: 'observation-deleted', observationId: id, title: 'наблюдение' });
-      return;
-    }
-    const scope = `observation:delete:${id}`;
-    setObservationMutationBusy(true);
-    try {
-      const response = await fetch(`/api/observations/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({}),
-      });
-      if (!response.ok) return setError('Не получилось убрать запись. Попробуй ещё раз.');
-      setObservations((current) => current.filter((item) => item.id !== id));
-      setRecentlyDeletedObservation(observation);
-      setCareFeedback({ kind: 'observation-deleted', observationId: id, title: 'наблюдение' });
-      finishCareMutation(scope);
-    } catch {
-      setError('Не получилось убрать запись. Попробуй ещё раз.');
-    } finally {
-      setObservationMutationBusy(false);
-    }
+  async function deleteObservation(id: string): Promise<boolean> {
+    const observation=observations.find(item=>item.id===id);
+    if(!observation)return false;
+    const scope=`observation:delete:${id}`;
+    const deleted = await writeObservation(id,async current=>{
+      if(!isGuestMode()){
+        const response=await fetch(`/api/observations/${id}`,{method:'DELETE',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:'{}'});
+        if(!current())return;
+        const receipt=await response.json();
+        if(!current())return;
+        if(!response.ok||receipt.ok!==true||!Number.isFinite(Date.parse(receipt.deletedAt)))throw new Error('DELETE_FAILED');
+      }
+      if(!current())return;
+      setObservations(previous=>previous.filter(item=>item.id!==id));setRecentlyDeletedObservation(observation);
+      setEditingObservationId(previous=>previous===id?null:previous);
+      setCareFeedback({kind:'observation-deleted',observationId:id,title:'запись'});finishCareMutation(scope); return true;
+    });
+    return deleted === true;
   }
 
   async function uploadPetDocument(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!profile.backendPetId || documentUploading) return;
+    const petId = profile.backendPetId;
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-    form.set('petId', profile.backendPetId);
+    form.set('petId', petId);
+    const file = form.get('file');
+    if (!(file instanceof File) || !file.size) { setDocumentError('Выберите PDF или фото.'); return; }
     setDocumentUploading(true);
-    setError('');
+    setDocumentError('');
     try {
-      const response = await fetch('/api/documents', { method: 'POST', headers: authHeaders(), body: form });
+      const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', await file.arrayBuffer()))].map(byte => byte.toString(16).padStart(2, '0')).join('');
+      const signature = JSON.stringify({ fields: [...form.entries()].filter(([key]) => key !== 'file'), name: file.name, type: file.type, hash });
+      if (documentSaveAttempt.current?.signature !== signature) documentSaveAttempt.current = { signature, key: `document:${crypto.randomUUID()}` };
+      const response = await fetch('/api/documents', { method: 'POST', headers: { ...authHeaders(), 'Idempotency-Key': documentSaveAttempt.current.key }, body: form });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.error || 'UPLOAD_FAILED');
-      setDocuments((current) => [payload.document, ...current]);
+      if (documentActivePet.current !== petId) return;
+      setDocuments(current => [payload.document, ...current.filter(item => item.id !== payload.document.id)]);
+      documentSaveAttempt.current = null;
       setDocumentUploadOpen(false);
       setDocumentFileName('');
       formElement.reset();
-      setNotice('saved');
+      setNotice('documentSaved');
       window.setTimeout(() => setNotice('idle'), 1400);
-    } catch {
-      setError('Не удалось сохранить документ. Проверь формат и размер файла — до 4 МБ.');
-    } finally {
-      setDocumentUploading(false);
-    }
+    } catch (error) {
+      if (documentActivePet.current !== petId) return;
+      const code = error instanceof Error ? error.message : '';
+      setDocumentError(code === 'FILE_TOO_LARGE' ? 'Файл больше 4 МБ. Выберите файл поменьше.'
+        : code === 'FILE_TYPE_NOT_ALLOWED' ? 'Подойдёт PDF или изображение JPEG, PNG, WebP.'
+        : code === 'DOCUMENT_REMOVED' ? 'Этот документ уже удалён. Выберите файл заново, если хотите добавить его снова.'
+        : 'Не удалось подтвердить сохранение. Ввод и файл остались здесь — повторите попытку.');
+    } finally { setDocumentUploading(false); }
   }
 
-  async function deletePetDocument(id: string) {
-    if (documentBusyId || !window.confirm('Удалить этот документ без возможности восстановления?')) return;
+  async function deletePetDocument(id: string, confirmed = false): Promise<boolean> {
+    if (documentBusyId || !confirmed && !window.confirm('Удалить этот документ без возможности восстановления?')) return false;
     setDocumentBusyId(id);
     setError('');
     try {
       const response = await fetch(`/api/documents/${id}`, { method: 'DELETE', headers: authHeaders() });
       if (!response.ok) throw new Error('DELETE_FAILED');
       setDocuments((current) => current.filter((item) => item.id !== id));
+      return true;
     } catch {
-      setError('Не удалось удалить документ. Ничего не изменилось — попробуй ещё раз.');
+      setError('Удаление документа не завершено. Повторите попытку; повтор не затронет другие файлы.');
+      return false;
     } finally {
       setDocumentBusyId(null);
     }
   }
 
   async function restoreObservation() {
-    if (!recentlyDeletedObservation) return;
-    const observation = recentlyDeletedObservation;
-    if (isGuestMode()) {
-      setObservations((current) => [observation, ...current]);
-      setRecentlyDeletedObservation(null);
-      setCareFeedback(null);
-      return;
-    }
-    const scope = `observation:restore:${observation.id}`;
-    setObservationMutationBusy(true);
-    try {
-      const response = await fetch(`/api/observations/${observation.id}/restore`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({}),
-      });
-      if (!response.ok) return setError('Не получилось вернуть запись. Попробуй ещё раз.');
-      setObservations((current) => [observation, ...current.filter((item) => item.id !== observation.id)]);
-      setRecentlyDeletedObservation(null);
-      setCareFeedback(null);
-      finishCareMutation(scope);
-    } catch {
-      setError('Не получилось вернуть запись. Попробуй ещё раз.');
-    } finally {
-      setObservationMutationBusy(false);
-    }
+    const observation=recentlyDeletedObservation,petId=profile.backendPetId;
+    if(!observation)return;
+    const scope=`observation:restore:${observation.id}`;
+    await writeObservation('restore',async current=>{
+      let saved=observation;
+      if(!isGuestMode()){
+        const response=await fetch(`/api/observations/${observation.id}/restore`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:'{}'});
+        const payload=await response.json();if(!current())return;
+        if(!response.ok||!petId)throw new Error('RESTORE_FAILED');
+        saved=observationReceipt(payload.observation,petId,observation.id);
+      }
+      if(!current())return;
+      setObservations(previous=>[saved,...previous.filter(item=>item.id!==saved.id)]);
+      setRecentlyDeletedObservation(null);setCareFeedback(null);finishCareMutation(scope);
+    });
   }
 
   function updateProfile(patch: Partial<DogProfile>) {
@@ -2716,12 +2800,17 @@ export default function Home() {
     updateProfile({ avatarImageUrl: renderUrl, avatarSource: result.source || 'none' });
   }
 
-  async function savePrivateProfile(nextProfile?: DogProfile) {
-    const profileToSave = nextProfile || profile;
-    if (!profileToSave.dogName.trim()) { setError('Сначала добавь имя собаки.'); return null; }
-    if (profileSaving) return profileToSave.backendPetId || null;
+  const profileBaselines = useRef(new Map<string, Partial<DogProfile>>());
+  const [profileConflict, setProfileConflict] = useState<ProfileMerge | null>(null);
+  const profileConflictResolver = useRef<((profile: DogProfile | null) => void) | null>(null);
+  const profileSaveAttempt = useRef<{ body: string; key: string } | null>(null);
+
+  async function savePrivateProfile(nextProfile?: DogProfile, reportError: (message:string)=>void = setError) {
+    let profileToSave = nextProfile || profile;
+    if (!profileToSave.dogName.trim()) { reportError('Сначала добавь имя собаки.'); return null; }
+    if (profileSaving) return null;
     setProfileSaving(true);
-    setError('');
+    reportError('');
     if (isGuestMode()) {
       ensureGuestPetId();
       setProfile(profileToSave);
@@ -2731,36 +2820,61 @@ export default function Home() {
       return profileToSave.backendPetId || guestPetIdRef.current;
     }
     try {
-      const idempotencyKey = profileToSave.backendPetId ? '' : (addDogKeyRef.current ?? `add-pet:${crypto.randomUUID()}`);
-      if (!profileToSave.backendPetId) addDogKeyRef.current = idempotencyKey;
-      const response = await fetch('/api/v1/pets', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
-          ...authHeaders(),
-        },
-        body: JSON.stringify({ profile: { ...profileToSave, isPublic: false } }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result?.error || 'Не удалось сохранить профиль');
-      const savedPetId = result.pet?.id || profileToSave.backendPetId;
-      addDogKeyRef.current = null;
-      setProfile({ ...profileToSave, backendPetId: savedPetId, isPublic: false });
-      if (savedPetId) setActivePetId(savedPetId);
-      await loadBootstrap(undefined, savedPetId);
-      setNotice('saved');
-      window.setTimeout(() => setNotice('idle'), 1600);
-      return savedPetId || null;
-    } catch {
-      setError('Не удалось сохранить личный профиль. Изменения остались на экране — попробуй ещё раз.');
+      for (;;) {
+        const requestBody = JSON.stringify({ profile: { ...profileToSave, isPublic: false } });
+        if (profileSaveAttempt.current?.body !== requestBody) profileSaveAttempt.current = { body: requestBody, key: `profile:${crypto.randomUUID()}` };
+        const idempotencyKey = profileToSave.backendPetId ? profileSaveAttempt.current.key : (addDogKeyRef.current ?? `add-pet:${crypto.randomUUID()}`);
+        if (!profileToSave.backendPetId) addDogKeyRef.current = idempotencyKey;
+        const response = await fetch('/api/v1/pets', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+            ...authHeaders(),
+          },
+          body: requestBody,
+        });
+        const result = await response.json();
+        if (response.status === 409 && result?.error === 'PROFILE_VERSION_CONFLICT') {
+          const latest = await fetch(`/api/app/bootstrap?petId=${encodeURIComponent(profileToSave.backendPetId!)}`, { credentials: 'include', headers: authHeaders() });
+          if (!latest.ok) throw new Error('PROFILE_VERSION_CONFLICT');
+          const remote = dbToProfile(await latest.json(), profileToSave.backendPetId);
+          if (!remote || remote.profileVersion === undefined) throw new Error('PROFILE_VERSION_CONFLICT');
+          const base = profileBaselines.current.get(`${profileToSave.backendPetId}:${profileToSave.profileVersion}`);
+          const merge = mergeProfileDraft(base, profileToSave, { ...profileToSave, ...remote });
+          // Even disjoint changes are reviewed before re-submitting a full profile.
+          const resolved = await new Promise<DogProfile | null>(resolve => {
+            profileConflictResolver.current = resolve;
+            setProfileConflict(merge);
+          });
+          if (!resolved) return null;
+          profileToSave = resolved;
+          continue;
+        }
+        if (!response.ok) throw new Error(result?.error || 'Не удалось сохранить профиль');
+        profileSaveAttempt.current = null;
+        const savedPetId = result.pet?.id || profileToSave.backendPetId;
+        addDogKeyRef.current = null;
+        setProfile({ ...profileToSave, backendPetId: savedPetId, profileVersion: result.pet?.profileVersion, isPublic: false });
+        if (savedPetId) setActivePetId(savedPetId);
+        await loadBootstrap(undefined, savedPetId);
+        setNotice('saved');
+        window.setTimeout(() => setNotice('idle'), 1600);
+        return savedPetId || null;
+      }
+    } catch (error) {
+      reportError(error instanceof Error && error.message === 'PROFILE_VERSION_CONFLICT'
+        ? 'Профиль изменён на другом устройстве. Ваш ввод сохранён на экране; перед повтором нужно сверить актуальные данные.'
+        : 'Не удалось сохранить личный профиль. Изменения остались на экране — попробуй ещё раз.');
       return null;
     } finally {
       setProfileSaving(false);
     }
   }
   async function signOut() {
+    healthReadVersion.current++; healthLoadedPet.current=null; observationWrite.current=null; setObservationIssue(null); setHealthFactsError('');setObservationSaving(false);setObservationMutationBusy(false);setObservationCaptureOpen(false);setHealthNextCursor(null);
+    wishlistOperation.current = null; setWishlistWriting(null); setWishlistIssue(null);
     await getSupabaseBrowser()?.auth.signOut();
     await fetch('/api/v1/session/logout', { method: 'POST', credentials: 'include' }).catch(() => null);
     setSession(null);
@@ -2774,88 +2888,93 @@ export default function Home() {
     setDocuments([]);
   }
 
-  async function createReminder(title?: string, type = newReminderType, dueInDays = 0, explicitDueDate?: string) {
-    const reminderTitle = (title || newReminderTitle).trim();
-    if (!reminderTitle) {
-      setError('Напиши, что нужно сделать для собаки.');
-      return false;
-    }
-    const dueAt = explicitDueDate
-      ? reminderDueAt(explicitDueDate, newReminderDueTime, newReminderTimeMode)
-      : title
-        ? new Date(Date.now() + dueInDays * 86400000).toISOString()
-        : reminderDueAt(newReminderDueDate, newReminderDueTime, newReminderTimeMode);
-    const recurrence = title ? 'none' : newReminderRecurrence;
-    if (!profile.backendPetId) {
-      if (!isGuestMode()) {
-        setError('Сначала сохрани профиль собаки.');
-        return false;
+  async function performReminderWrite(scope:string,task:(isCurrent:()=>boolean)=>Promise<boolean>,report?:(message:string)=>void){
+    const petId=profile.backendPetId||activePetId||'guest';
+    if(reminderOperation.current?.petId===petId)return false;
+    const operation={petId,scope,token:crypto.randomUUID()};reminderOperation.current=operation;
+    setReminderMutationBusy(scope);setReminderIssue(null);
+    const sourcePet=profile.backendPetId;
+    const isCurrent=()=>reminderOperation.current?.token===operation.token&&documentActivePet.current===sourcePet;
+    try{return await task(isCurrent);}
+    catch{if(isCurrent())(report||reportReminderError)('Не удалось подтвердить изменение дела. Ввод сохранён — повтори попытку.');return false;}
+    finally{if(reminderOperation.current?.token===operation.token){reminderOperation.current=null;setReminderMutationBusy(null);}}
+  }
+  function reportReminderError(message:string){const operation=reminderOperation.current;if(operation)setReminderIssue({petId:operation.petId,scope:operation.scope,message});}
+
+  async function createReminder(title?:string,type=newReminderType,dueInDays=0,explicitDueDate?:string){
+    return performReminderWrite(title?'assistant:create':'create',async isCurrent=>{
+      const reminderTitle=(title||newReminderTitle).trim();
+      if(!reminderTitle){reportReminderError('Напиши, что нужно сделать.');return false;}
+      const timeMode:ReminderTimeMode=title?'flexible':newReminderTimeMode;
+      const date=explicitDueDate||(title?dateAfterDays(dueInDays):newReminderDueDate);
+      const dueAt=reminderDueAt(date,title?'12:00':newReminderDueTime,timeMode);
+      if(!dueAt){reportReminderError('Выбери корректную дату и время.');return false;}
+      const recurrence=title?'none':newReminderRecurrence;
+      if(isGuestMode()){
+        const petId=ensureGuestPetId(),id=guestId('reminder');setReminders(current=>[{id,petId,type,title:reminderTitle,dueAt,recurrence,status:'active',timeMode},...current]);
+        if(!title){setNewReminderTitle('');setNewReminderRecurrence('none');}
+        setCareFeedback({kind:'created',reminderId:id,title:reminderTitle});return true;
       }
-      ensureGuestPetId();
-    }
-    if (isGuestMode()) {
-      const petId = ensureGuestPetId();
-      const id = guestId('reminder');
-      setReminders((current) => [{ id, petId, type, title: reminderTitle, dueAt, recurrence, status: 'active' }, ...current]);
-      setNewReminderTitle('');
-      setCareFeedback({ kind: 'created', reminderId: id, title: reminderTitle });
-      if (tab === 'today') resetViewScroll();
-      return true;
-    }
-    const scope = `reminder:create:${profile.backendPetId}:${reminderTitle}:${dueAt}:${type}:${recurrence}`;
-    setReminderMutationBusy(scope);
-    try {
-      const response = await fetch('/api/reminders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({ petId: profile.backendPetId, title: reminderTitle, dueAt, type, recurrence, source: 'manual_calendar' }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError('Дело не сохранилось. Всё введённое осталось в форме — проверь связь и попробуй снова.');
-        return false;
-      }
-      setNewReminderTitle('');
-      setNewReminderRecurrence('none');
-      await loadBootstrap();
-      finishCareMutation(scope);
-      setCareFeedback({ kind: 'created', reminderId: String(result.reminder?.id || ''), title: reminderTitle });
-      if (tab === 'today') resetViewScroll();
-      return true;
-    } catch {
-      setError('Дело не сохранилось. Всё введённое осталось в форме — проверь связь и попробуй снова.');
-      return false;
-    } finally {
-      setReminderMutationBusy(null);
-    }
+      const petId=profile.backendPetId;if(!petId){reportReminderError('Сначала сохрани профиль собаки.');return false;}
+      const payload={petId,title:reminderTitle,dueAt,type,recurrence,timeMode,source:title?'prepared':'manual_calendar'};
+      const scope=`reminder:create:${JSON.stringify(payload)}`;
+      const response=await fetch('/api/reminders',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify(payload)});
+      const result=await response.json().catch(()=>({}));if(!isCurrent())return false;
+      const saved=response.ok&&result.mode!=='demo'?reminderReceipt(result.reminder,petId):null;if(!saved)throw new Error('INVALID_REMINDER_RECEIPT');
+      setReminders(current=>[saved,...current.filter(item=>item.id!==saved.id)]);
+      if(!title){setNewReminderTitle('');setNewReminderRecurrence('none');}
+      finishCareMutation(scope);setCareFeedback({kind:'created',reminderId:saved.id,title:saved.title});return true;
+    });
+  }
+
+  async function performWishlistChange(scope: string, task: (isCurrent: () => boolean) => Promise<boolean>) {
+    const petId = profile.backendPetId || activePetId || 'guest';
+    if (wishlistOperation.current?.petId === petId) return false;
+    const operation = {petId, scope, token: crypto.randomUUID()};
+    const originalPet = profile.backendPetId;
+    wishlistOperation.current = operation; setWishlistWriting(operation); setWishlistIssue(null);
+    const isCurrent = () => wishlistOperation.current?.token === operation.token && documentActivePet.current === originalPet;
+    try { return await task(isCurrent); }
+    catch { if (isCurrent()) setWishlistIssue({petId,scope,message:'Не удалось подтвердить изменение. Ввод сохранён — проверь связь и повтори.'}); return false; }
+    finally { if (wishlistOperation.current?.token === operation.token) { wishlistOperation.current = null; setWishlistWriting(null); } }
+  }
+
+  function reportWishlistError(message: string) {
+    const operation = wishlistOperation.current;
+    if (operation) setWishlistIssue({petId:operation.petId,scope:operation.scope,message});
   }
 
   async function createWishlistItem(preset?: { title: string; category?: string; reason?: string; priority?: string; plannedFor?: string; source?: 'assistant' | 'manual' }) {
+    return performWishlistChange(preset ? 'assistant:create' : 'create', async isCurrent => {
     const title = (preset?.title || newWishTitle).trim();
-    if (!title) { setError('Добавь название позиции.'); return false; }
-    const plannedFor = preset?.plannedFor || (newWishNeedsReminder ? newWishPlannedFor : undefined);
+    if (!title) { reportWishlistError('Добавь название позиции.'); return false; }
+    setWishlistIssue(null);
+    const plannedFor = preset ? preset.plannedFor : (newWishNeedsReminder ? newWishPlannedFor : undefined);
     const dueAt = plannedFor ? reminderDueAt(plannedFor, '12:00', 'flexible') : undefined;
     if (!profile.backendPetId) {
-      if (!isGuestMode()) { setError('Сначала сохрани профиль собаки.'); return false; }
+      if (!isGuestMode()) { reportWishlistError('Сначала сохрани профиль собаки.'); return false; }
       ensureGuestPetId();
     }
     if (isGuestMode()) {
       const petId = ensureGuestPetId();
       const reminderId = plannedFor ? guestId('reminder') : undefined;
-      const wishlistItem: WishlistView = { id: guestId('wish'), petId, title, category: preset?.category || newWishCategory, reason: preset?.reason || newWishReason || undefined, priority: preset?.priority || 'medium', status: 'wanted', plannedFor, reminderId, createdAt: new Date().toISOString() };
+      const wishlistItem: WishlistView = { id: guestId('wish'), petId, title, category: preset?.category || (preset ? 'other' : newWishCategory), reason: preset ? preset.reason : newWishReason || undefined, priority: preset?.priority || 'medium', status: 'wanted', plannedFor, reminderId, createdAt: new Date().toISOString() };
       setWishlist((current) => [wishlistItem, ...current]);
       if (plannedFor && reminderId && dueAt) {
         setReminders((current) => [{ id: reminderId, petId, type: wishlistItem.category === 'food' ? 'food' : 'custom', title: wishlistReminderTitle(title), dueAt, recurrence: 'none', status: 'active' }, ...current]);
       }
+      if (!preset) {
       setNewWishTitle('');
       setNewWishReason('');
+      setNewWishNeedsReminder(false);
       setNewWishPlannedFor(dateAfterDays(1));
       setThingCaptureOpen(false);
+      }
       return true;
     }
     try {
-      const category = preset?.category || newWishCategory;
-      const reason = preset?.reason || newWishReason || null;
+      const category = preset?.category || (preset ? 'other' : newWishCategory);
+      const reason = preset ? preset.reason || null : newWishReason || null;
       const recommendationId = mainRecommendation?.status === 'accepted'
         && mainRecommendation.primaryAction.intent === 'add_wishlist'
         && mainRecommendation.primaryAction.draft.title === title
@@ -2863,22 +2982,29 @@ export default function Home() {
         && mainRecommendation.primaryAction.draft.reason === reason
         ? mainRecommendation.id
         : undefined;
-      const scope = `wishlist:create:${profile.backendPetId}:${title}:${category}:${plannedFor || 'unplanned'}`;
+      const scope = `wishlist:create:${JSON.stringify([profile.backendPetId,title,category,reason,preset?.priority || 'medium',plannedFor,dueAt])}`;
       const response = await fetch('/api/wishlist', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
         body: JSON.stringify({ petId: profile.backendPetId, title, category, reason, priority: preset?.priority || 'medium', plannedFor, dueAt, recommendationId, source: preset?.source || 'manual' }),
       });
-      await response.json().catch(() => ({}));
-      if (!response.ok) { setError('Покупка не сохранилась. Всё введённое осталось в форме — проверь связь и попробуй снова.'); return false; }
-      setNewWishTitle(''); setNewWishReason(''); setNewWishPlannedFor(dateAfterDays(1)); setThingCaptureOpen(false);
-      await loadBootstrap();
+      const payload = await response.json().catch(() => ({}));
+      if (!isCurrent()) return false;
+      if (!response.ok) { reportWishlistError('Не удалось подтвердить покупку. Ввод сохранён — повтори попытку.'); return false; }
+      if (payload.mode === 'demo') throw new Error('PERSISTENCE_UNAVAILABLE');
+      const saved = normalizeWishlistReceipt(payload.item, profile.backendPetId!);
+      if (!saved) throw new Error('INVALID_WISHLIST_RECEIPT');
+      setWishlist(current => [saved, ...current.filter(item => item.id !== saved.id)]);
+      if (payload.reminder?.id && payload.reminder?.petId === profile.backendPetId) setReminders(current => [payload.reminder, ...current.filter(item => item.id !== payload.reminder.id)]);
+      if (!preset) { setNewWishTitle(''); setNewWishCategory('other'); setNewWishReason(''); setNewWishNeedsReminder(false); setNewWishPlannedFor(dateAfterDays(1)); setThingCaptureOpen(false); }
       finishCareMutation(scope);
       finishRecommendationOutcome(recommendationId);
       return true;
     } catch {
-      setError('Покупка не сохранилась. Всё введённое осталось в форме — проверь связь и попробуй снова.');
+      if (!isCurrent()) return false;
+      reportWishlistError('Не удалось подтвердить покупку. Ввод сохранён — повтори попытку.');
       return false;
     }
+    });
   }
 
   function openWishlistPlan(item: WishlistView) {
@@ -2895,11 +3021,7 @@ export default function Home() {
 
   async function completeWishlistItem(item: WishlistView) {
     if (!item.reminderId) return updateWishlistItem(item.id, { status: 'bought' });
-    const completed = await completeReminder(item.reminderId);
-    if (completed && isGuestMode()) {
-      setWishlist((current) => current.map((entry) => entry.id === item.id ? { ...entry, status: 'bought' } : entry));
-    }
-    return completed;
+    return performWishlistChange(item.id, isCurrent => completeReminder(item.reminderId!, reportWishlistError, isCurrent));
   }
 
   async function createZone(preset?: { title: string; type?: string; note?: string; radiusMeters?: number; approximateLat?: number; approximateLng?: number }) {
@@ -3014,6 +3136,7 @@ export default function Home() {
       ? { type: 'route', title, petId: profile.backendPetId, path: routePoints, visibility, description: newZoneNote || null, routeSource: mapRouteMeta?.routeSource || 'planned', planning:mapRouteMeta?.planning, pathGaps: mapRouteMeta?.pathGaps, startedAt: mapRouteMeta?.startedAt, durationSeconds: mapRouteMeta?.durationSeconds ?? 0, distanceMeters: mapRouteMeta?.distanceMeters ?? 0, recommendationId }
       : { type: 'point', title, petId: profile.backendPetId, lat: pickedZonePoint?.lat, lng: pickedZonePoint?.lng, zone_type: newZoneType, visibility, description: newZoneNote || null };
 
+    const originalPetId=profile.backendPetId;
     const fingerprint=JSON.stringify(body);
     if(mapAttemptRef.current?.fingerprint!==fingerprint)mapAttemptRef.current={fingerprint,key:crypto.randomUUID()};
     const response = await fetch(editingRouteGeometryId?`/api/map/features/${encodeURIComponent(editingRouteGeometryId)}`:'/api/map/features', {
@@ -3022,11 +3145,13 @@ export default function Home() {
       body: JSON.stringify(body),
     });
     const result = await response.json().catch(() => ({}));
+    if(documentActivePet.current!==originalPetId)return;
     if (!response.ok) return setError('Не удалось сохранить место на карте');
 
     if (drawMode === 'route') {
       const createdRoute = normalizeOwnerRoutes([result.feature])[0];
-      if (createdRoute) setOwnerRoutes((current) => upsertOwnerRoute(current, createdRoute));
+      if (!createdRoute || createdRoute.petId !== profile.backendPetId) throw new Error('INVALID_ROUTE_RECEIPT');
+      setOwnerRoutes((current) => upsertOwnerRoute(current, createdRoute));
       finishRecommendationOutcome(recommendationId);
     }
     setEditingRouteGeometryId(null);setRouteEditSeed(null);mapAttemptRef.current=null;
@@ -3067,6 +3192,7 @@ export default function Home() {
 
   async function saveProductionMapDraft() {
     if (mapDraftSaving || mapSaveLockRef.current) return;
+    const originalPetId=profile.backendPetId;
     mapSaveLockRef.current = true;
     setMapDraftSaving(true);
     setError('');
@@ -3074,7 +3200,7 @@ export default function Home() {
       if (drawMode === 'route' || mapSaveMode === 'shared') await createMapFeature(mapSaveMode);
       else await createZone();
     } catch {
-      setError('Не удалось подтвердить сохранение. Черновик остался на месте.');
+      if(documentActivePet.current===originalPetId)setError('Не удалось подтвердить сохранение. Черновик остался на месте.');
     } finally {
       mapSaveLockRef.current = false;
       setMapDraftSaving(false);
@@ -3211,10 +3337,17 @@ export default function Home() {
     await loadBootstrap();
   }
 
+  function beginWishlistEdit(item: WishlistView) {
+    const draft = wishlistEditDrafts.current.get(item.id);
+    setEditingWishlistId(item.id); setWishlistTitleDraft(draft?.title ?? item.title); setWishlistReasonDraft(draft?.reason ?? item.reason ?? '');
+    requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.wishlist-edit-form input')?.focus());
+  }
+
   async function updateWishlistItem(id: string, patch: Partial<WishlistView>) {
+    return performWishlistChange(id, async isCurrent => {
     if (isGuestMode()) {
       setWishlist((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
-      setEditingWishlistId(null);
+      wishlistEditDrafts.current.delete(id); setEditingWishlistId(null);
       return true;
     }
     try {
@@ -3223,21 +3356,27 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(patch),
       });
-      await response.json().catch(() => ({}));
+      const payload = await response.json().catch(() => ({}));
+      if (!isCurrent()) return false;
       if (!response.ok) {
-        setError('Не удалось обновить вещь. Изменения остались в форме.');
+        reportWishlistError('Не удалось подтвердить изменение вещи. Ввод сохранён — повтори попытку.');
         return false;
       }
-      await loadBootstrap();
-      setEditingWishlistId(null);
+      const saved = normalizeWishlistReceipt(payload.item, profile.backendPetId!, id);
+      if (!saved) throw new Error('INVALID_WISHLIST_RECEIPT');
+      setWishlist(current => current.map(item => item.id === id ? saved : item));
+      wishlistEditDrafts.current.delete(id); setEditingWishlistId(null);
       return true;
     } catch {
-      setError('Не удалось обновить вещь. Проверь соединение и попробуй снова.');
+      if (!isCurrent()) return false;
+      reportWishlistError('Не удалось подтвердить изменение вещи. Ввод сохранён — повтори попытку.');
       return false;
     }
+    });
   }
 
   async function deleteWishlistItem(id: string) {
+    return performWishlistChange(id, async isCurrent => {
     const item = wishlist.find((entry) => entry.id === id);
     if (isGuestMode()) {
       setWishlist((current) => current.filter((entry) => entry.id !== id));
@@ -3245,101 +3384,85 @@ export default function Home() {
         setReminders((current) => current.filter((reminder) => reminder.id !== item.reminderId));
       }
       if (item) setRemovedWishlistItem({ ...item, plannedFor: undefined, reminderId: undefined });
-      return;
+      return true;
     }
     const response = await fetch(`/api/wishlist/${id}`, { method: 'DELETE', headers: authHeaders() });
     await response.json().catch(() => ({}));
-    if (!response.ok) return setError('Не удалось удалить вещь');
-    if (item) setRemovedWishlistItem(item);
-    await loadBootstrap();
+      if (!isCurrent()) return false;
+    if (!response.ok) { reportWishlistError('Не удалось убрать вещь. Попробуй ещё раз.'); return false; }
+    if (item) setRemovedWishlistItem({...item, plannedFor:undefined, reminderId:undefined});
+    setWishlist(current => current.filter(entry => entry.id !== id));
+    if (item?.reminderId) setReminders(current => current.filter(entry => entry.id !== item.reminderId));
+    return true;
+    });
   }
 
   async function restoreWishlistItem() {
-    if (!removedWishlistItem) return;
+    return performWishlistChange('restore', async isCurrent => {
+    if (!removedWishlistItem) return false;
     if (isGuestMode()) {
       setWishlist((current) => [removedWishlistItem, ...current.filter((item) => item.id !== removedWishlistItem.id)]);
       setRemovedWishlistItem(null);
-      return;
+      return true;
     }
     const response = await fetch(`/api/wishlist/${removedWishlistItem.id}/restore`, { method: 'POST', headers: authHeaders() });
-    await response.json().catch(() => ({}));
-    if (!response.ok) return setError('Не удалось вернуть вещь');
+    const payload = await response.json().catch(() => ({}));
+      if (!isCurrent()) return false;
+    if (!response.ok) { reportWishlistError('Не удалось вернуть вещь. Попробуй ещё раз.'); return false; }
+    const saved = normalizeWishlistReceipt(payload.item, profile.backendPetId!, removedWishlistItem.id);
+    if (!saved) throw new Error('INVALID_WISHLIST_RECEIPT');
+    setWishlist(current => [saved, ...current.filter(item => item.id !== saved.id)]);
     setRemovedWishlistItem(null);
-    await loadBootstrap();
+    return true;
+    });
   }
 
-  async function updateReminder(id: string, patch: Partial<ReminderView>) {
-    if (isGuestMode()) {
-      setReminders((current) => current.map((reminder) => reminder.id === id ? { ...reminder, ...patch } : reminder));
-      return true;
-    }
-    const serverPatch = { title: patch.title, type: patch.type, dueAt: patch.dueAt, recurrence: patch.recurrence };
-    const scope = `reminder:update:${id}:${JSON.stringify(serverPatch)}`;
-    setReminderMutationBusy(scope);
-    try {
-      const response = await fetch(`/api/reminders/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify(serverPatch),
-      });
-      await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError('Не получилось сохранить изменение. Проверь связь и попробуй ещё раз.');
-        return false;
+  async function updateReminder(id:string,patch:Partial<ReminderView>){
+    return performReminderWrite(id,async isCurrent=>{
+      if(isGuestMode()){setReminders(current=>current.map(item=>item.id===id?{...item,...patch,...(patch.dueAt?{snoozedUntil:undefined,nextDueAt:undefined,status:item.status==='snoozed'?'active':item.status}:{})}:item));return true;}
+      const petId=profile.backendPetId;if(!petId)return false;
+      const serverPatch={title:patch.title,type:patch.type,dueAt:patch.dueAt,recurrence:patch.recurrence,timeMode:patch.timeMode};
+      const scope=`reminder:update:${id}:${JSON.stringify(serverPatch)}`;
+      const response=await fetch(`/api/reminders/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify(serverPatch)});
+      const result=await response.json().catch(()=>({}));if(!isCurrent())return false;
+      const saved=response.ok&&result.mode!=='demo'?reminderReceipt(result.reminder,petId,id):null;if(!saved)throw new Error('INVALID_REMINDER_RECEIPT');
+      setReminders(current=>current.map(item=>item.id===id?saved:item));finishCareMutation(scope);return true;
+    });
+  }
+
+  async function deleteReminder(id:string){
+    return performReminderWrite(id,async isCurrent=>{
+      if(!isGuestMode()){
+        const scope=`reminder:delete:${id}`;
+        const response=await fetch(`/api/reminders/${id}`,{method:'DELETE',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:'{}'});
+        const result=await response.json().catch(()=>({}));if(!isCurrent())return false;
+        if(!response.ok||result.ok!==true||result.mode==='demo')throw new Error('DELETE_NOT_CONFIRMED');finishCareMutation(scope);
       }
-      await loadBootstrap();
-      finishCareMutation(scope);
-      return true;
-    } catch {
-      setError('Не получилось сохранить изменение. Проверь связь и попробуй ещё раз.');
-      return false;
-    } finally {
-      setReminderMutationBusy(null);
-    }
+      setReminders(current=>current.filter(item=>item.id!==id));setReminderHistory(current=>{const next={...current};delete next[id];return next;});reminderDrafts.current.delete(id);return true;
+    });
   }
 
-  async function deleteReminder(id: string) {
-    if (isGuestMode()) {
-      setReminders((current) => current.filter((reminder) => reminder.id !== id));
-      return true;
-    }
-    const scope = `reminder:delete:${id}`;
-    try {
-      const response = await fetch(`/api/reminders/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({}),
-      });
-      await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError('Не получилось удалить дело. Проверь связь и попробуй ещё раз.');
-        return false;
-      }
-      await loadBootstrap();
-      finishCareMutation(scope);
-      return true;
-    } catch {
-      setError('Не получилось удалить дело. Проверь связь и попробуй ещё раз.');
-      return false;
-    }
-  }
-
-  async function completeReminder(id: string) {
+  async function completeReminder(id: string, issue: (message: string) => void = reportReminderError, stillCurrent?: () => boolean) {
+    return performReminderWrite(id,async current=>{
+    const isCurrent=()=>current()&&(!stillCurrent||stillCurrent());
     const reminder = reminders.find((item) => item.id === id);
     if (!reminder) {
-      setError('Не удалось найти дело в плане.');
+      issue('Не удалось найти дело в плане.');
       return false;
     }
     if (isGuestMode()) {
-      setReminders((current) => current.map((item) => item.id === id ? { ...item, status: 'done', completedAt: new Date().toISOString() } : item));
-      setWishlist((current) => current.map((item) => item.reminderId === id ? { ...item, status: 'bought' } : item));
-      setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
+      const at=new Date().toISOString(),nextDueAt=nextReminderDueAt(reminder.dueAt,reminder.recurrence||'none');
+      const after: ReminderView = {...reminder,status:nextDueAt?'active':'done',completedAt:nextDueAt?undefined:at,dueAt:nextDueAt||reminder.dueAt,nextDueAt:nextDueAt||undefined,snoozedUntil:undefined};
+      guestCareUndo.current.set(`${id}:${at}`, {before:{...reminder},after,wishlist:wishlist.filter(item=>item.reminderId===id).map(item=>({...item}))});
+      setReminders(current=>current.map(item=>item.id===id?after:item));
+      if(!nextDueAt)setWishlist(current=>current.map(item=>item.reminderId===id?{...item,status:'bought'}:item));
+      setReminderHistory(current=>({...current,[id]:[{id:guestId('care-history'),payload:{dueAt:reminder.dueAt,completedAt:at,nextDueAt},createdAt:at},...(current[id]||[])]}));
+      setCareFeedback({kind:'completed',reminderId:id,title:reminder.title,nextDueAt:nextDueAt||undefined,timeMode:reminder.timeMode});
       return true;
     }
     const scope = `reminder:complete:${id}`;
     const completedAt = careMutationTime(scope, () => new Date().toISOString());
     const recommendationId = acceptedRecommendationId('open_reminder', id);
-    setReminderMutationBusy(scope);
     try {
       const response = await fetch(`/api/reminders/${id}/complete`, {
         method: 'POST',
@@ -3347,12 +3470,16 @@ export default function Home() {
         body: JSON.stringify({ completedAt, recommendationId }),
       });
       const payload = await response.json().catch(() => ({}));
+      if (!isCurrent()) return false;
       if (!response.ok) {
-        setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
+        issue('Не удалось подтвердить выполнение. Повтори — уже выполненное дело не запишется второй раз.');
         return false;
       }
-      await loadBootstrap();
-      if (payload.historyOccurrence) {
+      const updated=payload.mode!=='demo'?reminderReceipt(payload.reminder,reminder.petId,id):null;
+      if(!updated||!['active','done'].includes(updated.status))throw new Error('INVALID_REMINDER_RECEIPT');
+      setReminders(current => current.map(item => item.id === id ? updated : item));
+      if (updated.status === 'done') setWishlist(current => current.map(item => item.reminderId === id && item.status === 'wanted' ? {...item,status:'bought'} : item));
+      if (payload.historyOccurrence?.reminderId===id && Number.isFinite(Date.parse(payload.historyOccurrence.completedAt)) && Number.isFinite(Date.parse(payload.historyOccurrence.dueAt))) {
         setReminderHistory((current) => ({
           ...current,
           [id]: [{ id: `${id}-${completedAt}`, payload: payload.historyOccurrence, createdAt: completedAt }, ...(current[id] ?? [])],
@@ -3360,14 +3487,38 @@ export default function Home() {
       }
       finishCareMutation(scope);
       finishRecommendationOutcome(recommendationId);
-      setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
+      setCareFeedback({kind:'completed',reminderId:id,title:reminder.title,nextDueAt:updated.nextDueAt,timeMode:updated.timeMode});
       return true;
     } catch {
-      setError('Не получилось отметить дело. Проверь связь и попробуй ещё раз.');
+      if (!isCurrent()) return false;
+      issue('Не удалось подтвердить выполнение. Повтори — уже выполненное дело не запишется второй раз.');
       return false;
-    } finally {
-      setReminderMutationBusy(null);
     }
+    },issue);
+  }
+
+  async function undoExactCareCompletion(reminder: ReminderView) {
+    if (!reminder.completedAt) return;
+    return performReminderWrite(reminder.id, async isCurrent => {
+      if (isGuestMode()) {
+        const key = `${reminder.id}:${reminder.completedAt}`, snapshot = guestCareUndo.current.get(key);
+        const currentReminder = reminders.find(item=>item.id===reminder.id);
+        if (!snapshot || JSON.stringify(currentReminder)!==JSON.stringify(snapshot.after)) { reportReminderError('Исходное состояние недоступно или дело уже изменено. Выполнение не отменено.'); return false; }
+        setReminders(current => current.map(item => item.id === reminder.id ? snapshot.before : item));
+        setReminderHistory(current => ({ ...current, [reminder.id]: (current[reminder.id] || []).filter(event => event.payload?.completedAt !== reminder.completedAt) }));
+        setWishlist(current => current.map(item => { const before=snapshot.wishlist.find(value=>value.id===item.id); return before?.status==='wanted' && JSON.stringify(item)===JSON.stringify({...before,status:'bought'}) ? before : item; }));
+        guestCareUndo.current.delete(key);
+        return true;
+      }
+      const scope = `reminder:undo-complete:${reminder.id}:${reminder.completedAt}`;
+      const response = await fetch(`/api/reminders/${reminder.id}/undo-complete`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() }, body: JSON.stringify({ completedAt: reminder.completedAt }) });
+      const body = await response.json().catch(() => ({})); if (!isCurrent()) return false;
+      const saved = response.ok ? reminderReceipt(body.reminder, reminder.petId, reminder.id) : null;
+      if (!saved) { reportReminderError(body.message || 'Не удалось отменить выполнение. Обнови список и повтори.'); return false; }
+      setReminders(current => current.map(item => item.id === reminder.id ? saved : item));
+      setReminderHistory(current => ({ ...current, [reminder.id]: (current[reminder.id] || []).filter(event => event.payload?.completedAt !== reminder.completedAt) }));
+      finishCareMutation(scope); await loadBootstrap(); return true;
+    });
   }
 
   async function undoLastCareCompletion() {
@@ -3382,53 +3533,25 @@ export default function Home() {
     setPendingCareDeletion(null);
   }
 
-  async function snoozeReminder(id: string) {
-    const scope = `reminder:snooze:${id}:day`;
-    const snoozedUntil = careMutationTime(scope, () => new Date(Date.now() + 86400000).toISOString());
-    if (isGuestMode()) { setReminders((current) => current.map((reminder) => reminder.id === id ? { ...reminder, status: 'snoozed', snoozedUntil } : reminder)); return; }
-    setReminderMutationBusy(scope);
-    try {
-      const response = await fetch(`/api/reminders/${id}/snooze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({ snoozedUntil }),
+  async function snoozeReminder(id:string){
+    return performReminderWrite(id,async isCurrent=>{
+      const reminder=reminders.find(item=>item.id===id);if(!reminder)return false;
+      const scope=`reminder:snooze:${id}:day`;
+      const snoozedUntil=careMutationTime(scope,()=>{
+        const clock=new Date(reminder.snoozedUntil||reminder.dueAt),tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);tomorrow.setHours(clock.getHours(),clock.getMinutes(),0,0);return tomorrow.toISOString();
       });
-      if (!response.ok) return setError('Не удалось перенести дело. Проверь связь и попробуй ещё раз.');
-      await loadBootstrap();
-      finishCareMutation(scope);
-    } catch {
-      setError('Не удалось перенести дело. Проверь связь и попробуй ещё раз.');
-    } finally {
-      setReminderMutationBusy(null);
-    }
-  }
-
-  async function rescheduleReminder(id: string, days: number) {
-    const next = new Date();
-    next.setDate(next.getDate() + days);
-    await updateReminder(id, { dueAt: isoFromDateInput(dateInputValue(next)) });
+      if(isGuestMode()){setReminders(current=>current.map(item=>item.id===id?{...item,status:'snoozed',snoozedUntil}:item));return true;}
+      const response=await fetch(`/api/reminders/${id}/snooze`,{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify({snoozedUntil})});
+      const payload=await response.json().catch(()=>({}));if(!isCurrent())return false;
+      const saved=response.ok&&payload.mode!=='demo'?reminderReceipt(payload.reminder,reminder.petId,id):null;if(!saved)throw new Error('SNOOZE_NOT_CONFIRMED');
+      setReminders(current=>current.map(item=>item.id===id?saved:item));finishCareMutation(scope);setCareFeedback({kind:'rescheduled',reminderId:id,title:saved.title});return true;
+    });
   }
 
   function exportReminderToCalendar(reminder: ReminderView) {
     const start = new Date(reminder.snoozedUntil || reminder.dueAt);
     if (!Number.isFinite(start.getTime())) return setError('У дела некорректная дата.');
-    const end = new Date(start);
-    end.setHours(end.getHours() + 1);
-    const petName = profile.dogName.trim() || 'питомец';
-    const lines = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Pso//Care Calendar//RU',
-      'BEGIN:VEVENT',
-      `UID:${reminder.id}@pso-mvp`,
-      `DTSTAMP:${calendarStamp(new Date())}`,
-      `DTSTART:${calendarStamp(start)}`,
-      `DTEND:${calendarStamp(end)}`,
-      `SUMMARY:${reminder.title.replace(/\n/g, ' ')}`,
-      `DESCRIPTION:Псё: дело ухода для ${petName}. Тип: ${careTypeLabel(reminder.type)}.`,
-      'END:VEVENT',
-      'END:VCALENDAR',
-    ].join('\r\n');
+    const lines=reminderCalendarText(reminder,profile.dogName.trim()||'питомец');
     const url = URL.createObjectURL(new Blob([lines], { type: 'text/calendar;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;
@@ -3438,13 +3561,17 @@ export default function Home() {
   }
 
   async function askAssistant(preset?: string) {
+    const requestEpoch=agentRequestEpoch.current;
     const question = (preset || assistantQuestion).trim();
-    if (!question) return setError('Напиши вопрос ассистенту.');
+    if(assistantLoading) return;
+    if (!question) return setAssistantError('Напиши вопрос ассистенту.');
     if (!profile.backendPetId) {
-      if (!isGuestMode()) return setError('Сначала сохрани профиль собаки — ассистенту нужен контекст.');
+      if (!isGuestMode()) return setAssistantError('Сначала сохрани профиль собаки — ассистенту нужен контекст.');
       ensureGuestPetId();
     }
-    setAssistantLoading(true); setAssistantActions([]); setAssistantActionStatuses({}); setError('');
+    if(agentRequest.current?.question!==question||agentRequest.current?.pet!==profile.backendPetId) agentRequest.current={pet:profile.backendPetId||'guest',question,id:crypto.randomUUID()};
+    setAssistantQuestion(question);
+    setAssistantLoading(true); setAssistantActions([]); setAssistantActionStatuses({}); setAssistantError('');
     setAssistantMessages((current) => [...current, { role: 'user', content: question }]);
     let response: Response;
     try {
@@ -3455,6 +3582,7 @@ export default function Home() {
         ...(isGuestMode() ? {} : { petId: profile.backendPetId }),
         ...(assistantThreadId ? { threadId: assistantThreadId } : {}),
         question,
+        requestId:agentRequest.current.id,
         context: {
           pet: {
             name: profile.dogName,
@@ -3490,18 +3618,32 @@ export default function Home() {
         }),
       });
     } catch {
+      if(requestEpoch!==agentRequestEpoch.current) return;
       setAssistantLoading(false);
       setAssistantMessages((current) => current.slice(0, -1));
-      setError('Псё не ответил. Проверь связь и попробуй ещё раз.');
+      setAssistantError('Псё не ответил. Проверь связь и попробуй ещё раз.');
       return;
     }
     const result = await response.json().catch(() => ({}));
+    if(requestEpoch!==agentRequestEpoch.current) return;
+    if(response.status===202&&typeof result.runId==='string') {
+      agentRequest.current=null;
+      setAgentRunId(result.runId);
+      setAssistantThreadId(result.threadId);
+      setAssistantQuestion('');setAssistantError('');
+      return;
+    }
     setAssistantLoading(false);
     if (!response.ok) {
       setAssistantMessages((current) => current.slice(0, -1));
-      return setError('Псё не ответил. Проверь связь и попробуй ещё раз.');
+      return setAssistantError('Псё не ответил. Проверь связь и попробуй ещё раз.');
     }
-    setAssistantQuestion('');
+    if(result.mode==='agent'&&typeof result.runId==='string') {
+      agentDelivered.current=result.runId;
+      setAgentRunId(result.runId);
+      agentRequest.current=null;
+    }
+    setAssistantQuestion('');setAssistantError('');
     setAssistantAnswer(result.answer || 'Не получилось составить ответ. Уточни вопрос.');
     setAssistantMessages((current) => [...current, { role: 'assistant', content: result.answer || 'Не получилось составить ответ. Уточни вопрос.' }]);
     setAssistantActions(Array.isArray(result.actionSuggestions) ? result.actionSuggestions : []);
@@ -4133,36 +4275,13 @@ export default function Home() {
   </section>;
 
   return (
-    <main className="app-canvas">
-      <section ref={phoneShellRef} className={`phone-shell${hasDog ? ' journal-shell' : ''} tab-${tab}${hasDog && (isJourneyRoute || journeyDetail === 'nearby') ? ' journey-active' : ''}`}>
-        <header className="app-header">
-          <div className="app-wordmark">
-            <p>план ухода и памятка</p>
-            <h1>Псё</h1>
-          </div>
-          <TelegramPill session={telegramSession} />
-          {session
-            ? <button onClick={signOut}>Выйти</button>
-            : hasDog
-              ? <button onClick={() => setTab(tab === 'profile' ? 'today' : 'profile')}>{tab === 'profile' ? 'всё' : 'псё'}</button>
-              : <button onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>}
-        </header>
+    <ExactScope key={profile.backendPetId || activePetId || 'guest'}><main id="pso-exact-interface" className={hasDog ? `exact-interface${assistantOpen ? ' exact-conversation-open' : ''}` : 'exact-interface exact-static'} data-connected-canvas={tab === 'today' || tab === 'all' ? '' : undefined}>
+      {hasDog && <ExactHeader dogName={profile.dogName} guest={isGuestMode()} onHome={() => { setAssistantOpen(false); setTab('today'); }} onProfile={() => { setAssistantOpen(false); setProfileSurface('overview'); setExactProfileView('profile'); setTab('profile'); }} onBack={['today','map','nearby','all','profile'].includes(tab) && !journeyDetail ? undefined : () => closeSecondaryFlow('all')} />}
+        {!hasDog && <header className="exact-header"><span className="brand">Псё</span><TelegramPill session={telegramSession} /></header>}
+      <section ref={phoneShellRef} id="pso-exact-content" className={hasDog ? `exact-content tab-${tab}` : 'exact-content phone-shell exact-extension'}>
 
-        {pets.length > 0 && <section className="pet-switcher" aria-label="Активная собака">
-          <span>мои собаки</span>
-          <div>
-            {pets.map((pet) => <button key={pet.id} className={pet.id === activePetId ? 'active' : ''} type="button" disabled={petMutationBusy} onClick={() => switchActivePet(pet.id)} aria-pressed={pet.id === activePetId}>
-              {pet.name}
-            </button>)}
-            <button type="button" className="secondary" onClick={() => setAddDogOpen((open) => !open)}>Добавить собаку</button>
-          </div>
-          {addDogOpen && <div className="pet-add-row">
-            <label>Имя новой собаки<input value={newDogName} maxLength={80} autoFocus onChange={(event) => setNewDogName(event.target.value)} placeholder="Например, Луна" /></label>
-            <button type="button" className="primary" disabled={!newDogName.trim() || petMutationBusy} onClick={addDog}>{petMutationBusy ? 'Добавляю…' : 'Добавить'}</button>
-            <button type="button" className="secondary" disabled={petMutationBusy} onClick={() => { setAddDogOpen(false); setNewDogName(''); }}>Отмена</button>
-          </div>}
-          <p>Профиль, дела, места, вещи и наблюдения ниже относятся только к выбранной собаке.</p>
-        </section>}
+
+
 
         {showAuthPanel && <section className={`auth-inline-panel mode-${authPanelMode}`} aria-label="Вход и синхронизация">
           {hasConnectedAccount ? <>
@@ -4183,16 +4302,42 @@ export default function Home() {
           </>}
         </section>}
 
-        {!hasDog && <section className="first-run-activation" aria-labelledby="first-run-title">
+        {!hasDog && <section className="first-run-activation exact-first-run" aria-labelledby="first-run-title">
           <GeneratedAvatar profile={profile} ready={false} size="large" />
           <div>
             <h2 id="first-run-title">Добавь собаку</h2>
-            <p>Начни с имени. После этого Псё покажет одно ближайшее дело и сохранит всё остальное на потом.</p>
+            <p>Начни с имени. Возраст, пол и породу можно указать позже.</p>
           </div>
           <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>
         </section>}
 
-        {hasDog && tab === 'today' && !journeyDetail && <ProductionJourney route="today"
+        {hasDog && tab === 'today' && !exactVoiceOpen && !journeyDetail && <ConnectedHome
+          key={`home:${profile.backendPetId || activePetId}`}
+          dogName={profile.dogName} petId={profile.backendPetId} guest={isGuestMode()}
+          question={assistantQuestion} loading={assistantLoading} headers={authHeaders}
+          recentQuestion={assistantMessages.findLast(message => message.role === 'user')?.content}
+          onQuestion={setAssistantQuestion}
+          onAsk={() => { openAssistantSheet(); void askAssistant(); }}
+          onContinue={run => { if (run) { setAgentRunId(run.id); setAssistantThreadId(run.thread_id || ''); } openAssistantSheet(); }}
+          onProfile={() => { setProfileSurface('overview'); setExactProfileView('profile'); setTab('profile'); }}
+          onAll={() => setTab('all')}
+          observationCount={observations.length} onHistory={() => setTab('health')}
+          onAttach={() => { setExactProfileView('documents'); setProfileSurface('passport'); setTab('profile'); setDocumentUploadOpen(true); }}
+          onVoice={() => setExactVoiceOpen(true)}
+        />}
+        {hasDog && tab === 'today' && exactVoiceOpen && <ExactVoice key={profile.backendPetId || activePetId || 'guest'} active draft={exactVoiceDraft} onDraft={setExactVoiceDraft} onTranscribe={transcribeVoiceObservation} onClose={()=>{setExactVoiceOpen(false);requestAnimationFrame(()=>document.getElementById('connected-question')?.focus());}} onUse={text=>{setAssistantQuestion(current=>current.trim()?`${current.trim()}\n${text}`:text);setExactVoiceDraft('');}} />}
+        {hasDog && tab === 'all' && <ConnectedTools onOpen={destination => {
+          if (destination === 'library') { setMapExactScreen('library'); setMapExactNavigation(value=>value+1); setTab('map'); return; }
+          if (destination === 'connections') { setWoofRecommendationEntry({ key: crypto.randomUUID(), view: 'requests' }); setTab('nearby'); return; }
+          if (destination === 'passport' || destination === 'documents') {
+            const origin = { from: tab, to: 'profile' as Tab, detail: journeyDetail, shellScroll: phoneShellRef.current?.scrollTop ?? 0, windowScroll: window.scrollY, focusText: document.activeElement?.textContent?.trim() ?? '' };
+            setExactProfileView(destination === 'documents' ? 'documents' : 'editprofile'); setProfileSurface('passport'); setTab('profile'); secondaryOrigins.current.push(origin);
+          } else setTab(destination);
+        }} />}
+        {hasDog&&tab==='diary'&&reminderIssue&&<p role="alert">{reminderIssue.message}</p>}
+        {hasDog && tab === 'diary' && !journeyDetail && <ExactPage viewKey="diary" onBack={()=>closeSecondaryFlow('all')}><div className="exact-extension"><ProductionJourney route="today"
+          onBack={() => closeSecondaryFlow('all')}
+          onOpenJournalEntry={(entry, trigger) => openPrivateRecord(entry.kind === 'care' ? 'reminder' : 'observation', entry.id.replace(/^(care|observation)-/, ''), trigger)}
           dogName={profile.dogName}
           breedLabel={breedLabel}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
@@ -4248,10 +4393,15 @@ export default function Home() {
             setJourneyDetail(null);
             setTab(route);
           }}
-        />}
+        /></div></ExactPage>}
 
-        {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ProfileMemoryWorkspace
-          key={profile.backendPetId || activePetId}
+        {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ExactProfile
+          documentId={exactDocumentId} onDocumentId={setExactDocumentId} memoryDrafts={exactMemoryDrafts.current}
+          view={exactProfileView} onView={setExactProfileView} draft={exactProfileDraft} onDraft={setExactProfileDraft}
+          headers={authHeaders} guest={isGuestMode()} onLibrary={() => { setMapExactScreen('library'); setMapExactNavigation(value=>value+1); setTab('map'); }}
+          surface={profileSurface}
+          onSurfaceChange={surface => { if (surface === 'overview' && secondaryOrigins.current.at(-1)?.to === 'profile') closeSecondaryFlow('all'); else setProfileSurface(surface); }}
+          key={`profile:${profile.backendPetId || activePetId}`}
           profile={profile}
           breedLabel={breedLabel}
           imageUrl={generatedAvatarUrl || profile.avatarImageUrl || (demoMode ? '/demo-avatar.png' : '')}
@@ -4275,7 +4425,7 @@ export default function Home() {
           avatarOwnerPrompt={avatarOwnerPrompt}
           avatarConsent={avatarConsent}
           error={error}
-          onBack={() => setTab('today')}
+          onBack={() => secondaryOrigins.current.at(-1)?.to === 'profile' ? closeSecondaryFlow('all') : setTab('today')}
           onOpenIdentity={() => { setError(''); setAvatarComposerOpen(true); }}
           onCloseIdentity={() => setAvatarComposerOpen(false)}
           onPhotoChange={handlePhotos}
@@ -4293,11 +4443,11 @@ export default function Home() {
               return;
             }
             documentUploadTriggerRef.current = trigger;
-            setDocumentFileName('');
             setDocumentUploadOpen(true);
           }}
+          onOpenRecord={openPrivateRecord}
           onOpenDocument={(id) => window.open(`/api/documents/${id}`, '_blank', 'noopener,noreferrer')}
-          onDeleteDocument={(id) => void deletePetDocument(id)}
+          onDeleteDocument={(id) => deletePetDocument(id, true)}
           documentBusyId={documentBusyId}
           onAskAssistant={openAssistantSheet}
           onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
@@ -4307,24 +4457,24 @@ export default function Home() {
           onOpenSettings={() => openJourneyDetail('profile')}
         />}
 
-        {hasDog && tab === 'profile' && documentUploadOpen && <ProductionDocumentSheet dogName={petNameGent} returnFocusTo={documentUploadTriggerRef.current} onClose={() => { setDocumentUploadOpen(false); setDocumentFileName(''); }}>
-          <form className="profile-life-document-form" data-slot="field-group" onSubmit={uploadPetDocument}>
-            <label data-slot="field"><span data-slot="field-label">Что это</span><span className="document-field-control"><TextT weight="regular" aria-hidden="true" /><input data-slot="input" name="title" required placeholder="Например, общий анализ крови" /></span></label>
-            <label data-slot="field"><span data-slot="field-label">Тип документа</span><span className="document-field-control document-select-control"><Files weight="regular" aria-hidden="true" /><select data-slot="input" name="kind" defaultValue="analysis"><option value="analysis">Анализ</option><option value="prescription">Назначение</option><option value="vaccination">Вакцинация</option><option value="other">Другое</option></select><CaretDown className="document-field-action" weight="regular" aria-hidden="true" /></span></label>
-            <label data-slot="field"><span data-slot="field-label">Дата документа <small>необязательно</small></span><span className="document-field-control"><CalendarBlank weight="regular" aria-hidden="true" /><input data-slot="input" name="documentDate" type="date" /></span></label>
-            <label data-slot="field"><span data-slot="field-label">Клиника <small>необязательно</small></span><span className="document-field-control"><Buildings weight="regular" aria-hidden="true" /><input data-slot="input" name="clinic" placeholder="Название клиники" /></span></label>
-            <label className="document-file-drop" data-slot="field"><input data-slot="input" name="file" type="file" required accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(event) => setDocumentFileName(event.currentTarget.files?.[0]?.name || '')} aria-describedby={`profile-document-help${error ? ' profile-document-error' : ''}`} /><span className="document-file-drop-media" aria-hidden="true">{documentFileName ? <CheckCircle weight="fill" /> : <UploadSimple weight="regular" />}</span><span className="document-file-drop-copy"><b data-document-file-name>{documentFileName || 'Выбрать PDF или фото'}</b><small data-slot="field-description" id="profile-document-help">До 4 МБ · файл останется приватным</small></span><span className="document-file-drop-action" aria-hidden="true">{documentFileName ? 'Готово' : 'Выбрать'}</span></label>
-            {error && <p className="profile-life-form-error" data-slot="field-error" id="profile-document-error" role="alert">{error}</p>}
-            <button className="primary" data-slot="button" type="submit" disabled={documentUploading}>{documentUploading ? 'Добавляю…' : <><CheckCircle weight="regular" /> Добавить в историю {petNameGent}</>}</button>
+        {hasDog && <ProductionDocumentSheet exact key={`document:${profile.backendPetId}`} open={tab === 'profile' && documentUploadOpen} dogName={petNameGent} returnFocusTo={documentUploadTriggerRef.current} onClose={() => setDocumentUploadOpen(false)}>
+          <form onSubmit={uploadPetDocument} onReset={() => { setDocumentFileName(''); setDocumentError(''); documentSaveAttempt.current = null; }}>
+            <fieldset disabled={documentUploading}>
+              <div className="field"><label htmlFor="exact-document-title">Что это</label><input id="exact-document-title" name="title" required placeholder="Например, анализ крови" maxLength={200} /></div>
+              <div className="field"><label className="secondary exact-file-choice" htmlFor="exact-document-file">{documentFileName || 'Выбрать PDF или фото'}</label><input className="sr-only" id="exact-document-file" name="file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={event => setDocumentFileName(event.currentTarget.files?.[0]?.name || '')} /><p className="hint">До 4 МБ · файл останется личным</p></div>
+              <details><summary>Тип, дата и клиника</summary><div className="field"><label htmlFor="exact-document-kind">Тип документа</label><select id="exact-document-kind" name="kind" defaultValue="analysis"><option value="analysis">Анализ</option><option value="prescription">Назначение</option><option value="vaccination">Вакцинация</option><option value="other">Другое</option></select></div>
+                <div className="field"><label htmlFor="exact-document-date">Дата документа · необязательно</label><input id="exact-document-date" name="documentDate" type="date" /></div>
+                <div className="field"><label htmlFor="exact-document-clinic">Клиника · необязательно</label><input id="exact-document-clinic" name="clinic" maxLength={200} /></div>
+              </details>
+              {documentError && <p className="error" role="alert">{documentError}</p>}
+              <button className="primary full" type="submit" disabled={documentUploading || !documentFileName}>{documentUploading ? 'Добавляю…' : 'Добавить документ'}</button>
+              <button className="text-button" type="reset">Очистить черновик</button>
+            </fieldset>
           </form>
         </ProductionDocumentSheet>}
 
         {hasDog && mapActivity && tab !== 'map' && <button type="button" className="map-global-activity" onClick={() => setTab('map')}>{mapActivity==='recording'?'Прогулка записывается':'Прогулка на паузе'} · Вернуться к карте</button>}
-        {hasDog && (tab === 'map' || mapVisited) && <div hidden={tab !== 'map'} className="map-persistent-workspace"><ProductionJourney route="map"
-          dogName={profile.dogName}
-          breedLabel={breedLabel}
-          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
-          mapWorkspace={<ProductionMapWorkspace
+        {hasDog && (tab === 'map' || mapVisited) && <div hidden={tab !== 'map'} className="map-persistent-workspace"><ProductionMapWorkspace navigationToken={mapExactNavigation} active={tab === 'map' && !assistantOpen} saveError={error} requestedScreen={mapExactScreen}
             actionNotice={notice==='mapSaved'?'Сохранено на карте':undefined}
             key={profile.backendPetId || activePetId}
             petId={profile.backendPetId || activePetId}
@@ -4342,6 +4492,10 @@ export default function Home() {
             draftNote={newZoneNote}
             savedRevision={mapSavedRevision}
             routeEditSeed={routeEditSeed}
+            agentSelection={agentMapSelection}
+            agentWalkSelection={agentWalkSelection}
+            agentSavedRouteSelection={agentSavedRouteSelection}
+            onReturnToAssistant={openAssistantSheet}
             editingRouteId={editingRouteGeometryId}
             onActivityChange={setMapActivity}
             onReuseRoute={id=>{const route=ownerRoutes.find(r=>r.id===id);if(route)planSavedRoute(route,false);}}
@@ -4354,41 +4508,61 @@ export default function Home() {
             onAppendRoutePoint={(point) => setRoutePoints((current) => [...current, point])}
             onReplaceRoutePoints={setRoutePoints}
             onClearDraft={() => { setRoutePoints([]); setPickedZonePoint(null);setNewZoneTitle('');setNewZoneNote('');setEditingRouteGeometryId(null);setRouteEditSeed(null); }}
-            onSaveDraft={() => void saveProductionMapDraft()}
+            onSaveDraft={saveProductionMapDraft}
             canSaveDraft={mapDraftReady}
             savingDraft={mapDraftSaving}
             onRouteMetaChange={setMapRouteMeta}
-          />}
-          onNavigate={(route) => { setJourneyDetail(null); setTab(route); }}
-        /></div>}
+          /></div>}
 
-        {hasDog && tab === 'things' && journeyDetail !== 'things' && <ProductionJourney route="things"
-          dogName={profile.dogName}
-          breedLabel={breedLabel}
-          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
-          things={wantedWishlist.slice(0, 3).map((item, index) => ({
-            id: item.id,
-            title: item.title,
-            detail: item.reason || (item.priority === 'high' ? 'важно купить' : 'в личном списке'),
-            tone: index === 1 ? 'rose' : index === 2 ? 'green' : 'mint',
-          }))}
-          onAddThing={() => { openJourneyDetail('things'); setThingCaptureOpen(true); }}
-          onNavigate={(route) => {
-            if (route === 'things') openJourneyDetail('things');
-            else { setJourneyDetail(null); setTab(route); }
-          }}
-        />}
-
-        {hasDog && assistantOpen && <ProductionAssistantSheet
+        {hasDog && assistantOpen && <ExactConversation
+          returnFocusTo={assistantReturnFocus}
           dogName={profile.dogName}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
           question={assistantQuestion}
           answer={assistantAnswer}
           messages={assistantMessages}
           loading={assistantLoading}
-          error={error}
+          error={assistantError}
           suggestions={assistantSuggestedQuestions.length ? assistantSuggestedQuestions : contextualAssistantSuggestions}
-          actions={<AssistantActionButtons actions={assistantActions} statuses={assistantActionStatuses} onApply={(action, key) => { void handleApplyAction(action, key); }} onOpen={openAssistantAction} />}
+          actions={<>
+            {!isGuestMode()&&profile.backendPetId&&<AgentPanel key={profile.backendPetId} petId={profile.backendPetId} runId={agentRunId} headers={authHeaders}
+              observationEdits={agentObservationEdits.current}
+              onOpenSavedWalk={async id=>{
+                const pet=profile.backendPetId;if(!pet)return 'missing';
+                agentMapRead.current?.abort();const controller=new AbortController();agentMapRead.current=controller;
+                const response=await fetch(`/api/map/features/${encodeURIComponent(id)}?petId=${encodeURIComponent(pet)}`,{headers:authHeaders(),signal:controller.signal});
+                const body=await response.json();if(controller.signal.aborted)return;
+                if(!response.ok){if(response.status===404){setAgentSavedRouteSelection(null);setOwnerRoutes(current=>current.filter(route=>route.id!==id));return 'missing';}return 'failed';}
+                const route=normalizeOwnerRoutes([body.route])[0];if(!route||route.id!==id||route.petId!==pet)return 'failed';
+                setOwnerRoutes(current=>upsertOwnerRoute(current,route));setAgentMapSelection(null);setAgentWalkSelection(null);
+                setAgentSavedRouteSelection({token:crypto.randomUUID(),petId:pet,route});
+                setAssistantOpen(false);setJourneyDetail(null);setTabState('map');
+                const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
+              }}
+              onOpenWalk={walk=>{
+                if(!isAgentWalk(walk)||!profile.backendPetId)return;
+                setAgentSavedRouteSelection(null);setAgentMapSelection(null);setAgentWalkSelection({token:crypto.randomUUID(),petId:profile.backendPetId,walk});
+                setAssistantOpen(false);setJourneyDetail(null);setTabState('map');
+                const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
+              }}
+              onOpenPlace={(place,places)=>{
+                if(!isMapSearchPlace(place)||!profile.backendPetId)return;
+                setAgentSavedRouteSelection(null);setAgentWalkSelection(null);setAgentMapSelection({token:crypto.randomUUID(),petId:profile.backendPetId,place,places:places.filter(isMapSearchPlace)});
+                setAssistantOpen(false);setJourneyDetail(null);setTabState('map');
+                const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
+              }}
+              onObservationSaved={record=>{const entry=normalizeObservation(record);if(entry)setObservations(current=>[{...entry,syncStatus:'saved' as const},...current.filter(item=>item.id!==entry.id)]);}}
+              onOpenObservation={record => { const entry=normalizeObservation(record); if(entry) setObservations(current => [entry,...current.filter(item=>item.id!==entry.id)]); setExactRecordId(record.id); setObservationCaptureOpen(false); setEditingObservationId(null); setAssistantOpen(false); setTab('health'); }}
+              onBusy={setAssistantLoading} onRetry={question=>void askAssistant(question)} onResult={result=>{
+              if(agentDelivered.current===result.runId) return;
+              agentDelivered.current=result.runId;
+              setAssistantAnswer(result.answer);setAssistantThreadId(result.threadId);
+              setAssistantMessages(current=>[...current,{role:'assistant',content:result.answer}]);
+              setAssistantDiagnostic({provider:result.provider??'openai',mode:'agent'});
+              if (result.observationDraftId) { setExactAgentObservationId(result.observationDraftId); setAssistantOpen(false); setTab('health'); }
+            }}/>}
+            <AssistantActionButtons actions={assistantActions} statuses={assistantActionStatuses} onApply={(action, key) => { void handleApplyAction(action, key); }} onOpen={openAssistantAction} />
+          </>}
           diagnostic={assistantDiagnostic}
           onQuestionChange={setAssistantQuestion}
           onAsk={(question) => { void askAssistant(question); }}
@@ -4411,8 +4585,13 @@ export default function Home() {
           suggestedDraft={suggestedHabitDraft}
         />}
 
-        {hasDog && tab === 'health' && <HealthTimelineScreen
-          dogName={petNameGent}
+        {hasDog && tab === 'health' && exactAgentObservationId && profile.backendPetId && <ExactPage viewKey="observe" onBack={() => setExactAgentObservationId(null)}><AgentObservationDraft page dogName={profile.dogName} key={exactAgentObservationId} id={exactAgentObservationId} petId={profile.backendPetId} headers={authHeaders} edits={agentObservationEdits.current}
+          onSaved={record => { const entry=normalizeObservation(record); if(entry) setObservations(current=>[entry,...current.filter(item=>item.id!==entry.id)]); setExactRecordId(record.id); setExactAgentObservationId(null); }}
+          onOpen={record => { setExactRecordId(record.id); setExactAgentObservationId(null); }}
+        /></ExactPage>}
+        {hasDog && tab === 'health' && !exactAgentObservationId && <ExactRecords selectedId={exactRecordId} onSelect={setExactRecordId}
+          key={profile.backendPetId || activePetId}
+          dogName={profile.dogName || 'Собака'}
           entries={observations}
           draft={observationDraft}
           saving={observationSaving}
@@ -4420,18 +4599,28 @@ export default function Home() {
           onBack={() => closeSecondaryFlow('today')}
           onDraftChange={updateObservationDraft}
           onSave={submitObservation}
-          onRetry={() => loadRealModules(profile.backendPetId)}
+          onRetry={() => loadHealthTimeline()}
+          loading={healthLoading}
+          hasMore={Boolean(healthNextCursor)}
+          onLoadMore={() => healthNextCursor ? loadHealthTimeline(healthNextCursor) : Promise.resolve()}
+          captureOpen={observationCaptureOpen}
+          onCaptureOpen={setObservationCaptureOpen}
+          issue={observationIssue}
+          recentlyDeleted={Boolean(recentlyDeletedObservation)}
+          onRestore={restoreObservation}
+          factsError={healthFactsError}
+          factsSaving={profileSaving}
           editingId={editingObservationId}
           editDraft={observationEditDraft}
           mutationBusy={observationMutationBusy}
           onStartEdit={startObservationEdit}
-          onEditDraftChange={(patch) => setObservationEditDraft((current) => ({ ...current, ...patch }))}
+          onEditDraftChange={(patch) => setObservationEditDraft(current => { const next = { ...current, ...patch }; if (editingObservationId) observationEditDrafts.current.set(editingObservationId, next); return next; })}
           onSaveEdit={editObservation}
-          onCancelEdit={() => setEditingObservationId(null)}
+          onCancelEdit={() => { if (editingObservationId) observationEditDrafts.current.set(editingObservationId,observationEditDraft); setEditingObservationId(null); }}
           onDelete={deleteObservation}
-          facts={{ allergies: profile.allergies, medication: profile.medication, vaccineStatus: profile.vaccineStatus, parasiteStatus: profile.parasiteStatus, healthNotes: profile.healthNotes }}
-          onFactChange={(patch) => updateProfile(patch)}
-          onSaveFacts={async () => { await savePrivateProfile(); }}
+          facts={healthFactsDraft ?? profile}
+          onFactChange={(patch) => setHealthFactsDraft(current => ({ ...(current ?? profile), ...patch }))}
+          onSaveFacts={async () => { if (await savePrivateProfile(healthFactsDraft ?? profile,setHealthFactsError)) setHealthFactsDraft(null); }}
         />}
 
         {hasDog && tab === 'nearby' && <ProductionWoofWorkspace
@@ -4477,21 +4666,14 @@ export default function Home() {
           onRetry={() => loadSocialSurface().catch(() => setNearbyState('error'))}
         />}
 
-        {hasDog && tab === 'calendar' && <WatercolorScreen onBack={() => closeSecondaryFlow('today')} backLabel="На главную" className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Дела, напоминания и история ухода." aside={<CalendarDots className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
-          <section className="care-workbench" aria-label="Дела ухода">
-            <div className="care-workbench-head">
-              <div><span className="eyebrow">сейчас в плане</span><h3>{activeReminders.length ? formatCount(activeReminders.length, ['активное дело', 'активных дела', 'активных дел']) : 'Добавь первое дело'}</h3></div>
-              <button className="primary" onClick={() => {
-                setNewReminderDueDate(selectedCalendarDate);
-                document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus();
-              }}>Добавить дело</button>
-            </div>
+        {hasDog && tab === 'calendar' && <ExactCare advanced={<>
             <div className="care-view-toggle" aria-label="Раздел плана ухода">
-              <button className={careView === 'active' ? 'active' : ''} onClick={() => setCareView('active')} aria-pressed={careView === 'active'}>Календарь</button>
+              <button className={careView === 'active' ? 'active' : ''} onClick={() => setCareView('active')} aria-pressed={careView === 'active'}>Дела</button>
               <button className={careView === 'history' ? 'active' : ''} onClick={() => setCareView('history')} aria-pressed={careView === 'history'}>История</button>
             </div>
 
             {careView === 'active' && <div className="care-calendar-view">
+              <details open={careCalendarOpen} onToggle={event=>setCareCalendarOpen(event.currentTarget.open)} className="care-calendar-disclosure"><summary>Выбрать дату</summary>
               <section className="care-calendar-panel" data-care-calendar aria-label="Календарь дел">
                 <div className="calendar-toolbar">
                   <button type="button" aria-label="Предыдущий месяц" onClick={() => setCalendarCursor((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}><ArrowLeft weight="bold" aria-hidden="true" /></button>
@@ -4504,7 +4686,7 @@ export default function Home() {
                     const today = new Date();
                     const key = dateInputValue(today);
                     setCalendarCursor(today);
-                    setSelectedCalendarDate(key);
+                    setSelectedCalendarDate(key);setCareFilterDate(true);
                   }}>Сегодня</button>
                 </div>
                 <div className="care-calendar-grid" role="grid" aria-label={calendarTitle}>
@@ -4518,7 +4700,7 @@ export default function Home() {
                     aria-label={`${day.date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, ${formatCount(day.reminders.length, ['дело', 'дела', 'дел'])}`}
                     onClick={() => {
                       setSelectedCalendarDate(day.key);
-                      setNewReminderDueDate(day.key);
+                      setCareFilterDate(true);
                       if (!day.inMonth) setCalendarCursor(day.date);
                     }}
                   >
@@ -4526,41 +4708,20 @@ export default function Home() {
                     {day.reminders.length > 0 && <b aria-hidden="true">{day.reminders.length}</b>}
                   </button>)}
                 </div>
-              </section>
+              </section></details>
 
-              <div className="selected-day-panel">
+              {careFilterDate&&<div className="selected-day-panel">
                 <div><span>Дела на выбранную дату</span><b>{selectedDateLabel}</b></div>
                 <button type="button" onClick={() => {
                   setNewReminderDueDate(selectedCalendarDate);
                   document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus();
-                }}>Добавить</button>
-              </div>
+                }}>Добавить на эту дату</button><button type="button" onClick={()=>setCareFilterDate(false)}>Все дела</button>
+              </div>}
 
               <div className="care-task-list" aria-live="polite">
-              {selectedDateReminders.length === 0 && <article className="care-empty-state"><b>На этот день дел нет</b><p>Выбери другую дату или добавь дело — выбранный день уже подставлен в форму.</p></article>}
-              {selectedDateReminders.map((reminder) => <article key={reminder.id} className={`care-task-card ${new Date(reminder.snoozedUntil || reminder.dueAt).getTime() < new Date().setHours(0, 0, 0, 0) ? 'warning' : ''}`}>
-                {editingReminderId === reminder.id ? <form className="reminder-edit-form" onSubmit={async (event) => {
-                  event.preventDefault();
-                  const data = new FormData(event.currentTarget);
-                  const saved = await updateReminder(reminder.id, {
-                    title: String(data.get('title') || reminder.title),
-                    type: String(data.get('type') || reminder.type),
-                    dueAt: reminderDueAt(String(data.get('dueDate') || reminderDateInputValue(reminder)), String(data.get('dueTime') || '09:00'), 'exact'),
-                    recurrence: String(data.get('recurrence') || reminder.recurrence || 'none') as ReminderRecurrence,
-                  });
-                  if (saved) setEditingReminderId(null);
-                }}>
-                  <input name="title" defaultValue={reminder.title} aria-label="Название дела" />
-                  <div className="reminder-edit-row">
-                    <select name="type" defaultValue={reminder.type} aria-label="Тип дела">{careTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
-                    <input name="dueDate" type="date" defaultValue={reminderDateInputValue(reminder)} aria-label="Дата дела" />
-                  </div>
-                  <div className="reminder-edit-row">
-                    <input name="dueTime" type="time" defaultValue={new Date(reminder.dueAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })} aria-label="Время дела" />
-                    <select name="recurrence" defaultValue={reminder.recurrence || 'none'} aria-label="Повтор дела">{reminderRecurrenceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
-                  </div>
-                  <div className="care-row-actions"><button type="submit" disabled={Boolean(reminderMutationBusy)}>{reminderMutationBusy ? 'Сохраняю…' : 'Сохранить'}</button><button type="button" onClick={() => setEditingReminderId(null)} disabled={Boolean(reminderMutationBusy)}>Отмена</button></div>
-                </form> : <>
+              {(careFilterDate?selectedDateReminders:activeReminders).length===0&&<p className="care-empty-state">{careFilterDate?'На эту дату дел нет.':'В плане пока нет дел.'}</p>}
+              {(careFilterDate?selectedDateReminders:[...activeReminders].sort((a,b)=>new Date(a.snoozedUntil||a.dueAt).getTime()-new Date(b.snoozedUntil||b.dueAt).getTime())).map((reminder) => <article key={reminder.id} className={`care-task-card ${new Date(reminder.snoozedUntil || reminder.dueAt).getTime() < new Date().setHours(0, 0, 0, 0) ? 'warning' : ''}`}>
+                {editingReminderId === reminder.id ? <ReminderEditor reminder={reminder} drafts={reminderDrafts.current} busy={Boolean(reminderMutationBusy)} error={reminderIssue?.scope===reminder.id?reminderIssue.message:undefined} types={careTypeOptions} recurrences={reminderRecurrenceOptions} onClose={()=>setEditingReminderId(null)} onSave={draft=>updateReminder(reminder.id,{title:draft.title,type:draft.type,dueAt:reminderDueAt(draft.date,draft.time,draft.timeMode||'exact'),recurrence:draft.recurrence,...(draft.timeMode?{timeMode:draft.timeMode}:{})})}/> : <>
                   <div className="care-task-main">
                     <span>{careTypeLabel(reminder.type)}</span>
                     <b>{reminder.title}</b>
@@ -4569,16 +4730,18 @@ export default function Home() {
                   </div>
                   <div className="care-row-actions">
                     <button disabled={Boolean(reminderMutationBusy)} onClick={() => completeReminder(reminder.id)}>Готово</button>
-                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => snoozeReminder(reminder.id)}>Отложить</button>
+                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => snoozeReminder(reminder.id)}>На завтра</button>
                     <button disabled={Boolean(reminderMutationBusy)} onClick={() => setEditingReminderId(reminder.id)}>Изменить</button>
                     <button disabled={Boolean(reminderMutationBusy)} className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button>
                   </div>
+                  {reminderIssue?.scope===reminder.id&&!pendingCareDeletion&&<p role="alert">{reminderIssue.message}</p>}
                 </>}
               </article>)}
               </div>
             </div>}
 
             {careView === 'history' && <div className="care-task-list">
+              {Object.entries(reminderHistoryErrors).map(([id,message])=><p key={id} role="alert">{message} <button type="button" onClick={()=>void loadReminderHistory(id)}>Повторить</button></p>)}
               {doneReminders.length === 0 && Object.values(reminderHistory).every((items) => items.length === 0) && <article className="care-empty-state"><b>История начнётся после первого «Готово»</b><p>Так будет видно, когда была обработка, вакцина, груминг или визит.</p></article>}
               {doneReminders.slice(0, 12).map((reminder) => <article key={reminder.id} className="care-task-card done">
                 <div className="care-task-main">
@@ -4588,38 +4751,35 @@ export default function Home() {
                 </div>
                 <div className="care-row-actions"><button onClick={() => createReminder(reminder.title, reminder.type, 0)}>Создать снова</button><button className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button></div>
               </article>)}
-              {reminders.flatMap((reminder) => (reminderHistory[reminder.id] ?? []).map((entry) => ({ reminder, entry }))).slice(0, 20).map(({ reminder, entry }) => <article key={entry.id} className="care-task-card done"><div className="care-task-main"><span>{careTypeLabel(reminder.type)}</span><b>{reminder.title}</b><p>Выполнено {new Date(entry.payload?.completedAt || entry.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>{entry.payload?.nextDueAt && <p>Следующий раз: {new Date(entry.payload.nextDueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}</div></article>)}
+              {reminders.flatMap((reminder) => (reminderHistory[reminder.id] ?? []).filter(entry=>!(reminder.status==='done'&&reminder.completedAt&&entry.payload?.completedAt&&Date.parse(reminder.completedAt)===Date.parse(entry.payload.completedAt))).map((entry) => ({ reminder, entry }))).slice(0, 20).map(({ reminder, entry }) => <article key={entry.id} className="care-task-card done"><div className="care-task-main"><span>{careTypeLabel(reminder.type)}</span><b>{reminder.title}</b><p>Выполнено {new Date(entry.payload?.completedAt || entry.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>{entry.payload?.nextDueAt && <p>Следующий раз: {new Date(entry.payload.nextDueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}</div></article>)}
             </div>}
-          </section>
 
-          <article className="today-add-care care-composer">
-            <div className="today-add-copy">
-              <span className="eyebrow">новое дело</span>
-              <b>Что нужно не забыть</b>
-              <p>Название, тип и дата. Всё остальное можно поправить прямо в списке.</p>
-            </div>
-            <div className="quick-add today-quick-add">
-              <input value={newReminderTitle} onChange={(event) => setNewReminderTitle(event.target.value)} placeholder="Например: обработка от клещей" />
-              <button aria-label="Добавить дело" onClick={() => createReminder()}><Plus aria-hidden="true" /></button>
-            </div>
-            <div className="care-form-row">
-              <select value={newReminderType} onChange={(event) => setNewReminderType(event.target.value)} aria-label="Тип дела">{careTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
-              <input type="date" value={newReminderDueDate} onChange={(event) => setNewReminderDueDate(event.target.value)} aria-label="Дата дела" />
-            </div>
-            <div className="care-form-row">
-              <select value={newReminderTimeMode} onChange={(event) => setNewReminderTimeMode(event.target.value as ReminderTimeMode)} aria-label="Точность времени">{reminderTimeModeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
-              {newReminderTimeMode === 'exact' ? <input type="time" value={newReminderDueTime} onChange={(event) => setNewReminderDueTime(event.target.value)} aria-label="Время дела" /> : <select value={newReminderRecurrence} onChange={(event) => setNewReminderRecurrence(event.target.value as ReminderRecurrence)} aria-label="Повтор дела">{reminderRecurrenceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>}
-            </div>
-            {newReminderTimeMode === 'exact' && <label>Повтор<select value={newReminderRecurrence} onChange={(event) => setNewReminderRecurrence(event.target.value as ReminderRecurrence)}>{reminderRecurrenceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>}
-            <div className="care-preset-grid" aria-label="Быстро добавить уход">
-              <button onClick={() => createReminder('Обработка от клещей и паразитов', 'parasite', 30)}>Обработка</button>
-              <button onClick={() => createReminder('Проверить дату вакцинации', 'vaccine', 7)}>Вакцинация</button>
-              <button onClick={() => createReminder('Груминг: шерсть и когти', 'grooming', 14)}>Груминг</button>
-            </div>
-          </article>
-        </WatercolorScreen>}
+</>}
+          editActions={(() => {const reminder=reminders.find(item=>item.id===editingReminderId);return reminder ? <div className="row-actions section-gap"><button type="button" className="secondary" disabled={Boolean(reminderMutationBusy)} onClick={()=>snoozeReminder(reminder.id)}>На завтра</button><button type="button" className="secondary" onClick={()=>exportReminderToCalendar(reminder)}>В календарь телефона</button><button type="button" className="secondary" disabled={Boolean(reminderMutationBusy)} onClick={()=>setPendingCareDeletion({id:reminder.id,title:reminder.title})}>Удалить дело</button></div> : null;})()}
+          items={[...reminders, ...reminders.filter(item=>item.recurrence && item.recurrence!=='none').flatMap(item=>{const event=reminderHistory[item.id]?.find(entry=>entry.payload?.completedAt); return event?.payload?.completedAt ? [{...item,status:'done',dueAt:event.payload.dueAt || event.createdAt,completedAt:event.payload.completedAt,snoozedUntil:undefined}] : [];})]} busy={Boolean(reminderMutationBusy)} issue={reminderIssue}
+          onBack={() => closeSecondaryFlow('all')} onComplete={id => completeReminder(id)} onUndo={undoExactCareCompletion}
+          onEdit={item => setEditingReminderId(item.id)} editing={Boolean(editingReminderId)} onCloseEdit={() => setEditingReminderId(null)}
+          editingForm={(() => { const reminder = reminders.find(item => item.id === editingReminderId); return reminder ? <ReminderEditor key={reminder.id} reminder={reminder} drafts={reminderDrafts.current} busy={Boolean(reminderMutationBusy)} error={reminderIssue?.scope===reminder.id?reminderIssue.message:undefined} types={careTypeOptions} recurrences={reminderRecurrenceOptions} onClose={()=>setEditingReminderId(null)} onSave={draft=>updateReminder(reminder.id,{title:draft.title,type:draft.type,dueAt:reminderDueAt(draft.date,draft.time,draft.timeMode||'exact'),recurrence:draft.recurrence,...(draft.timeMode?{timeMode:draft.timeMode}:{})})}/> : null; })()}
+          createForm={onSaved => <form className="exact-care-create" aria-label="Новое дело" onSubmit={async event=>{event.preventDefault();if(await createReminder())onSaved();}}><fieldset  disabled={Boolean(reminderMutationBusy)}>
+              <label htmlFor="care-new-title">Новое дело</label>
+              <div className="inline-add"><input id="care-new-title" required maxLength={200} value={newReminderTitle} onChange={event=>setNewReminderTitle(event.target.value)} placeholder="Что нужно сделать…"/><button type="submit" disabled={!newReminderTitle.trim()||Boolean(reminderMutationBusy)} className="primary" aria-label="Добавить дело"><Plus aria-hidden="true"/></button></div>
+              <label className="field">Когда<input type="date" required value={newReminderDueDate} onChange={event=>setNewReminderDueDate(event.target.value)} aria-label="Дата дела"/></label>
+              <details><summary>Время, повтор и тип</summary>
+                <fieldset className="chips"><legend>Точность времени</legend>{reminderTimeModeOptions.map(option=><button type="button" key={option.value} aria-pressed={newReminderTimeMode===option.value} onClick={()=>setNewReminderTimeMode(option.value)}>{option.label}</button>)}</fieldset>
+                {newReminderTimeMode!=='flexible'&&<label>Время дела<input type="time" required value={newReminderDueTime} onChange={event=>setNewReminderDueTime(event.target.value)}/></label>}
+                <label>Повтор дела<select value={newReminderRecurrence} onChange={event=>setNewReminderRecurrence(event.target.value as ReminderRecurrence)}>{reminderRecurrenceOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+                <label>Тип дела<select value={newReminderType} onChange={event=>setNewReminderType(event.target.value)}>{careTypeOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+              </details>
+              {reminderIssue?.scope==='create'&&<p role="alert">{reminderIssue.message}</p>}
+              <details className="care-presets"><summary>Примеры дел</summary><div className="care-preset-grid" aria-label="Подготовить дело">
+                <button type="button" onClick={()=>{setNewReminderTitle('Обработка от клещей и паразитов');setNewReminderType('parasite');}}>Обработка</button>
+                <button type="button" onClick={()=>{setNewReminderTitle('Проверить дату вакцинации');setNewReminderType('vaccine');}}>Вакцинация</button>
+                <button type="button" onClick={()=>{setNewReminderTitle('Груминг: шерсть и когти');setNewReminderType('grooming');}}>Груминг</button>
+              </div></details>
+            </fieldset></form>}
+        />}
 
-        {hasDog && tab === 'card' && <WatercolorScreen onBack={() => closeSecondaryFlow('profile')} backLabel="В профиль" className="public-card-screen" tone="gold" eyebrow="" title="Публичная карточка" caption="Одна безопасная ссылка для догситтера, грумера, друга или человека во дворе. Ты решаешь, что показать и когда закрыть доступ." aside={<PawPrint className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'card' && <ExactPage viewKey="public-card" onBack={() => closeSecondaryFlow('profile')}><div className="exact-extension public-card-screen"><h1>Публичная карточка</h1><p className="lead">Ты решаешь, что показать и когда закрыть доступ.</p>
 
           <section className={`public-card-lifecycle ${publicCardPublished ? 'is-published' : 'is-draft'} ${publicCardHasChanges ? 'has-changes' : ''}`} aria-live="polite">
             <div className="public-card-lifecycle-icon" aria-hidden="true">{publicCardPublished ? <CheckCircle weight="fill" /> : <LinkSimple weight="duotone" />}</div>
@@ -4696,9 +4856,24 @@ export default function Home() {
             <b>Что не публикуем автоматически</b>
             <p>Точный адрес, контакты владельца, медицинские заметки, лекарства и внутреннюю историю ухода. В памятку попадает только то, что нужно человеку рядом с собакой.</p>
           </article>
-        </WatercolorScreen>}
+        </div></ExactPage>}
 
-        {hasDog && tab === 'profile' && journeyDetail === 'profile' && <WatercolorScreen onBack={closeJourneyDetail} backLabel="В профиль" className="profile-settings-screen" tone="green" eyebrow="настройки" title="Данные и доступ" caption="Аккаунт, приватность и помощь.">
+        {hasDog && tab === 'profile' && journeyDetail === 'profile' && <ExactPage viewKey="settings" onBack={closeJourneyDetail}><div className="exact-extension profile-settings-screen"><h1>Данные и доступ</h1><p className="lead">Аккаунт, приватность и помощь.</p>
+        {hasDog && <section className="exact-pet-switcher" aria-label="Активная собака">
+          <h2>Мои собаки</h2>
+          <div className="chips">
+            {pets.map((pet) => <button key={pet.id} className={pet.id === activePetId ? 'active' : ''} type="button" disabled={petMutationBusy} onClick={() => switchActivePet(pet.id)} aria-pressed={pet.id === activePetId}>
+              {pet.name}
+            </button>)}
+            <button type="button" className="secondary" onClick={() => setAddDogOpen((open) => !open)}>Добавить собаку</button>
+          </div>
+          {addDogOpen && <div className="pet-add-row">
+            <label>Имя новой собаки<input value={newDogName} maxLength={80} autoFocus onChange={(event) => setNewDogName(event.target.value)} placeholder="Например, Луна" /></label>
+            <button type="button" className="primary" disabled={!newDogName.trim() || petMutationBusy} onClick={addDog}>{petMutationBusy ? 'Добавляю…' : 'Добавить'}</button>
+            <button type="button" className="secondary" disabled={petMutationBusy} onClick={() => { setAddDogOpen(false); setNewDogName(''); }}>Отмена</button>
+          </div>}
+          <p>Профиль, дела, места, вещи и наблюдения ниже относятся только к выбранной собаке.</p>
+        </section>}
           {session && <section className="journal-account"><p>Вы вошли в аккаунт Псё.</p><button type="button" className="secondary" onClick={signOut}>Выйти из аккаунта</button></section>}
 
           <section className="profile-settings-links" aria-label="Настройки и документы">
@@ -4719,82 +4894,36 @@ export default function Home() {
             {!isGuestMode() && <details><summary>Удалить аккаунт</summary><div className="profile-delete-form"><p>Будут удалены аккаунт и данные всех собак без возможности восстановления.</p><label>Для подтверждения введи УДАЛИТЬ АККАУНТ<input value={accountDeleteConfirmation} onChange={(event) => setAccountDeleteConfirmation(event.target.value)} placeholder="УДАЛИТЬ АККАУНТ" /></label><button type="button" className="danger-action" disabled={accountDeleteConfirmation.trim() !== 'УДАЛИТЬ АККАУНТ' || petMutationBusy} onClick={deleteAccount}>Удалить аккаунт</button></div></details>}
             {isGuestMode() && <details><summary>Очистить данные на этом устройстве</summary><div className="profile-delete-form"><p>Псё удалит локальный профиль, дела, записи, вещи, места и черновики. Данные других сайтов не затрагиваются.</p><label>Для подтверждения введи ОЧИСТИТЬ ДАННЫЕ<input value={localDeleteConfirmation} onChange={(event) => setLocalDeleteConfirmation(event.target.value)} placeholder="ОЧИСТИТЬ ДАННЫЕ" /></label><button type="button" className="danger-action" disabled={localDeleteConfirmation.trim() !== 'ОЧИСТИТЬ ДАННЫЕ' || petMutationBusy} onClick={deleteLocalData}>Очистить данные на устройстве</button></div></details>}
           </section>
-        </WatercolorScreen>}
+        </div></ExactPage>}
 
-        {hasDog && tab === 'things' && journeyDetail === 'things' && <WatercolorScreen onBack={closeJourneyDetail} backLabel="К вещам" className="things-composition" tone="gold" eyebrow="вещи" title={`Что нужно ${petNameDatv}`} caption="Личный список покупок и того, что заканчивается." aside={<ShoppingBag className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
-          <div className="screen-primary-action">
-            <button className="primary" type="button" aria-expanded={thingCaptureOpen} onClick={() => setThingCaptureOpen((open) => !open)}>
-              {thingCaptureOpen ? 'Закрыть добавление' : 'Добавить вещь'}
-            </button>
-            <span>{formatCount(wantedWishlist.length, ['позиция', 'позиции', 'позиций'])}</span>
-          </div>
-
-          {thingCaptureOpen && <PaperSheet className="thing-capture">
-            <div className="section-title">
-              <div><span className="eyebrow">новая позиция</span><h3>Что нужно</h3></div>
-            </div>
-            <label>Название<input value={newWishTitle} onChange={(event) => setNewWishTitle(event.target.value)} placeholder="Например, адресник" /></label>
-            <label>Категория<select value={newWishCategory} onChange={(event) => setNewWishCategory(event.target.value)}>
-              <option value="gear">амуниция</option>
-              <option value="food">корм</option>
-              <option value="treats">лакомства</option>
-              <option value="toy">игрушка</option>
-              <option value="health">здоровье</option>
-              <option value="grooming">груминг</option>
-              <option value="service">сервис</option>
-              <option value="other">другое</option>
-            </select></label>
-            <label>Зачем <span className="field-optional">необязательно</span><input value={newWishReason} onChange={(event) => setNewWishReason(event.target.value)} placeholder="Например, старый адресник потерялся" /></label>
-            <label className="thing-plan-option">
-              <input type="checkbox" checked={newWishNeedsReminder} onChange={(event) => setNewWishNeedsReminder(event.target.checked)} />
-              <span><b>Добавить в план</b><small>Псё напомнит купить к выбранной дате</small></span>
-            </label>
-            {newWishNeedsReminder && <label>Купить до<input type="date" min={dateInputValue(new Date())} value={newWishPlannedFor} onChange={(event) => setNewWishPlannedFor(event.target.value)} /></label>}
-            <button className="primary full" onClick={() => createWishlistItem()} disabled={!newWishTitle.trim() || (newWishNeedsReminder && !newWishPlannedFor)}>{newWishTitle.trim() ? newWishNeedsReminder ? 'Добавить в вещи и план' : 'Добавить в вещи' : 'Напиши название'}</button>
-          </PaperSheet>}
-
-          {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <article className="empty-state"><b>Список пока пуст</b><p>Здесь можно держать покупки и услуги для {profile.dogName}.</p></article>}
-
-          {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Вещи собаки">
-            {wantedWishlist.map((item) => <article key={item.id} className={`wishlist-item priority-${item.priority}`}>
-              {editingWishlistId === item.id ? <form className="wishlist-edit-form" onSubmit={async (event) => { event.preventDefault(); await updateWishlistItem(item.id, { title: wishlistTitleDraft.trim(), reason: wishlistReasonDraft.trim() || undefined }); }}><label>Название<input value={wishlistTitleDraft} maxLength={160} onChange={(event) => setWishlistTitleDraft(event.target.value)} /></label><label>Зачем <span className="field-optional">необязательно</span><input value={wishlistReasonDraft} maxLength={500} onChange={(event) => setWishlistReasonDraft(event.target.value)} /></label><div className="wishlist-actions"><button type="submit" disabled={!wishlistTitleDraft.trim()}>Сохранить</button><button type="button" onClick={() => setEditingWishlistId(null)}>Отмена</button></div></form> : <><div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div><div className="wishlist-actions">
-                {item.plannedFor && <p className="wishlist-plan-date"><CalendarBlank weight="bold" aria-hidden="true" />В плане на {new Date(`${item.plannedFor}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}
-                {item.url && <a href={item.url} target="_blank" rel="noreferrer">Открыть</a>}
-                {item.plannedFor && <button type="button" onClick={() => openWishlistPlan(item)}>Открыть в плане</button>}
-                <button onClick={() => { setEditingWishlistId(item.id); setWishlistTitleDraft(item.title); setWishlistReasonDraft(item.reason || ''); }}>Изменить</button>
-                <button onClick={() => completeWishlistItem(item)}>Куплено</button>
-                <button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button>
-              </div></>}
-            </article>)}
-          </section>}
-
-
-          {boughtWishlist.length > 0 && <section className="wishlist-list" aria-label="История вещей">
-            <div className="section-title"><div><span className="eyebrow">история</span><h3>Уже закрыто</h3></div></div>
-            {boughtWishlist.slice(0, 4).map((item) => <article key={item.id} className="wishlist-item">
-              <div><b>{item.title}</b><p>{formatWishlistMeta(item.category, item.priority, item.reason)}</p></div>
-              <div className="wishlist-actions"><button onClick={() => updateWishlistItem(item.id, { status: 'wanted', plannedFor: undefined, reminderId: undefined })}>Вернуть</button><button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Удалить</button></div>
-            </article>)}
-          </section>}
-
-          {removedWishlistItem && <div className="restore-notice" role="status">
-            <span>Вещь убрана</span>
-            <button type="button" onClick={restoreWishlistItem}>Вернуть</button>
-          </div>}
-
-        </WatercolorScreen>}
+        {hasDog && tab === 'things' && <ExactThings items={wishlist} draft={newWishTitle} onDraft={setNewWishTitle}
+          busy={wishlistBusy} issue={wishlistError} onBack={() => closeSecondaryFlow('all')}
+          onAdd={() => createWishlistItem()}
+          captureOpen={thingCaptureOpen} onCaptureOpen={setThingCaptureOpen} category={newWishCategory} onCategory={setNewWishCategory} reason={newWishReason} onReason={setNewWishReason}
+          needsReminder={newWishNeedsReminder} onNeedsReminder={setNewWishNeedsReminder} plannedFor={newWishPlannedFor} onPlannedFor={setNewWishPlannedFor}
+          onComplete={completeWishlistItem}
+          editingId={editingWishlistId} editTitle={wishlistTitleDraft} editReason={wishlistReasonDraft}
+          onEdit={beginWishlistEdit} onCloseEdit={() => setEditingWishlistId(null)}
+          onEditDraft={patch => { const title=patch.title ?? wishlistTitleDraft, reason=patch.reason ?? wishlistReasonDraft; setWishlistTitleDraft(title); setWishlistReasonDraft(reason); if(editingWishlistId) wishlistEditDrafts.current.set(editingWishlistId,{title,reason}); }}
+          onSaveEdit={id => updateWishlistItem(id,{title:wishlistTitleDraft.trim(),reason:wishlistReasonDraft.trim()})}
+          onDelete={deleteWishlistItem} removed={Boolean(removedWishlistItem)} onRestore={restoreWishlistItem} onOpenPlan={openWishlistPlan}
+          onReturn={item => updateWishlistItem(item.id, { status: 'wanted', plannedFor: undefined, reminderId: undefined })}
+        />}
 
         {error && <p className="error-text" role="alert">{error}</p>}
-        {notice !== 'idle' && !(tab === 'map' && notice === 'mapSaved') && <div className="toast" role="status" aria-live="polite">{notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
+        {notice !== 'idle' && !(tab === 'map' && notice === 'mapSaved') && <div className="toast" role="status" aria-live="polite">{notice === 'documentSaved' ? 'Документ сохранён' : notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
       </section>
 
-      {hasDog && !(tab === 'map' && productionMapMode !== 'view') && <AppNavigation dogName={profile.dogName} active={activePrimaryRoute} onAskAssistant={openAssistantSheet} onNavigate={(route) => {
+      {hasDog && <ExactNavigation active={activePrimaryRoute} onNavigate={(route) => {
+        setAssistantOpen(false);
+        if (route === 'profile') { setExactProfileView('profile'); setProfileSurface('overview'); secondaryOrigins.current = []; }
+        if (route === 'map') { setMapExactScreen('map'); setMapExactNavigation(value=>value+1); }
         setJourneyDetail(null);
         setAssistantOpen(false);
         setTab(route);
       }} />}
 
-      <DesktopContextPanel
+      {!hasDog && tab !== 'today' && tab !== 'all' && <DesktopContextPanel
         mode={journeyDetail || tab}
         dogName={petName || 'собаки'}
         nearestTitle={nextBestAction.title}
@@ -4811,15 +4940,22 @@ export default function Home() {
         onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
         onOpenHistory={() => { setCareView('history'); setTab('calendar'); }}
         onOpenCard={() => setTab('card')}
-      />
+      />}
       <CareActionNotice
-        feedback={careFeedback}
+        feedback={careFeedback?.kind === 'observation-deleted' ? null : careFeedback}
         onUndo={undoLastCareCompletion}
         onDismiss={() => setCareFeedback(null)}
       />
+      {recordDetail && <RecordDetailDialog record={recordDetail} onClose={() => setRecordDetail(null)} />}
+      {profileConflict && <ProfileConflictDialog key={profileConflict.remote.profileVersion} conflict={profileConflict} onResolve={resolved => {
+        setProfileConflict(null);
+        profileConflictResolver.current?.(resolved);
+        profileConflictResolver.current = null;
+      }} />}
       <DeleteCareDialog
         reminder={pendingCareDeletion}
         busy={careDeletionBusy}
+        error={reminderIssue?.scope===pendingCareDeletion?.id?reminderIssue?.message:undefined}
         onCancel={() => setPendingCareDeletion(null)}
         onConfirm={confirmCareDeletion}
       />
@@ -4853,6 +4989,6 @@ export default function Home() {
         onSubmit={saveMinimalDog}
       />
 
-    </main>
+    </main></ExactScope>
   );
 }

@@ -29,6 +29,7 @@ export default defineConfig([
     },
   },
   globalIgnores([
+    'app/.well-known/workflow/**',
     '.next/**',
     'node_modules/**',
     'public/design-lab/**',

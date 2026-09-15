@@ -22,7 +22,7 @@ for (const token of ['buildTodayCareView', "'empty'", "'overdue'", "'today'", "'
   if (!today.includes(token)) failures.push(`TodayService contract missing: ${token}`);
 }
 
-for (const token of ["label: 'Главная'", "label: 'Профиль'", "label: 'Карта'", "label: 'Гав'", "label: 'Вещи'"]) {
+for (const token of ["label: 'Псё'", "label: 'Профиль'", "label: 'Карта'", "label: 'Гав'", "label: 'Всё'"]) {
   if (!nav.includes(token)) failures.push(`primary navigation missing: ${token}`);
 }
 

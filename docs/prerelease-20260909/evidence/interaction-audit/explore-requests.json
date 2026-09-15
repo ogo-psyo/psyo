@@ -1,0 +1,164 @@
+{
+  "fail": false,
+  "requests": [
+    {
+      "path": "/api/internal/release",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/app/bootstrap",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/billing/entitlements",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/v1/session/telegram",
+      "method": "POST",
+      "body": "{\"initData\":\"test-fixture-not-valid\"}"
+    },
+    {
+      "path": "/api/internal/release",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/app/bootstrap",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/billing/entitlements",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/v1/session/telegram",
+      "method": "POST",
+      "body": "{\"initData\":\"test-fixture-not-valid\"}"
+    },
+    {
+      "path": "/api/app/bootstrap",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/app/bootstrap",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/billing/entitlements",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/observations",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/dog-cards",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/habits",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/health",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/pets/11111111-1111-4111-8111-111111111111/summary",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/recommendations",
+      "method": "POST",
+      "body": "{\"petId\":\"11111111-1111-4111-8111-111111111111\"}"
+    },
+    {
+      "path": "/api/social/profile",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/social/candidates",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/social/requests",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/social/signals",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/map/library",
+      "method": "GET",
+      "body": null
+    }
+  ],
+  "blocked": [
+    "telegram.org"
+  ],
+  "observations": [
+    {
+      "id": "o1",
+      "petId": "11111111-1111-4111-8111-111111111111",
+      "note": "Контрольная запись для открытия",
+      "mood": "",
+      "appetite": "обычный",
+      "stool": "",
+      "energy": "",
+      "createdAt": "2026-09-08T23:25:11.855Z",
+      "observedAt": "2026-09-08T23:25:11.855Z"
+    }
+  ],
+  "documents": [
+    {
+      "id": "d1",
+      "petId": "11111111-1111-4111-8111-111111111111",
+      "title": "Контрольный документ",
+      "kind": "analysis",
+      "createdAt": "2026-09-08T23:25:11.855Z"
+    }
+  ],
+  "reminders": [
+    {
+      "id": "r-done",
+      "title": "Завершённое контрольное дело",
+      "petId": "11111111-1111-4111-8111-111111111111",
+      "type": "care",
+      "dueAt": "2026-09-08T23:25:11.855Z",
+      "done": true,
+      "completedAt": "2026-09-08T23:25:11.855Z",
+      "createdAt": "2026-09-08T23:25:11.855Z",
+      "recurrence": "none"
+    },
+    {
+      "id": "r-active",
+      "title": "Текущее контрольное дело",
+      "petId": "11111111-1111-4111-8111-111111111111",
+      "type": "care",
+      "dueAt": "2026-09-08T23:25:11.855Z",
+      "done": false,
+      "createdAt": "2026-09-08T23:25:11.855Z",
+      "recurrence": "none"
+    }
+  ],
+  "wishlist": []
+}

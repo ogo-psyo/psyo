@@ -1,0 +1,126 @@
+/* Extended product states use the original component declarations, not a second theme. */
+#pso-exact-interface .exact-extension button:not(.primary):not(.icon-button):not(.text-button):not(.check-button):not(.chip):not(.list-row):not(.calendar-day), #pso-exact-interface .reminder-edit-form button:not(.primary), #pso-exact-interface .care-dialog-backdrop button{border:0!important;box-shadow:none!important;font-family:Arial,sans-serif!important;font-weight:400!important;text-transform:none!important;letter-spacing:normal!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-height:44px!important;padding:10px 13px!important;border-radius:16px!important;background:#ffffff6b!important;color:#675972!important;font-size:14px!important;}
+#pso-exact-interface .exact-extension :is(.woof-primary,.care-row-actions button:first-child,.profile-delete-form button),#pso-exact-interface .reminder-edit-form button[type=submit]{display:inline-flex!important;justify-content:center!important;align-items:center!important;gap:9px!important;min-height:48px!important;padding:12px 19px!important;border-radius:22px!important;background:linear-gradient(130deg,#fff 0%,#e8e0f29e 68%,#e6edf67a)!important;border:1px solid #fff!important;box-shadow:inset 0 1px white,inset 0 -1px #b6a8cc2d,0 5px 15px #6d557716!important;color:#50445f!important;font-size:14px!important;}
+#pso-exact-interface .exact-extension :is(.profile-settings-links button,.profile-settings-links a){display:flex!important;align-items:center!important;gap:13px!important;text-align:left!important;min-height:73px!important;padding:14px 2px!important;width:100%!important;border-bottom:1px solid #dad4e143!important;background:transparent!important;border-radius:0!important;box-shadow:none!important;}
+#pso-exact-interface .exact-extension :is(.care-task-card,.habit-list>article,.public-card-preview-panel,.public-card-checklist,.public-card-publish-card,.profile-danger-zone,.profile-plus-card,.social-request-card){background:linear-gradient(145deg,#ffffffed,#ffffff99)!important;border:1px solid #fff!important;border-radius:27px!important;box-shadow:inset 0 1px white,0 12px 26px -10px #65527224,0 25px 55px -30px #6552721d!important;backdrop-filter:blur(18px)!important;padding:21px!important;margin:18px 0!important;}
+#pso-exact-interface .exact-extension :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select){width:100%!important;border:1px solid #d7cfdf!important;background:#ffffffab!important;border-radius:16px!important;padding:13px!important;font-size:16px!important;line-height:1.5!important;font-family:Arial,sans-serif!important;box-shadow:none!important;min-width:0!important;height:auto!important;max-width:100%!important;}
+
+#pso-exact-interface .exact-extension {
+  --pso-deep:#3e3947;--pso-muted:#817588;--pso-paper:#faf9fc;--pso-emerald:#6e6087;--pso-leaf:#e6dfee;--pso-mint:#eee8f3;--pso-signal:#a79bb7;
+  --ink:#3e3947;--muted:#817588;--primary:#6e6087;--primary-ink:#fff;--surface:#ffffffab;--surface-2:#faf9fc;--line:#d7cfdf;
+  color:#3e3947!important;font-family:Arial,sans-serif!important;font-size:15px!important;line-height:1.5!important;min-width:0;
+}
+#pso-exact-interface .exact-extension :is(.module-form,.module-form-grid,.reminder-edit-form,.profile-delete-form,.care-compose-fields) {display:block!important;background:none!important;border:0!important;padding:0!important;box-shadow:none!important;}
+#pso-exact-interface .exact-extension label {margin:19px 0!important;display:block!important;}
+#pso-exact-interface .exact-extension :is(.care-row-actions,.habit-row-actions,.module-form-actions,.social-request-actions) {display:flex!important;flex-wrap:wrap!important;gap:8px!important;}
+#pso-exact-interface .exact-extension :is(.public-card-screen,.profile-settings-screen,.production-map-workspace,.care-calendar-panel,.care-calendar-view,.social-requests-panel,.social-request-list) {background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0!important;min-width:0!important;}
+#pso-exact-interface .exact-extension :is(.production-map-topbar,.woof-profile-topbar) {display:none!important;}
+#pso-exact-interface .exact-extension .production-map-workspace {height:auto!important;min-height:0!important;display:block!important;overflow:visible!important;}
+#pso-exact-interface .exact-extension .production-map-stage {height:280px!important;min-height:280px!important;border-radius:0!important;}
+#pso-exact-interface .exact-extension svg:not(.leaflet-zoom-animated) {width:20px;height:20px;flex-shrink:0;}
+#pso-exact-interface .exact-extension .care-calendar-grid {display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:3px!important;}
+#pso-exact-interface .exact-extension .calendar-day {min-width:0!important;min-height:42px!important;padding:5px!important;background:#ffffff8c!important;border:1px solid transparent!important;border-radius:15px!important;color:#74627f!important;font-size:13px!important;box-shadow:none!important;}
+#pso-exact-interface .exact-extension .calendar-day.selected {background:#e6dfee!important;border-color:#a99ab9!important;}
+#pso-exact-interface .exact-extension .calendar-toolbar {display:flex;align-items:center;justify-content:space-between;}
+#pso-exact-interface :is(.exact-checkbox,.exact-extension label:has(>input[type=checkbox])) {display:flex!important;align-items:center;gap:10px!important;}
+#pso-exact-interface input:is([type=checkbox],[type=radio]) {width:20px!important;height:20px!important;min-width:20px!important;padding:0!important;accent-color:#6e6087!important;}
+#pso-exact-interface .exact-extension .profile-settings-links {display:block!important;border:0!important;background:none!important;padding:0!important;}
+#pso-exact-interface .exact-extension .profile-settings-links small {display:block;font-size:12px;color:#817588;}
+#pso-exact-interface .gav-dialog.exact-extension {width:min(480px,100vw)!important;max-width:100vw!important;max-height:94dvh!important;margin:auto!important;border:1px solid white!important;border-radius:27px!important;padding:24px!important;background:#faf9fc!important;}
+#pso-exact-interface .gav-dialog .woof-overlay {position:static!important;inset:auto!important;width:auto!important;height:auto!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important;}
+#pso-exact-interface .exact-extension :is(.woof-profile-sheet,.woof-signal-composer,.social-profile-sheet,.woof-area-editor,.woof-filters) {background:transparent!important;box-shadow:none!important;color:#3e3947!important;max-width:100%!important;}
+
+
+#pso-exact-interface.exact-static {grid-template-rows:84px minmax(0,1fr)!important;}
+#pso-exact-interface .exact-public :is(.share-card,.map-share-card,.share-hero-glass,.share-approach,.share-character,.share-avoid,.share-place,.legal-callout) {background:#ffffffab!important;border:1px solid white!important;border-radius:27px!important;box-shadow:none!important;padding:21px!important;margin:18px 0!important;color:#3e3947!important;}
+#pso-exact-interface .exact-public > section {width:100%!important;max-width:100%!important;margin:0!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important;}
+#pso-exact-interface .exact-public :is(.share-hero,.share-safety-stack,.map-share-hero) {display:block!important;background:transparent!important;box-shadow:none!important;margin:0!important;padding:0!important;}
+#pso-exact-interface .exact-public .share-avatar {width:110px!important;height:110px!important;border-radius:50%!important;box-shadow:none!important;background:#ede8f1!important;}
+#pso-exact-interface .exact-public .share-avatar img {width:100%;height:100%;object-fit:cover;border-radius:50%;}
+#pso-exact-interface .exact-public .card-top {display:none!important;}
+#pso-exact-interface .exact-public p {margin:14px 0;}
+#pso-exact-interface .exact-public .share-create-link {display:inline-flex!important;min-height:44px!important;align-items:center!important;background:none!important;color:#685775!important;font-size:14px!important;padding:10px 0!important;}
+#pso-exact-interface .exact-first-run {border:0!important;background:none!important;box-shadow:none!important;margin:18px 0!important;padding:24px!important;}
+#pso-exact-interface .care-dialog-backdrop {background:#3e394755!important;}
+#pso-exact-interface :is(.care-delete-dialog,.dog-creation-sheet) {background:#faf9fc!important;color:#3e3947!important;border:1px solid white!important;border-radius:27px!important;box-shadow:0 12px 26px -10px #65527224!important;padding:24px!important;}
+#pso-exact-interface .dog-creation-sheet :is(input:not([type=checkbox]),select) {width:100%!important;min-height:50px!important;background:#ffffffab!important;border:1px solid #d7cfdf!important;border-radius:16px!important;font:16px/1.5 Arial,sans-serif!important;color:#3e3947!important;box-shadow:none!important;}
+
+/* Retired screen positioning must not cover the source header or navigation. */
+#pso-exact-interface .exact-extension .production-map-workspace {position:static!important;inset:auto!important;width:100%!important;color:#3e3947!important;}
+#pso-exact-interface .exact-extension .production-map-canvas {position:relative!important;height:280px!important;min-height:280px!important;margin:18px -24px!important;width:calc(100% + 48px)!important;background:#eef0f0!important;border-radius:0!important;}
+#pso-exact-interface .exact-extension .map-surface-overlay {inset:0!important;height:100%!important;min-height:0!important;background:#eef0f0!important;border:0!important;border-radius:0!important;color:#3e3947!important;}
+#pso-exact-interface .exact-extension .live-map-frame {background:#eef0f0!important;}
+#pso-exact-interface .exact-extension .production-map-snap-sheet {position:static!important;inset:auto!important;min-height:0!important;max-height:none!important;padding:0!important;margin:0!important;width:100%!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#3e3947!important;}
+#pso-exact-interface .exact-extension :is(.map-workspace-tools,.map-home-tabs,.production-map-search,.map-places-workspace,.care-view-toggle,.module-empty,.care-empty-state,.habit-list,.social-request-card) {background:transparent!important;border-color:#d7cfdf!important;box-shadow:none!important;color:#3e3947!important;}
+#pso-exact-interface .exact-extension :is(.module-empty,.care-empty-state) {padding:0!important;margin:18px 0!important;}
+#pso-exact-interface .exact-extension :is(.module-empty p,.care-task-main p,.map-places-workspace p,.map-surface-overlay p,.profile-plus-card p,.profile-plus-card small) {font:15px/1.5 Arial,sans-serif!important;color:#817588!important;}
+#pso-exact-interface .exact-extension :is(.care-task-main>b,.habit-list b,.profile-plus-card h3,.profile-settings-links b) {font:400 15px/1.5 Arial,sans-serif!important;color:#3e3947!important;}
+#pso-exact-interface .exact-extension .care-task-main>span {display:block!important;background:none!important;padding:0!important;color:#82798c!important;font:11px/1.5 Arial,sans-serif!important;}
+#pso-exact-interface .exact-extension .profile-settings-links button {display:flex!important;justify-content:space-between!important;text-align:left!important;min-height:73px!important;padding:14px 2px!important;border:0!important;border-bottom:1px solid #dad4e143!important;border-radius:0!important;background:transparent!important;}
+#pso-exact-interface .exact-extension .production-journey-screen {background:transparent!important;box-shadow:none!important;padding:0!important;min-height:0!important;color:#3e3947!important;}
+#pso-exact-interface .exact-extension .journal-screen-back {display:none!important;}
+#pso-exact-interface .toast {background:#faf9fc!important;border:1px solid #fff!important;border-radius:16px!important;box-shadow:0 12px 26px -10px #65527224!important;color:#50445f!important;font:14px/1.5 Arial,sans-serif!important;}
+
+#pso-exact-interface .exact-extension .production-woof-workspace {position:relative!important;inset:auto!important;height:auto!important;min-height:0!important;width:100%!important;display:block!important;background:transparent!important;color:#3e3947!important;overflow:visible!important;}
+#pso-exact-interface .exact-extension .woof-meet-feed {position:static!important;inset:auto!important;height:auto!important;min-height:0!important;max-height:none!important;width:100%!important;padding:0!important;background:transparent!important;overflow:visible!important;}
+#pso-exact-interface .exact-extension .woof-map-layer {position:relative!important;inset:auto!important;height:280px!important;min-height:280px!important;width:100%!important;background:#eef0f0!important;}
+#pso-exact-interface .exact-extension .woof-topbar {position:relative!important;inset:auto!important;width:100%!important;padding:0!important;margin:18px 0!important;background:transparent!important;}
+#pso-exact-interface .exact-extension :is(.woof-meet-filters,.woof-mode-switch,.woof-live-tools,.woof-live-panel,.woof-empty-live,.woof-locate-prompt,.woof-area-editor,.social-form-grid,.social-section-heading) {background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;color:#3e3947!important;}
+#pso-exact-interface .exact-extension .woof-meet-filters {padding:0!important;}
+#pso-exact-interface .exact-extension :is(.woof-meet-filters label,.social-form-grid label,.social-profile-sheet p,.woof-filter-summary,.woof-meet-filters p) {color:#817588!important;font-weight:400!important;}
+#pso-exact-interface .exact-extension :is(.social-form-grid,.social-scenarios>div) {display:flex!important;flex-direction:column!important;gap:0!important;}
+#pso-exact-interface .exact-extension .social-section-heading h3 {font:29px/1.15 Naris,Arial,sans-serif!important;color:#3e3947!important;margin:0 0 14px!important;}
+#pso-exact-interface .exact-extension :is(.social-state-on,.social-state-off) {background:#ede8f1!important;color:#6e6087!important;font:11px/1.5 Arial,sans-serif!important;border-radius:15px!important;padding:5px 8px!important;}
+#pso-exact-interface .exact-extension .social-scenarios {border:0!important;padding:0!important;}
+#pso-exact-interface .exact-extension .social-scenarios>div {flex-direction:row!important;flex-wrap:wrap!important;gap:8px!important;}
+#pso-exact-interface .exact-extension .social-scenarios label {display:inline-flex!important;align-items:center!important;gap:7px!important;margin:0!important;padding:8px 12px!important;border:1px solid white!important;border-radius:15px!important;background:#ffffff8c!important;min-height:40px!important;color:#74627f!important;font:12px/1.5 Arial,sans-serif!important;}
+#pso-exact-interface .exact-extension .social-scenarios label:has(input:checked) {background:#e6dfee!important;box-shadow:inset 0 0 0 1px #a99ab9!important;}
+#pso-exact-interface .exact-extension .social-scenarios label span {font:inherit!important;color:inherit!important;}
+#pso-exact-interface .exact-extension button svg {color:inherit!important;}
+#pso-exact-interface .exact-extension :is(.woof-live-panel,.woof-meet-tools,.gav-resume-connection) {position:relative!important;inset:auto!important;}
+
+#pso-exact-interface :is(dialog,[role=dialog]) {font-family:Arial,sans-serif!important;background:#faf9fc!important;border-color:#fff!important;border-radius:27px!important;color:#3e3947!important;}
+#pso-exact-interface .exact-auxiliary-dialog>section {background:transparent!important;box-shadow:none!important;border:0!important;color:#3e3947!important;}
+#pso-exact-interface .exact-auxiliary-dialog :is(header,[data-assistant-scroll]) {background:transparent!important;color:inherit!important;}
+#pso-exact-interface .exact-extension .woof-map-load-state {background:#eef0f0!important;color:#3e3947!important;}
+
+/* Full product forms retain their handlers, with source label/chip geometry. */
+#pso-exact-interface .exact-extension :is(.woof-meet-filters label>span,.social-scenarios legend) {font:12px/1.5 Arial,sans-serif!important;color:#817588!important;letter-spacing:normal!important;text-transform:none!important;}
+#pso-exact-interface .exact-extension .social-scenarios label span {background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;}
+#pso-exact-interface .gav-dialog .social-section-heading {padding-right:40px!important;}
+#pso-exact-interface .gav-dialog :is(.woof-overlay-x,.woof-sheet-close) {position:absolute!important;right:12px!important;top:12px!important;width:36px!important;height:36px!important;min-height:36px!important;padding:6px!important;background:transparent!important;}
+
+/* The common shell owns identity and Back; the diary supplies content only. */
+#pso-exact-interface .exact-extension .journal-screen {padding:0!important;margin:0!important;max-width:none!important;}
+#pso-exact-interface .exact-extension .journal-screen>:is(.journal-quiet,[data-all-profile]) {display:none!important;}
+#pso-exact-interface .exact-extension .journal-title {padding:0!important;margin:0 0 18px!important;}
+#pso-exact-interface .exact-extension .journal-title h1 {font:44px/1.13 Naris,Arial,sans-serif!important;letter-spacing:normal!important;margin:0 0 20px!important;}
+#pso-exact-interface .exact-extension :is(.journal-title p,.journal-status>p,.journal-entry time,.journal-entry small,.journal-ask small,.journal-next-care small) {color:#817588!important;font-weight:400!important;}
+#pso-exact-interface .exact-extension :is(.journal-status,.all-scenario-workspace,.public-card-lifecycle,.public-card-fields-panel,.public-card-privacy-note) {background:linear-gradient(145deg,#ffffffed,#ffffff99)!important;border:1px solid white!important;border-radius:27px!important;padding:21px!important;margin:18px 0!important;box-shadow:inset 0 1px white,0 12px 26px -10px #65527224,0 25px 55px -30px #6552721d!important;color:#3e3947!important;}
+#pso-exact-interface .exact-extension :is(.journal-status h2,.journal-section-title h2) {font:29px/1.15 Naris,Arial,sans-serif!important;margin:0 0 14px!important;}
+#pso-exact-interface .exact-extension :is(.journal-entry b,.journal-ask b,.journal-next-care b) {font:400 15px/1.5 Arial,sans-serif!important;color:#3e3947!important;}
+#pso-exact-interface .exact-extension .journal-entry button {display:block!important;text-align:left!important;padding:0!important;background:transparent!important;}
+#pso-exact-interface .exact-extension .journal-point {background:#ede8f1!important;border-color:#d7cfdf!important;color:#6e6087!important;}
+#pso-exact-interface .exact-extension .journal-point.done {background:#e6dfee!important;}
+#pso-exact-interface .exact-extension .journal-entry:before {background:#d7cfdf!important;}
+#pso-exact-interface .exact-extension .journal-primary {min-height:48px!important;padding:12px 19px!important;border-radius:22px!important;background:linear-gradient(130deg,#fff 0%,#e8e0f29e 68%,#e6edf67a)!important;border:1px solid white!important;box-shadow:inset 0 1px white,inset 0 -1px #b6a8cc2d,0 5px 15px #6d557716!important;color:#50445f!important;}
+
+#pso-exact-interface .public-card-screen :is(.public-card-rule,.public-card-preview-grid article) {background:#ffffffab!important;border:1px solid white!important;border-radius:16px!important;color:#3e3947!important;}
+#pso-exact-interface .public-card-screen :is(.public-card-rule span,.public-card-preview-grid span,.eyebrow) {font:12px/1.5 Arial,sans-serif!important;letter-spacing:normal!important;text-transform:none!important;color:#817588!important;}
+#pso-exact-interface .public-card-screen :is(.public-card-rule b,.public-card-preview-grid b,.public-card-fields-panel b,.public-card-checklist b) {font:400 15px/1.5 Arial,sans-serif!important;color:#3e3947!important;}
+#pso-exact-interface .public-card-screen :is(.public-card-preview-dog p,.public-card-rule p,.public-card-privacy-note p,.public-card-fields-panel p,.public-card-fields-panel small) {font:400 13px/1.5 Arial,sans-serif!important;color:#817588!important;}
+#pso-exact-interface .public-card-screen .public-card-preview-head b {font:11px/1.5 Arial,sans-serif!important;color:#6e6087!important;background:#ede8f1!important;}
+#pso-exact-interface .public-card-screen .public-card-preview-dog h3 {font:29px/1.15 Naris,Arial,sans-serif!important;color:#3e3947!important;}
+#pso-exact-interface .public-card-screen .public-card-lifecycle-icon {background:#ffffffab!important;color:#6e6087!important;border:0!important;}
+#pso-exact-interface .public-card-screen .public-card-fields-panel button {display:block!important;text-align:left!important;}
+#pso-exact-interface .public-card-screen .public-card-fields-panel button.active {background:#e6dfee!important;box-shadow:inset 0 0 0 1px #a99ab9!important;}
+#pso-exact-interface .public-card-screen .public-card-checklist>div:not(.section-title) {background:transparent!important;border-color:#dad4e143!important;color:#817588!important;}
+
+#pso-exact-interface .exact-extension .production-route-launch {display:flex!important;flex-wrap:wrap!important;gap:8px!important;}
+#pso-exact-interface .exact-extension .production-route-launch button {flex:1 1 130px!important;width:auto!important;white-space:normal!important;}
+#pso-exact-interface .exact-extension .production-route-launch button:first-child {flex-basis:100%!important;}
+#pso-exact-interface .exact-extension .production-route-launch button svg {background:transparent!important;color:#675972!important;border:0!important;box-shadow:none!important;padding:0!important;}
+#pso-exact-interface #pso-exact-content .exact-extension .journal-screen {position:static!important;inset:auto!important;width:100%!important;height:auto!important;overflow:visible!important;}
+#pso-exact-interface #pso-exact-content .journal-screen>.journal-quiet {display:none!important;}
+#pso-exact-interface #pso-exact-content .journal-entry button {display:block!important;text-align:left!important;padding:0!important;background:transparent!important;}
+#pso-exact-interface #pso-exact-content .journal-primary {min-height:48px!important;padding:12px 19px!important;border-radius:22px!important;background:linear-gradient(130deg,#fff 0%,#e8e0f29e 68%,#e6edf67a)!important;border:1px solid white!important;box-shadow:inset 0 1px white,inset 0 -1px #b6a8cc2d,0 5px 15px #6d557716!important;color:#50445f!important;}

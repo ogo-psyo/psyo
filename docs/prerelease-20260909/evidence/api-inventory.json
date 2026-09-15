@@ -1,0 +1,623 @@
+[
+  {
+    "path": "/api/admin/auth/owners",
+    "methods": "GET",
+    "source": "app/api/admin/auth/owners/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "pets,profiles,subscriptions,telegram_identities",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/app/bootstrap",
+    "methods": "GET",
+    "source": "app/api/app/bootstrap/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "map_routes,map_zones,pet_documents,pet_observations,pet_passports,pets,profiles,reminders,social_profiles,wishlist_items",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/assistant",
+    "methods": "POST",
+    "source": "app/api/assistant/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "assistant_messages,assistant_threads,map_routes,pet_documents,pet_observations,pet_passports,pets,reminders,social_profiles",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/auth/[...all]",
+    "methods": "GET,POST",
+    "source": "app/api/auth/[...all]/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/avatar/generate",
+    "methods": "POST",
+    "source": "app/api/avatar/generate/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/avatar/upload",
+    "methods": "POST",
+    "source": "app/api/avatar/upload/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/billing/entitlements",
+    "methods": "GET",
+    "source": "app/api/billing/entitlements/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/billing/telegram-stars/checkout",
+    "methods": "POST",
+    "source": "app/api/billing/telegram-stars/checkout/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/billing/telegram-stars",
+    "methods": "POST",
+    "source": "app/api/billing/telegram-stars/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "subscriptions,telegram_identities",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/documents/[id]",
+    "methods": "DELETE,GET",
+    "source": "app/api/documents/[id]/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "pet_documents",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/documents",
+    "methods": "GET,POST",
+    "source": "app/api/documents/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "pet_documents",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/dog-cards",
+    "methods": "DELETE,GET,POST",
+    "source": "app/api/dog-cards/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "dog_cards,pets",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/habits/[id]/checkins",
+    "methods": "POST",
+    "source": "app/api/habits/[id]/checkins/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/habits/[id]",
+    "methods": "DELETE,PATCH",
+    "source": "app/api/habits/[id]/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/habits",
+    "methods": "GET,POST",
+    "source": "app/api/habits/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/health",
+    "methods": "GET",
+    "source": "app/api/health/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/internal/avatar-retention",
+    "methods": "GET",
+    "source": "app/api/internal/avatar-retention/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "avatar_assets,avatar_jobs,avatar_upload_reservations",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/internal/health",
+    "methods": "GET",
+    "source": "app/api/internal/health/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/internal/recommendation-outcomes",
+    "methods": "GET",
+    "source": "app/api/internal/recommendation-outcomes/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/internal/release",
+    "methods": "GET",
+    "source": "app/api/internal/release/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/map/features/[id]",
+    "methods": "DELETE,PATCH",
+    "source": "app/api/map/features/[id]/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "map_routes",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/map/features",
+    "methods": "GET,POST",
+    "source": "app/api/map/features/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "get_map_features_in_bounds",
+    "tables": "map_routes,map_zones,pets",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/map/library",
+    "methods": "GET,POST",
+    "source": "app/api/map/library/route.ts",
+    "authMarkers": "socialRequestContext",
+    "rpc": "",
+    "tables": "map_libraries",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/map/places",
+    "methods": "GET",
+    "source": "app/api/map/places/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/map/search",
+    "methods": "GET",
+    "source": "app/api/map/search/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/map/walking",
+    "methods": "POST",
+    "source": "app/api/map/walking/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "take_map_walk_slot",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/observations/[id]/restore",
+    "methods": "POST",
+    "source": "app/api/observations/[id]/restore/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "pet_observations",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/observations/[id]",
+    "methods": "DELETE,PATCH",
+    "source": "app/api/observations/[id]/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "pet_observations",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/observations/extract",
+    "methods": "POST",
+    "source": "app/api/observations/extract/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "pet_observations,pets",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/observations",
+    "methods": "GET,POST",
+    "source": "app/api/observations/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "pet_observations,pets",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/observations/voice",
+    "methods": "POST",
+    "source": "app/api/observations/voice/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/pets/[id]/summary",
+    "methods": "GET",
+    "source": "app/api/pets/[id]/summary/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/pets",
+    "methods": "POST",
+    "source": "app/api/pets/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/recommendations/[id]/outcome",
+    "methods": "POST",
+    "source": "app/api/recommendations/[id]/outcome/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/recommendations/[id]",
+    "methods": "PATCH",
+    "source": "app/api/recommendations/[id]/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/recommendations",
+    "methods": "GET,POST",
+    "source": "app/api/recommendations/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/reminders/[id]/complete",
+    "methods": "POST",
+    "source": "app/api/reminders/[id]/complete/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "care_complete_reminder_atomic",
+    "tables": "",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/reminders/[id]/history",
+    "methods": "GET",
+    "source": "app/api/reminders/[id]/history/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "reminder_events,reminders",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/reminders/[id]",
+    "methods": "DELETE,PATCH",
+    "source": "app/api/reminders/[id]/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "care_update_reminder_atomic,care_delete_reminder_atomic",
+    "tables": "",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/reminders/[id]/snooze",
+    "methods": "POST",
+    "source": "app/api/reminders/[id]/snooze/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "care_snooze_reminder_atomic",
+    "tables": "",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/reminders",
+    "methods": "GET,POST",
+    "source": "app/api/reminders/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "care_create_reminder_atomic",
+    "tables": "reminders",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/social/candidates",
+    "methods": "GET",
+    "source": "app/api/social/candidates/route.ts",
+    "authMarkers": "socialRequestContext",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/social/invites/[token]",
+    "methods": "GET,POST",
+    "source": "app/api/social/invites/[token]/route.ts",
+    "authMarkers": "socialRequestContext",
+    "rpc": "",
+    "tables": "social_friend_invites",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/social/invites",
+    "methods": "POST",
+    "source": "app/api/social/invites/route.ts",
+    "authMarkers": "socialRequestContext",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/social/profile",
+    "methods": "DELETE,GET,PUT",
+    "source": "app/api/social/profile/route.ts",
+    "authMarkers": "socialRequestContext",
+    "rpc": "",
+    "tables": "social_discovery_profiles",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/social/requests/[id]/meeting",
+    "methods": "GET,POST",
+    "source": "app/api/social/requests/[id]/meeting/route.ts",
+    "authMarkers": "socialRequestContext",
+    "rpc": "",
+    "tables": "map_libraries,map_routes,social_discovery_profiles,social_match_requests,social_meeting_proposals",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/social/requests/[id]",
+    "methods": "PATCH",
+    "source": "app/api/social/requests/[id]/route.ts",
+    "authMarkers": "socialRequestContext",
+    "rpc": "",
+    "tables": "social_blocks,social_match_requests,social_reports",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/social/requests",
+    "methods": "GET,POST",
+    "source": "app/api/social/requests/route.ts",
+    "authMarkers": "socialRequestContext",
+    "rpc": "",
+    "tables": "pets,social_discovery_profiles,social_match_requests,social_walk_signals",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/social/signals",
+    "methods": "DELETE,GET,PUT",
+    "source": "app/api/social/signals/route.ts",
+    "authMarkers": "socialRequestContext",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/stt/transcribe",
+    "methods": "POST",
+    "source": "app/api/stt/transcribe/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/telegram/session",
+    "methods": "POST",
+    "source": "app/api/telegram/session/route.ts",
+    "authMarkers": "verifyTelegramInitData",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/telegram/webhook",
+    "methods": "POST",
+    "source": "app/api/telegram/webhook/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "subscriptions",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/v1/account",
+    "methods": "DELETE",
+    "source": "app/api/v1/account/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/v1/onboarding/activate",
+    "methods": "POST",
+    "source": "app/api/v1/onboarding/activate/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/v1/pets/[petId]/avatar/assets/[assetId]/activate",
+    "methods": "POST",
+    "source": "app/api/v1/pets/[petId]/avatar/assets/[assetId]/activate/route.ts",
+    "authMarkers": "",
+    "rpc": "activate_pet_avatar_for_owner",
+    "tables": "avatar_assets",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/v1/pets/[petId]/avatar/assets/[assetId]/render",
+    "methods": "GET",
+    "source": "app/api/v1/pets/[petId]/avatar/assets/[assetId]/render/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "avatar_assets",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/v1/pets/[petId]/avatar/assets/[assetId]",
+    "methods": "DELETE",
+    "source": "app/api/v1/pets/[petId]/avatar/assets/[assetId]/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "avatar_assets",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/v1/pets/[petId]/avatar/assets",
+    "methods": "GET,POST",
+    "source": "app/api/v1/pets/[petId]/avatar/assets/route.ts",
+    "authMarkers": "",
+    "rpc": "claim_avatar_upload_for_owner,finalize_avatar_upload_for_owner",
+    "tables": "avatar_assets",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/v1/pets/[petId]/avatar/identity",
+    "methods": "POST",
+    "source": "app/api/v1/pets/[petId]/avatar/identity/route.ts",
+    "authMarkers": "",
+    "rpc": "activate_pet_avatar_for_owner",
+    "tables": "pet_avatar_selections",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/v1/pets/[petId]/avatar/jobs",
+    "methods": "POST",
+    "source": "app/api/v1/pets/[petId]/avatar/jobs/route.ts",
+    "authMarkers": "",
+    "rpc": "claim_avatar_job_for_owner",
+    "tables": "avatar_assets,avatar_jobs",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/v1/pets",
+    "methods": "DELETE,GET,PATCH,POST",
+    "source": "app/api/v1/pets/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "pets,profiles",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/v1/session/logout",
+    "methods": "POST",
+    "source": "app/api/v1/session/logout/route.ts",
+    "authMarkers": "",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/v1/session/telegram",
+    "methods": "POST",
+    "source": "app/api/v1/session/telegram/route.ts",
+    "authMarkers": "verifyTelegramInitData",
+    "rpc": "",
+    "tables": "",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/wishlist/[id]/restore",
+    "methods": "POST",
+    "source": "app/api/wishlist/[id]/restore/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "wishlist_items",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/wishlist/[id]",
+    "methods": "DELETE,PATCH",
+    "source": "app/api/wishlist/[id]/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "wishlist_items",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/wishlist",
+    "methods": "GET,POST",
+    "source": "app/api/wishlist/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "wishlist_create_plan_atomic",
+    "tables": "pets,wishlist_items",
+    "idempotencyMarker": true
+  },
+  {
+    "path": "/api/zones/[id]/restore",
+    "methods": "POST",
+    "source": "app/api/zones/[id]/restore/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "map_zones",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/zones/[id]",
+    "methods": "DELETE,PATCH",
+    "source": "app/api/zones/[id]/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "map_zones",
+    "idempotencyMarker": false
+  },
+  {
+    "path": "/api/zones",
+    "methods": "GET,POST",
+    "source": "app/api/zones/route.ts",
+    "authMarkers": "getAppSessionFromRequest,getRequestAuth",
+    "rpc": "",
+    "tables": "map_zones,pets",
+    "idempotencyMarker": false
+  }
+]

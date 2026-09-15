@@ -138,6 +138,7 @@ export type CreatePetCommand = {
   triggers?: string;
   aloneTime?: string;
   backendPetId?: string;
+  profileVersion?: number;
   avatarImageUrl?: string;
   photoUrls?: string[];
 };

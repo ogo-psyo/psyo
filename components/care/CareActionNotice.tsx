@@ -1,7 +1,8 @@
 'use client';
+import {reminderTiming,type ReminderTimeMode} from '@/lib/reminder';
 
 export type CareFeedback =
-  | { kind: 'completed'; reminderId: string; title: string }
+  | { kind: 'completed'; reminderId: string; title: string;nextDueAt?:string;timeMode?:ReminderTimeMode }
   | { kind: 'created'; reminderId: string; title: string }
   | { kind: 'rescheduled'; reminderId: string; title: string }
   | { kind: 'observation-deleted'; observationId: string; title: string }
@@ -28,7 +29,7 @@ export function CareActionNotice({
 
   return (
     <div className="care-action-notice" role="status" aria-live="polite">
-      <span>{label}</span>
+      <span>{label}{feedback.kind==='completed'&&feedback.nextDueAt&&<small>Следующий раз: {reminderTiming({dueAt:feedback.nextDueAt,timeMode:feedback.timeMode})}</small>}</span>
       {feedback.kind === 'observation-deleted' && (
         <button type="button" onClick={onUndo}>Отменить</button>
       )}

@@ -8703,3 +8703,11 @@ body { background:linear-gradient(160deg,#cbfedb 0%,#f7fff9 48%,#98df73 140%); c
 @media (max-width: 359px) {
   .health-capture { padding: 16px 14px; }
 }
+/* Agent additions retain the existing assistant's surfaces and native controls. */
+.pso-agent-panel { display:grid; gap:12px; }
+.pso-agent-panel button,.pso-agent-panel summary { min-height:44px; padding:10px 12px; cursor:pointer; }
+.pso-agent-panel label { display:grid; gap:6px; margin-block:12px; }
+.pso-agent-panel input,.pso-agent-panel textarea { width:100%; font:inherit; padding:12px; border:1px solid #bcc9d6; border-radius:12px; box-sizing:border-box; }
+.pso-agent-panel textarea { min-height:90px; resize:vertical; }
+.pso-agent-panel a { overflow-wrap:anywhere; text-decoration:underline; }
+.pso-agent-panel p { white-space:pre-wrap; }

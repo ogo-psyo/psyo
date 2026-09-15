@@ -23,16 +23,21 @@ export async function POST(request: Request) {
 
   try {
     const idempotencyKey = request.headers.get('idempotency-key')?.trim() ?? '';
-    if (!parsed.command.backendPetId && !/^[A-Za-z0-9._:-]{8,128}$/.test(idempotencyKey)) {
+    if (!/^[A-Za-z0-9._:-]{8,128}$/.test(idempotencyKey)) {
       return NextResponse.json({ error: 'IDEMPOTENCY_KEY_REQUIRED' }, { status: 400 });
     }
-    if (!parsed.command.backendPetId && !admin) return NextResponse.json({ error: 'STORAGE_REQUIRED' }, { status: 503 });
+    if (!admin) return NextResponse.json({ error: 'STORAGE_REQUIRED' }, { status: 503 });
     const result = parsed.command.backendPetId
-      ? await savePetProfile({ supabase, user: owner, profile: parsed.command })
+      ? await savePetProfile({ supabase: admin!, user: owner, profile: parsed.command, idempotencyKey })
       : await createPetProfileIdempotently({ supabase: admin!, user: owner, profile: parsed.command, idempotencyKey });
     const replayed = 'replayed' in result && result.replayed === true;
     return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', ...result }, { status: parsed.command.backendPetId || replayed ? 200 : 201 });
   } catch (error) {
+    const message = error instanceof Error ? error.message : error && typeof error === 'object' && 'message' in error ? String(error.message) : '';
+    if (message.includes('PROFILE_VERSION_CONFLICT')) return NextResponse.json({ error: 'PROFILE_VERSION_CONFLICT' }, { status: 409 });
+    if (message.includes('IDEMPOTENCY_KEY_REUSED')) return NextResponse.json({ error: 'IDEMPOTENCY_KEY_REUSED' }, { status: 409 });
+    if (message.includes('PET_NOT_FOUND')) return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
+
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to save pet' }, { status: 500 });
   }
 }

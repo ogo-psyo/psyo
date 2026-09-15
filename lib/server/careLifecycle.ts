@@ -1,3 +1,5 @@
+import {nextReminderDueAt} from '@/lib/reminderRecurrence';
+export {nextReminderDueAt} from '@/lib/reminderRecurrence';
 export type CareRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 
 export type CareReminderState = {
@@ -46,38 +48,6 @@ function parseIso(value: string) {
   const date = new Date(value);
   if (!value || Number.isNaN(date.getTime())) throw new Error('INVALID_DATE');
   return date;
-}
-
-function calendarShift(source: Date, months: number) {
-  const year = source.getUTCFullYear();
-  const month = source.getUTCMonth();
-  const day = source.getUTCDate();
-  const targetMonthStart = new Date(Date.UTC(
-    year,
-    month + months,
-    1,
-    source.getUTCHours(),
-    source.getUTCMinutes(),
-    source.getUTCSeconds(),
-    source.getUTCMilliseconds(),
-  ));
-  const lastDay = new Date(Date.UTC(
-    targetMonthStart.getUTCFullYear(),
-    targetMonthStart.getUTCMonth() + 1,
-    0,
-  )).getUTCDate();
-  targetMonthStart.setUTCDate(Math.min(day, lastDay));
-  return targetMonthStart;
-}
-
-export function nextReminderDueAt(dueAt: string, recurrence: CareRecurrence) {
-  const due = parseIso(dueAt);
-  if (recurrence === 'none') return null;
-  if (recurrence === 'daily') return new Date(due.getTime() + 86_400_000).toISOString();
-  if (recurrence === 'weekly') return new Date(due.getTime() + 7 * 86_400_000).toISOString();
-  if (recurrence === 'monthly') return calendarShift(due, 1).toISOString();
-  if (recurrence === 'quarterly') return calendarShift(due, 3).toISOString();
-  return calendarShift(due, 12).toISOString();
 }
 
 export function completeReminder(reminder: CareReminderState, completedAt: string): ReminderCompletion {

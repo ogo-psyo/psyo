@@ -1,0 +1,980 @@
+{
+  "checks": [
+    {
+      "id": "keyboard-profile-passport",
+      "status": "OBSERVED",
+      "data": {
+        "before": {
+          "text": "Мята",
+          "outline": "rgb(49, 94, 168) solid 3px"
+        },
+        "surface": "passport"
+      }
+    },
+    {
+      "id": "sampled-colors-forms",
+      "status": "OBSERVED",
+      "data": [
+        {
+          "label": "Вернуться к обзору",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(234, 240, 231)",
+          "grad": false,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "Характер",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(253, 252, 249)",
+          "grad": true,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "С окружающими",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(253, 252, 249)",
+          "grad": true,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "Повторяемые привычки",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(253, 252, 249)",
+          "grad": true,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "Добавить образ",
+          "fg": "rgb(0, 0, 0)",
+          "bg": "rgb(32, 36, 34)",
+          "grad": false,
+          "size": "16px",
+          "outline": "rgb(0, 0, 0) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "Редактировать",
+          "fg": "rgb(64, 88, 69)",
+          "bg": "rgb(253, 252, 249)",
+          "grad": true,
+          "size": "12px",
+          "outline": "rgb(64, 88, 69) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "Изменить постоянные данные",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(37, 59, 52)",
+          "grad": false,
+          "size": "14px",
+          "outline": "rgb(255, 255, 255) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "Закрыть редактор",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(255, 254, 250)",
+          "grad": false,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(255, 254, 250)",
+          "grad": false,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 0px",
+          "disabled": false
+        },
+        {
+          "label": "Название или английское имя",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(255, 254, 250)",
+          "grad": false,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 0px",
+          "disabled": false
+        },
+        {
+          "label": "Метис / не знаюПорода неизвестнаДругая породаКсолоитцкуинтли / кс",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(255, 254, 250)",
+          "grad": false,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 0px",
+          "disabled": false
+        },
+        {
+          "label": "Не указанощенокюниорвзрослыйзрелыйсеньор",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(255, 254, 250)",
+          "grad": false,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 0px",
+          "disabled": false
+        },
+        {
+          "label": "Не указанокобельсукане указано",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(255, 254, 250)",
+          "grad": false,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 0px",
+          "disabled": false
+        },
+        {
+          "label": "Например, 8,4 кг",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(255, 254, 250)",
+          "grad": false,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 0px",
+          "disabled": false
+        },
+        {
+          "label": "Номер или не установлен",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(255, 254, 250)",
+          "grad": false,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 0px",
+          "disabled": false
+        },
+        {
+          "label": "Отмена",
+          "fg": "rgb(37, 59, 52)",
+          "bg": "rgb(255, 254, 250)",
+          "grad": false,
+          "size": "16px",
+          "outline": "rgb(37, 59, 52) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "Сохранить",
+          "fg": "rgb(255, 255, 255)",
+          "bg": "rgb(64, 88, 69)",
+          "grad": false,
+          "size": "16px",
+          "outline": "rgb(255, 255, 255) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "Главная",
+          "fg": "rgb(97, 112, 103)",
+          "bg": "rgb(253, 252, 249)",
+          "grad": true,
+          "size": "10px",
+          "outline": "rgb(97, 112, 103) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "Мята",
+          "fg": "rgb(64, 88, 69)",
+          "bg": "rgb(253, 252, 249)",
+          "grad": true,
+          "size": "10px",
+          "outline": "rgb(64, 88, 69) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "Карта",
+          "fg": "rgb(97, 112, 103)",
+          "bg": "rgb(253, 252, 249)",
+          "grad": true,
+          "size": "10px",
+          "outline": "rgb(97, 112, 103) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "Гав",
+          "fg": "rgb(97, 112, 103)",
+          "bg": "rgb(253, 252, 249)",
+          "grad": true,
+          "size": "10px",
+          "outline": "rgb(97, 112, 103) none 3px",
+          "disabled": false
+        },
+        {
+          "label": "Вещи",
+          "fg": "rgb(97, 112, 103)",
+          "bg": "rgb(253, 252, 249)",
+          "grad": true,
+          "size": "10px",
+          "outline": "rgb(97, 112, 103) none 3px",
+          "disabled": false
+        }
+      ]
+    },
+    {
+      "id": "health-unsaved-profile-state",
+      "status": "OBSERVED",
+      "data": {
+        "localFact": "Контрольный несохранённый факт",
+        "mutations": [],
+        "pairs": [
+          {
+            "label": "На главную",
+            "fg": "rgb(64, 88, 69)",
+            "bg": "rgb(253, 252, 249)",
+            "grad": true,
+            "size": "14px",
+            "outline": "rgb(64, 88, 69) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "спокойное",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "радостное",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "тревожное",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "вялое",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "обычный",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "ниже обычного",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "выше обычного",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "не ела",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "обычный",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "мягкий",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "твёрдый",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "не было",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "обычная",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "ниже обычного",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "выше обычного",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "нет сил",
+            "fg": "rgb(82, 100, 81)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(82, 100, 81) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "Если есть",
+            "fg": "rgb(37, 59, 52)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "16px",
+            "outline": "rgb(6, 71, 47) solid 3px",
+            "disabled": false
+          },
+          {
+            "label": "Только как заметка владельца",
+            "fg": "rgb(37, 59, 52)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "16px",
+            "outline": "rgb(37, 59, 52) none 0px",
+            "disabled": false
+          },
+          {
+            "label": "Не указаноактуальноскоро нужнопросроченоне знаю",
+            "fg": "rgb(37, 59, 52)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "16px",
+            "outline": "rgb(37, 59, 52) none 0px",
+            "disabled": false
+          },
+          {
+            "label": "Не указаноактуальнопоставить напоминаниепросроченоне знаю",
+            "fg": "rgb(37, 59, 52)",
+            "bg": "rgb(255, 254, 250)",
+            "grad": false,
+            "size": "16px",
+            "outline": "rgb(37, 59, 52) none 0px",
+            "disabled": false
+          },
+          {
+            "label": "Сохранить постоянные данные",
+            "fg": "rgb(255, 255, 255)",
+            "bg": "rgb(64, 88, 69)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(255, 255, 255) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "Предыдущий месяц",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "16px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "Следующий месяц",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "16px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "1 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "2 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "3 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "4 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "5 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "6 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "7 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "8 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "9 сентября, наблюдений: 1",
+            "fg": "rgb(255, 253, 248)",
+            "bg": "rgb(23, 24, 20)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(255, 253, 248) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "10 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "11 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "12 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "13 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "14 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "15 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "16 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "17 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "18 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "19 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "20 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "21 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "22 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "23 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "24 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "25 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "26 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "27 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "28 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "29 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "30 сентября, наблюдений нет",
+            "fg": "rgb(23, 24, 20)",
+            "bg": "rgb(255, 253, 248)",
+            "grad": false,
+            "size": "12px",
+            "outline": "rgb(23, 24, 20) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "Изменить",
+            "fg": "rgb(25, 35, 29)",
+            "bg": "rgb(234, 240, 231)",
+            "grad": false,
+            "size": "11px",
+            "outline": "rgb(25, 35, 29) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "Убрать",
+            "fg": "rgb(155, 62, 62)",
+            "bg": "rgb(245, 233, 231)",
+            "grad": false,
+            "size": "11px",
+            "outline": "rgb(155, 62, 62) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "Главная",
+            "fg": "rgb(64, 88, 69)",
+            "bg": "rgb(253, 252, 249)",
+            "grad": true,
+            "size": "10px",
+            "outline": "rgb(64, 88, 69) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "Мята",
+            "fg": "rgb(97, 112, 103)",
+            "bg": "rgb(253, 252, 249)",
+            "grad": true,
+            "size": "10px",
+            "outline": "rgb(97, 112, 103) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "Карта",
+            "fg": "rgb(97, 112, 103)",
+            "bg": "rgb(253, 252, 249)",
+            "grad": true,
+            "size": "10px",
+            "outline": "rgb(97, 112, 103) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "Гав",
+            "fg": "rgb(97, 112, 103)",
+            "bg": "rgb(253, 252, 249)",
+            "grad": true,
+            "size": "10px",
+            "outline": "rgb(97, 112, 103) none 3px",
+            "disabled": false
+          },
+          {
+            "label": "Вещи",
+            "fg": "rgb(97, 112, 103)",
+            "bg": "rgb(253, 252, 249)",
+            "grad": true,
+            "size": "10px",
+            "outline": "rgb(97, 112, 103) none 3px",
+            "disabled": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "health-editor-month-loss",
+      "status": "UNVERIFIED",
+      "error": "locator.fill: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('Контекст наблюдения', { exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <textarea placeholder=\"Например, после долгой прогулки или смены корма\"></textarea>\u001b[22m\n\u001b[2m    - fill(\"Черновик редактирования\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and editable\u001b[22m\n"
+    },
+    {
+      "id": "habit-failure-locality",
+      "status": "OBSERVED",
+      "data": {
+        "draft": "Контрольная привычка",
+        "localErrors": [],
+        "globalErrors": [
+          "Привычка не сохранилась. Проверь данные и попробуй снова.",
+          ""
+        ]
+      }
+    },
+    {
+      "id": "document-retry-terminal",
+      "status": "OBSERVED",
+      "data": {
+        "toast": "Профиль сохранён",
+        "record": 1
+      }
+    },
+    {
+      "id": "gav-draft-reopen",
+      "status": "UNVERIFIED",
+      "error": "locator.selectOption: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('dialog[open]').getByLabel('Город', { exact: true })\u001b[22m\n"
+    },
+    {
+      "id": "map-library-failure-retains-title",
+      "status": "OBSERVED",
+      "data": {
+        "title": "Контрольная подборка",
+        "error": [],
+        "global": [
+          "Сохранение не подтверждено. Ввод оставлен; повторите действие.",
+          ""
+        ]
+      }
+    },
+    {
+      "id": "200-percent-layout",
+      "status": "OBSERVED",
+      "data": {
+        "viewport": 320,
+        "scroll": 320,
+        "form": {
+          "x": 58,
+          "y": 832,
+          "width": 380.84375,
+          "height": 1164.984375,
+          "top": 832,
+          "right": 438.84375,
+          "bottom": 1996.984375,
+          "left": 58
+        }
+      }
+    }
+  ],
+  "pageErrors": [],
+  "requests": [
+    {
+      "path": "/api/internal/release",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/app/bootstrap",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/billing/entitlements",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/v1/session/telegram",
+      "method": "POST",
+      "body": "{\"initData\":\"test-fixture-not-valid\"}"
+    },
+    {
+      "path": "/api/internal/release",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/app/bootstrap",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/billing/entitlements",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/v1/session/telegram",
+      "method": "POST",
+      "body": "{\"initData\":\"test-fixture-not-valid\"}"
+    },
+    {
+      "path": "/api/app/bootstrap",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/app/bootstrap",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/billing/entitlements",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/observations",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/dog-cards",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/habits",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/health",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/pets/11111111-1111-4111-8111-111111111111/summary",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/recommendations",
+      "method": "POST",
+      "body": "{\"petId\":\"11111111-1111-4111-8111-111111111111\"}"
+    },
+    {
+      "path": "/api/internal/release",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/habits",
+      "method": "POST",
+      "body": "{\"petId\":\"11111111-1111-4111-8111-111111111111\",\"title\":\"Контрольная привычка\",\"kind\":\"walk\",\"cadence\":\"daily\",\"targetPerPeriod\":1}"
+    },
+    {
+      "path": "/api/documents",
+      "method": "POST",
+      "body": "------WebKitFormBoundaryI6jvg8GDIaXhBIdT\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\nДокумент после повтора\r\n------WebKitFormBoundaryI6jvg8GDIaXhBIdT\r\nContent-Disposition: form-data; name=\"kind\"\r\n\r\nanalysis\r\n------WebKitFormBoundaryI6jvg8GDIaXhBIdT\r\nContent-Disposition: form-data; name=\"documentDate\"\r\n\r\n\r\n------WebKitFormBoundaryI6jvg8GDIaXhBIdT\r\nContent-Disposition: form-data; name=\"clinic\"\r\n\r\n\r\n------WebKitFormBoundaryI6jvg8GDIaXhBIdT\r\nContent-Disposition: form-data; name=\"file\"; filename=\"sample.pdf\"\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.4\n%%EOF\r\n------WebKitFormBoundaryI6jvg8GDIaXhBIdT\r\nContent-Disposition: form-data; name=\"petId\"\r\n\r\n11111111-1111-4111-8111-111111111111\r\n------WebKitFormBoundaryI6jvg8GDIaXhBIdT--\r\n"
+    },
+    {
+      "path": "/api/documents",
+      "method": "POST",
+      "body": "------WebKitFormBoundarydk8jODlFx8friKUD\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\nДокумент после повтора\r\n------WebKitFormBoundarydk8jODlFx8friKUD\r\nContent-Disposition: form-data; name=\"kind\"\r\n\r\nanalysis\r\n------WebKitFormBoundarydk8jODlFx8friKUD\r\nContent-Disposition: form-data; name=\"documentDate\"\r\n\r\n\r\n------WebKitFormBoundarydk8jODlFx8friKUD\r\nContent-Disposition: form-data; name=\"clinic\"\r\n\r\n\r\n------WebKitFormBoundarydk8jODlFx8friKUD\r\nContent-Disposition: form-data; name=\"file\"; filename=\"sample.pdf\"\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.4\n%%EOF\r\n------WebKitFormBoundarydk8jODlFx8friKUD\r\nContent-Disposition: form-data; name=\"petId\"\r\n\r\n11111111-1111-4111-8111-111111111111\r\n------WebKitFormBoundarydk8jODlFx8friKUD--\r\n"
+    },
+    {
+      "path": "/api/social/profile",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/social/candidates",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/social/requests",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/social/signals",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/map/library",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "path": "/api/map/library",
+      "method": "POST",
+      "body": "{\"petId\":\"11111111-1111-4111-8111-111111111111\",\"command\":{\"id\":\"f7d06fbb-6800-4633-9ce4-b60c6c40b785\",\"kind\":\"createCollection\",\"collectionId\":\"f7d06fbb-6800-4633-9ce4-b60c6c40b785\",\"title\":\"Контрольная подборка\"}}"
+    }
+  ],
+  "externalBlocked": [
+    "telegram.org",
+    "tiles.openfreemap.org"
+  ]
+}

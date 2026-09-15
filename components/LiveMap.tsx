@@ -34,6 +34,7 @@ export type MapBounds = {south:number;west:number;north:number;east:number};
 export type MapSearchPoint = { lat: number; lng: number; title: string; detail?: string };
 
 export type LiveMapProps = {
+  appearance?: 'default' | 'exact';
   zones?: ZoneFeature[];
   features?: MapFeature[];
   picked?: { lat: number; lng: number } | null;

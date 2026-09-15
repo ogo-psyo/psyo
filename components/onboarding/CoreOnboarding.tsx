@@ -43,7 +43,7 @@ export function CoreOnboarding({
     if (!open) return;
 
     previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const page = document.querySelector<HTMLElement>('.phone-shell');
+    const page = document.querySelector<HTMLElement>('#pso-exact-content, .phone-shell');
     page?.setAttribute('inert', '');
     const frame = window.requestAnimationFrame(() => dialogRef.current?.focus({ preventScroll: true }));
 
@@ -83,7 +83,7 @@ export function CoreOnboarding({
   return (
     <div
       ref={backdropRef}
-      className="care-dialog-backdrop dog-creation-backdrop"
+      className="care-dialog-backdrop dog-creation-backdrop exact-extension"
       role="presentation"
       onMouseDown={(event) => {
         if (event.currentTarget === event.target && !busy) onDismiss();

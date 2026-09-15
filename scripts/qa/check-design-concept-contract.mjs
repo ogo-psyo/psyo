@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 
 const files = {
-  page: readFileSync('app/page.tsx', 'utf8'),
+  page: readFileSync('app/page.tsx', 'utf8') + readFileSync('components/app/ConnectedHome.tsx','utf8'),
   css: readFileSync('app/editorial.css', 'utf8'),
   direction: readFileSync('DESIGN_DIRECTION.md', 'utf8'),
   navigation: readFileSync('components/app/AppNavigation.tsx', 'utf8'),
@@ -47,18 +47,18 @@ if (!files.nextCare.includes('data-testid="today-first-viewport"')) {
 }
 
 for (const token of [
-  'план ухода и памятка',
+  'Что сегодня',
   'ближайшее дело',
   'Памятка',
 ]) {
   if (!`${files.page}\n${files.nextCare}\n${files.journey}`.includes(token)) failures.push(`focused experience missing concept copy: ${token}`);
 }
 
-for (const section of ["label: 'Главная'", "label: 'Профиль'", "label: 'Карта'", "label: 'Гав'", "label: 'Вещи'"]) {
+for (const section of ["label: 'Псё'", "label: 'Профиль'", "label: 'Карта'", "label: 'Гав'", "label: 'Всё'"]) {
   if (!files.navigation.includes(section)) failures.push(`primary nav must keep section: ${section}`);
 }
 
-for (const route of ["id: 'today'", "id: 'profile'", "id: 'map'", "id: 'nearby'", "id: 'things'"]) {
+for (const route of ["id: 'today'", "id: 'profile'", "id: 'map'", "id: 'nearby'", "id: 'all'"]) {
   if (!files.navigation.includes(route)) failures.push(`primary nav must keep route: ${route}`);
 }
 

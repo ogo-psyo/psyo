@@ -41,7 +41,7 @@ vi.mock('@/lib/server/supabase', async (importOriginal) => {
 import { GET as getReminders, POST as postReminder } from '@/app/api/reminders/route';
 import { GET as getSocialProfile, PUT as putSocialProfile } from '@/app/api/social/profile/route';
 import { PATCH as patchPet } from '@/app/api/v1/pets/route';
-import { POST as postMapFeature } from '@/app/api/map/features/route';
+import { GET as getMapFeatures, POST as postMapFeature } from '@/app/api/map/features/route';
 
 function makeQuery(table: string, result: Result, calls: Call[]): Query {
   const query = {
@@ -107,7 +107,6 @@ describe('care route characterization', () => {
     ['bearer', 'bearer-owner', null],
     ['app-session', null, 'session-owner'],
     ['matching principals', 'same-owner', 'same-owner'],
-    ['conflicting principals keep bearer legacy priority', 'bearer-owner', 'session-owner'],
   ])('%s owner-scopes GET', async (_label, bearerOwner, sessionOwner) => {
     const db = fakeSupabase({ reminders: { data: [], error: null } });
     state.auth = { user: bearerOwner ? { id: bearerOwner } : null, supabase: bearerOwner ? db.client : null, token: bearerOwner ? 'token' : null };
@@ -125,10 +124,12 @@ describe('care route characterization', () => {
     expect(await payload(response)).toEqual({ error: 'AUTH_REQUIRED' });
   });
 
-  test('missing storage returns demo response before auth rejection', async () => {
-    const response = await getReminders(request('/api/reminders'));
-    expect(response.status).toBe(200);
-    expect(await payload(response)).toMatchObject({ reminders: [], mode: 'demo' });
+  test('missing storage does not impersonate an empty authenticated reminder list', async () => {
+    expect((await getReminders(request('/api/reminders'))).status).toBe(401);
+    state.auth={user:{id:'owner'},supabase:null,token:null};
+    const response=await getReminders(request('/api/reminders'));
+    expect(response.status).toBe(503);
+    expect(await payload(response)).toMatchObject({error:'STORAGE_UNAVAILABLE'});
   });
 
   test('storage error keeps legacy error envelope', async () => {
@@ -141,6 +142,7 @@ describe('care route characterization', () => {
 
   test('invalid mutation JSON keeps care envelope and never calls storage', async () => {
     const db = fakeSupabase({});
+    state.auth={user:{id:'owner'},supabase:db.client,token:null};
     state.admin = db.client;
     const response = await postReminder(request('/api/reminders', { method: 'POST', body: '{' }));
     expect(response.status).toBe(400);
@@ -270,7 +272,6 @@ describe('map route characterization', () => {
     ['bearer', 'bearer-owner', null],
     ['app-session', null, 'session-owner'],
     ['matching principals', 'same-owner', 'same-owner'],
-    ['conflicting principals keep bearer legacy priority', 'bearer-owner', 'session-owner'],
   ])('%s owner-scopes POST', async (_label, bearerOwner, sessionOwner) => {
     const db = fakeSupabase({ pets: { data: { id: 'pet-a' }, error: null }, map_zones: { data: { id: 'zone-a', share_token: null }, error: null } });
     state.auth = { user: bearerOwner ? { id: bearerOwner } : null, supabase: bearerOwner ? db.client : null, token: bearerOwner ? 'token' : null };
@@ -279,6 +280,14 @@ describe('map route characterization', () => {
     const response = await postMapFeature(request('/api/map/features', { method: 'POST', json: { type: 'point', title: 'Парк', petId: 'pet-a', lat: 55.75, lng: 37.62 } }));
     expect(response.status).toBe(201);
     expectOwnerScope(db.calls, bearerOwner ?? sessionOwner ?? '');
+  });
+
+  test('conflicting principals reject both Map reads and writes before database access',async()=>{
+    const db=fakeSupabase({});state.admin=db.client;
+    state.auth={user:{id:'bearer-owner'},supabase:db.client,token:null};state.session={ownerId:'session-owner'};
+    expect((await postMapFeature(request('/api/map/features',{method:'POST',json:{type:'route',title:'QA'}}))).status).toBe(401);
+    expect((await getMapFeatures(request('/api/map/features?bounds=55,37,56,38'))).status).toBe(401);
+    expect(db.calls).toEqual([]);
   });
 
   test.each([

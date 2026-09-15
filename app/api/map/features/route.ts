@@ -1,7 +1,6 @@
-import {parseRoutePlanning} from '@/lib/routePlanning';
+import {principalsAgree} from '@/lib/socialCore';
+import {RouteSaveError,saveOwnedMapRoute} from '@/lib/server/mapRouteSave';
 import { measuredMapOperation } from '@/lib/server/mapMetrics';
-import { createHash } from 'node:crypto';
-import { validRouteGaps, routeEwkt, storedRoutePoints } from '@/lib/routeGeometry';
 import { NextResponse } from 'next/server';
 import { blurPublicZoneInput, isValidGeoPoint } from '@/lib/geo';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
@@ -26,22 +25,16 @@ function safeVisibility(value: unknown) {
   return visibilityModes.has(value as string) ? value as 'private' | 'shared' | 'public' : 'private';
 }
 
-const ewktLineString = routeEwkt;
 
 function shareUrl(request: Request, id: string) {
   const origin = new URL(request.url).origin;
   return `${origin}/map/share/${id}`;
 }
 
-function nonNegativeInteger(value: unknown, maximum: number) {
-  const number = Number(value);
-  if (!Number.isFinite(number) || number < 0) return null;
-  return Math.min(maximum, Math.round(number));
-}
-
 export async function GET(request: Request) {
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
+  if(!principalsAgree({bearerOwnerId:auth.user?.id,sessionOwnerId:appSession?.ownerId}))return NextResponse.json({error:"AUTH_REQUIRED"},{status:401});
   const ownerId = auth.user?.id ?? appSession?.ownerId;
   const bounds = parseBounds(new URL(request.url).searchParams.get('bounds'));
   if (!bounds) return NextResponse.json({ error: 'bounds must be minLat,minLng,maxLat,maxLng' }, { status: 400 });
@@ -65,13 +58,14 @@ export async function POST(request:Request){return measuredMapOperation('route_s
 async function measuredMutation(request:Request){
   const auth = await getRequestAuth(request);
   const appSession = getAppSessionFromRequest(request);
+  if(!principalsAgree({bearerOwnerId:auth.user?.id,sessionOwnerId:appSession?.ownerId}))return NextResponse.json({error:"AUTH_REQUIRED"},{status:401});
   const supabase = getSupabaseAdmin();
   const ownerId = auth.user?.id ?? appSession?.ownerId;
   const body = await request.json().catch(() => null);
 
   if (!supabase) return NextResponse.json({ error: 'SUPABASE_NOT_CONFIGURED' }, { status: 503 });
   if (!ownerId) return NextResponse.json({ error: 'AUTH_REQUIRED' }, { status: 401 });
-  if (!body?.type || !body?.title?.trim()) return NextResponse.json({ error: 'type and title are required' }, { status: 400 });
+  if (!body?.type || typeof body?.title!=='string' || !body.title.trim()) return NextResponse.json({ error: 'type and title are required' }, { status: 400 });
 
   const requestedVisibility = safeVisibility(body.visibility);
 
@@ -110,55 +104,10 @@ async function measuredMutation(request:Request){
   }
 
   if (body.type === 'route') {
-    const visibility = requestedVisibility;
-    const moderationStatus = visibility === 'public' ? 'pending' : 'approved';
-    const lineString = ewktLineString(body.path);
-    if (!lineString) return NextResponse.json({ error: 'path must contain at least two [lng,lat] points' }, { status: 400 });
-    if (body.petId) {
-      const { data: pet } = await supabase.from('pets').select('id').eq('id', body.petId).eq('owner_id', ownerId).maybeSingle();
-      if (!pet) return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
-    }
-    const planning=body.planning==null?null:parseRoutePlanning(body.planning);
-    if(body.planning!=null&&!planning)return NextResponse.json({error:'INVALID_PLANNING'},{status:400});
-    const routeSource = body.routeSource === 'recorded' ? 'recorded' : 'planned';
-    const startedAt = routeSource === 'recorded' && typeof body.startedAt === 'string' && Number.isFinite(Date.parse(body.startedAt))
-      ? new Date(body.startedAt).toISOString()
-      : null;
-    const durationSeconds = nonNegativeInteger(body.durationSeconds, 60 * 60 * 24);
-    const distanceMeters = nonNegativeInteger(body.distanceMeters, 500_000);
-
-    const retryKey=request.headers.get('idempotency-key');
-    if(retryKey&&retryKey.length>128)return NextResponse.json({error:'INVALID_IDEMPOTENCY_KEY'},{status:400});
-    const hex=retryKey?createHash('sha256').update(`${ownerId}:${retryKey}`).digest('hex'):null;
-    const routeId=hex?`${hex.slice(0,8)}-${hex.slice(8,12)}-4${hex.slice(13,16)}-a${hex.slice(17,20)}-${hex.slice(20,32)}`:crypto.randomUUID();
-    const fingerprint=createHash('sha256').update(JSON.stringify({petId:body.petId,title:body.title.trim(),path:body.path,visibility,description:body.description,routeSource,startedAt,durationSeconds,distanceMeters,pathGaps:body.pathGaps,planning})).digest('hex');
-    const { data:inserted, error } = await supabase.from('map_routes').insert({
-      id:routeId,
-      request_fingerprint:fingerprint,
-      owner_id: ownerId,
-      pet_id: body.petId || null,
-      title: body.title.trim(),
-      description: typeof body.description === 'string' ? body.description.trim() || null : null,
-      visibility,
-      moderation_status: moderationStatus,
-      color: typeof body.color === 'string' ? body.color : '#3b82f6',
-      path: lineString,
-      share_token: visibility === 'shared' ? crypto.randomUUID() : null,
-      route_source: routeSource,
-      planning,
-      path_gaps: validRouteGaps(body.pathGaps, body.path.length),
-      started_at: startedAt,
-      duration_seconds: durationSeconds,
-      distance_meters: distanceMeters,
-    }).select('*').single();
-
-    let data=inserted;
-    if(error?.code==='23505'&&retryKey){
-      const replay=await supabase.from('map_routes').select('*').eq('id',routeId).eq('owner_id',ownerId).maybeSingle();
-      if(replay.error||replay.data?.request_fingerprint!==fingerprint)return NextResponse.json({error:'IDEMPOTENCY_CONFLICT'},{status:409});
-      data=replay.data;
-    }else if(error)return NextResponse.json({error:'ROUTE_SAVE_FAILED'},{status:500});
-    if(!data)return NextResponse.json({error:'ROUTE_SAVE_FAILED'},{status:500});
+    let saved;
+    try { saved=await saveOwnedMapRoute(supabase,ownerId,body,request.headers.get('idempotency-key')); }
+    catch(error){return NextResponse.json({error:error instanceof RouteSaveError?error.code:'ROUTE_SAVE_FAILED'},{status:error instanceof RouteSaveError?error.status:503});}
+    const data=saved.feature;
     const recommendationId = typeof body.recommendationId === 'string' ? body.recommendationId.trim() : '';
     const recommendationOutcome = recommendationId && process.env.RECOMMENDATIONS_FOUNDATION_ENABLED === 'true'
       ? await linkRecommendationOutcome({
@@ -168,9 +117,8 @@ async function measuredMutation(request:Request){
       })
       : undefined;
     return NextResponse.json({
-      replayed:error?.code==='23505',
-      feature: {...data,path:{type:'LineString',coordinates:storedRoutePoints(data.path)||body.path}},
-      shareUrl: visibility === 'shared' ? shareUrl(request, data.share_token) : null,
+      ...saved,
+      shareUrl: data.visibility === 'shared' ? shareUrl(request, data.share_token) : null,
       ...(recommendationOutcome ? { recommendationOutcome } : {}),
     }, { status: 201 });
   }

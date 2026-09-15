@@ -1,0 +1,16 @@
+{
+  "source": "c15d067",
+  "fixture": "Unmodified route and care helpers, simulated Supabase transport; failure finishing replay record after note insert",
+  "first": {
+    "status": 500,
+    "code": "CARE_SAVE_FAILED",
+    "committedNotes": 1
+  },
+  "retry": {
+    "status": 201,
+    "committedNotes": 2,
+    "id": "row-2"
+  },
+  "verdict": "REPRODUCED: identical request/key can duplicate a committed note when finishCareMutation fails and abort clears its claim",
+  "limits": "Not a live database test; does not assert this incident occurred in production"
+}

@@ -20,11 +20,7 @@ const globals = source('app/globals.css');
 requireText(page, "tab === 'nearby' && <ProductionWoofWorkspace", 'Gav opens the real map workspace directly');
 
 requireText(page, "from '@/components/journey/ProductionJourney'", 'production root');
-for (const route of ['today', 'map', 'things']) {
-  requireText(page, `<ProductionJourney route="${route}"`, `production route ${route}`);
-}
-requireText(page, '<ProfileMemoryWorkspace', 'production profile memory route');
-requireText(page, '<ProductionAssistantSheet', 'assistant overlay');
+for (const component of ['ConnectedHome','ProductionMapWorkspace','ExactThings','ExactProfile','ExactConversation','ExactRecords']) requireText(page, `<${component}`, `active product view ${component}`);
 requireText(shell, 'production-today-summary', 'useful Today summary');
 requireText(shell, 'production-today-history', 'real Today history');
 requireText(page, 'profileEntries={profileJourneyEntries}', 'Today real-event data');
@@ -33,7 +29,7 @@ requireText(shell, 'data-scenario-workspace="social"', 'guided Gav scenario work
 requireText(shell, "onClick={() => props.onNavigate('nearby')}>Открыть Гав", 'guided Gav scenario action');
 requireText(profileMemory, 'data-profile-memory', 'accepted profile memory composition');
 requireText(profileMemory, 'onOpenHealth', 'profile health entry point');
-requireText(page, '<HealthTimelineScreen', 'single health drill-down');
+requireText(page, '<ExactRecords', 'single health drill-down');
 requireText(profileMemory, "surface === 'character'", 'profile character drill-down');
 requireText(profileMemory, "surface === 'social'", 'profile social drill-down');
 requireText(shell, 'production-journey-map', 'accepted live map composition');
@@ -41,13 +37,17 @@ requireText(shell, 'production-journey-woof', 'accepted Гав composition');
 requireText(shell, 'Покажем профиль тем, кто тоже ищет компанию поблизости.', 'gender-neutral Гав copy');
 rejectText(shell, 'Покажем {props.dogName}', 'uninflected dog name in Гав copy');
 requireText(css, '.production-journey-avatar .avatar-placeholder b', 'compact avatar label guard');
-requireText(shell, 'production-journey-shelf', 'accepted Things composition');
+// The old shelf routed every object to creation. Verify the real shared list instead.
+requireText(page, `tab === 'things' && <ExactThings`, 'single Things shell');
+requireText(source('components/exact/ExactThings.tsx'), "items.filter(item => ['wanted', 'bought'].includes(item.status))", 'real wanted and bought list');
+requireText(page, 'setEditingWishlistId(item.id)', 'entity-specific edit');
+requireText(page, '[newWishNeedsReminder, setNewWishNeedsReminder] = useState(false)', 'no implicit purchase plan');
+rejectText(shell, 'Любимые вещи', 'unsupported favorites shortcut');
+requireText(profileMemory, 'props.onOpenRecord(item.entityKind, item.entityId', 'exact history object');
+rejectText(profileMemory, 'traitPosition', 'invented numeric trait position');
 requireText(shell, 'map?: ReactNode', 'real map slot');
 requireText(globals, "@import '../components/journey/production-journey.css';", 'shared production style');
-requireText(css, '#cbfedb', 'approved mint');
-requireText(css, '#98df73', 'approved green');
-requireText(css, '#3df881', 'approved signal');
-requireText(css, '#07814d', 'approved emerald');
-requireText(css, '#dd617c', 'approved coral');
+const exactCss = source('components/exact/exact-interface.css');
+for (const token of ['Naris','#6e6087','#a79bb7','#ffffffab']) requireText(exactCss,token,'approved exact design code');
 
 console.log('production journey parity contract: ok');

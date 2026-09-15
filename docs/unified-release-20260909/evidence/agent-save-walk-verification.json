@@ -1,0 +1,34 @@
+{
+  "scope": "local SQL and built UI with intercepted HTTP; no live provider/cloud/device or production claim",
+  "buildId": "9LNMQNIHx-IuWu2jq8Fpe",
+  "sourceSha256": {
+    "app/api/agent/runs/[id]/route.ts": "5cbff3b664b7b3ef4298cd66de5a2e98c16ea58b555ffbe4031462a1296f153e",
+    "app/api/map/features/route.ts": "32b1e1b08ed6e79b8b52c82f2f2522af43a5486ddbe4c1cf387abc38b1baad57",
+    "components/journey/AgentPanel.tsx": "0a624dcb6a08d382d7f783526bdd44d2dd8cd28f9bf5cdeece8ba7c43964fbe6",
+    "lib/server/agent/runner.ts": "20533b7ec8225077905a6ecc0d7e7ed16c1e03467881d0b541f0b8c8add6cd87",
+    "lib/server/agent/tools.ts": "d60745738dabee77042635034170e0459a8941a72088fff2374ba0cf297ba969",
+    "lib/server/agent/walkSave.ts": "21e6cc0936460606dd087356d46947561dde8fd439e2a920c9e2c4c046dfecb4",
+    "lib/server/mapRouteSave.ts": "25308de4b80e14a1b89a3ee4f496bf77b46857cea21decfeca9dfce029825505",
+    "supabase/migrations/20260909140000_agent_walk_save.sql": "bc6955ae3237b2065a456bf255d32e6f348872c621f29d4202d12de7eee89fbb"
+  },
+  "logs": {
+    "/tmp/pso-a07-sql-final.log": "6907b8963eed60386f5fcda57a89aabd0b653a6704e3683b4b4d5e86d60921ce",
+    "/tmp/pso-a07-concurrency.log": "60a2f600e7f80979dee7fddb47eb7a573d4ce2220fa9134f6af71b437d4ac01c",
+    "/tmp/pso-a07-domain-sql.log": "a42c17714754eaaff3da8d31a2604b7085b54e2f3df0f3425cdd10db3ced908f",
+    "/tmp/pso-a07-fresh-restore.log": "4a9e062175e6a28da61e7ffd6928ad064782674b215ce82aacd5dda9b7546169",
+    "/tmp/pso-a07-fresh-migration.log": "3d9b0840f6f25c21e8f35b125f5cf02931871672a8e2dd55ae48d4eaf1a08e0f",
+    "/tmp/pso-a07-fresh-proof.log": "63ca8b2f706e8c8488545688123d30080bb20860794bc08813086d173ab513eb",
+    "/tmp/pso-a07-legacy-proof.log": "c77291fe3dec66fc9144ba3a7c5af251f127cda1b54c92972083b8bd9403527a",
+    "/tmp/pso-a07-final-tests.log": "7148b7ce142f0375d2c98880b614ad7e9d35e0881ed3c36799ad40319b92b728",
+    "/tmp/pso-a07-contracts.log": "39efa7d38cc8c22b3e5dac9961bb9b17afcc2bd1905593f7f8652b536cc788cb",
+    "/tmp/pso-a07-browser.log": "cc1fc2e09e8424702e3770469e01f316ff5e8cfd673db36308bc2edcdf19c2bc",
+    "/tmp/pso-a07-read-regression.log": "dd12306b7edfd7a8b9633b698a3f599c946f5fa757e177d447d8fa1cfe303a5e",
+    "/tmp/pso-a07-map-regression.log": "0a029c0fedb5d405225387e8229230f5efac7bbb5f133179e990c5a379aa9d0e",
+    "/tmp/pso-a07-assistant-surface.log": "8cf4fb4b2aa41ac5b4f7bd1b9b19697cda6056c44bf6058863eeb10ad3f38489",
+    "/tmp/pso-a07-assistant-regression2.log": "a89cb2ae3754a88a024eca2160d0dc3f3c12947f26e82bf5193cd39946a4729f"
+  },
+  "tests": 220,
+  "browserCombinations": 20,
+  "sqlDatabase": "pso_release_atomic_test",
+  "freshMigrationDatabase": "pso_a07_migration_test"
+}

@@ -91,13 +91,14 @@ for (const api of [reminderCreateApi, reminderUpdateApi, reminderCompleteApi, re
   assert.doesNotMatch(api, /beginCareMutation|finishCareMutation|abortCareMutation/);
 }
 for (const api of [observationCreateApi, observationItemApi, observationRestoreApi]) {
-  assert.match(api, /beginCareMutation/);
+  assert.match(api, /care_observation_atomic/);
+  assert.doesNotMatch(api, /beginCareMutation|finishCareMutation|abortCareMutation/);
 }
 assert.match(reminderHistoryApi, /event_type[\s\S]*completed/);
 assert.match(observationCreateApi, /is\('deleted_at', null\)/);
 assert.doesNotMatch(observationItemApi, /\.delete\(\)/);
-assert.match(observationItemApi, /deleted_at/);
-assert.match(observationRestoreApi, /deleted_at:\s*null/);
+assert.match(observationItemApi, /p_action: 'delete'/);
+assert.match(observationRestoreApi, /p_action: 'restore'/);
 assert.match(migration, /create table if not exists public\.care_mutations/);
 assert.match(migration, /unique \(owner_id, idempotency_key\)/);
 assert.match(migration, /add column if not exists deleted_at timestamptz/);

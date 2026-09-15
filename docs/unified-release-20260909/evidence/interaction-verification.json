@@ -1,0 +1,25 @@
+{
+  "qa": "180 tests + build + contracts passed",
+  "eslintWarnings": 216,
+  "eslintBudget": 220,
+  "browser": "Chromium and WebKit, 320 and 390 CSS px",
+  "api": "fully intercepted synthetic fixtures; no live inference",
+  "interaction": [
+    "PASS chromium/320: exact trait, retained failure draft, no implicit purchase plan, entity edit/read, origin back/focus, health isolation, month edit retention",
+    "PASS chromium/390: exact trait, retained failure draft, no implicit purchase plan, entity edit/read, origin back/focus, health isolation, month edit retention",
+    "PASS webkit/320: exact trait, retained failure draft, no implicit purchase plan, entity edit/read, origin back/focus, health isolation, month edit retention",
+    "PASS webkit/390: exact trait, retained failure draft, no implicit purchase plan, entity edit/read, origin back/focus, health isolation, month edit retention"
+  ],
+  "profileConflict": [
+    "PASS chromium: conflict values, modal focus, Escape retains draft, explicit resolution uses new version, save returns to same trigger",
+    "PASS webkit: conflict values, modal focus, Escape retains draft, explicit resolution uses new version, save returns to same trigger"
+  ],
+  "documents": [
+    "PASS chromium/320: file+draft after close; scoped 503; same-key retry; correct success; no overflow",
+    "PASS chromium/390: file+draft after close; scoped 503; same-key retry; correct success; no overflow",
+    "PASS webkit/320: file+draft after close; scoped 503; same-key retry; correct success; no overflow",
+    "PASS webkit/390: file+draft after close; scoped 503; same-key retry; correct success; no overflow"
+  ],
+  "agentUi": "[{\"engine\":\"chromium\",\"width\":320,\"passed\":true,\"scope\":\"mock API/UI only\"},{\"engine\":\"chromium\",\"width\":390,\"passed\":true,\"scope\":\"mock API/UI only\"},{\"engine\":\"webkit\",\"width\":320,\"passed\":true,\"scope\":\"mock API/UI only\"},{\"engine\":\"webkit\",\"width\":390,\"passed\":true,\"scope\":\"mock API/UI only\"}]",
+  "productionChanged": false
+}

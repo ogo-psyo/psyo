@@ -19,7 +19,7 @@ const freshOwner = {
   blockingOnboarding: page.includes("if (onboardingStage !== 'done') return"),
 };
 
-assert.deepEqual(freshOwner.visibleTabs, ['today', 'profile', 'map', 'nearby', 'things']);
+assert.deepEqual(freshOwner.visibleTabs, ['today', 'map', 'nearby', 'all', 'profile']);
 assert.equal(freshOwner.blockingOnboarding, false, 'fresh owners must see the real app shell');
 
 for (const token of ['Имя собаки', 'Завести профиль', 'Возраст', 'Пол', 'Порода', 'Не сейчас', 'role="dialog"']) {

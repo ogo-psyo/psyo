@@ -2,6 +2,7 @@ import { distanceMeters } from './geo';
 import type { SavedPlace } from './mapLibrary';
 export type MeetingPreview = {
     kind: 'place' | 'route';
+    origin?: 'selected-point';
     title: string;
     detail: string;
     points: number[][];
@@ -32,4 +33,16 @@ export function previewMeetingRoute(id: string, title: string, points: number[][
     if (!longest || longest.length < 2)
         return null;
     return { kind: 'route', title, detail: 'Фрагмент маршрута без частных начала и конца (не ближе 500 м)', points: longest, sourceId: id };
+}
+
+/** An explicitly selected meeting point is a proposal, not a private-library write.
+ * Only these public fields can enter its snapshot; never copy arbitrary object fields.
+ */
+export function previewMeetingPoint(value: unknown): MeetingPreview | null {
+    if (!value || typeof value !== 'object') return null;
+    const point = value as Record<string, unknown>;
+    if (typeof point.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(point.id)) return null;
+    if (typeof point.title !== 'string' || !point.title.trim() || point.title.length > 160) return null;
+    if (typeof point.lat !== 'number' || !Number.isFinite(point.lat) || Math.abs(point.lat) > 90 || typeof point.lng !== 'number' || !Number.isFinite(point.lng) || Math.abs(point.lng) > 180) return null;
+    return { kind: 'place', origin: 'selected-point', title: point.title.trim(), detail: 'Точка, выбранная для встречи', points: [[point.lng, point.lat]], sourceId: point.id };
 }

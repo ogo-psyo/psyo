@@ -8,3 +8,15 @@ it('search uses explicit bounds and stable provider identity; missing coordinate
 });
 it('exhausted shared budget makes no provider call and is distinct from an empty result',async()=>{const fetch=vi.fn();vi.stubGlobal('fetch',fetch);gate.mockResolvedValue(false);const response=await GET(new Request('http://localhost/api/map/search?q=парк'));expect(response.status).toBe(429);expect(response.headers.get('Retry-After')).toBe('2');expect(fetch).not.toHaveBeenCalled();});
 it('provider failure does not claim there are no places',async()=>{vi.stubGlobal('fetch',vi.fn().mockRejectedValue(Error('network')));const response=await GET(new Request('http://localhost/api/map/search?q=парк'));expect(response.status).toBe(503);expect((await response.json()).error).toBe('search_unavailable');});
+
+it('untrusted provider shapes and invalid coordinates are rejected without made-up map points',async()=>{
+ const fetch=vi.fn().mockResolvedValue(Response.json({error:'unexpected object'}));vi.stubGlobal('fetch',fetch);
+ expect((await GET(new Request('http://localhost/api/map/search?q=парк'))).status).toBe(503);
+ fetch.mockResolvedValue(Response.json([{name:'Place',lat:'Infinity',lon:'12'},{name:'Bad',lat:'10',lon:[]},{name:'Blank',lat:' ',lon:' '},{name:'Valid',lat:'55.75',lon:'37.61',osm_type:'way',osm_id:22}]));
+ const body=await (await GET(new Request('http://localhost/api/map/search?q=парк'))).json();
+ expect(body.results).toHaveLength(1);expect(body.results[0]).toMatchObject({sourceUrl:'https://www.openstreetmap.org/way/22',pointIsCenter:true,dogAccess:'unknown'});
+});
+it('provider throttling keeps its retry signal and does not fall back to invented places',async()=>{
+ const fetch=vi.fn().mockResolvedValue(new Response('',{status:429}));vi.stubGlobal('fetch',fetch);
+ const result=await GET(new Request('http://localhost/api/map/search?q=парк'));expect(result.status).toBe(429);expect(result.headers.get('Retry-After')).toBe('60');expect(fetch).toHaveBeenCalledTimes(1);
+});

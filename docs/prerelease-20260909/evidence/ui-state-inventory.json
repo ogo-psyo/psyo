@@ -1,0 +1,1522 @@
+[
+  {
+    "source": "app/page.tsx",
+    "line": 2,
+    "text": "import {downloadRouteGpx,type RoutePlanning} from '@/lib/routePlanning';"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 8,
+    "text": "import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 13,
+    "text": "import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 65,
+    "text": "import { normalizeOwnerRoutes, removeOwnerRoute, upsertOwnerRoute, type OwnerRouteView } from '@/lib/mapUi';"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 76,
+    "text": "type ReminderTimeMode = 'exact' | 'flexible' | 'approximate';"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 87,
+    "text": "type Tab = 'today' | 'calendar' | 'habits' | 'health' | 'nearby' | 'map' | 'card' | 'profile' | 'things';"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 88,
+    "text": "type DrawMode = 'none' | 'point' | 'route';"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 89,
+    "text": "type MapSaveMode = 'private' | 'shared';"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 499,
+    "text": "const [profile, setProfile] = useState<DogProfile>(defaultProfile);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 500,
+    "text": "const [profileHydrated, setProfileHydrated] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 501,
+    "text": "const [avatarState, setAvatarState] = useState<AvatarState>('idle');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 502,
+    "text": "const [generatedAvatarUrl, setGeneratedAvatarUrl] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 503,
+    "text": "const [avatarDraftAssetId, setAvatarDraftAssetId] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 504,
+    "text": "const [avatarReferenceAssetId, setAvatarReferenceAssetId] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 505,
+    "text": "const [avatarDraftSource, setAvatarDraftSource] = useState<'uploaded' | 'generated' | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 506,
+    "text": "const [avatarOwnerPrompt, setAvatarOwnerPrompt] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 507,
+    "text": "const [avatarConsent, setAvatarConsent] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 508,
+    "text": "const [avatarComposerOpen, setAvatarComposerOpen] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 509,
+    "text": "const [avatarCapabilities, setAvatarCapabilities] = useState({ identityEnabled: false, uploadsEnabled: false, generationEnabled: false, providerReady: false });"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 510,
+    "text": "const [demoMode, setDemoMode] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 511,
+    "text": "const [notice, setNotice] = useState<Notice>('idle');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 512,
+    "text": "const [error, setError] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 513,
+    "text": "const [tab, setTabState] = useState<Tab>('today');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 514,
+    "text": "const [journeyDetail, setJourneyDetail] = useState<PrimaryRoute | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 515,
+    "text": "const [assistantOpen, setAssistantOpen] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 516,
+    "text": "const [session, setSession] = useState<AuthSession | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 517,
+    "text": "const [authLoading, setAuthLoading] = useState(true);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 518,
+    "text": "const [reminders, setReminders] = useState<ReminderView[]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 519,
+    "text": "const [wishlist, setWishlist] = useState<WishlistView[]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 520,
+    "text": "const [zones, setZones] = useState<ZoneView[]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 521,
+    "text": "const [removedWishlistItem, setRemovedWishlistItem] = useState<WishlistView | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 522,
+    "text": "const [removedZone, setRemovedZone] = useState<ZoneView | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 523,
+    "text": "const [editingWishlistId, setEditingWishlistId] = useState<string | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 524,
+    "text": "const [wishlistTitleDraft, setWishlistTitleDraft] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 525,
+    "text": "const [wishlistReasonDraft, setWishlistReasonDraft] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 526,
+    "text": "const [editingZoneId, setEditingZoneId] = useState<string | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 527,
+    "text": "const [zoneTitleDraft, setZoneTitleDraft] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 528,
+    "text": "const [zoneNoteDraft, setZoneNoteDraft] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 529,
+    "text": "const [pets, setPets] = useState<PetSwitchOption[]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 530,
+    "text": "const [activePetId, setActivePetId] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 531,
+    "text": "const [observations, setObservations] = useState<ObservationView[]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 532,
+    "text": "const [documents, setDocuments] = useState<DocumentView[]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 533,
+    "text": "const [documentUploadOpen, setDocumentUploadOpen] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 534,
+    "text": "const [documentUploading, setDocumentUploading] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 535,
+    "text": "const [documentFileName, setDocumentFileName] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 536,
+    "text": "const [documentBusyId, setDocumentBusyId] = useState<string | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 538,
+    "text": "const [habits, setHabits] = useState<HabitView[]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 539,
+    "text": "const [habitLoading, setHabitLoading] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 540,
+    "text": "const [habitBusyId, setHabitBusyId] = useState<string | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 541,
+    "text": "const [suggestedHabitDraft, setSuggestedHabitDraft] = useState<HabitDraft | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 542,
+    "text": "const [dogSummary, setDogSummary] = useState<DogModuleSummary | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 543,
+    "text": "const [moduleErrors, setModuleErrors] = useState<{ habits?: string; health?: string }>({});"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 544,
+    "text": "const [socialResult, setSocialResult] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 545,
+    "text": "const [socialLoadedPet,setSocialLoadedPet] = useState<string|null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 546,
+    "text": "const [socialProfile, setSocialProfile] = useState<SocialProfile | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 547,
+    "text": "const [socialCandidates, setSocialCandidates] = useState<CandidateGroup>({ nearby: [], city: [] });"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 548,
+    "text": "const [socialRequests, setSocialRequests] = useState<SocialRequestView[]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 549,
+    "text": "const [walkSignals, setWalkSignals] = useState<WalkSignal[]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 550,
+    "text": "const [walkSignalReason, setWalkSignalReason] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 551,
+    "text": "const [socialViewerLocation, setSocialViewerLocation] = useState<CoarseLocation | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 552,
+    "text": "const [socialViewerRadiusKm, setSocialViewerRadiusKm] = useState(3);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 553,
+    "text": "const [socialViewerRadiusMeters, setSocialViewerRadiusMeters] = useState(3000);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 554,
+    "text": "const [nearbyState, setNearbyState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 555,
+    "text": "const [nearbyReason, setNearbyReason] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 556,
+    "text": "const [socialBusyId, setSocialBusyId] = useState<string | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 557,
+    "text": "const [socialLocating, setSocialLocating] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 558,
+    "text": "const [missingTelegramUsernameAction, setMissingTelegramUsernameAction] = useState<string | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 559,
+    "text": "const [socialInvite, setSocialInvite] = useState<SocialInviteView | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 560,
+    "text": "const [socialInviteState, setSocialInviteState] = useState<'idle' | 'loading' | 'ready' | 'gone' | 'error'>('idle');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 561,
+    "text": "const [observationDraft, setObservationDraft] = useState<ObservationDraft>(defaultObservationDraft);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 562,
+    "text": "const [observationSaving, setObservationSaving] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 563,
+    "text": "const [editingObservationId, setEditingObservationId] = useState<string | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 564,
+    "text": "const [observationEditDraft, setObservationEditDraft] = useState<ObservationEditorDraft>(defaultObservationDraft);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 565,
+    "text": "const [observationMutationBusy, setObservationMutationBusy] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 566,
+    "text": "const [recentlyDeletedObservation, setRecentlyDeletedObservation] = useState<ObservationView | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 567,
+    "text": "const [newReminderTitle, setNewReminderTitle] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 568,
+    "text": "const [newReminderType, setNewReminderType] = useState('custom');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 569,
+    "text": "const [newReminderDueDate, setNewReminderDueDate] = useState(() => dateInputValue(new Date()));"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 570,
+    "text": "const [newReminderDueTime, setNewReminderDueTime] = useState('09:00');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 571,
+    "text": "const [newReminderTimeMode, setNewReminderTimeMode] = useState<ReminderTimeMode>('flexible');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 572,
+    "text": "const [newReminderRecurrence, setNewReminderRecurrence] = useState<ReminderRecurrence>('none');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 573,
+    "text": "const [editingReminderId, setEditingReminderId] = useState<string | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 574,
+    "text": "const [reminderMutationBusy, setReminderMutationBusy] = useState<string | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 575,
+    "text": "const [reminderHistory, setReminderHistory] = useState<Record<string, ReminderHistoryItem[]>>({});"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 576,
+    "text": "const [calendarCursor, setCalendarCursor] = useState(() => new Date());"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 577,
+    "text": "const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => dateInputValue(new Date()));"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 579,
+    "text": "const [careView, setCareView] = useState<'active' | 'history'>('active');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 580,
+    "text": "const [mapVisited, setMapVisited] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 581,
+    "text": "const [mapActivity, setMapActivity] = useState<'recording'|'paused'|null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 583,
+    "text": "const [routeEditSeed,setRouteEditSeed] = useState<{token:number;points:number[][];planning?:RoutePlanning;review?:boolean;pathGaps?:number[];routeSource?:'recorded'|'planned';durationSeconds?:number;startedAt?:string}|null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 584,
+    "text": "const [editingRouteGeometryId,setEditingRouteGeometryId] = useState<string|null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 585,
+    "text": "const [mapSavedRevision, setMapSavedRevision] = useState(0);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 588,
+    "text": "const [newZoneTitle, setNewZoneTitle] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 589,
+    "text": "const [newZoneNote, setNewZoneNote] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 590,
+    "text": "const [newZoneType, setNewZoneType] = useState('safe_place');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 591,
+    "text": "const [pickedZonePoint, setPickedZonePoint] = useState<{ lat: number; lng: number } | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 592,
+    "text": "const [drawMode, setDrawMode] = useState<DrawMode>('none');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 593,
+    "text": "const [mapSaveMode, setMapSaveMode] = useState<MapSaveMode>('private');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 594,
+    "text": "const [routePoints, setRoutePoints] = useState<number[][]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 595,
+    "text": "const [ownerRoutes, setOwnerRoutes] = useState<OwnerRouteView[]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 596,
+    "text": "const [editingRouteId, setEditingRouteId] = useState<string | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 597,
+    "text": "const [routeTitleDraft, setRouteTitleDraft] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 598,
+    "text": "const [routeDescriptionDraft, setRouteDescriptionDraft] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 599,
+    "text": "const [routeMutationBusy, setRouteMutationBusy] = useState<string | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 600,
+    "text": "const [mapDraftSaving, setMapDraftSaving] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 601,
+    "text": "const [mapRouteMeta, setMapRouteMeta] = useState<RouteDraftMeta | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 602,
+    "text": "const [pendingRouteDeletion, setPendingRouteDeletion] = useState<OwnerRouteView | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 603,
+    "text": "const [newWishTitle, setNewWishTitle] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 604,
+    "text": "const [newWishReason, setNewWishReason] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 605,
+    "text": "const [newWishCategory, setNewWishCategory] = useState('gear');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 606,
+    "text": "const [newWishNeedsReminder, setNewWishNeedsReminder] = useState(true);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 607,
+    "text": "const [newWishPlannedFor, setNewWishPlannedFor] = useState(() => dateAfterDays(1));"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 608,
+    "text": "const [thingCaptureOpen, setThingCaptureOpen] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 609,
+    "text": "const [mainRecommendation, setMainRecommendation] = useState<Recommendation | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 610,
+    "text": "const [woofRecommendationEntry, setWoofRecommendationEntry] = useState<WoofRecommendationEntry | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 611,
+    "text": "const [recommendationState, setRecommendationState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 612,
+    "text": "const [recommendationBusyAction, setRecommendationBusyAction] = useState<'primary' | 'snooze' | 'dismiss' | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 613,
+    "text": "const [viralCardFormat, setViralCardFormat] = useState<ViralCardFormat>('story');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 614,
+    "text": "const [viralCardMood, setViralCardMood] = useState<ViralCardMood>('bold');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 615,
+    "text": "const [viralCardHeadline, setViralCardHeadline] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 616,
+    "text": "const [viralSelectedFacts, setViralSelectedFacts] = useState<ViralFactKey[]>(['social', 'energy', 'care', 'triggers']);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 617,
+    "text": "const [publicCardVisibleFields, setPublicCardVisibleFields] = useState<PublicCardFieldKey[]>(defaultPublicCardFields);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 618,
+    "text": "const [publishedPublicCardPath, setPublishedPublicCardPath] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 619,
+    "text": "const [publishedPublicCardFingerprint, setPublishedPublicCardFingerprint] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 620,
+    "text": "const [publicCardLinkBusy, setPublicCardLinkBusy] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 621,
+    "text": "const [publicCardRevokeConfirm, setPublicCardRevokeConfirm] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 622,
+    "text": "const [assistantQuestion, setAssistantQuestion] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 623,
+    "text": "const [assistantAnswer, setAssistantAnswer] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 624,
+    "text": "const [assistantActions, setAssistantActions] = useState<ActionSuggestion[]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 625,
+    "text": "const [assistantActionStatuses, setAssistantActionStatuses] = useState<Record<string, AssistantActionStatus>>({});"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 626,
+    "text": "const [assistantSuggestedQuestions, setAssistantSuggestedQuestions] = useState<string[]>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 627,
+    "text": "const [assistantThreadId, setAssistantThreadId] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 628,
+    "text": "const [assistantDiagnostic, setAssistantDiagnostic] = useState<{ provider?: string; mode?: string }>({});"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 629,
+    "text": "const [assistantMessages, setAssistantMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 630,
+    "text": "const [breedSearch, setBreedSearch] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 631,
+    "text": "const [assistantLoading, setAssistantLoading] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 632,
+    "text": "const [dogCreationOpen, setDogCreationOpen] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 633,
+    "text": "const [heroNameDraft, setHeroNameDraft] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 634,
+    "text": "const [onboardingSaving, setOnboardingSaving] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 635,
+    "text": "const [addDogOpen, setAddDogOpen] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 636,
+    "text": "const [newDogName, setNewDogName] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 637,
+    "text": "const [profileSaving, setProfileSaving] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 638,
+    "text": "const [petMutationBusy, setPetMutationBusy] = useState(false);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 639,
+    "text": "const [dogDeleteName, setDogDeleteName] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 640,
+    "text": "const [accountDeleteConfirmation, setAccountDeleteConfirmation] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 641,
+    "text": "const [localDeleteConfirmation, setLocalDeleteConfirmation] = useState('');"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 642,
+    "text": "const [telegramSession, setTelegramSession] = useState<TelegramSessionView>({ mode: 'loading' });"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 654,
+    "text": "const [billing, setBilling] = useState<BillingView | null>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 655,
+    "text": "const [careFeedback, setCareFeedback] = useState<CareFeedback>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 656,
+    "text": "const [pendingCareDeletion, setPendingCareDeletion] = useState<PendingCareDeletion>(null);"
+  },
+  {
+    "source": "app/page.tsx",
+    "line": 657,
+    "text": "const [careDeletionBusy, setCareDeletionBusy] = useState(false);"
+  },
+  {
+    "source": "components/LiveMapClient.tsx",
+    "line": 171,
+    "text": "const map=useMap();const [zoom,setZoom]=useState(map.getZoom());useMapEvents({zoomend:()=>setZoom(map.getZoom())});"
+  },
+  {
+    "source": "components/LiveMapClient.tsx",
+    "line": 201,
+    "text": "const [tilesReady, setTilesReady] = useState(false);"
+  },
+  {
+    "source": "components/LiveMapClient.tsx",
+    "line": 202,
+    "text": "const [tilesFailed, setTilesFailed] = useState(false);"
+  },
+  {
+    "source": "components/LiveMapClient.tsx",
+    "line": 203,
+    "text": "const [tileRevision, setTileRevision] = useState(0);"
+  },
+  {
+    "source": "components/app/AppNavigation.tsx",
+    "line": 6,
+    "text": "export type PrimaryRoute = 'today' | 'profile' | 'map' | 'nearby' | 'things';"
+  },
+  {
+    "source": "components/care/DeleteCareDialog.tsx",
+    "line": 41,
+    "text": "role=\"dialog\""
+  },
+  {
+    "source": "components/habits/HabitScreen.tsx",
+    "line": 66,
+    "text": "const [adding, setAdding] = useState(false);"
+  },
+  {
+    "source": "components/habits/HabitScreen.tsx",
+    "line": 67,
+    "text": "const [editingId, setEditingId] = useState<string | null>(null);"
+  },
+  {
+    "source": "components/habits/HabitScreen.tsx",
+    "line": 68,
+    "text": "const [draft, setDraft] = useState<HabitDraft>({ title: '', kind: 'walk', cadence: 'daily', targetPerPeriod: 1 });"
+  },
+  {
+    "source": "components/health/HealthTimelineScreen.tsx",
+    "line": 99,
+    "text": "const [today] = useState(() => new Date());"
+  },
+  {
+    "source": "components/health/HealthTimelineScreen.tsx",
+    "line": 104,
+    "text": "const [selectedDayOverride, setSelectedDayOverride] = useState<string | null>(null);"
+  },
+  {
+    "source": "components/health/HealthTimelineScreen.tsx",
+    "line": 105,
+    "text": "const [visibleMonthOverride, setVisibleMonthOverride] = useState<Date | null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionJourney.tsx",
+    "line": 295,
+    "text": "const [activeScenario, setActiveScenario] = useState<ScenarioId | null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionJourney.tsx",
+    "line": 296,
+    "text": "const [observationCaptureOpen, setObservationCaptureOpen] = useState(false);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 27,
+    "text": "export type ProductionMapMode = 'view' | 'route' | 'risk';"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 28,
+    "text": "import {parseRoutePlanning,stopsKey,downloadRouteGpx,type RoutePlanning,type RouteStop} from '@/lib/routePlanning';"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 31,
+    "text": "import type {OwnerRouteView} from '@/lib/mapUi';"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 35,
+    "text": "import { routeSessionKey, persistentFlows, readRouteSession, hasRouteWork, type RouteFlow, type StoredRouteSession } from '@/lib/mapSession';"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 37,
+    "text": "export type RouteDraftMeta = {"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 164,
+    "text": "const [targetCollection,setTargetCollection] = useState('saved');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 165,
+    "text": "const [collectionId,setCollectionId] = useState('saved');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 168,
+    "text": "const [savedPlaceNotice,setSavedPlaceNotice] = useState('');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 169,
+    "text": "const [placeUndo,setPlaceUndo] = useState<{collectionId:string;placeId:string}|null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 170,
+    "text": "const [durationOpen,setDurationOpen]=useState(false);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 171,
+    "text": "const [wantedMinutes,setWantedMinutes]=useState(30);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 172,
+    "text": "const [durationResult,setDurationResult]=useState<ReturnType<typeof findDurationWalk>|undefined>(undefined);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 173,
+    "text": "const [filter, setFilter] = useState<MapLayerFilter>('all');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 174,
+    "text": "const [layers,setLayers]=useState({routes:true,places:true,risks:true});"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 175,
+    "text": "const [layersReady,setLayersReady]=useState(false);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 180,
+    "text": "const [savedExpanded, setSavedExpanded] = useState(false);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 181,
+    "text": "const [workspaceTab,setWorkspaceTab]=useState<'places'|'walks'|'saved'>('places');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 182,
+    "text": "const [query, setQuery] = useState('');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 183,
+    "text": "const [searchRequest, setSearchRequest] = useState<{query:string;lat:number;lng:number;revision:number;bounds?:MapBounds} | null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 184,
+    "text": "const [searchOpen, setSearchOpen] = useState(false);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 187,
+    "text": "const [remoteSearchResults, setRemoteSearchResults] = useState<SearchResult[]>([]);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 188,
+    "text": "const [searchState, setSearchState] = useState<'idle' | 'loading' | 'ready' | 'error' | 'quota'>('idle');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 189,
+    "text": "const [selectedSearchPoint, setSelectedSearchPoint] = useState<SearchResult | null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 190,
+    "text": "const [activeSearchIndex, setActiveSearchIndex] = useState(-1);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 191,
+    "text": "const [locating, setLocating] = useState(false);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 192,
+    "text": "const [locationStatus, setLocationStatus] = useState('');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 193,
+    "text": "const [userLocation, setUserLocation] = useState<MapUserLocation | null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 194,
+    "text": "const [focusPoint, setFocusPoint] = useState<MapFocusPoint | null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 195,
+    "text": "const [mapBounds,setMapBounds]=useState<MapBounds|null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 197,
+    "text": "const [mapSelection,setMapSelection]=useState<{lat:number;lng:number}|null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 200,
+    "text": "const [mapCenter, setMapCenter] = useState<{lat:number;lng:number;zoom?:number}>({ lat: 55.751244, lng: 37.618423 });"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 201,
+    "text": "const [routeFlow, setRouteFlow] = useState<RouteFlow>('idle');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 202,
+    "text": "const [elapsedSeconds, setElapsedSeconds] = useState(0);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 203,
+    "text": "const [discardPrompt, setDiscardPrompt] = useState(false);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 204,
+    "text": "const [hydrated, setHydrated] = useState(false);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 205,
+    "text": "const [folded, setFolded] = useState(false);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 206,
+    "text": "const [pathGaps, setPathGaps] = useState<number[]>([]);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 210,
+    "text": "const [startedAt, setStartedAt] = useState<number | null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 218,
+    "text": "const [planningMode,setPlanningMode]=useState<'manual'|'walking'>('manual');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 219,
+    "text": "const [routeStops,setRouteStops]=useState<RouteStop[]>([]);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 220,
+    "text": "const [candidate,setCandidate]=useState<RouteStop|null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 221,
+    "text": "const [calculationKey,setCalculationKey]=useState('');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 222,
+    "text": "const [calculationState,setCalculationState]=useState<'idle'|'loading'|'preview'|'ready'|'error'>('idle');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 224,
+    "text": "const [walkResult,setWalkResult]=useState<WalkResult|null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 225,
+    "text": "const [calculationError,setCalculationError]=useState('');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 236,
+    "text": "const [undoStops,setUndoStops]=useState<RouteStop[]|null>(null);"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 501,
+    "text": "const [placeOrigin,setPlaceOrigin] = useState<'search'|'library'|'map'>('search');"
+  },
+  {
+    "source": "components/journey/ProductionMapWorkspace.tsx",
+    "line": 826,
+    "text": "{discardPrompt ? <section ref={discardDialogRef} className=\"production-route-discard\" role=\"alertdialog\" aria-modal=\"true\" aria-labelledby=\"route-discard-title\" aria-describedby=\"route-discard-description\">"
+  },
+  {
+    "source": "components/journey/RouteDeleteDialog.tsx",
+    "line": 5,
+    "text": "import type { OwnerRouteView } from '@/lib/mapUi';"
+  },
+  {
+    "source": "components/journey/RouteDeleteDialog.tsx",
+    "line": 41,
+    "text": "<section className=\"care-delete-dialog route-delete-dialog\" role=\"alertdialog\" aria-modal=\"true\" aria-labelledby=\"route-delete-title\" aria-describedby=\"route-delete-description\">"
+  },
+  {
+    "source": "components/journey/VoiceObservationCapture.tsx",
+    "line": 61,
+    "text": "const [typedText, setTypedText] = useState('');"
+  },
+  {
+    "source": "components/journey/VoiceObservationCapture.tsx",
+    "line": 62,
+    "text": "const [seconds, setSeconds] = useState(0);"
+  },
+  {
+    "source": "components/journey/VoiceObservationCapture.tsx",
+    "line": 63,
+    "text": "const [candidates, setCandidates] = useState<ObservationCandidate[]>([]);"
+  },
+  {
+    "source": "components/journey/VoiceObservationCapture.tsx",
+    "line": 64,
+    "text": "const [saving, setSaving] = useState(false);"
+  },
+  {
+    "source": "components/journey/VoiceObservationCapture.tsx",
+    "line": 65,
+    "text": "const [saveError, setSaveError] = useState('');"
+  },
+  {
+    "source": "components/journey/VoiceObservationCapture.tsx",
+    "line": 66,
+    "text": "const [saved, setSaved] = useState(false);"
+  },
+  {
+    "source": "components/journey/VoiceObservationCapture.tsx",
+    "line": 67,
+    "text": "const [keepPrivateNote, setKeepPrivateNote] = useState(false);"
+  },
+  {
+    "source": "components/journey/VoiceObservationCapture.tsx",
+    "line": 68,
+    "text": "const [privateNoteSaved, setPrivateNoteSaved] = useState(false);"
+  },
+  {
+    "source": "components/journey/VoiceObservationCapture.tsx",
+    "line": 69,
+    "text": "const [structuredSaved, setStructuredSaved] = useState(false);"
+  },
+  {
+    "source": "components/journey/VoiceObservationCapture.tsx",
+    "line": 70,
+    "text": "const [parseStatus, setParseStatus] = useState<'idle' | 'loading' | 'editing' | 'empty' | 'ready'>('idle');"
+  },
+  {
+    "source": "components/journey/VoiceObservationCapture.tsx",
+    "line": 71,
+    "text": "const [detailsOpen, setDetailsOpen] = useState(false);"
+  },
+  {
+    "source": "components/map/MapLibraryPanel.tsx",
+    "line": 21,
+    "text": "const [title, setTitle] = useState('');"
+  },
+  {
+    "source": "components/map/MapLibraryPanel.tsx",
+    "line": 22,
+    "text": "const [managing,setManaging]=useState(false);"
+  },
+  {
+    "source": "components/map/MapLibraryPanel.tsx",
+    "line": 23,
+    "text": "const [selected, setSelected] = useState<string[]>([]);"
+  },
+  {
+    "source": "components/map/MapLibraryPanel.tsx",
+    "line": 24,
+    "text": "const [editingPlace, setEditingPlace] = useState<string | null>(null), [note, setNote] = useState('');"
+  },
+  {
+    "source": "components/map/MapLibraryPanel.tsx",
+    "line": 25,
+    "text": "const [undo, setUndo] = useState<{"
+  },
+  {
+    "source": "components/onboarding/CoreOnboarding.tsx",
+    "line": 95,
+    "text": "role=\"dialog\""
+  },
+  {
+    "source": "components/profile/ProfileMemoryWorkspace.tsx",
+    "line": 38,
+    "text": "type Surface = 'overview' | 'character' | 'social' | 'passport' | 'history' | 'capture';"
+  },
+  {
+    "source": "components/profile/ProfileMemoryWorkspace.tsx",
+    "line": 131,
+    "text": "const [surface, setSurface] = useState<Surface>('overview');"
+  },
+  {
+    "source": "components/profile/ProfileMemoryWorkspace.tsx",
+    "line": 132,
+    "text": "const [editor, setEditor] = useState<EditorDomain | null>(null);"
+  },
+  {
+    "source": "components/profile/ProfileMemoryWorkspace.tsx",
+    "line": 133,
+    "text": "const [editorDraft, setEditorDraft] = useState<DogProfile | null>(null);"
+  },
+  {
+    "source": "components/profile/ProfileMemoryWorkspace.tsx",
+    "line": 134,
+    "text": "const [editorSaving, setEditorSaving] = useState(false);"
+  },
+  {
+    "source": "components/profile/ProfileMemoryWorkspace.tsx",
+    "line": 135,
+    "text": "const [breedQuery, setBreedQuery] = useState('');"
+  },
+  {
+    "source": "components/social/CandidateDeck.tsx",
+    "line": 12,
+    "text": "const [state,setState]=useState<'loading'|'ready'|'error'>(src?'loading':'error');"
+  },
+  {
+    "source": "components/social/CandidateDeck.tsx",
+    "line": 29,
+    "text": "const [announcement,setAnnouncement]=useState('');"
+  },
+  {
+    "source": "components/social/CandidateDeck.tsx",
+    "line": 30,
+    "text": "const [requestError,setRequestError]=useState('');"
+  },
+  {
+    "source": "components/social/MeetingPlacePanel.tsx",
+    "line": 5,
+    "text": "import type { OwnerRouteView } from '@/lib/mapUi';"
+  },
+  {
+    "source": "components/social/MeetingPlacePanel.tsx",
+    "line": 17,
+    "text": "const [draft] = useState(() => {"
+  },
+  {
+    "source": "components/social/MeetingPlacePanel.tsx",
+    "line": 25,
+    "text": "const [library, setLibrary] = useState<MapLibrary | null>(null);"
+  },
+  {
+    "source": "components/social/MeetingPlacePanel.tsx",
+    "line": 26,
+    "text": "const [proposals, setProposals] = useState<Proposal[]>([]);"
+  },
+  {
+    "source": "components/social/MeetingPlacePanel.tsx",
+    "line": 27,
+    "text": "const [loading, setLoading] = useState(true), [loadError, setLoadError] = useState('');"
+  },
+  {
+    "source": "components/social/MeetingPlacePanel.tsx",
+    "line": 28,
+    "text": "const [unavailable, setUnavailable] = useState(false);"
+  },
+  {
+    "source": "components/social/MeetingPlacePanel.tsx",
+    "line": 29,
+    "text": "const [composing, setComposing] = useState(false), [method, setMethod] = useState<'search'|'map'|'saved'>(draft?.method || 'search');"
+  },
+  {
+    "source": "components/social/MeetingPlacePanel.tsx",
+    "line": 30,
+    "text": "const [query, setQuery] = useState(draft?.query || ''), [results, setResults] = useState<MapSearchResult[]>([]);"
+  },
+  {
+    "source": "components/social/MeetingPlacePanel.tsx",
+    "line": 31,
+    "text": "const [searchState, setSearchState] = useState<'idle'|'loading'|'ready'|'error'>('idle');"
+  },
+  {
+    "source": "components/social/MeetingPlacePanel.tsx",
+    "line": 32,
+    "text": "const [selection, setSelection] = useState(draft?.selection || ''), [newPlace, setNewPlace] = useState<SavedPlace | null>(draft?.newPlace || null);"
+  },
+  {
+    "source": "components/social/MeetingPlacePanel.tsx",
+    "line": 33,
+    "text": "const [preview, setPreview] = useState<MeetingPreview | null>(null), [digest, setDigest] = useState(draft?.fingerprint || '');"
+  },
+  {
+    "source": "components/social/MeetingPlacePanel.tsx",
+    "line": 34,
+    "text": "const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 11,
+    "text": "import type { OwnerRouteView } from '@/lib/mapUi';"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 93,
+    "text": "return <section className=\"woof-profile-sheet\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"woof-profile-title\">"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 110,
+    "text": "const [mode, setMode] = useState<'live' | 'meet'>('live');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 111,
+    "text": "const [selectedSignalId, setSelectedSignalId] = useState<string | null>("
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 114,
+    "text": "const [signalComposer, setSignalComposer] = useState(props.recommendationEntry?.view === 'give_signal');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 115,
+    "text": "const [profileEditor, setProfileEditor] = useState(false);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 116,
+    "text": "const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 117,
+    "text": "const [browsedCandidateId,setBrowsedCandidateId]=useState<string|null>(null);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 118,
+    "text": "const [chosenRequestId, setSelectedRequestId] = useState<string | null>(null);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 119,
+    "text": "const [awaitingPartner, setAwaitingPartner] = useState<string | null>(null);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 121,
+    "text": "const [requestsOpen, setRequestsOpen] = useState(props.recommendationEntry?.view === 'requests');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 122,
+    "text": "const [manualArea, setManualArea] = useState(false);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 123,
+    "text": "const [mapExpanded, setMapExpanded] = useState(false);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 124,
+    "text": "const [mapPanel, setMapPanel] = useState<'selection' | 'list' | 'tools'>('selection');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 125,
+    "text": "const [liveMapState, setLiveMapState] = useState<'loading' | 'ready' | 'error'>('loading');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 126,
+    "text": "const [areaQuery, setAreaQuery] = useState('');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 127,
+    "text": "const [areaLocateAttempted,setAreaLocateAttempted]=useState(false);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 129,
+    "text": "const [areaResults, setAreaResults] = useState<Array<{id:string;title:string;detail?:string;point:CoarseLocation}>>([]);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 130,
+    "text": "const [areaState, setAreaState] = useState<'idle'|'loading'|'error'|'ready'>('idle');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 132,
+    "text": "const [filtersOpen, setFiltersOpen] = useState(false);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 133,
+    "text": "const [clockNow, setClockNow] = useState(() => Date.now());"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 135,
+    "text": "const [liveWhen, setLiveWhen] = useState<'all' | 'now' | 'later'>('all');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 136,
+    "text": "const [livePace, setLivePace] = useState<'all' | WalkPace>('all');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 137,
+    "text": "const [meetRadius, setMeetRadius] = useState<'5' | '10' | '15' | 'city'>('city');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 138,
+    "text": "const [meetScenario, setMeetScenario] = useState<'all' | SocialScenario>('all');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 139,
+    "text": "const [meetLifeStage, setMeetLifeStage] = useState<'all' | 'puppy' | 'adult' | 'senior'>('all');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 140,
+    "text": "const [meetEnergy, setMeetEnergy] = useState<'all' | 'calm' | 'balanced' | 'active'>('all');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 141,
+    "text": "const [pace, setPace] = useState<WalkPace>('balanced');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 142,
+    "text": "const [when, setWhen] = useState<'now' | 'later'>('now');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 143,
+    "text": "const [laterTime, setLaterTime] = useState('19:00');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 144,
+    "text": "const [note, setNote] = useState('');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 145,
+    "text": "const [location, setLocation] = useState<CoarseLocation | null>(props.profile?.coarseLocation ?? null);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 146,
+    "text": "const [locating, setLocating] = useState(false);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 147,
+    "text": "const [locationError, setLocationError] = useState('');"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 149,
+    "text": "const [viewHydrated, setViewHydrated] = useState(false);"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 473,
+    "text": "{signalComposer && <GavDialog label=\"Свой Гав\" onClose={closeActiveModal}><section onChangeCapture={() => { signalDraftRef.current = null; }} ref={composerRef} className=\"woof-composer\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"woof-composer-title\">"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 487,
+    "text": "{profileEditor && <GavDialog label=\"Моя анкета знакомства\" onClose={closeActiveModal}><div ref={profileOverlayRef} className=\"woof-overlay\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Моя анкета знакомства\"><button className=\"woof-overlay-x\" type=\"button\" onClick={closeActiveModal} aria-label=\"Закрыть\"><X /></button>{props.error && <p role=\"alert\">{props.error}</p>}<SocialProfileSheet petId={props.petId} dogName={props.dogName} profile={props.profile} busy={props.busyId === 'profile'} locating={props.locating} onSave={async draft => { const saved = await props.onSaveProfile(draft); if (saved && draft.discoverable) closeActiveModal(); return saved; }} onHide={props.onHideProfile} onLocate={props.onLocateProfile} /><button className=\"woof-overlay-close\" type=\"button\" onClick={closeActiveModal}>К анкетам</button></div></GavDialog>}"
+  },
+  {
+    "source": "components/social/ProductionWoofWorkspace.tsx",
+    "line": 489,
+    "text": "{requestsOpen && <GavDialog label={selectedRequest ? `Знакомство: ${selectedRequest.otherDog?.name || 'собака'}` : 'Отклики и связи'} onClose={closeActiveModal}><div ref={requestsOverlayRef} className=\"woof-overlay gav-relationship\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Отклики и связи\"><button className=\"woof-overlay-x\" type=\"button\" onClick={closeActiveModal} aria-label=\"Закрыть\"><X /></button>"
+  },
+  {
+    "source": "components/social/RequestsPanel.tsx",
+    "line": 52,
+    "text": "const [reportingId, setReportingId] = useState<string | null>(null);"
+  },
+  {
+    "source": "components/social/RequestsPanel.tsx",
+    "line": 53,
+    "text": "const [blockingId, setBlockingId] = useState<string | null>(null);"
+  },
+  {
+    "source": "components/social/RequestsPanel.tsx",
+    "line": 54,
+    "text": "const [reason, setReason] = useState('');"
+  },
+  {
+    "source": "components/social/RequestsPanel.tsx",
+    "line": 55,
+    "text": "const [closing, setClosing] = useState(false);"
+  },
+  {
+    "source": "components/social/SocialProfileSheet.tsx",
+    "line": 45,
+    "text": "const [draft, setDraft] = useState<Omit<SocialProfile, 'petId'>>(profile ? {"
+  },
+  {
+    "source": "components/social/SocialProfileSheet.tsx",
+    "line": 56,
+    "text": "const [result, setResult] = useState('');"
+  },
+  {
+    "source": "components/social/WoofLiveMapClient.tsx",
+    "line": 43,
+    "text": "const [moved, setMoved] = useState(false);"
+  },
+  {
+    "source": "components/social/WoofLiveMapClient.tsx",
+    "line": 62,
+    "text": "const [tileState,setTileState] = useState<'loading'|'ready'|'error'>('loading');"
+  },
+  {
+    "source": "components/social/WoofLiveMapClient.tsx",
+    "line": 63,
+    "text": "const [tileRevision,setTileRevision] = useState(0);"
+  },
+  {
+    "source": "components/ui/LongPressButton.tsx",
+    "line": 18,
+    "text": "const [progress, setProgress] = useState(0);"
+  },
+  {
+    "source": "components/ui/StatusButton.tsx",
+    "line": 44,
+    "text": "const [state, setState] = useState<StatusButtonState>('idle');"
+  },
+  {
+    "source": "components/ui/Surface.tsx",
+    "line": 4,
+    "text": "type SurfaceVariant = 'raised' | 'flat' | 'outline' | 'fancy';"
+  },
+  {
+    "source": "components/ui/Surface.tsx",
+    "line": 5,
+    "text": "type SurfaceElement = 'article' | 'section' | 'div';"
+  }
+]

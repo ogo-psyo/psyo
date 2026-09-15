@@ -12,11 +12,13 @@ export type PendingCareDeletion = {
 export function DeleteCareDialog({
   reminder,
   busy,
+  error,
   onCancel,
   onConfirm,
 }: {
   reminder: PendingCareDeletion;
   busy: boolean;
+  error?:string;
   onCancel: () => void;
   onConfirm: (id: string) => Promise<void>;
 }) {
@@ -48,6 +50,7 @@ export function DeleteCareDialog({
         <p className="eyebrow">план ухода</p>
         <h2 id="care-delete-title">Удалить дело?</h2>
         <p>«{reminder.title}» исчезнет из плана и истории. Это действие нельзя отменить.</p>
+        {error&&<p role="alert">{error}</p>}
         <div>
           <Button ref={cancelRef} variant="secondary" onClick={onCancel} disabled={busy}>Отмена</Button>
           <LongPressButton

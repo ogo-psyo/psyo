@@ -1,6 +1,7 @@
 'use client';
 
-import { ObservationMetricFields, observationMetricCount } from '@/components/health/ObservationMetricFields';
+import { isPrimaryObservationFact, observationTypeLabel } from '@/lib/observationLabels';
+import { ObservationMetricFields } from '@/components/health/ObservationMetricFields';
 
 export type ObservationEditorDraft = {
   mood: string;
@@ -8,6 +9,7 @@ export type ObservationEditorDraft = {
   stool: string;
   energy: string;
   note?: string;
+  type?:string;value?:string;
 };
 
 export function ObservationEditor({
@@ -23,22 +25,20 @@ export function ObservationEditor({
   onCancel: () => void;
   onSave: () => Promise<void>;
 }) {
-  const metricCount = observationMetricCount(draft);
   return (
     <form className="observation-form structured-observation-editor" onSubmit={async (event) => {
       event.preventDefault();
       await onSave();
     }}>
-      <header><div><b>Изменить показатели</b><small>{metricCount ? `${metricCount} из 4 отмечено` : 'Показатели не отмечены'}</small></div></header>
-      <ObservationMetricFields values={draft} onChange={onChange} compact />
-      <details className="observation-edit-context">
-        <summary>Изменить контекст <span>необязательно</span></summary>
-        <label><span className="sr-only">Контекст наблюдения</span><textarea value={draft.note || ''} onChange={(event) => onChange({ note: event.target.value })} placeholder="Например, после долгой прогулки" /></label>
-      </details>
+      <fieldset disabled={busy}>
+      {isPrimaryObservationFact(draft.type)&&<label>{observationTypeLabel(draft.type)}<input required value={draft.value||''} onChange={event=>onChange({value:event.target.value})}/></label>}
+      <label>Текст записи<textarea maxLength={8000} value={draft.note||''} onChange={event=>onChange({note:event.target.value})}/></label>
+      <details className="observation-edit-context"><summary>Изменить показатели</summary><ObservationMetricFields values={draft} onChange={onChange} compact/></details>
       <div className="care-row-actions">
-        <button type="submit" disabled={busy}>{busy ? 'Сохраняю…' : 'Сохранить запись'}</button>
-        <button type="button" onClick={onCancel} disabled={busy}>Отмена</button>
+        <button type="submit" disabled={busy||!draft.value?.trim()&&!draft.note?.trim()&&!draft.mood&&!draft.appetite&&!draft.stool&&!draft.energy}>{busy ? 'Сохраняю…' : 'Сохранить запись'}</button>
+        <button type="button" onClick={onCancel} disabled={busy}>Свернуть</button>
       </div>
+      </fieldset>
     </form>
   );
 }

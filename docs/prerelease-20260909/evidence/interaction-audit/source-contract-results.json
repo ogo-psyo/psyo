@@ -1,0 +1,14 @@
+{
+  "source": "c15d067",
+  "checks": [
+    {
+      "command": "node scripts/qa/check-production-journey-parity-contract.mjs",
+      "result": "production journey parity contract: ok"
+    },
+    {
+      "command": "node scripts/qa/check-profile-memory-production-contract.mjs",
+      "result": "profile memory production contract: ok"
+    }
+  ],
+  "limits": "Source contract checks do not detect confirmed semantic UI defects"
+}

@@ -1,28 +1,28 @@
 'use client';
 
+import styles from './ConnectedShell.module.css';
 import { Button } from '@/components/ui/Button';
-import { Sparkle, House, Dog, MapTrifold, ChatCircleDots, ShoppingBag } from '@phosphor-icons/react';
+import { Sparkle, House, Dog, MapTrifold, ChatCircleDots, SquaresFour } from '@phosphor-icons/react';
 
-export type PrimaryRoute = 'today' | 'profile' | 'map' | 'nearby' | 'things';
+export type PrimaryRoute = 'today' | 'profile' | 'map' | 'nearby' | 'all';
 
 type PetIconName = 'home' | 'paw' | 'map' | 'nearby' | 'bag';
 
 const routes: { id: PrimaryRoute; label: string; icon: PetIconName }[] = [
-  { id: 'today', label: 'Главная', icon: 'home' },
-  { id: 'profile', label: 'Профиль', icon: 'paw' },
+  { id: 'today', label: 'Псё', icon: 'home' },
   { id: 'map', label: 'Карта', icon: 'map' },
   { id: 'nearby', label: 'Гав', icon: 'nearby' },
-  { id: 'things', label: 'Вещи', icon: 'bag' },
+  { id: 'all', label: 'Всё', icon: 'bag' },
+  { id: 'profile', label: 'Профиль', icon: 'paw' },
 ];
 
 function PetNavIcon({ name }: { name: PetIconName }) {
-  const Icon = { home: House, paw: Dog, map: MapTrifold, nearby: ChatCircleDots, bag: ShoppingBag }[name];
+  const Icon = { home: House, paw: Dog, map: MapTrifold, nearby: ChatCircleDots, bag: SquaresFour }[name];
   return <Icon weight="regular" aria-hidden="true" />;
 }
 
 export function AppNavigation({
   active,
-  dogName,
   onNavigate,
   onAskAssistant,
 }: {
@@ -32,7 +32,7 @@ export function AppNavigation({
   onAskAssistant?: () => void;
 }) {
   return (
-    <nav className="app-tabs" aria-label="Основные разделы">
+    <nav className={`app-tabs ${styles.navigation}`} data-connected-navigation aria-label="Основные разделы">
       <div className="app-tabs-brand" aria-hidden="true">
         <b>Псё</b>
         <span>ваш день вместе</span>
@@ -52,7 +52,7 @@ export function AppNavigation({
             <span className="app-tab-icon" aria-hidden="true">
               <PetNavIcon name={route.icon} />
             </span>
-            <span>{route.id === 'profile' && dogName ? dogName : route.label}</span>
+            <span>{route.label}</span>
           </Button>
         );
       })}

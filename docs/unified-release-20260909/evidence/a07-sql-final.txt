@@ -1,0 +1,6 @@
+BEGIN
+CREATE FUNCTION
+CREATE TRIGGER
+DO
+NOTICE:  PASS injected mid-transaction rollback, mutation-kind isolation, service-only grants; canonical geometry/stops; same/new-run retry; committed action survives cancellation; owner, public/path, negative intent, deletion and privacy-era guards
+ROLLBACK

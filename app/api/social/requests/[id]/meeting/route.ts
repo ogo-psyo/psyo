@@ -2,7 +2,7 @@ import { measuredMapOperation } from '@/lib/server/mapMetrics';
 import { createHash } from 'node:crypto';
 import { socialRequestContext, socialStorageError } from '@/lib/server/socialHttp';
 import { isOwnerPairBlocked } from '@/lib/server/socialService';
-import { previewMeetingPlace, previewMeetingRoute, type MeetingPreview } from '@/lib/meetingPlace';
+import { previewMeetingPlace, previewMeetingRoute, previewMeetingPoint, type MeetingPreview } from '@/lib/meetingPlace';
 import { storedRoutePoints } from '@/lib/routeGeometry';
 import type { MapLibrary } from '@/lib/mapLibrary';
 export const runtime = 'nodejs';
@@ -66,7 +66,7 @@ async function measuredMutation(request: Request, ctx: Ctx) {
             return context.response!;
         const body = await request.json().catch(() => null);
         const petId = context.connection.sender_owner_id === context.ownerId ? context.connection.sender_pet_id : context.connection.recipient_pet_id;
-        const preview = await sourcePreview(context, context.ownerId, petId, body?.kind, body?.sourceId);
+        const preview = body?.kind === 'point' ? previewMeetingPoint(body.point) : await sourcePreview(context, context.ownerId, petId, body?.kind, body?.sourceId);
         if (!preview)
             return Response.json({ error: 'MEETING_OBJECT_UNAVAILABLE' }, { status: 409 });
         const digest = fingerprint(preview);
@@ -100,7 +100,9 @@ export async function GET(request: Request, ctx: Ctx) {
             return socialStorageError();
         const proposals = [];
         for (const row of data || []) {
-            const current = await sourcePreview(context, row.author_owner_id, row.author_pet_id, row.kind, row.source_id);
+            const current = row.snapshot?.origin === 'selected-point'
+                ? previewMeetingPoint({ id: row.source_id, title: row.snapshot.title, lng: row.snapshot.points?.[0]?.[0], lat: row.snapshot.points?.[0]?.[1] })
+                : await sourcePreview(context, row.author_owner_id, row.author_pet_id, row.kind, row.source_id);
             const available = current && fingerprint(current) === row.fingerprint;
             proposals.push({ id: row.id, mine: row.author_owner_id === context.ownerId, createdAt: row.created_at, status: available ? 'available' : 'changed_or_unavailable', preview: available ? row.snapshot : null });
         }

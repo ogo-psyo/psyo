@@ -2,15 +2,14 @@ import { NextResponse } from 'next/server';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { getRequestAuth } from '@/lib/server/auth';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
-import { listPetDocuments, mapPetDocument, ownedPet, PET_DOCUMENT_BUCKET, PET_DOCUMENT_MAX_BYTES, PET_DOCUMENT_MIME_TYPES } from '@/lib/server/petDocumentService';
+import { listPetDocuments, mapPetDocument, ownedPet, PET_DOCUMENT_MAX_BYTES, PET_DOCUMENT_MIME_TYPES } from '@/lib/server/petDocumentService';
+
+import { uploadDocumentOnce } from '@/lib/server/documentLifecycle';
+import { readCareIdempotencyKey } from '@/lib/server/careHttp';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
-
-function safeName(value: string) {
-  const normalized = value.normalize('NFKC').replace(/[^a-zA-Z0-9а-яА-Я._-]+/g, '-').replace(/^-+|-+$/g, '');
-  return normalized.slice(0, 120) || 'document';
-}
 
 async function context(request: Request) {
   const auth = await getRequestAuth(request);
@@ -53,27 +52,21 @@ export async function POST(request: Request) {
   if (file.size > PET_DOCUMENT_MAX_BYTES) return NextResponse.json({ error: 'FILE_TOO_LARGE' }, { status: 413 });
   if (!(await ownedPet(supabase, ownerId, petId))) return NextResponse.json({ error: 'PET_NOT_FOUND' }, { status: 404 });
 
-  const storagePath = `${ownerId}/${petId}/${crypto.randomUUID()}-${safeName(file.name)}`;
-  const bytes = Buffer.from(await file.arrayBuffer());
-  const upload = await supabase.storage.from(PET_DOCUMENT_BUCKET).upload(storagePath, bytes, { contentType: file.type, upsert: false });
-  if (upload.error) return NextResponse.json({ error: 'DOCUMENT_UPLOAD_FAILED' }, { status: 500 });
-
-  const insert = await supabase.from('pet_documents').insert({
-    pet_id: petId,
-    kind: allowedKinds.has(kind) ? kind : 'analysis',
-    title,
-    clinic: clinic || null,
-    document_date: /^\d{4}-\d{2}-\d{2}$/.test(documentDate) ? documentDate : null,
-    original_name: file.name,
-    mime_type: file.type,
-    size_bytes: file.size,
-    storage_bucket: PET_DOCUMENT_BUCKET,
-    storage_path: storagePath,
-  }).select('*').single();
-
-  if (insert.error) {
-    await supabase.storage.from(PET_DOCUMENT_BUCKET).remove([storagePath]);
-    return NextResponse.json({ error: 'DOCUMENT_METADATA_FAILED' }, { status: 500 });
+  const key = readCareIdempotencyKey(request);
+  if (!key) return NextResponse.json({ error: 'IDEMPOTENCY_KEY_REQUIRED' }, { status: 400 });
+  try {
+    const document = await uploadDocumentOnce({ supabase, ownerId, petId, key,
+      bytes: Buffer.from(await file.arrayBuffer()), metadata: {
+        kind: allowedKinds.has(kind) ? kind : 'analysis', title, clinic: clinic || null,
+        document_date: /^\d{4}-\d{2}-\d{2}$/.test(documentDate) ? documentDate : null,
+        original_name: file.name, mime_type: file.type, size_bytes: file.size,
+      },
+    });
+    return NextResponse.json({ document: mapPetDocument(document) }, { status: 201 });
+  } catch (error) {
+    const code = error && typeof error === 'object' && 'message' in error ? String(error.message) : '';
+    if (code.includes('IDEMPOTENCY_KEY_REUSED')) return NextResponse.json({ error: 'IDEMPOTENCY_KEY_REUSED' }, { status: 409 });
+    if (code.includes('DOCUMENT_REMOVED')) return NextResponse.json({ error: 'DOCUMENT_REMOVED' }, { status: 409 });
+    return NextResponse.json({ error: 'DOCUMENT_SAVE_PENDING' }, { status: 503 });
   }
-  return NextResponse.json({ document: mapPetDocument(insert.data) }, { status: 201 });
 }

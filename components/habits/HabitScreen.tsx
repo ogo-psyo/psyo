@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Archive, ArrowLeft, Check, ListChecks, PencilSimple, Plus } from '@phosphor-icons/react';
+import { ExactPage } from '@/components/exact/ExactShell';
+import { Archive, Check, PencilSimple, Plus } from '@phosphor-icons/react';
 
 export type HabitView = {
   id: string;
@@ -76,12 +77,8 @@ export function HabitScreen({
   }, [suggestedDraft]);
 
   return (
-    <section className="module-screen habit-screen" aria-labelledby="habit-screen-title">
-      <button className="journal-screen-back" type="button" onClick={onBack}><ArrowLeft weight="bold" aria-hidden="true" /> На главную</button>
-      <header className="module-screen-heading">
-        <span className="module-screen-icon"><ListChecks weight="duotone" aria-hidden="true" /></span>
-        <div><h1 id="habit-screen-title">Привычки {dogName}</h1><p>{habits.length ? `${completed} отметок в текущем периоде` : 'Регулярные дела появятся здесь'}</p></div>
-      </header>
+    <ExactPage viewKey="habits" onBack={onBack}><section className="exact-extension" aria-labelledby="habit-screen-title">
+      <h1 id="habit-screen-title">Привычки {dogName}</h1><p className="lead">{habits.length ? `${completed} отметок в текущем периоде` : 'Регулярные дела появятся здесь'}</p>
 
       {loading ? <div className="module-skeleton" aria-label="Загружаю привычки" /> : error ? (
         <div className="module-error" role="alert"><b>Привычки не загрузились</b><p>{error}</p><button type="button" onClick={() => void onRetry()}>Повторить</button></div>
@@ -127,6 +124,6 @@ export function HabitScreen({
         </form>
       )}
       {!canPersist && <p className="module-persistence-note">Привычки сохраняются для профиля, открытого через Telegram.</p>}
-    </section>
+    </section></ExactPage>
   );
 }

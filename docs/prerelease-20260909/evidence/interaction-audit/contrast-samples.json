@@ -1,0 +1,35 @@
+{
+  "method": "WCAG2 luminance, computed opaque element foreground/background; excludes gradients, child-styled portrait, images and translucent surfaces",
+  "pairs": [
+    {
+      "label": "Закрыть редактор",
+      "fg": "rgb(37, 59, 52)",
+      "bg": "rgb(255, 254, 250)",
+      "grad": false,
+      "size": "16px",
+      "outline": "rgb(37, 59, 52) none 3px",
+      "disabled": false,
+      "ratio": 11.86
+    },
+    {
+      "label": "Отмена",
+      "fg": "rgb(37, 59, 52)",
+      "bg": "rgb(255, 254, 250)",
+      "grad": false,
+      "size": "16px",
+      "outline": "rgb(37, 59, 52) none 3px",
+      "disabled": false,
+      "ratio": 11.86
+    },
+    {
+      "label": "Сохранить",
+      "fg": "rgb(255, 255, 255)",
+      "bg": "rgb(64, 88, 69)",
+      "grad": false,
+      "size": "16px",
+      "outline": "rgb(255, 255, 255) none 3px",
+      "disabled": false,
+      "ratio": 7.78
+    }
+  ]
+}

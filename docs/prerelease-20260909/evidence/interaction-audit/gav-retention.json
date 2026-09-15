@@ -1,0 +1,13 @@
+{
+  "before": {
+    "city": "saint_petersburg",
+    "walk": true,
+    "storage": {
+      "pso.gav.profile-draft.v1:11111111-1111-4111-8111-111111111111": "{\"discoverable\":false,\"city\":\"saint_petersburg\",\"district\":null,\"coarseLocation\":null,\"scenarios\":[\"walk\"]}"
+    }
+  },
+  "after": {
+    "city": "moscow",
+    "walk": false
+  }
+}

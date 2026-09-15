@@ -1,7 +1,8 @@
 'use client';
 
 import { JournalMasthead } from '@/components/journal/JournalMasthead';
-import type { ChangeEvent, CSSProperties, ReactNode } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
+import { ProfileTraitRow } from './ProfileTraitRow';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
@@ -35,7 +36,7 @@ import {
 } from '@/lib/data';
 import styles from './ProfileMemoryWorkspace.module.css';
 
-type Surface = 'overview' | 'character' | 'social' | 'passport' | 'history' | 'capture';
+export type ProfileSurface = 'overview' | 'character' | 'social' | 'passport' | 'history' | 'capture';
 type EditorDomain = 'character' | 'social' | 'passport';
 type ObservationPoint = { id: string; createdAt: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string };
 type DocumentPoint = { id: string; title: string; clinic?: string | null; originalName: string; createdAt: string };
@@ -43,6 +44,8 @@ type ReminderPoint = { id: string; title: string; status: string; dueAt: string;
 type AvatarCapabilities = { identityEnabled: boolean; uploadsEnabled: boolean; generationEnabled: boolean; providerReady: boolean };
 
 type Props = {
+  surface?: ProfileSurface;
+  onSurfaceChange?: (surface: ProfileSurface) => void;
   profile: DogProfile;
   breedLabel: string;
   imageUrl: string;
@@ -72,6 +75,7 @@ type Props = {
   onSaveProfile: (profile: DogProfile) => Promise<string | null>;
   onAddDocument: (trigger: HTMLButtonElement) => void;
   onOpenDocument: (id: string) => void;
+  onOpenRecord: (kind: 'observation' | 'reminder', id: string, trigger: HTMLButtonElement) => void;
   onDeleteDocument: (id: string) => void;
   documentBusyId?: string | null;
   onAskAssistant: () => void;
@@ -104,15 +108,6 @@ function observationDetail(item?: ObservationPoint) {
   return item.note || (details.length ? details.join(' · ') : 'Подтверждённое наблюдение владельца.');
 }
 
-function traitPosition(value: string, fallback = 50) {
-  const text = value.toLowerCase();
-  if (!text) return fallback;
-  if (/осторож|тревож|мягк|спокой/.test(text)) return 36;
-  if (/увер|общит|актив|легко|быстро/.test(text)) return 68;
-  if (/независ|охран|упрям/.test(text)) return 78;
-  return fallback;
-}
-
 function valueOrEmpty(value?: string, empty = 'Пока не заполнено') {
   return value?.trim() || empty;
 }
@@ -128,9 +123,12 @@ function EditorSelect(props: { label: string; value: string; options: string[]; 
 }
 
 export function ProfileMemoryWorkspace(props: Props) {
-  const [surface, setSurface] = useState<Surface>('overview');
+  const [localSurface, setLocalSurface] = useState<ProfileSurface>('overview');
+  const surface = props.surface ?? localSurface;
+  const setSurface = (next: ProfileSurface) => { setLocalSurface(next); props.onSurfaceChange?.(next); };
   const [editor, setEditor] = useState<EditorDomain | null>(null);
   const [editorDraft, setEditorDraft] = useState<DogProfile | null>(null);
+  const editorDrafts = useRef<Partial<Record<EditorDomain, DogProfile>>>({});
   const [editorSaving, setEditorSaving] = useState(false);
   const [breedQuery, setBreedQuery] = useState('');
   const dialogRef = useRef<HTMLDialogElement | null>(null);
@@ -200,14 +198,18 @@ export function ProfileMemoryWorkspace(props: Props) {
 
   const openEditor = (domain: EditorDomain, trigger?: HTMLButtonElement | null) => {
     editorTriggerRef.current = trigger || (document.activeElement instanceof HTMLButtonElement ? document.activeElement : null);
-    setEditorDraft({ ...props.profile, habits: props.profile.habits.map((habit) => ({ ...habit })) });
+    setEditorDraft(editorDrafts.current[domain] ?? { ...props.profile, habits: props.profile.habits.map((habit) => ({ ...habit })) });
     setEditor(domain);
   };
 
   const closeEditor = () => {
+    if (editor && editorDraft) editorDrafts.current[editor] = editorDraft;
+    // Close the native top-layer dialog before restoring focus. WebKit can
+    // otherwise undo focus restored while React still has the dialog open.
+    editorDialogRef.current?.close();
     setEditor(null);
     setEditorDraft(null);
-    window.setTimeout(() => editorTriggerRef.current?.focus(), 0);
+    window.requestAnimationFrame(() => editorTriggerRef.current?.focus());
   };
 
   const updateEditorProfile = (patch: Partial<DogProfile>) => setEditorDraft((current) => current ? { ...current, ...patch } : current);
@@ -217,7 +219,11 @@ export function ProfileMemoryWorkspace(props: Props) {
     setEditorSaving(true);
     const saved = await props.onSaveProfile(editorDraft);
     setEditorSaving(false);
-    if (saved) closeEditor();
+    if (saved) {
+      // Closing keeps the current draft by default; successful save retires it.
+      closeEditor();
+      if (editor) delete editorDrafts.current[editor];
+    }
   };
 
   const header = (title: string) => (
@@ -249,7 +255,7 @@ export function ProfileMemoryWorkspace(props: Props) {
               <button type="button" className="journal-index-row" onClick={props.onOpenCard}><span className="journal-row-icon"><ShieldCheck aria-hidden="true" /></span><span><b>Памятка для близких</b><small>Без доступа к личной истории</small></span><CaretRight aria-hidden="true" /></button>
             </section>
             <section className="journal-recent"><div className="journal-section-title"><h2>Последние записи</h2><button type="button" onClick={() => setSurface('history')}>Все <CaretRight aria-hidden="true" /></button></div>
-              {history.length ? history.slice(0, 2).map((item) => <button type="button" key={item.id} className="journal-recent-row" onClick={() => item.entityKind === 'document' ? props.onOpenDocument(item.entityId) : item.entityKind === 'observation' ? props.onOpenHealth() : props.onOpenPlan()}><time dateTime={item.date}>{new Date(item.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</time><span><b>{item.title}</b><small>{item.entityKind === 'document' ? 'Документы' : item.entityKind === 'observation' ? 'Наблюдение' : 'Уход'}</small></span><CaretRight aria-hidden="true" /></button>) : <p className="journal-empty-copy">Здесь появятся ваши наблюдения, документы и выполненные дела.</p>}
+              {history.length ? history.slice(0, 2).map((item) => <button type="button" key={item.id} className="journal-recent-row" onClick={event => item.entityKind === 'document' ? props.onOpenDocument(item.entityId) : props.onOpenRecord(item.entityKind, item.entityId, event.currentTarget)}><time dateTime={item.date}>{new Date(item.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</time><span><b>{item.title}</b><small>{item.entityKind === 'document' ? 'Документы' : item.entityKind === 'observation' ? 'Наблюдение' : 'Уход'}</small></span><CaretRight aria-hidden="true" /></button>) : <p className="journal-empty-copy">Здесь появятся ваши наблюдения, документы и выполненные дела.</p>}
             </section>
             <div className="journal-profile-tools"><button type="button" className="journal-text-link" onClick={props.onOpenSettings}><Dog aria-hidden="true" />Мои собаки</button><button type="button" className="journal-text-link" onClick={props.onOpenPlan}><CalendarCheck aria-hidden="true" />План заботы{activeReminders.length ? ` · ${activeReminders.length}` : ''}</button><button type="button" className="journal-text-link" onClick={props.onOpenSettings}>Настройки и приватность <CaretRight aria-hidden="true" /></button></div>
           </div>}
@@ -259,12 +265,10 @@ export function ProfileMemoryWorkspace(props: Props) {
             <article className={styles.characterPortrait}><h2>{valueOrEmpty(props.profile.temperament, `Портрет ${props.profile.dogName} формируется`)}</h2><p>{props.profile.playStyle || 'Характер — устойчивый портрет со слов владельца. Одно наблюдение не переписывает его автоматически.'}</p></article>
             <p className={styles.evidence}><ShieldCheck weight="fill" /> {props.profile.temperament ? 'Подтверждено владельцем' : 'Нужны примеры из разных ситуаций'}</p>
             <section className={styles.traits}><h2>Грани характера</h2>
-              {[
-                ['Уверенность', props.profile.temperament, 'осторожный', 'смелый'],
-                ['Общительность', props.profile.socialMode, 'сам по себе', 'ко всем'],
-                ['Возбуждение', props.profile.energyLevel, 'ровный', 'возбудимый'],
-                ['Обучаемость', props.profile.trainability, 'нужна мотивация', 'быстро схватывает'],
-              ].map(([label, value, from, to]) => <div className={styles.traitRow} key={label}><button type="button" onClick={(event) => openEditor('character', event.currentTarget)}><span>{label}</span><b>{valueOrEmpty(value)}</b><CaretRight /></button><div className={styles.traitAxis} style={{ '--position': `${traitPosition(value)}%` } as CSSProperties}><i /><span>{from}</span><span>{to}</span></div></div>)}
+              <ProfileTraitRow key={`${props.profile.backendPetId}:temperament`} label="Темперамент" field="temperament" options={temperamentOptions} profile={props.profile} onSave={props.onSaveProfile} />
+              <ProfileTraitRow key={`${props.profile.backendPetId}:socialMode`} label="Правило знакомства" field="socialMode" options={socialOptions} profile={props.profile} onSave={props.onSaveProfile} />
+              <ProfileTraitRow key={`${props.profile.backendPetId}:energyLevel`} label="Энергия" field="energyLevel" options={energyOptions} profile={props.profile} onSave={props.onSaveProfile} />
+              <ProfileTraitRow key={`${props.profile.backendPetId}:trainability`} label="Обучаемость" field="trainability" options={['нужна мотивация', 'постепенно осваивает', 'быстро схватывает']} profile={props.profile} onSave={props.onSaveProfile} />
             </section>
             <section className={styles.motivators}><h2>Что помогает</h2><div><b>Стиль игры</b><span>{valueOrEmpty(props.profile.playStyle)}</span></div><div><b>Оставаться одному</b><span>{valueOrEmpty(props.profile.aloneTime)}</span></div></section>
             <p className={styles.domainNote}><Info /> Устойчивое изменение Псё предложит подтвердить — профиль не меняется молча.</p>
@@ -286,7 +290,7 @@ export function ProfileMemoryWorkspace(props: Props) {
 
           {surface === 'passport' && <section className={styles.domainSurface}>
             {header('Паспорт и внешность')}
-            <div className={styles.domainActions}><button type="button" className={styles.secondaryAction} onClick={() => setSurface('character')}>Характер <CaretRight /></button><button type="button" className={styles.secondaryAction} onClick={() => setSurface('social')}>С окружающими <CaretRight /></button><button type="button" className={styles.secondaryAction} onClick={props.onOpenHabits}>Повторяемые привычки <CaretRight /></button></div>
+            <div className={styles.domainActions}><button type="button" className={styles.secondaryAction} onClick={() => setSurface('character')}>Характер <CaretRight /></button><button type="button" className={styles.secondaryAction} onClick={() => setSurface('social')}>С окружающими <CaretRight /></button><button type="button" className={styles.secondaryAction} onClick={event => { event.currentTarget.focus(); props.onOpenHabits(); }}>Повторяемые привычки <CaretRight /></button></div>
             <div className={styles.passportIdentity}><button type="button" className={`${styles.passportPhoto} ${styles.passportPhotoButton}`} onClick={openIdentity}>{hasIdentity ? <img src={props.imageUrl} alt={`Фото ${props.profile.dogName}`} /> : <span><PawPrint weight="duotone" />Добавить образ</span>}</button><div><h2>{props.profile.dogName}</h2><p>{props.breedLabel}</p><span>{valueOrEmpty(props.profile.sex, 'Пол не указан')} · {valueOrEmpty(props.profile.lifeStage, 'Возрастная группа не указана')}</span></div></div>
             <section className={styles.passportFacts}><header><h2>Основное</h2><button type="button" onClick={(event) => openEditor('passport', event.currentTarget)}>Редактировать</button></header>
               <div><span>Порода</span><b>{props.breedLabel}</b></div><div><span>Возрастная группа</span><b>{valueOrEmpty(props.profile.lifeStage)}</b></div><div><span>Пол</span><b>{valueOrEmpty(props.profile.sex)}</b></div><div><span>Вес</span><b>{valueOrEmpty(props.profile.weight)}</b></div><div><span>Микрочип</span><b>{valueOrEmpty(props.profile.microchip)}</b></div><div><span>Клиника</span><b>{valueOrEmpty(props.profile.vetClinic)}</b></div>
@@ -296,8 +300,8 @@ export function ProfileMemoryWorkspace(props: Props) {
 
           {surface === 'history' && <section className={styles.domainSurface}>
             {header('История')}
-            <div className={styles.domainActions}><button type="button" className={styles.secondaryAction} onClick={props.onOpenHealth}>Самочувствие и здоровье <CaretRight /></button><button type="button" className={styles.secondaryAction} data-profile-memory-action="add-document" onClick={(event) => props.onAddDocument(event.currentTarget)}><UploadSimple />Добавить документ</button></div>
-            {history.length ? <div className={styles.timeline}>{history.map((item) => <article key={item.id}><i className={item.kind === 'health' ? styles.timeline_health : styles.timeline_care} /><time>{readableDate(item.date)}</time><h2>{item.title}</h2><p>{item.detail}</p>{item.entityKind === 'document' && <div className={styles.timelineActions}><button type="button" onClick={() => props.onOpenDocument(item.entityId)}>Открыть</button><button type="button" className={styles.timelineDanger} disabled={props.documentBusyId === item.entityId} onClick={() => props.onDeleteDocument(item.entityId)}>{props.documentBusyId === item.entityId ? 'Удаляю…' : 'Удалить'}</button></div>}</article>)}</div> : <article className={styles.emptyHistory}><ClockCounterClockwise /><h2>История пока пустая</h2><p>Наблюдения, документы и выполненные дела появятся здесь автоматически.</p></article>}
+            <div className={styles.domainActions}><button type="button" className={styles.secondaryAction} onClick={event => { event.currentTarget.focus(); props.onOpenHealth(); }}>Самочувствие и здоровье <CaretRight /></button><button type="button" className={styles.secondaryAction} data-profile-memory-action="add-document" onClick={(event) => props.onAddDocument(event.currentTarget)}><UploadSimple />Добавить документ</button></div>
+            {history.length ? <div className={styles.timeline}>{history.map((item) => <article key={item.id}><i className={item.kind === 'health' ? styles.timeline_health : styles.timeline_care} /><time>{readableDate(item.date)}</time><h2>{item.title}</h2><p>{item.detail}</p>{item.entityKind !== 'document' && <div className={styles.timelineActions}><button type="button" onClick={event => props.onOpenRecord(item.entityKind, item.entityId, event.currentTarget)}>Открыть запись</button></div>}{item.entityKind === 'document' && <div className={styles.timelineActions}><button type="button" onClick={() => props.onOpenDocument(item.entityId)}>Открыть</button><button type="button" className={styles.timelineDanger} disabled={props.documentBusyId === item.entityId} onClick={() => props.onDeleteDocument(item.entityId)}>{props.documentBusyId === item.entityId ? 'Удаляю…' : 'Удалить'}</button></div>}</article>)}</div> : <article className={styles.emptyHistory}><ClockCounterClockwise /><h2>История пока пустая</h2><p>Наблюдения, документы и выполненные дела появятся здесь автоматически.</p></article>}
             <button className={styles.primaryAction} type="button" onClick={() => setSurface('capture')}><Microphone /> Рассказать Псё</button>
           </section>}
 
@@ -365,7 +369,7 @@ export function ProfileMemoryWorkspace(props: Props) {
           </div>
 
           {props.error && <p className={styles.editorError} role="alert">{props.error}</p>}
-          <footer><button type="button" className={styles.editorCancel} onClick={closeEditor}>Отмена</button><button type="submit" className={styles.editorSave} disabled={editorSaving || !editorDraft.dogName.trim()}>{editorSaving ? 'Сохраняю…' : 'Сохранить'}</button></footer>
+          <footer><button type="button" className={styles.editorCancel} onClick={closeEditor}>Свернуть</button><button type="submit" className={styles.editorSave} disabled={editorSaving || !editorDraft.dogName.trim()}>{editorSaving ? 'Сохраняю…' : 'Сохранить'}</button></footer>
         </form>}
       </dialog>
     </section>

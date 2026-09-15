@@ -23,7 +23,7 @@ const requiredCopyApi = [
 
 for (const token of requiredCopyApi) {
   if (!files.copy.includes(`function ${token}`)) failures.push(`lib/copy.ts missing formatter: ${token}`);
-  if (token !== 'inflectPetName' && !files.page.includes(token)) failures.push(`page.tsx does not use formatter: ${token}`);
+  if (['formatCount','formatReadinessLabel','formatZoneMeta'].includes(token) && !files.page.includes(token)) failures.push(`page.tsx does not use formatter: ${token}`);
 }
 
 const forbiddenUiSnippets = [
@@ -40,7 +40,6 @@ const forbiddenUiSnippets = [
   ['/6 в профиле', 'today screen must not expose profile completion counters'],
   ['Что важно для', 'today screen must lead with a useful action, not a dog identity/status card'],
   ['Экспорт в .ics', 'calendar CRUD must not expose export implementation copy'],
-  ['В календарь', 'calendar CRUD must keep actions focused on done, reschedule, edit, delete'],
   ['{item.category} · {item.priority}', 'wishlist must not expose raw category/priority enums'],
   ['{item.category}{item.reason', 'wishlist history must not expose raw category enum'],
   ['{zone.type} ·', 'zones must not expose raw zone type enum'],

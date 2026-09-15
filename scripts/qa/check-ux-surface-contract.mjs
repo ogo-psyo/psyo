@@ -50,7 +50,7 @@ const requiredOwnerLanguage = [
   'Памятка',
   'Публичная карточка',
   'Карта прогулок',
-  'План заботы',
+  'Данные и доступ',
 ];
 
 for (const token of requiredOwnerLanguage) {
@@ -99,18 +99,18 @@ if (!files.page.includes("const publicCardReady = Boolean(profile.dogName.trim()
   failures.push('public card must require persisted name and contact rule before sharing');
 }
 
-const navStart = files.navigation.indexOf('<nav className="app-tabs"');
+const navStart = files.navigation.indexOf('<nav ');
 const navEnd = files.navigation.indexOf('</nav>', navStart);
 const navBlock = navStart >= 0 && navEnd > navStart ? files.navigation.slice(navStart, navEnd) : '';
-if (!navBlock) failures.push('primary app nav missing');
-for (const token of ["label: 'Главная'", "label: 'Профиль'", "label: 'Карта'", "label: 'Гав'", "label: 'Вещи'"]) {
+if (!navBlock || !navBlock.includes('data-connected-navigation') || !navBlock.includes('app-tabs')) failures.push('primary app nav missing');
+for (const token of ["label: 'Псё'", "label: 'Профиль'", "label: 'Карта'", "label: 'Гав'", "label: 'Всё'"]) {
   if (!files.navigation.includes(token)) failures.push(`primary nav missing section: ${token}`);
 }
 for (const token of ["id: 'calendar'", "id: 'card'", "id: 'assistant'"]) {
   if (files.navigation.includes(token)) failures.push(`secondary surface leaked into primary nav: ${token}`);
 }
 if (!files.page.includes("tab === 'things'")) failures.push('things/wishlist tab surface missing');
-if (!files.page.includes('<ProductionAssistantSheet')) failures.push('assistant sheet surface missing');
+if (!files.page.includes('<ExactConversation')) failures.push('assistant sheet surface missing');
 if (files.page.includes("tab === 'assistant'")) failures.push('duplicate assistant tab surface present');
 if (!files.page.includes("tab === 'nearby'")) failures.push('socialization/nearby tab surface missing');
 

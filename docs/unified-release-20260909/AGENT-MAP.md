@@ -1,0 +1,23 @@
+# A-03: agent place result → real map (locally verified candidate)
+
+Authorized continuation of the universal agent/application integration. Not another demo map or a new paid catalog. Existing Nominatim search, shared quota and library/route builder remain canonical. Full automated route calculation and saving from a message are a later part of the same global release gate, not implicitly declared done here.
+
+## Contract
+- Extract existing place search into a shared server service; ordinary map GET and agent call the same validation/provider/quota logic. No internal HTTP call to our own API, paid fallback, invented coordinates or change of map provider.
+- Agent tool searches a place/address/location query. Missing district for “nearby” needs clarification; it cannot treat the viewport as GPS or label an unverified place quiet/dog-friendly.
+- Results originate only from validated provider objects; retain source and fetch date, mark centroid/unknown entrance and unknown dog access. Run result stores the actual typed place objects and restores them after reopening; not buttons built from answer keywords.
+- Owner selects a result → opens that exact place in the existing working map. Existing save and add-to-current-walk operate on it. No save/publication on preparation. Active route draft must not be discarded by entering from assistant.
+- Clear per-pet selection on pet change. Failed/empty/quota search cannot fabricate a successful result. Bound calls per run and respect cancellation.
+- Verify shared service error/coordinate/shape/limits, tool ownership/cancel, browser agent→place→same card→library/route, reload and unchanged route draft. Separate synthetic provider evidence from live provider/cloud/device acceptance.
+
+## Implemented and verified
+- Shared `searchMapPlaces` used by API and SDK tool, fixed provider host, bounded query/result count, existing distributed search quota, timeout/cancellation, real source URLs and coordinate/shape validation. Empty/whitespace coordinates never become0. Two tool searches per run, collected actual results persisted in `agent_runs.result.places` (no new database schema for this slice). `retrievedAt` is application receipt time; provider response may use the existing one-hour Next cache, not a claim of source-update time.
+- Completed run restores typed result objects; UI validates before map command. Map receives selected object and actual candidate list, retains the current route/metadata and lets existing library/route actions work. Unknown access and centroid/entrance limitation visible, no automatic save.
+- Real UI defect found: saving replaces upstream ID with library ID and collapsed the selected row. Resolve provider/library identity for selected row and marker. Library-load retry no longer clears agent results or inherits an unrelated previous search error.
+- `qa:local`:191 tests/build/contracts passed, lint216/220. Shared source tests cover invalid shapes/null/blank/infinite coordinates, explicit bounds, global/provider quota and no fallback. Tool tests cover owned active run, cancellation before/after fetch, source objects/citations, deduplication and two-search cap.
+- `evidence/agent-map.cjs` passed Chromium/WebKit320/390 on immutable build: persisted 2-stop draft → agent result → exact card → library load failure/retry → failed save/retry → same selected card → third stop added to original plan → original title/note → conversation/reload and same place. API/provider replies synthetic, library uses actual pure reducer; route/session actually stored in browser. Map tiles blocked, and saved actions remain available.
+- Existing observation flow and typed legacy reminder/map actions passed both engines320/390 after integration. New map-return control visually inspected and refined to avoid native unstyled button chrome. Final style/source-hardening build and full191tests passed; final new browser path repeated successfully.
+- Initial test looked for a deliberately hidden duplicate card heading rather than the visible linked row; locator corrected. A misplaced client directive caused a failed build during implementation, fixed before verification. Those were not deployed defects.
+
+## Still open
+This does NOT implement autonomous route calculation/save/retrieval tools, general private artifact opening, or complete product UI transfer. No paid/model call, real search API response, cloud mutation/migration, or physical Telegram evidence. Live model relevance/choice of location still needs its own quality gate. Preparing a point from a named search is not a guarantee of dog-friendly conditions or a generated walk.

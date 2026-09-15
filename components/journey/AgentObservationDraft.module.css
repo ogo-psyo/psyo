@@ -1,0 +1,15 @@
+@font-face { font-family:PsoHandwritten; src:url("/fonts/NarisovanniySANS-Regular.ttf") format("truetype"); font-weight:400; font-style:normal; font-display:swap; }
+.sheet { margin-block:20px; padding:20px; border:1px solid #e1dbea; border-radius:24px; background:linear-gradient(135deg,#fff,#f6f3fb); color:#453c52; }
+.sheet h3 { margin:0 0 18px; font:400 2rem/1.2 PsoHandwritten, sans-serif; }
+.sheet fieldset { border:0; margin:0; padding:0; min-width:0; }
+.sheet label { display:block; margin:12px 0 7px; color:#5b4c6a; font-size:0.9rem; }
+.sheet textarea,.sheet input { width:100%; min-width:0; box-sizing:border-box; padding:12px; border:1px solid #bcb0ca; border-radius:14px; background:#fff; color:inherit; font-size:16px; line-height:1.6; }
+.sheet textarea { min-height:140px; resize:vertical; }
+.sheet summary,.sheet button { min-height:44px; }
+.sheet summary { padding-block:14px; cursor:pointer; }
+.sheet button { padding:10px 15px; border-radius:16px; color:inherit; }
+.actions { display:flex; flex-wrap:wrap; gap:10px; }
+.sheet .primary { color:#fff; background:#67527c; border:1px solid #67527c; }
+.note { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.6; }
+.sheet :focus-visible { outline:3px solid #655079; outline-offset:3px; }
+.sheet [role=alert] { color:#9d2738; }
