@@ -1,6 +1,6 @@
 'use client';
 
-import { type FocusEvent, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 export function CoreOnboarding({
   open,
@@ -43,42 +43,38 @@ export function CoreOnboarding({
     if (!open) return;
 
     previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const page = document.querySelector<HTMLElement>('#pso-exact-content, .phone-shell');
-    page?.setAttribute('inert', '');
+    const background = Array.from(document.querySelectorAll<HTMLElement>('#pso-exact-content, .exact-header, .nav-wrap'));
+    const previousInert = background.map(element => element.inert);
+    background.forEach(element => { element.inert = true; });
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const frame = window.requestAnimationFrame(() => dialogRef.current?.focus({ preventScroll: true }));
 
     const viewport = window.visualViewport;
     const syncVisibleViewport = () => {
       const backdrop = backdropRef.current;
       if (!backdrop) return;
-      backdrop.style.setProperty('--dog-sheet-viewport-top', `${Math.max(0, viewport?.offsetTop || 0)}px`);
       backdrop.style.setProperty('--dog-sheet-viewport-height', `${Math.max(0, viewport?.height || window.innerHeight)}px`);
     };
     syncVisibleViewport();
     viewport?.addEventListener('resize', syncVisibleViewport);
-    viewport?.addEventListener('scroll', syncVisibleViewport);
     window.addEventListener('resize', syncVisibleViewport);
 
     return () => {
       window.cancelAnimationFrame(frame);
       viewport?.removeEventListener('resize', syncVisibleViewport);
-      viewport?.removeEventListener('scroll', syncVisibleViewport);
       window.removeEventListener('resize', syncVisibleViewport);
-      page?.removeAttribute('inert');
-      const returnTarget = previousFocusRef.current?.isConnected
+      background.forEach((element, index) => { element.inert = previousInert[index]; });
+      document.body.style.overflow = previousOverflow;
+      const returnTarget = previousFocusRef.current?.isConnected && previousFocusRef.current.matches('button, a[href], input, select, textarea, [role=button]')
         ? previousFocusRef.current
         : document.querySelector<HTMLElement>('.first-run-activation button');
-      returnTarget?.focus();
-      window.requestAnimationFrame(() => returnTarget?.focus());
+      returnTarget?.focus({ preventScroll: true });
     };
   }, [open]);
 
   if (!open) return null;
 
-  const keepFieldVisible = (event: FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const field = event.currentTarget;
-    window.setTimeout(() => field.scrollIntoView({ block: 'center', behavior: 'auto' }), 120);
-  };
 
   return (
     <div
@@ -116,25 +112,24 @@ export function CoreOnboarding({
         <h2 id="dog-creation-title">Профиль собаки</h2>
         <p>Начни с имени. Остальное можно написать своими словами или заполнить позже.</p>
         <form onSubmit={(event) => { event.preventDefault(); void onSubmit(); }}>
-          <label htmlFor="dog-creation-name">Имя собаки</label>
+          <div className="dog-creation-field"><label htmlFor="dog-creation-name">Имя собаки</label>
           <input
             id="dog-creation-name"
             value={dogName}
             onChange={(event) => onNameChange(event.target.value)}
-            onFocus={keepFieldVisible}
             autoComplete="off"
             placeholder="Например, Боня"
             maxLength={80}
             disabled={busy}
           />
+          </div>
           <div className="dog-creation-core-fields">
-            <label htmlFor="dog-creation-age">Возраст или дата рождения
+            <div className="dog-creation-field"><label htmlFor="dog-creation-age">Возраст или дата рождения</label>
               <input
                 id="dog-creation-age"
                 list="dog-creation-age-options"
                 value={lifeStage}
                 onChange={(event) => onLifeStageChange(event.target.value)}
-                onFocus={keepFieldVisible}
                 placeholder="2 года 4 месяца"
                 autoComplete="off"
                 maxLength={60}
@@ -143,21 +138,20 @@ export function CoreOnboarding({
               <datalist id="dog-creation-age-options">
                 {lifeStageOptions.map((option) => <option key={option} value={option} />)}
               </datalist>
-            </label>
-            <label htmlFor="dog-creation-sex">Пол
-              <select id="dog-creation-sex" value={sex} onChange={(event) => onSexChange(event.target.value)} onFocus={keepFieldVisible} disabled={busy}>
+            </div>
+            <div className="dog-creation-field"><label htmlFor="dog-creation-sex">Пол</label>
+              <select id="dog-creation-sex" value={sex === 'не указано' ? '' : sex} onChange={(event) => onSexChange(event.target.value)} disabled={busy}>
                 <option value="">Не указывать</option>
-                {sexOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                {sexOptions.filter(option => option.toLocaleLowerCase('ru') !== 'не указано').map((option) => <option key={option} value={option}>{option}</option>)}
               </select>
-            </label>
+            </div>
           </div>
-          <label htmlFor="dog-creation-breed">Порода
+          <div className="dog-creation-field"><label htmlFor="dog-creation-breed">Порода</label>
             <input
               id="dog-creation-breed"
               list="dog-creation-breed-options"
               value={breedValue}
               onChange={(event) => onBreedChange(event.target.value)}
-              onFocus={keepFieldVisible}
               placeholder="Например, корги или метис"
               autoComplete="off"
               maxLength={80}
@@ -167,7 +161,7 @@ export function CoreOnboarding({
             <datalist id="dog-creation-breed-options">
               {breedOptions.map((option) => <option key={option.id} value={option.title} />)}
             </datalist>
-          </label>
+          </div>
           <small id="dog-creation-breed-note" className="dog-creation-note">Можно указать любую породу, написать «метис» или оставить поле пустым.</small>
           <div className="onboarding-step-actions">
             <button type="button" onClick={onDismiss} disabled={busy}>Не сейчас</button>

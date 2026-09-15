@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import { chromium } from 'playwright';
+import { chromium, webkit } from 'playwright';
 
 const base = process.env.BASE_URL || 'http://localhost:3101';
 const screenshotDir = process.env.UX_SCREENSHOT_DIR;
@@ -14,10 +14,11 @@ const emptyBootstrap = {
 
 if (screenshotDir) await fs.mkdir(screenshotDir, { recursive: true });
 
-const browser = await chromium.launch({ headless: true });
+const engine = process.env.ENGINE || 'chromium';
+const browser = await ({chromium,webkit}[engine]).launch({ headless: true });
 try {
   for (const viewport of [{ width: 320, height: 780 }, { width: 390, height: 844 }]) {
-    const context = await browser.newContext({ viewport });
+    const context = await browser.newContext({ viewport, isMobile:true, hasTouch:true, reducedMotion:'reduce' });
     const page = await context.newPage();
     await page.route('**/api/app/bootstrap**', (route) => route.fulfill({
       status: 200,
@@ -25,6 +26,7 @@ try {
       body: JSON.stringify(emptyBootstrap),
     }));
     await page.goto(base, { waitUntil: 'domcontentloaded' });
+    await page.locator('.telegram-pill:not(.mode-loading)').waitFor();
     await page.getByRole('button', { name: 'Добавить собаку', exact: true }).click();
 
     const dialog = page.getByRole('dialog', { name: 'Профиль собаки' });
@@ -32,6 +34,13 @@ try {
     await page.waitForFunction(() => document.activeElement === document.querySelector('.dog-creation-sheet'));
     assert.equal(await dialog.evaluate((element) => document.activeElement === element), true, 'dialog should receive focus without opening the keyboard');
     assert.equal(await dialog.locator('input').count(), 3);
+    assert.deepEqual(await dialog.locator('#dog-creation-sex option').allTextContents(), ['Не указывать','кобель','сука']);
+    assert.equal(await page.locator('#pso-exact-content').evaluate(el=>el.inert),true);
+    await dialog.evaluate(el=>Promise.all(el.getAnimations().map(animation=>animation.finished)));
+    const stableTop = await dialog.evaluate(el=>el.getBoundingClientRect().top);
+    await page.evaluate(()=>{Object.defineProperty(visualViewport,'offsetTop',{value:90,configurable:true});visualViewport.dispatchEvent(new Event('scroll'));});
+    assert.equal(await dialog.evaluate(el=>el.getBoundingClientRect().top),stableTop,'visual viewport scroll must not reposition the sheet');
+    await page.evaluate(()=>{delete visualViewport.offsetTop;});
     assert.equal(await dialog.locator('#dog-creation-age').getAttribute('list'), 'dog-creation-age-options');
     assert.equal(await dialog.locator('#dog-creation-breed').getAttribute('list'), 'dog-creation-breed-options');
     assert.equal(await dialog.getByRole('button', { name: 'Завести профиль' }).isDisabled(), true);
@@ -43,6 +52,9 @@ try {
     assert.equal(await dialog.locator('#dog-creation-age').inputValue(), '2 года 4 месяца');
     assert.equal(await dialog.locator('#dog-creation-breed').inputValue(), 'австралийский лабрадудль');
 
+    assert.ok(await dialog.locator('#dog-creation-sex').evaluate(el=>el.getBoundingClientRect().height>=50),'native WebKit select must retain source-sized touch target');
+    const labelGaps = await dialog.locator('.dog-creation-field').evaluateAll(fields=>fields.map(field=>{const label=field.querySelector('label').getBoundingClientRect(),input=field.querySelector('input,select').getBoundingClientRect();return input.top-label.bottom;}));
+    assert.ok(labelGaps.every(gap=>gap>=8),'focus perimeter must not touch a label');
     const geometry = await dialog.evaluate((element) => {
       const rect = element.getBoundingClientRect();
       return {
@@ -62,6 +74,7 @@ try {
     await dialog.locator('#dog-creation-breed').focus();
     await page.setViewportSize({ width: viewport.width, height: 520 });
     await page.waitForTimeout(180);
+    await dialog.getByRole('button',{name:'Завести профиль'}).scrollIntoViewIfNeeded();
     const keyboardGeometry = await dialog.evaluate((element) => {
       const rect = element.getBoundingClientRect();
       const action = element.querySelector('.onboarding-step-actions')?.getBoundingClientRect();
@@ -71,7 +84,22 @@ try {
     assert.ok(keyboardGeometry.bottom <= keyboardGeometry.viewportHeight, `dialog bottom is hidden with keyboard-sized viewport at ${viewport.width}px`);
     assert.ok(keyboardGeometry.actionTop >= keyboardGeometry.top && keyboardGeometry.actionBottom <= keyboardGeometry.bottom, `dialog actions are hidden with keyboard-sized viewport at ${viewport.width}px`);
 
-    if (screenshotDir) await page.screenshot({ path: `${screenshotDir}/onboarding-${viewport.width}.png`, fullPage: false, animations: 'disabled' });
+    await dialog.locator('#dog-creation-breed').focus();
+    await dialog.evaluate(el=>{el.scrollTop=Math.max(0,el.scrollTop-50);});
+    const manualScroll=await dialog.evaluate(el=>el.scrollTop);
+    await page.waitForTimeout(250);
+    assert.equal(await dialog.evaluate(el=>el.scrollTop),manualScroll,'no delayed forced centering after focus/manual scroll');
+    if (screenshotDir) await page.screenshot({ path: `${screenshotDir}/${engine}-onboarding-${viewport.width}.png`, fullPage: false, animations: 'disabled' });
+    await page.keyboard.press('Escape');
+    await dialog.waitFor({state:'hidden'});
+    assert.equal(await page.locator('#pso-exact-content').evaluate(el=>el.inert),false);
+    assert.equal(await page.getByRole('button',{name:'Добавить собаку',exact:true}).evaluate(el=>document.activeElement===el),true);
+    await page.getByRole('button',{name:'Добавить собаку',exact:true}).click();
+    assert.equal(await dialog.locator('#dog-creation-name').inputValue(),'Боня');
+    assert.equal(await dialog.locator('#dog-creation-age').inputValue(),'2 года 4 месяца');
+    await dialog.getByRole('button',{name:'Завести профиль'}).click();
+    try { await dialog.waitFor({state:'hidden',timeout:10000}); } catch(error) { console.error(await page.locator('body').innerText()); throw error; }
+    await page.getByRole('button',{name:'Боня',exact:true}).waitFor();
     await context.close();
   }
   console.log('onboarding free-input ui smoke ok');

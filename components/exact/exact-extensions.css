@@ -142,3 +142,17 @@
 #pso-exact-interface .exact-extension .production-map-privacy button {background:rgba(255,255,255,.62);color:#6e6087;box-shadow:none;border:1px solid transparent;}
 #pso-exact-interface .exact-extension .production-map-privacy button[aria-pressed=true] {border-color:#a79bb7;background:rgba(255,255,255,.72);color:#514760;}
 #pso-exact-interface .exact-extension .production-map-privacy span {font-weight:400;}
+
+/* One anchored scroll surface: do not chase iOS visualViewport scroll offsets. */
+#pso-exact-interface .dog-creation-backdrop {top:0!important;bottom:auto!important;height:var(--dog-sheet-viewport-height,100dvh)!important;place-items:start center!important;overflow:hidden!important;padding:16px!important;}
+#pso-exact-interface .dog-creation-sheet {max-height:100%!important;overflow-y:auto!important;overscroll-behavior:contain;scroll-padding-block:16px!important;}
+#pso-exact-interface .dog-creation-sheet form {gap:19px!important;}
+#pso-exact-interface .dog-creation-sheet .dog-creation-field {display:grid!important;gap:8px!important;min-width:0;}
+#pso-exact-interface .dog-creation-sheet label {margin:0!important;line-height:1.5!important;}
+#pso-exact-interface .dog-creation-core-fields {align-items:end;gap:16px;}
+#pso-exact-interface .dog-creation-sheet .onboarding-step-actions {position:static!important;margin:0!important;padding:8px 0 0!important;background:transparent!important;gap:12px;}
+#pso-exact-interface .dog-creation-sheet :is(input,select):focus-visible {outline:2px solid #786b94!important;outline-offset:2px!important;}
+
+#pso-exact-interface .dog-creation-field:has(select) {position:relative;}
+#pso-exact-interface .dog-creation-sheet select {appearance:none!important;height:50px!important;padding-right:36px!important;}
+#pso-exact-interface .dog-creation-field:has(select)::after {content:'';position:absolute;right:18px;bottom:23px;width:7px;height:7px;border-right:1.6px solid #786b94;border-bottom:1.6px solid #786b94;transform:rotate(45deg);pointer-events:none;}
