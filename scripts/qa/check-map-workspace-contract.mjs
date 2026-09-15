@@ -61,10 +61,10 @@ for (const requirement of [
 }
 
 for (const requirement of [
-  'mapWorkspace={<ProductionMapWorkspace',
+  '<ProductionMapWorkspace navigationToken=',
   'onReplaceRoutePoints={setRoutePoints}',
   'onRouteMetaChange={setMapRouteMeta}',
-  "tab === 'map' && productionMapMode !== 'view'",
+  "hidden={tab !== 'map'}",
   'data-map-saved-content',
   'data-map-composer-content',
 ]) {

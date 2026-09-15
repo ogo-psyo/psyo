@@ -1,0 +1,112 @@
+        {hasDog && tab === 'calendar' && <section className={`${careStyles.screen} calendar-composition`} aria-label="План заботы">
+          <button className="journal-screen-back" type="button" onClick={()=>closeSecondaryFlow('today')}><ArrowLeft aria-hidden="true"/> Назад</button>
+          <h1>План заботы</h1>
+          <section className="care-workbench" aria-label="Дела ухода">
+            {reminderIssue?.scope==='assistant:create'&&<p role="alert">{reminderIssue.message}</p>}
+            <form className="today-add-care care-composer" aria-label="Новое дело" onSubmit={event=>{event.preventDefault();void createReminder();}}><fieldset className="care-compose-fields" disabled={Boolean(reminderMutationBusy)}>
+              <label htmlFor="care-new-title">Новое дело</label>
+              <div className="quick-add today-quick-add"><input id="care-new-title" required maxLength={200} value={newReminderTitle} onChange={event=>setNewReminderTitle(event.target.value)} placeholder="Что нужно сделать…"/><button type="submit" disabled={!newReminderTitle.trim()||Boolean(reminderMutationBusy)} aria-label="Добавить дело"><Plus aria-hidden="true"/></button></div>
+              <label className="care-date-field">Когда<input type="date" required value={newReminderDueDate} onChange={event=>setNewReminderDueDate(event.target.value)} aria-label="Дата дела"/></label>
+              <details><summary>Время, повтор и тип</summary>
+                <fieldset className="care-time-choice"><legend>Точность времени</legend>{reminderTimeModeOptions.map(option=><button type="button" key={option.value} aria-pressed={newReminderTimeMode===option.value} onClick={()=>setNewReminderTimeMode(option.value)}>{option.label}</button>)}</fieldset>
+                {newReminderTimeMode!=='flexible'&&<label>Время дела<input type="time" required value={newReminderDueTime} onChange={event=>setNewReminderDueTime(event.target.value)}/></label>}
+                <label>Повтор дела<select value={newReminderRecurrence} onChange={event=>setNewReminderRecurrence(event.target.value as ReminderRecurrence)}>{reminderRecurrenceOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+                <label>Тип дела<select value={newReminderType} onChange={event=>setNewReminderType(event.target.value)}>{careTypeOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+              </details>
+              {reminderIssue?.scope==='create'&&<p role="alert">{reminderIssue.message}</p>}
+              <details className="care-presets"><summary>Примеры дел</summary><div className="care-preset-grid" aria-label="Подготовить дело">
+                <button type="button" onClick={()=>{setNewReminderTitle('Обработка от клещей и паразитов');setNewReminderType('parasite');}}>Обработка</button>
+                <button type="button" onClick={()=>{setNewReminderTitle('Проверить дату вакцинации');setNewReminderType('vaccine');}}>Вакцинация</button>
+                <button type="button" onClick={()=>{setNewReminderTitle('Груминг: шерсть и когти');setNewReminderType('grooming');}}>Груминг</button>
+              </div></details>
+            </fieldset></form>
+            <div className="care-view-toggle" aria-label="Раздел плана ухода">
+              <button className={careView === 'active' ? 'active' : ''} onClick={() => setCareView('active')} aria-pressed={careView === 'active'}>Дела</button>
+              <button className={careView === 'history' ? 'active' : ''} onClick={() => setCareView('history')} aria-pressed={careView === 'history'}>История</button>
+            </div>
+
+            {careView === 'active' && <div className="care-calendar-view">
+              <details open={careCalendarOpen} onToggle={event=>setCareCalendarOpen(event.currentTarget.open)} className="care-calendar-disclosure"><summary>Выбрать дату</summary>
+              <section className="care-calendar-panel" data-care-calendar aria-label="Календарь дел">
+                <div className="calendar-toolbar">
+                  <button type="button" aria-label="Предыдущий месяц" onClick={() => setCalendarCursor((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}><ArrowLeft weight="bold" aria-hidden="true" /></button>
+                  <b>{calendarTitle}</b>
+                  <button type="button" aria-label="Следующий месяц" onClick={() => setCalendarCursor((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))}><ArrowRight weight="bold" aria-hidden="true" /></button>
+                </div>
+                <div className="calendar-mode-row">
+                  <span>{formatCount(activeReminders.length, ['дело в плане', 'дела в плане', 'дел в плане'])}</span>
+                  <button type="button" onClick={() => {
+                    const today = new Date();
+                    const key = dateInputValue(today);
+                    setCalendarCursor(today);
+                    setSelectedCalendarDate(key);setCareFilterDate(true);
+                  }}>Сегодня</button>
+                </div>
+                <div className="care-calendar-grid" role="grid" aria-label={calendarTitle}>
+                  {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((weekday) => <span className="calendar-weekday" role="columnheader" key={weekday}>{weekday}</span>)}
+                  {calendarDays.map((day) => <button
+                    type="button"
+                    role="gridcell"
+                    key={day.key}
+                    className={`calendar-day${day.inMonth ? '' : ' muted'}${day.reminders.length ? ' has-care' : ''}${day.isToday ? ' today' : ''}${day.isSelected ? ' selected' : ''}`}
+                    aria-pressed={day.isSelected}
+                    aria-label={`${day.date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, ${formatCount(day.reminders.length, ['дело', 'дела', 'дел'])}`}
+                    onClick={() => {
+                      setSelectedCalendarDate(day.key);
+                      setCareFilterDate(true);
+                      if (!day.inMonth) setCalendarCursor(day.date);
+                    }}
+                  >
+                    <span>{day.date.getDate()}</span>
+                    {day.reminders.length > 0 && <b aria-hidden="true">{day.reminders.length}</b>}
+                  </button>)}
+                </div>
+              </section></details>
+
+              {careFilterDate&&<div className="selected-day-panel">
+                <div><span>Дела на выбранную дату</span><b>{selectedDateLabel}</b></div>
+                <button type="button" onClick={() => {
+                  setNewReminderDueDate(selectedCalendarDate);
+                  document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus();
+                }}>Добавить на эту дату</button><button type="button" onClick={()=>setCareFilterDate(false)}>Все дела</button>
+              </div>}
+
+              <div className="care-task-list" aria-live="polite">
+              {(careFilterDate?selectedDateReminders:activeReminders).length===0&&<p className="care-empty-state">{careFilterDate?'На эту дату дел нет.':'В плане пока нет дел.'}</p>}
+              {(careFilterDate?selectedDateReminders:[...activeReminders].sort((a,b)=>new Date(a.snoozedUntil||a.dueAt).getTime()-new Date(b.snoozedUntil||b.dueAt).getTime())).map((reminder) => <article key={reminder.id} className={`care-task-card ${new Date(reminder.snoozedUntil || reminder.dueAt).getTime() < new Date().setHours(0, 0, 0, 0) ? 'warning' : ''}`}>
+                {editingReminderId === reminder.id ? <ReminderEditor reminder={reminder} drafts={reminderDrafts.current} busy={Boolean(reminderMutationBusy)} error={reminderIssue?.scope===reminder.id?reminderIssue.message:undefined} types={careTypeOptions} recurrences={reminderRecurrenceOptions} onClose={()=>setEditingReminderId(null)} onSave={draft=>updateReminder(reminder.id,{title:draft.title,type:draft.type,dueAt:reminderDueAt(draft.date,draft.time,draft.timeMode||'exact'),recurrence:draft.recurrence,...(draft.timeMode?{timeMode:draft.timeMode}:{})})}/> : <>
+                  <div className="care-task-main">
+                    <span>{careTypeLabel(reminder.type)}</span>
+                    <b>{reminder.title}</b>
+                    <p>{reminderTimeLabel(reminder)} · {reminderRecurrenceLabel(reminder.recurrence)}</p>
+                    {reminder.nextDueAt && <p>Следующий раз: {new Date(reminder.nextDueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}
+                  </div>
+                  <div className="care-row-actions">
+                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => completeReminder(reminder.id)}>Готово</button>
+                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => snoozeReminder(reminder.id)}>На завтра</button>
+                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => setEditingReminderId(reminder.id)}>Изменить</button>
+                    <button disabled={Boolean(reminderMutationBusy)} className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button>
+                  </div>
+                  {reminderIssue?.scope===reminder.id&&!pendingCareDeletion&&<p role="alert">{reminderIssue.message}</p>}
+                </>}
+              </article>)}
+              </div>
+            </div>}
+
+            {careView === 'history' && <div className="care-task-list">
+              {Object.entries(reminderHistoryErrors).map(([id,message])=><p key={id} role="alert">{message} <button type="button" onClick={()=>void loadReminderHistory(id)}>Повторить</button></p>)}
+              {doneReminders.length === 0 && Object.values(reminderHistory).every((items) => items.length === 0) && <article className="care-empty-state"><b>История начнётся после первого «Готово»</b><p>Так будет видно, когда была обработка, вакцина, груминг или визит.</p></article>}
+              {doneReminders.slice(0, 12).map((reminder) => <article key={reminder.id} className="care-task-card done">
+                <div className="care-task-main">
+                  <span>{careTypeLabel(reminder.type)}</span>
+                  <b>{reminder.title}</b>
+                  <p>{new Date(reminder.completedAt || reminder.dueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                </div>
+                <div className="care-row-actions"><button onClick={() => createReminder(reminder.title, reminder.type, 0)}>Создать снова</button><button className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button></div>
+              </article>)}
+              {reminders.flatMap((reminder) => (reminderHistory[reminder.id] ?? []).filter(entry=>!(reminder.status==='done'&&reminder.completedAt&&entry.payload?.completedAt&&Date.parse(reminder.completedAt)===Date.parse(entry.payload.completedAt))).map((entry) => ({ reminder, entry }))).slice(0, 20).map(({ reminder, entry }) => <article key={entry.id} className="care-task-card done"><div className="care-task-main"><span>{careTypeLabel(reminder.type)}</span><b>{reminder.title}</b><p>Выполнено {new Date(entry.payload?.completedAt || entry.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>{entry.payload?.nextDueAt && <p>Следующий раз: {new Date(entry.payload.nextDueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}</div></article>)}
+            </div>}
+          </section>
+
+
+        </section>}

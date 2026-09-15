@@ -318,7 +318,7 @@ function TodayScreen(props: ProductionJourneyProps) {
     </section>
     <section className="journal-day" aria-labelledby="journal-day-title">
       <div className="journal-section-title"><h2 id="journal-day-title">День по порядку</h2><button type="button" aria-label="Открыть план ухода" onClick={props.onOpenCare}><CalendarCheck aria-hidden="true" /></button></div>
-      {entries.length ? <ol className="journal-entries">{entries.slice(0, 4).map((entry) => <li key={entry.id} className="journal-entry"><time dateTime={entry.at}>{new Date(entry.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</time><span className={`journal-point${entry.completed ? ' done' : ''}`}>{entry.completed ? <Check aria-hidden="true" /> : <CalendarCheck aria-hidden="true" />}</span><button type="button" onClick={event => props.onOpenJournalEntry?.(entry, event.currentTarget)}><b>{entry.title}</b><small>{entry.detail}</small></button></li>)}</ol> : <div className="journal-empty"><p>На сегодня пока нет записей и дел.</p><button type="button" className="journal-text-link" onClick={props.onOpenCare}>Открыть план ухода <CaretRight aria-hidden="true" /></button></div>}
+      {entries.length ? <ol className="journal-entries">{entries.slice(0, 4).map((entry) => <li key={entry.id} className="journal-entry"><time dateTime={entry.at}>{entry.timeLabel ?? new Date(entry.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</time><span className={`journal-point${entry.completed ? ' done' : ''}`}>{entry.completed ? <Check aria-hidden="true" /> : <CalendarCheck aria-hidden="true" />}</span><button type="button" onClick={event => props.onOpenJournalEntry?.(entry, event.currentTarget)}><b>{entry.title}</b><small>{entry.detail}</small></button></li>)}</ol> : <div className="journal-empty"><p>На сегодня пока нет записей и дел.</p><button type="button" className="journal-text-link" onClick={props.onOpenCare}>Открыть план ухода <CaretRight aria-hidden="true" /></button></div>}
       {entries.length > 4 && <button type="button" className="journal-text-link" onClick={props.onOpenCare}>Весь план <CaretRight aria-hidden="true" /></button>}
     </section>
     <button type="button" className="journal-ask" onClick={props.onAskAssistant}><Sparkle aria-hidden="true" /><span><b>Есть вопрос о собаке?</b><small>Спросите Псё</small></span><CaretRight aria-hidden="true" /></button>
@@ -387,7 +387,7 @@ function ProfileScreen(props: ProductionJourneyProps) {
   </main>;
 }
 
-export function ProductionDocumentSheet({ dogName, open = true, onClose, returnFocusTo, children }: { dogName: string; open?: boolean; onClose: () => void; returnFocusTo?: HTMLElement | null; children: ReactNode }) {
+export function ProductionDocumentSheet({ exact = false, dogName, open = true, onClose, returnFocusTo, children }: { exact?: boolean; dogName: string; open?: boolean; onClose: () => void; returnFocusTo?: HTMLElement | null; children: ReactNode }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
@@ -402,11 +402,14 @@ export function ProductionDocumentSheet({ dogName, open = true, onClose, returnF
     }
   }, [open, returnFocusTo]);
   const closeSheet = () => { dialogRef.current?.close(); onClose(); window.requestAnimationFrame(() => triggerRef.current?.focus()); };
-  return <dialog ref={dialogRef} className="profile-document-dialog" aria-labelledby="profile-document-sheet-title" aria-describedby="profile-document-sheet-description" onCancel={(event) => { event.preventDefault(); closeSheet(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSheet(); }}>
-    <section className="profile-document-sheet" data-slot="sheet-content">
+  return <dialog ref={dialogRef} className={exact ? 'exact-document-dialog' : 'profile-document-dialog'} aria-labelledby="profile-document-sheet-title" aria-describedby="profile-document-sheet-description" onCancel={(event) => { event.preventDefault(); closeSheet(); }} onClick={(event) => { if (event.target === event.currentTarget) closeSheet(); }}>
+    {exact ? <section>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><h2 id="profile-document-sheet-title">Добавить документ</h2><button type="button" className="icon-button" aria-label="Закрыть" onClick={closeSheet}><X aria-hidden="true" /></button></div>
+      <p id="profile-document-sheet-description" className="lead">Останется личным и будет рядом, когда понадобится.</p>{children}
+    </section> : <section className="profile-document-sheet" data-slot="sheet-content">
       <header data-slot="sheet-header"><span className="profile-document-sheet-mark" aria-hidden="true"><FileArrowUp weight="regular" /></span><div><h2 id="profile-document-sheet-title">Добавить в историю</h2><p id="profile-document-sheet-description">Документ останется личным и будет рядом, когда понадобится</p></div><button type="button" aria-label="Закрыть" onClick={closeSheet}><X weight="regular" /></button></header>
       <div className="profile-document-sheet-body" data-slot="sheet-body">{children}</div>
-    </section>
+    </section>}
   </dialog>;
 }
 

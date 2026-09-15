@@ -1,0 +1,62 @@
+        {hasDog && tab === 'things' && <ProductionJourney route="things" onBack={() => closeSecondaryFlow('all')} dogName={profile.dogName} breedLabel={breedLabel}
+          avatar={<GeneratedAvatar profile={profile} ready={Boolean(profile.avatarImageUrl) || demoMode} imageUrl={profile.avatarImageUrl} demo={demoMode} size="small" />}
+          onNavigate={setTab} onAskAssistant={openAssistantSheet}>
+          <fieldset className="things-write-scope" disabled={wishlistBusy} aria-busy={wishlistBusy}>
+          <form className="thing-capture" onSubmit={async event => { event.preventDefault(); const saved = await createWishlistItem(); if (saved) requestAnimationFrame(() => document.getElementById('wish-quick-title')?.focus()); }}>
+            <label htmlFor="wish-quick-title">Нужно купить</label>
+            <div className="thing-quick-row"><input id="wish-quick-title" value={newWishTitle} onChange={event => setNewWishTitle(event.target.value)} placeholder="Например, корм" maxLength={160} enterKeyHint="done" />
+            <button type="submit" aria-label={newWishNeedsReminder ? 'Добавить в вещи и план' : 'Добавить в вещи'} disabled={!newWishTitle.trim() || (newWishNeedsReminder && !newWishPlannedFor)}><Plus aria-hidden="true" /></button></div>
+            <details open={thingCaptureOpen} onToggle={event => setThingCaptureOpen(event.currentTarget.open)}><summary>Категория, пояснение и срок</summary>
+            <label>Категория<select value={newWishCategory} onChange={(event) => setNewWishCategory(event.target.value)}>
+              <option value="gear">амуниция</option>
+              <option value="food">корм</option>
+              <option value="treats">лакомства</option>
+              <option value="toy">игрушка</option>
+              <option value="health">здоровье</option>
+              <option value="grooming">груминг</option>
+              <option value="service">сервис</option>
+              <option value="other">другое</option>
+            </select></label>
+            <label>Зачем <span className="field-optional">необязательно</span><input value={newWishReason} onChange={(event) => setNewWishReason(event.target.value)} placeholder="Например, старый адресник потерялся" /></label>
+            <label className="thing-plan-option">
+              <input type="checkbox" checked={newWishNeedsReminder} onChange={(event) => setNewWishNeedsReminder(event.target.checked)} />
+              <span><b>Добавить в план</b><small>Покупка появится в плане на эту дату</small></span>
+            </label>
+            {newWishNeedsReminder && <label>Купить до<input type="date" min={dateInputValue(new Date())} value={newWishPlannedFor} onChange={(event) => setNewWishPlannedFor(event.target.value)} /></label>}
+            </details>
+            {wishlistError?.scope === 'create' && <p className="things-error" role="alert">{wishlistError.message}</p>}
+          </form>
+
+          {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <p className="things-empty">Пока ничего не нужно. Запиши здесь, когда что-то понадобится.</p>}
+
+          {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Вещи собаки" aria-live="polite">
+            {wantedWishlist.map((item) => <article key={item.id} data-wishlist-id={item.id} className={`wishlist-item priority-${item.priority}`}>
+              {editingWishlistId === item.id ? <form className="wishlist-edit-form" onSubmit={async (event) => { event.preventDefault(); await updateWishlistItem(item.id, { title: wishlistTitleDraft.trim(), reason: wishlistReasonDraft.trim() }); }}><label>Название<input value={wishlistTitleDraft} maxLength={160} onChange={event => { setWishlistTitleDraft(event.target.value); wishlistEditDrafts.current.set(item.id,{title:event.target.value,reason:wishlistReasonDraft}); }} /></label><label>Зачем <span className="field-optional">необязательно</span><input value={wishlistReasonDraft} maxLength={500} onChange={event => { setWishlistReasonDraft(event.target.value); wishlistEditDrafts.current.set(item.id,{title:wishlistTitleDraft,reason:event.target.value}); }} /></label><div className="wishlist-actions"><button type="submit" disabled={!wishlistTitleDraft.trim()}>Сохранить</button><button type="button" onClick={() => setEditingWishlistId(null)}>Закрыть</button></div></form> : <><div className="thing-row"><button type="button" className="thing-title" aria-label={`Изменить: ${item.title}`} onClick={() => beginWishlistEdit(item)}><b>{item.title}</b></button><button type="button" className="thing-complete" onClick={() => completeWishlistItem(item)}>Куплено</button></div><details className="thing-details"><summary>Подробнее</summary>{(item.category !== 'other' || item.reason || item.priority !== 'medium') && <p>{formatWishlistMeta(item.category, item.priority === 'medium' ? undefined : item.priority, item.reason)}</p>}<div className="wishlist-actions">
+                {item.plannedFor && <p className="wishlist-plan-date"><CalendarBlank weight="bold" aria-hidden="true" />В плане на {new Date(`${item.plannedFor}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}
+                {item.url && <a href={item.url} target="_blank" rel="noreferrer">Открыть</a>}
+                {item.plannedFor && <button type="button" onClick={() => openWishlistPlan(item)}>Открыть в плане</button>}
+                <button onClick={() => beginWishlistEdit(item)}>Изменить</button>
+                <button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button>
+              </div></details></>}
+              {wishlistError?.scope === item.id && <p className="things-error" role="alert">{wishlistError.message}</p>}
+            </article>)}
+          </section>}
+
+
+          {boughtWishlist.length > 0 && <section className="wishlist-list" aria-label="История вещей" aria-live="polite">
+            <div className="section-title"><div><span className="eyebrow">история</span><h3>Куплено</h3></div></div>
+            {boughtWishlist.map((item) => <article key={item.id} data-wishlist-id={item.id} className="wishlist-item">
+              <div><b>{item.title}</b>{(item.category !== 'other' || item.reason || item.priority !== 'medium') && <p>{formatWishlistMeta(item.category, item.priority === 'medium' ? undefined : item.priority, item.reason)}</p>}</div>
+              <div className="wishlist-actions"><button onClick={() => updateWishlistItem(item.id, { status: 'wanted', plannedFor: undefined, reminderId: undefined })}>Вернуть</button><button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button></div>
+              {wishlistError?.scope === item.id && <p className="things-error" role="alert">{wishlistError.message}</p>}
+            </article>)}
+          </section>}
+
+          {removedWishlistItem && <div className="restore-notice" role="status">
+            <span>Вещь убрана. Вернётся без срока.</span>
+            <button type="button" onClick={restoreWishlistItem}>Вернуть</button>
+            {wishlistError?.scope === 'restore' && <p className="things-error" role="alert">{wishlistError.message}</p>}
+          </div>}
+          </fieldset>
+
+        </ProductionJourney>}

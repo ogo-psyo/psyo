@@ -14,5 +14,5 @@ export function GavDialog({ children, onClose, label }: { children: ReactNode; o
     dialog?.showModal();
     return () => { dialog?.close(); if (origin?.isConnected) origin.focus({ preventScroll: true }); };
   }, []);
-  return createPortal(<dialog ref={ref} className="gav-dialog" aria-label={label} onCancel={event => { event.preventDefault(); closeRef.current(); }}>{children}</dialog>, document.body);
+  return createPortal(<dialog ref={ref} className="gav-dialog exact-extension" aria-label={label} onCancel={event => { event.preventDefault(); closeRef.current(); }}>{children}</dialog>, document.getElementById('pso-exact-interface') || document.body);
 }

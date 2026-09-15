@@ -50,7 +50,7 @@ const requiredOwnerLanguage = [
   'Памятка',
   'Публичная карточка',
   'Карта прогулок',
-  'План заботы',
+  'Данные и доступ',
 ];
 
 for (const token of requiredOwnerLanguage) {
@@ -110,7 +110,7 @@ for (const token of ["id: 'calendar'", "id: 'card'", "id: 'assistant'"]) {
   if (files.navigation.includes(token)) failures.push(`secondary surface leaked into primary nav: ${token}`);
 }
 if (!files.page.includes("tab === 'things'")) failures.push('things/wishlist tab surface missing');
-if (!files.page.includes('<ProductionAssistantSheet')) failures.push('assistant sheet surface missing');
+if (!files.page.includes('<ExactConversation')) failures.push('assistant sheet surface missing');
 if (files.page.includes("tab === 'assistant'")) failures.push('duplicate assistant tab surface present');
 if (!files.page.includes("tab === 'nearby'")) failures.push('socialization/nearby tab surface missing');
 

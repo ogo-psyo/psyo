@@ -17,7 +17,7 @@ export function ProductionAssistantSheet({dogName,returnFocusTo,question,answer,
   return()=>{cancelAnimationFrame(frame);requestAnimationFrame(()=>trigger.current?.focus());};
  },[returnFocusTo]);
  function close(){dialog.current?.close();onClose();}
- return <dialog ref={dialog} className={styles.dialog} aria-label="Спросить Псё" data-assistant-provider={diagnostic?.provider||'pending'} data-assistant-mode={diagnostic?.mode||'pending'} onCancel={e=>{e.preventDefault();e.stopPropagation();close();}} onClick={e=>{if(e.target===e.currentTarget)close();}}>
+ return <dialog ref={dialog} className={`${styles.dialog} exact-auxiliary-dialog exact-extension`} aria-label="Спросить Псё" data-assistant-provider={diagnostic?.provider||'pending'} data-assistant-mode={diagnostic?.mode||'pending'} onCancel={e=>{e.preventDefault();e.stopPropagation();close();}} onClick={e=>{if(e.target===e.currentTarget)close();}}>
   <section className={`${styles.sheet} ${conversation?styles.conversation:styles.entry}`}>
    <header className={styles.header}><div><h2 data-assistant-heading>Псё</h2><span>{dogName}</span></div><button type="button" aria-label="Закрыть" onClick={close}><X aria-hidden="true"/></button></header>
    <div className={styles.scroll} data-assistant-scroll>
@@ -44,7 +44,7 @@ export function AgentAuxiliaryDialog({title,onClose,children,returnFocusTo}:{tit
   return()=>{requestAnimationFrame(()=>trigger?.focus());};
  },[returnFocusTo]);
  function close(){dialog.current?.close();onClose();}
- return <dialog ref={dialog} className={styles.dialog} aria-label={title} onCancel={e=>{e.preventDefault();e.stopPropagation();close();}} onClick={e=>{if(e.target===e.currentTarget)close();}}><section className={`${styles.sheet} ${styles.conversation}`}>
+ return <dialog ref={dialog} className={`${styles.dialog} exact-auxiliary-dialog exact-extension`} aria-label={title} onCancel={e=>{e.preventDefault();e.stopPropagation();close();}} onClick={e=>{if(e.target===e.currentTarget)close();}}><section className={`${styles.sheet} ${styles.conversation}`}>
   <header className={styles.header}><h2 data-assistant-heading>{title}</h2><button ref={back} type="button" aria-label="Вернуться в разговор" onClick={close}><X aria-hidden="true"/></button></header>
   <div className={styles.scroll}>{children}</div>
  </section></dialog>;

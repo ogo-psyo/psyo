@@ -4,7 +4,8 @@ import { ObservationMetricFields } from '@/components/health/ObservationMetricFi
 import { agentObservationMetrics, reviewedObservation, type ReviewedObservation, type AgentObservationDraft as Draft, type AgentObservationRecord } from '@/lib/agentObservation';
 import styles from './AgentObservationDraft.module.css';
 
-export function AgentObservationDraft({id,petId,headers,edits,onSaved,onOpen}: {
+export function AgentObservationDraft({id,petId,headers,edits,onSaved,onOpen, page = false, dogName}: {
+  page?:boolean;dogName?:string;
   id:string;petId:string;headers:()=>Record<string,string>;edits:Map<string,ReviewedObservation>;
   onSaved:(record:AgentObservationRecord)=>void;
   onOpen:(record:AgentObservationRecord,trigger:HTMLButtonElement)=>void;
@@ -53,18 +54,18 @@ export function AgentObservationDraft({id,petId,headers,edits,onSaved,onOpen}: {
         : discard?'Не удалось убрать черновик. Попробуйте ещё раз.':'Не удалось подтвердить сохранение. Ввод остался — повторите попытку.');
     } finally {if(alive.current)setBusy(false);}
   }
-  return <section className={styles.sheet} aria-label="Запись из разговора" data-agent-observation={id}>
+  return <section className={page ? 'exact-observation-page' : 'soft exact-agent-observation'} aria-label="Запись из разговора" data-agent-observation={id}>
     {error&&<div><p role="alert">{error}</p><button type="button" disabled={busy} onClick={()=>setReload(value=>value+1)}>Обновить результат</button></div>}
     {!draft&&!error&&<p role="status">Открываю черновик…</p>}
     {draft?.status==='discarded'&&<p role="status">Черновик убран. Запись не создавалась.</p>}
     {draft?.status==='saved'&&<>
       <h3 data-assistant-heading>Запись сохранена</h3>
-      {record?<><p className={styles.note}>{record.note||record.value}</p><button type="button" className={styles.primary} onClick={event=>callbacks.current.onOpen(record,event.currentTarget)}>Открыть запись</button></>:<p>Эта запись больше недоступна в истории.</p>}
+      {record?<><p className={styles.note}>{record.note||record.value}</p><button type="button" className="primary" onClick={event=>callbacks.current.onOpen(record,event.currentTarget)}>Открыть запись</button></>:<p>Эта запись больше недоступна в истории.</p>}
     </>}
     {draft?.status==='draft'&&review&&<form onSubmit={event=>{event.preventDefault();void submit();}}>
-      <h3 data-assistant-heading>Запись о собаке</h3>
+      {page ? <><p className="eyebrow">Наблюдение · {dogName}</p><h1>Что заметил?</h1><p className="lead">Можно обычным текстом. Не обязательно заполнять показатели.</p></> : <h2 data-assistant-heading>Запись о собаке</h2>}
       <fieldset disabled={busy}>
-        <label htmlFor={`agent-note-${id}`}>Что сохранить</label>
+        <label htmlFor={`agent-note-${id}`}>Запись</label>
         <textarea ref={text} id={`agent-note-${id}`} value={review.note} maxLength={8000} required onChange={event=>change({...review,note:event.target.value})}/>
         <details><summary>Дата и показатели</summary>
           <label htmlFor={`agent-date-${id}`}>Дата наблюдения</label>
@@ -72,7 +73,7 @@ export function AgentObservationDraft({id,petId,headers,edits,onSaved,onOpen}: {
           <ObservationMetricFields values={review.metrics} onChange={patch=>change({...review,metrics:agentObservationMetrics.parse({...review.metrics,...patch})})}/>
         </details>
         {review.note!==draft.source_text&&<details><summary>Исходное сообщение</summary><p className={styles.note}>{draft.source_text}</p></details>}
-        <div className={styles.actions}><button type="submit" className={styles.primary}>{busy?'Сохраняю…':'Сохранить запись'}</button><button type="button" onClick={()=>void submit(true)}>Не сохранять</button></div>
+        <div className="row-actions"><button type="submit" className="primary">{busy?'Сохраняю…':'Сохранить запись'}</button><button type="button" onClick={()=>void submit(true)}>Не сохранять</button></div>
       </fieldset>
     </form>}
   </section>;

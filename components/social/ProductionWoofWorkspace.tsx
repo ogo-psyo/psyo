@@ -1,5 +1,6 @@
 'use client';
 
+import { ExactIcon, ExactPage, ExactRow } from '@/components/exact/ExactShell';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Check, ClockCountdown, Crosshair, Funnel, PawPrint, ShieldCheck, UsersThree, X } from '@phosphor-icons/react';
 import type { CandidateGroup, CoarseLocation, SocialCandidate, SocialProfile, SocialScenario, WalkPace, WalkSignal } from '@/lib/socialCore';
@@ -107,7 +108,11 @@ function CandidateProfile({ candidate, busy, onClose, onRequest }: {
 }
 
 export function ProductionWoofWorkspace(props: Props) {
-  const [mode, setMode] = useState<'live' | 'meet'>('live');
+  const [mode, setMode] = useState<'live' | 'meet'>('meet');
+  const [exactMeeting, setExactMeeting] = useState(false);
+  const swipeOrigin = useRef<{ x: number; y: number } | null>(null);
+  const [exactRequestError, setExactRequestError] = useState('');
+  const exactRequestLock = useRef(false);
   const [selectedSignalId, setSelectedSignalId] = useState<string | null>(
     props.recommendationEntry?.view === 'live_signal' ? props.recommendationEntry.targetId ?? null : null,
   );
@@ -372,7 +377,58 @@ export function ProductionWoofWorkspace(props: Props) {
     {areaResults.map(result=><button type="button" key={result.id} onClick={()=>{props.onChooseViewerLocation(result.point);signalDraftRef.current=null;setLocation(result.point);setManualArea(false);}}>{result.title}{result.detail?` · ${result.detail}`:''}</button>)}
   </section>;
 
-  return <section ref={rootRef} onClickCapture={event=>{if(!activeModal){const button=(event.target as HTMLElement).closest<HTMLElement>("button");if(button)restoreFocusRef.current=button;}}} className="production-woof-workspace" data-view-mode={mode} data-map-state={liveMapState} data-map-expanded={mapExpanded} data-map-panel={mapPanel} data-needs-area={needsArea} data-production-journey="nearby" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
+  if (mode === 'meet' && !profileEditor && !manualArea && !filtersOpen && !signalComposer && !props.invite) {
+    const goFeed = () => { setRequestsOpen(false); setSelectedRequestId(null); setAwaitingPartner(null); setExactMeeting(false); };
+    const goConnections = () => { setRequestsOpen(true); setSelectedRequestId(null); setAwaitingPartner(null); setExactMeeting(false); };
+    const requestStatus = (request: SocialRequestView) => request.status === 'pending' ? request.recipientPetId === props.petId ? 'Вам откликнулись' : 'Отклик отправлен' : request.status === 'accepted' ? 'Знакомство принято' : 'Знакомство закрыто';
+    if (requestsOpen) {
+      if (selectedRequest) {
+        const partner = selectedRequest.otherDog?.name || 'другая собака';
+        if (exactMeeting && selectedRequest.status === 'accepted') return <MeetingPlacePanel exact onBack={() => setExactMeeting(false)} requestId={selectedRequest.id} petId={props.petId} routes={props.routes} headers={props.authHeaders} center={props.viewerLocation} partnerName={partner} />;
+        return <ExactPage viewKey="acquaintance" onBack={goConnections}>
+          <p className="eyebrow">Знакомство</p><h1>Вы и {partner}</h1>
+          <div className="connection-person">{selectedRequest.otherDog?.avatarUrl && <img src={selectedRequest.otherDog.avatarUrl} alt={`Фото ${partner}`} />}<div><strong>{partner}</strong></div></div>
+          <div className="pair-note"><div className="status-line"><ExactIcon name={selectedRequest.status === 'accepted' ? 'check' : 'clock'} />{requestStatus(selectedRequest)}</div><p>{selectedRequest.status === 'pending' ? selectedRequest.recipientPetId === props.petId ? 'Прими отклик, если хочешь познакомиться.' : 'Отклик отправлен. Ничего не нужно отправлять повторно.' : selectedRequest.status === 'accepted' ? 'Теперь можно предложить место прогулки.' : 'Новые предложения в этом знакомстве недоступны.'}</p></div>
+          {selectedRequest.status === 'pending' && selectedRequest.recipientPetId === props.petId && <div className="row-actions"><button type="button" className="primary" disabled={Boolean(props.busyId)} onClick={() => void props.onUpdateRequest(selectedRequest.id, 'accept')}>Принять отклик</button><button type="button" className="secondary" disabled={Boolean(props.busyId)} onClick={() => void props.onUpdateRequest(selectedRequest.id, 'reject')}>Отказаться</button></div>}
+          {selectedRequest.status === 'accepted' && <button type="button" className="primary full" onClick={() => setExactMeeting(true)}>Предложить место</button>}
+          {props.error && <p className="error" role="alert">{props.error}</p>}
+          <details><summary>Контакт и управление знакомством</summary><div className="exact-extension"><RequestsPanel key={selectedRequest.id} selectedId={selectedRequest.id} requests={props.requests} petId={props.petId} busyId={props.busyId} missingTelegramUsernameAction={props.missingTelegramUsernameAction ?? null} onAction={props.onUpdateRequest} onReport={props.onReport} onOpenChat={props.onOpenContact} onRefresh={()=>props.onRefresh()} /></div></details>
+          <button type="button" className="text-button" onClick={goConnections}>Все знакомства</button>
+        </ExactPage>;
+      }
+      return <ExactPage viewKey="connections" onBack={goFeed}>
+        <h1>Знакомства</h1><p className="lead">Ответы и договорённости остаются здесь.</p>
+        <div className="list">{props.requests.map(request => <ExactRow key={request.id} title={request.otherDog?.name || 'Другая собака'} detail={requestStatus(request)} icon="gav" onClick={() => { setSelectedRequestId(request.id); setAwaitingPartner(null); }} />)}</div>
+        {!props.requests.length && <p className="empty">{props.state === 'loading' ? 'Загружаю знакомства…' : 'Пока никому не откликались.'}</p>}
+        {props.error && <p className="error" role="alert">{props.error}</p>}
+        <button type="button" className="text-button" onClick={goFeed}>Посмотреть собак</button>
+      </ExactPage>;
+    }
+    const candidateIndex = Math.max(0, allCandidates.findIndex(item => item.petId === browsedCandidateId));
+    const candidate = allCandidates[candidateIndex];
+    const nextDog = (step = 1) => { if (exactRequestLock.current || !allCandidates.length) return; setBrowsedCandidateId(allCandidates[(candidateIndex + step + allCandidates.length) % allCandidates.length].petId); setExactRequestError(''); };
+    return <ExactPage viewKey="gav"><section ref={rootRef}>
+      <div className="gav-heading"><h1>С кем гулять?</h1><button type="button" className="icon-button" aria-label="Знакомства" onClick={goConnections}><ExactIcon name="gav" /></button></div>
+      <p className="lead">{props.profile?.district || candidate?.district || 'Выбери район'} · {props.viewerRadiusKm} км <button type="button" className="text-button" onClick={() => setManualArea(true)}>Изменить</button></p>
+      <div className="chips" style={{ marginTop: 0 }}><button type="button" className="chip active" aria-pressed="true">Знакомства</button><button type="button" className="chip" onClick={() => setMode('live')}>Гуляют сейчас</button></div>
+      {candidate ? <>
+        <div className="exact-dog-photo" onPointerDown={event => { swipeOrigin.current = { x: event.clientX, y: event.clientY }; }} onPointerCancel={() => { swipeOrigin.current = null; }} onPointerUp={event => { const start = swipeOrigin.current; swipeOrigin.current = null; if (!start) return; const dx = event.clientX - start.x, dy = event.clientY - start.y; if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) nextDog(dx < 0 ? 1 : -1); }}><CandidatePhoto src={candidate.avatarUrl} name={candidate.name} /></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h2 className="dog-identity">{candidate.name}</h2><button type="button" className="icon-button" aria-label="Следующая собака" disabled={allCandidates.length < 2 || Boolean(props.busyId)} onClick={() => nextDog()}><ExactIcon name="next" /></button></div>
+        <p className="meta">{[readable(candidate.lifeStage), candidate.weightKg ? `${candidate.weightKg} кг` : '', candidate.distance].filter(Boolean).join(' · ')}</p>
+        <div className="gav-cta"><button type="button" className="primary full" disabled={Boolean(props.busyId) || Boolean(props.accessMessage)} onClick={async () => {
+          if (exactRequestLock.current) return; exactRequestLock.current = true; setExactRequestError('');
+          try { await respond(candidate.petId, candidate.sharedScenarios[0] || 'meet'); } catch { setExactRequestError('Отклик не подтверждён. Повтори попытку.'); } finally { exactRequestLock.current = false; }
+        }}>{props.busyId === candidate.petId ? 'Отправляю…' : 'Откликнуться'}</button></div>
+        <p className="hint">{candidate.reasons[0] || 'Сведения в анкете заполняет владелец.'}</p>
+        <details><summary>Подробнее о собаке</summary><p className="hint">{[readable(candidate.temperament), readable(candidate.energyLevel), readable(candidate.dogFriendly), readable(candidate.playStyle)].filter(Boolean).join(' · ')}</p>{candidate.reasons.slice(1).map(reason => <p className="hint" key={reason}>{reason}</p>)}</details>
+        <p className="photo-credit">Листание не отправляет отклик.</p>
+      </> : <p className="empty">{props.accessMessage || (props.state === 'loading' ? 'Загружаю анкеты…' : 'Пока нет анкет в этом районе. Можно изменить район или вернуться позже.')}</p>}
+      {(props.error || exactRequestError) && <p className="error" role="alert">{exactRequestError || props.error}</p>}
+      <div className="list section-gap"><ExactRow title="Моя анкета" detail="Видимость и условия знакомства" icon="profile" onClick={()=>setProfileEditor(true)}/><ExactRow title="Кого искать" detail="Радиус и предпочтения" icon="gav" onClick={()=>setFiltersOpen(true)}/></div>
+      {props.state === 'error' && <button type="button" className="text-button" onClick={() => void props.onRetry()}>Повторить</button>}
+    </section></ExactPage>;
+  }
+  return <ExactPage viewKey="gav-tools" onBack={()=>{closeActiveModal();setFiltersOpen(false);setManualArea(false);setMode('meet');}}><h1>{mode==='live'?'Гуляют сейчас':filtersOpen?'Кого искать':'Знакомства'}</h1><div className="exact-extension"><section ref={rootRef} onClickCapture={event=>{if(!activeModal){const button=(event.target as HTMLElement).closest<HTMLElement>("button");if(button)restoreFocusRef.current=button;}}} className="production-woof-workspace" data-view-mode={mode} data-map-state={liveMapState} data-map-expanded={mapExpanded} data-map-panel={mapPanel} data-needs-area={needsArea} data-production-journey="nearby" data-direction="alive-map-not-feed; approximate-location; live-signal-and-persistent-profile; no-dating-cliches">
     <div className="woof-map-layer" hidden={needsArea} aria-hidden={mode !== 'live'||needsArea}>
       {props.viewerLocation && mode === 'live' ? <WoofLiveMap expanded={mapExpanded} onToggleExpanded={()=>setMapExpanded(v=>!v)} searching={props.state==='loading'} onSearchHere={props.onChooseViewerLocation} onMapState={setLiveMapState} signals={filteredLiveSignals} viewerLocation={props.viewerLocation} viewerRadiusMeters={props.viewerRadiusMeters} selectedId={selectedSignal?.id ?? null} onSelect={(id) => {setSelectedSignalId(id);setMapPanel('selection');}} />
         : <div className="woof-map-await" aria-hidden="true" />}
@@ -492,5 +548,5 @@ export function ProductionWoofWorkspace(props: Props) {
         {selectedRequest?.status === 'accepted' && <MeetingPlacePanel key={selectedRequest.id} requestId={selectedRequest.id} petId={props.petId} routes={props.routes} headers={props.authHeaders} center={props.viewerLocation || props.profile?.coarseLocation} partnerName={selectedRequest.otherDog?.name || 'собаки'} />}
       </RequestsPanel>
     </div></GavDialog>}
-  </section>;
+  </section></div></ExactPage>;
 }

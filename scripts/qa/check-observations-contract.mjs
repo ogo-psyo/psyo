@@ -11,7 +11,7 @@ const files = {
   schema: readFileSync('supabase/schema.sql', 'utf8'),
   migration: readFileSync('supabase/migrations/20260702120000_pet_observations.sql', 'utf8'),
   disclosure: readFileSync('components/today/ObservationDisclosure.tsx', 'utf8'),
-  health: readFileSync('components/health/HealthTimelineScreen.tsx', 'utf8'),
+  health: readFileSync('components/exact/ExactRecords.tsx', 'utf8'),
   profileMemory: readFileSync('components/profile/ProfileMemoryWorkspace.tsx', 'utf8'),
 };
 
@@ -77,10 +77,10 @@ for (const token of [
   if (!files.page.includes(token)) failures.push(`observation wiring missing: ${token}`);
 }
 
-for (const token of ['<HealthTimelineScreen', 'onStartEdit={startObservationEdit}', 'onDelete={deleteObservation}']) {
+for (const token of ['<ExactRecords', 'onStartEdit={startObservationEdit}', 'onDelete={deleteObservation}']) {
   if (!files.page.includes(token)) failures.push(`canonical health wiring missing: ${token}`);
 }
-for (const token of ['Записать наблюдение', 'aria-label="История наблюдений"', '<ObservationEditor', '<ObservationMetricFields', 'data-observation-calendar', 'health-calendar-grid', 'data-observation-metrics', 'health-record-text', 'Загрузить более ранние', 'Текст записи', 'Изменить', 'Убрать']) {
+for (const token of ['Новая запись', 'props.onSaveEdit', 'observationMetricDefinitions', 'exact-history-date', 'props.onLoadMore', 'props.onDelete', 'props.onRestore', 'selected.note || selected.value', 'Изменить', 'Убрать']) {
   if (!files.health.includes(token)) failures.push(`canonical health lifecycle missing: ${token}`);
 }
 if (files.profileMemory.includes("surface === 'health'")) {

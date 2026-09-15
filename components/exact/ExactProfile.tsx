@@ -1,0 +1,80 @@
+'use client';
+
+import { useState, type ComponentProps } from 'react';
+import type { ProfileMemoryWorkspace } from '@/components/profile/ProfileMemoryWorkspace';
+import { breedCatalog, type DogProfile } from '@/lib/data';
+import { inflectPetName } from '@/lib/copy';
+import { ExactIcon, ExactPage, ExactRow } from './ExactShell';
+import { ExactMemory } from './ExactMemory';
+import { ExactDocument } from './ExactDocument';
+import { ExactProfileFields } from './ExactProfileFields';
+
+export type ExactProfileView = 'profile' | 'editprofile' | 'memory' | 'documents' | 'document' | 'identity';
+type Props = Omit<ComponentProps<typeof ProfileMemoryWorkspace>, 'onDeleteDocument'> & {
+  onDeleteDocument: (id: string) => Promise<boolean>;
+  view: ExactProfileView; onView: (view: ExactProfileView) => void; guest: boolean; headers: () => Record<string, string>;
+  documentId: string | null; onDocumentId: (id: string | null) => void; memoryDrafts: Map<string, string>;
+  draft: DogProfile | null; onDraft: (draft: DogProfile | null) => void; onLibrary: () => void;
+};
+export function ExactProfile(props: Props) {
+  const selectedDocument = props.documentId, setSelectedDocument = props.onDocumentId;
+  const [saving, setSaving] = useState(false);
+  const profile = props.profile, draft = props.draft ?? profile;
+  const update = (patch: Partial<DogProfile>) => props.onDraft({ ...draft, ...patch });
+  const back = () => props.onView('profile');
+  if (props.view === 'memory') return <ExactMemory key={profile.backendPetId} petId={profile.backendPetId} guest={props.guest} draftsStore={props.memoryDrafts} headers={props.headers} onBack={back} />;
+  if (props.view === 'document') {
+    const document = props.documents.find(item => item.id === selectedDocument);
+    return document ? <ExactDocument key={document.id} document={document} dogName={profile.dogName} headers={props.headers} onBack={() => props.onView('documents')} onDiscuss={props.onAskAssistant} onDelete={async () => { if (await props.onDeleteDocument(document.id)) props.onView('documents'); }} deleting={props.documentBusyId === document.id} deleteError={props.error} /> : <ExactPage viewKey="missing-document" onBack={() => props.onView('documents')}><h1>Документ недоступен</h1><p className="lead">Вернись к списку, чтобы выбрать другой документ.</p></ExactPage>;
+  }
+  if (props.view === 'documents') return <ExactPage viewKey="documents" onBack={back}>
+    <h1>Документы</h1><p className="lead">Нужное для приёма или поездки — в одном месте.</p>
+    <div className="list">{props.documents.map(item => <ExactRow key={item.id} title={item.title} detail={new Date(item.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} icon="file" onClick={() => { setSelectedDocument(item.id); props.onView('document'); }} />)}</div>
+    {!props.documents.length && <p className="empty">Здесь появятся сохранённые документы.</p>}
+    <button type="button" className="text-button" onClick={event => props.onAddDocument(event.currentTarget)}><ExactIcon name="plus" />Добавить документ</button>
+  </ExactPage>;
+  if (props.view === 'editprofile') return <ExactPage viewKey="editprofile" onBack={back}>
+    <h1>О {inflectPetName(profile.dogName, 'loct')}</h1>
+    <form onSubmit={async event => { event.preventDefault(); if (saving) return; setSaving(true); try { const id = await props.onSaveProfile(draft); if (id) { props.onDraft(null); back(); } } finally { setSaving(false); } }}>
+      <fieldset disabled={saving}>
+        <div className="field"><label htmlFor="dog-age">Возраст</label><input id="dog-age" value={draft.age} onChange={event => update({ age: event.target.value })} maxLength={80} /></div>
+        <div className="field"><label htmlFor="exact-breed">Порода</label><input id="exact-breed" list="exact-breeds" value={draft.breedId === 'custom' ? draft.breedCustom : breedCatalog.find(item => item.id === draft.breedId)?.title || props.breedLabel} onChange={event => {
+          const match = breedCatalog.find(item => item.title.toLocaleLowerCase('ru') === event.target.value.toLocaleLowerCase('ru'));
+          update(match ? { breedId: match.id, breedGroupId: match.groupId, breedCustom: '' } : { breedId: 'custom', breedCustom: event.target.value });
+        }} /><datalist id="exact-breeds">{breedCatalog.map(item => <option key={item.id} value={item.title} />)}</datalist></div>
+        <ExactProfileFields draft={draft} onChange={update} />
+        <button type="submit" className="primary full">{saving ? 'Сохраняю…' : 'Сохранить'}</button>
+        {props.error && <p className="error" role="alert">{props.error}</p>}
+      </fieldset>
+    </form>
+  </ExactPage>;
+  if (props.view === 'identity') return <ExactPage viewKey="identity" onBack={back}>
+    <h1>Образ {inflectPetName(profile.dogName, 'gent')}</h1>
+    {props.imageUrl && <img className="exact-profile-image" src={props.imageUrl} alt={profile.dogName} />}
+    <div className="field"><label htmlFor="exact-avatar-file">Фотография собаки</label><input id="exact-avatar-file" type="file" accept="image/jpeg,image/png,image/webp" disabled={!props.avatarCapabilities.uploadsEnabled || props.avatarState === 'rendering'} onChange={props.onPhotoChange} /></div>
+    {props.avatarDraftUrl && <div className="row-actions"><button type="button" className="primary" onClick={props.onActivateAvatar}>Использовать</button><button type="button" className="secondary" onClick={props.onDiscardAvatarDraft}>Отменить</button></div>}
+    {props.avatarCapabilities.generationEnabled && <details><summary>Создать образ</summary>
+      <div className="field"><label htmlFor="exact-avatar-prompt">Каким должен быть образ</label><textarea id="exact-avatar-prompt" maxLength={280} value={props.avatarOwnerPrompt} onChange={event=>props.onAvatarPromptChange(event.target.value)}/></div>
+      <label className="exact-checkbox"><input type="checkbox" checked={props.avatarConsent} onChange={event=>props.onAvatarConsentChange(event.target.checked)}/>Разрешаю передать описание сервису генерации.</label>
+      <button type="button" className="primary" disabled={!props.avatarConsent || props.avatarState==='rendering'} onClick={props.onGenerateAvatar}>{props.avatarState==='rendering'?'Создаю черновик…':'Создать образ'}</button>
+    </details>}
+    <button type="button" className="text-button" onClick={props.onUseNoAvatar}>Оставить инициалы</button>
+    {profile.avatarSource !== 'none' && <button type="button" className="text-button" onClick={props.onRollbackAvatar}>Вернуть предыдущий образ</button>}
+    <p className="hint">Фото хранится приватно и не публикуется автоматически.</p>
+    {props.error && <p className="error" role="alert">{props.error}</p>}
+  </ExactPage>;
+  return <ExactPage viewKey="profile">
+    <div className="profile-top"><button type="button" className="initial" aria-label="Изменить образ собаки" onClick={() => props.onView('identity')}>{props.imageUrl ? <img className="exact-profile-initial" src={props.imageUrl} alt="" /> : profile.dogName.charAt(0)}</button><div><h1>{profile.dogName}</h1><p>{[profile.age, props.breedLabel].filter(Boolean).join(' · ')}</p></div></div>
+    <button type="button" className="text-button" onClick={() => { if (!props.draft) props.onDraft({ ...profile }); props.onView('editprofile'); }}>Изменить сведения</button>
+    <div className="list section-gap">
+      <ExactRow title={`История ${inflectPetName(profile.dogName, 'gent')}`} detail="Записи, которые можно найти снова" icon="book" onClick={props.onOpenHealth} />
+      <ExactRow title="Документы" detail="Хранятся отдельно от разговора" icon="file" onClick={() => props.onView('documents')} />
+      <ExactRow title="Что помнит Псё" detail="Посмотреть, исправить, забыть" icon="memory" onClick={() => props.onView('memory')} />
+      <ExactRow title="Прогулки и места" detail="Сохранённое вами" icon="map" onClick={props.onLibrary} />
+      <ExactRow title="План ухода" detail="Дела, календарь и история" icon="clock" onClick={props.onOpenPlan} />
+      <ExactRow title="Привычки" detail="Повторяющиеся занятия и отметки" icon="book" onClick={props.onOpenHabits} />
+      <ExactRow title="Памятка для других" detail="Выбрать сведения и управлять ссылкой" icon="file" onClick={props.onOpenCard} />
+      <ExactRow title="Данные и доступ" detail="Мои собаки, аккаунт и приватность" icon="profile" onClick={props.onOpenSettings} />
+    </div>
+  </ExactPage>;
+}

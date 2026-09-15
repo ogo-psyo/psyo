@@ -1,5 +1,6 @@
 'use client';
 
+import { ExactIcon, ExactPage } from '@/components/exact/ExactShell';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { applyLibraryCommand, emptyMapLibrary, type MapLibrary, type SavedPlace } from '@/lib/mapLibrary';
 import type { OwnerRouteView } from '@/lib/mapUi';
@@ -9,7 +10,8 @@ import { LiveMap } from '@/components/LiveMap';
 
 type Proposal = { id: string; mine: boolean; preview: MeetingPreview | null };
 type Point = { lat: number; lng: number };
-export function MeetingPlacePanel({ requestId, petId, routes, headers, center, partnerName }: {
+export function MeetingPlacePanel({ requestId, petId, routes, headers, center, partnerName, exact = false, onBack }: {
+  exact?: boolean; onBack?: () => void;
   requestId: string; petId: string; routes: OwnerRouteView[];
   headers: () => Record<string, string>; center?: Point | null; partnerName: string;
 }) {
@@ -126,6 +128,46 @@ export function MeetingPlacePanel({ requestId, petId, routes, headers, center, p
     focusPoint={{lng:value.points[0][0],lat:value.points[0][1],token:1}} accessibleLabel="Место или фрагмент маршрута для встречи"/>
   </div>; }
   function cancel() { setComposing(false);setPreview(null);setError('');triggerRef.current?.focus(); }
+  async function sendExactSelection() {
+    if (lock.current || (!selection && !newPlace) || unavailable) return;
+    lock.current = true; setBusy(true); setError(''); setNotice('');
+    const [kind, ...ids] = selection.split(':');
+    const source = newPlace ? { kind: 'point', point: { id: newPlace.id, title: newPlace.title, ...newPlace.point } } : { kind, sourceId: ids.join(':') };
+    try {
+      const checked = await fetch(endpoint, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...headersRef.current() }, body: JSON.stringify({ action: 'preview', ...source }) });
+      const checkedBody = await checked.json();
+      if (!checked.ok || !checkedBody.preview || typeof checkedBody.fingerprint !== 'string') throw Error('preview');
+      if (!live.current) return;
+      if (!attempt.current || digest !== checkedBody.fingerprint) attempt.current = crypto.randomUUID();
+      setDigest(checkedBody.fingerprint);
+      const response = await fetch(endpoint, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...headersRef.current() }, body: JSON.stringify({ action: 'send', ...source, confirmed: true, fingerprint: checkedBody.fingerprint, id: attempt.current }) });
+      const receipt = await response.json();
+      if (!response.ok || receipt.ok !== true || receipt.id !== attempt.current) throw Error('send');
+      if (!live.current) return;
+      setNotice('Место предложено. Это ещё не согласие второго владельца.');
+      setSelection(''); setNewPlace(null); setPreview(null); setDigest(''); attempt.current = null;
+      await load();
+    } catch { if (live.current) setError('Отправка не подтверждена. Выбор остался — повтори попытку.'); }
+    finally { lock.current = false; if (live.current) setBusy(false); }
+  }
+  if (exact) {
+    const choices = (library?.places || []).filter(place => !place.unavailable);
+    const pickedPlace = newPlace || choices.find(place => selection === `place:${place.id}`);
+    return <ExactPage viewKey="meeting" onBack={onBack}>
+      <p className="eyebrow">Предложение для {partnerName}</p><h1>Где встретиться?</h1><p className="lead">Выбери точку. Отправится только после твоего нажатия.</p>
+      <div className="map-canvas exact-live-map"><LiveMap appearance="exact" features={choices.map(place => ({ id: place.id, title: place.title, type: 'point' as const, lat: place.point.lat, lng: place.point.lng, pointKind: 'ownerPlace' as const, visibility: 'private' as const }))} selectedFeatureId={pickedPlace?.id} onMapClick={event => { if (busy) return; choose({ id: crypto.randomUUID(), title: 'Место встречи', detail: '', category: 'место', point: event.latlng, source: { provider: 'user', id: crypto.randomUUID() }, note: '' }); }} onSelectFeature={id => { if (busy) return; setNewPlace(null); setSelection(`place:${id}`); setPreview(null); setError(''); }} searchPoint={pickedPlace ? { ...pickedPlace.point, title: pickedPlace.title } : null} focusPoint={pickedPlace ? { ...pickedPlace.point, token: 1 } : center ? { ...center, token: 1 } : null} accessibleLabel="Выбор места встречи" /></div>
+      {loading && <p role="status">Загружаю места…</p>}
+      <div className="list">{choices.map(place => <button key={place.id} type="button" className="list-row" disabled={busy} aria-pressed={pickedPlace?.id === place.id} onClick={() => { setNewPlace(null); setSelection(`place:${place.id}`); setPreview(null); setError(''); }}><span className="selection-dot">{pickedPlace?.id === place.id ? '✓' : <ExactIcon name="pin" />}</span><span className="grow"><strong>{place.title}</strong><small>{place.category}</small></span></button>)}</div>
+      {!loading && !loadError && !choices.length && <p className="empty">Выбери место на карте.</p>}
+      {newPlace && <div className="field"><label htmlFor="exact-meeting-title">Название места</label><input id="exact-meeting-title" maxLength={160} value={newPlace.title} disabled={busy} onChange={event => setNewPlace({ ...newPlace, title: event.target.value })} /></div>}
+      {pickedPlace && <p className="hint section-gap">Выбрано: {pickedPlace.title}. В личные места автоматически не добавится.</p>}
+      {(error || loadError) && <p className="error" role="alert">{error || loadError}</p>}
+      {loadError && <button type="button" className="text-button" onClick={() => void load()}>Повторить загрузку</button>}
+      {notice && <p role="status" className="status-line success">{notice}</p>}
+      <button type="button" className="primary full" disabled={!pickedPlace || !pickedPlace.title.trim() || busy || unavailable} onClick={sendExactSelection}>{busy ? 'Отправляю…' : 'Отправить предложение'}</button>
+      {proposals.map(proposal => <section className="soft" key={proposal.id}><p className="eyebrow">{proposal.mine ? 'Вы предложили' : `${partnerName}: предложение`}</p><h2>{proposal.preview?.title || 'Место больше недоступно'}</h2><p className="hint">Предложение ещё не означает согласие на встречу.</p></section>)}
+    </ExactPage>;
+  }
   if (unavailable) return <section className="meeting-place-panel"><h3>Предложения больше недоступны</h3><p>Знакомство могло завершиться. Вернитесь к откликам и обновите его состояние.</p></section>;
   return <section className="meeting-place-panel" aria-label="Место встречи">
     <h3>Где встретимся?</h3>

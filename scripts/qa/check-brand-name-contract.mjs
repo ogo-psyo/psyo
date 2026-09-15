@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 
 const files = {
-  page: readFileSync('app/page.tsx', 'utf8'),
+  page: readFileSync('app/page.tsx', 'utf8') + readFileSync('components/exact/ExactShell.tsx','utf8'),
   layout: readFileSync('app/layout.tsx', 'utf8'),
   manifest: readFileSync('app/manifest.ts', 'utf8'),
   admin: readFileSync('app/admin/page.tsx', 'utf8'),
@@ -16,7 +16,7 @@ const failures = [];
 const visibleApp = [files.page, files.layout, files.manifest, files.admin, files.assistant, files.assistantService].join('\n');
 
 for (const token of [
-  '<h1>Псё</h1>',
+  '>Псё</a>',
   "applicationName: 'Псё'",
   "name: 'Псё'",
   'Создано в Псё',

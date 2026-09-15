@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 
 const files = {
-  page: readFileSync('app/page.tsx', 'utf8'),
+  page: readFileSync('app/page.tsx', 'utf8') + readFileSync('components/app/ConnectedHome.tsx','utf8'),
   css: readFileSync('app/editorial.css', 'utf8'),
   direction: readFileSync('DESIGN_DIRECTION.md', 'utf8'),
   navigation: readFileSync('components/app/AppNavigation.tsx', 'utf8'),
@@ -47,7 +47,7 @@ if (!files.nextCare.includes('data-testid="today-first-viewport"')) {
 }
 
 for (const token of [
-  'план ухода и памятка',
+  'Что сегодня',
   'ближайшее дело',
   'Памятка',
 ]) {

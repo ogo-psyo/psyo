@@ -1,22 +1,30 @@
 'use client';
 
+import {nextReminderDueAt} from '@/lib/reminderRecurrence';
+import {reminderTiming,reminderReceipt,reminderCalendarText,type ReminderRecord} from '@/lib/reminder';
+import {ReminderEditor,type ReminderDraft} from '@/components/care/ReminderEditor';
 import { isPrimaryObservationFact } from '@/lib/observationLabels';
 import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
 import {isMapSearchPlace,type MapSearchPlace} from '@/lib/mapSearchPlace';
 import {downloadRouteGpx,type RoutePlanning} from '@/lib/routePlanning';
 
 import { ChangeEvent, type FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Buildings, CalendarBlank, CalendarDots, CaretDown, CheckCircle, CopySimple, FilePdf, Files, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning, TextT, UploadSimple } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowRight, CheckCircle, CopySimple, FilePdf, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning } from '@phosphor-icons/react';
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
-import { WatercolorScreen } from '@/components/watercolor';
 import { normalizeWishlistReceipt, type WishlistView } from '@/lib/wishlistView';
-import { AppNavigation, type PrimaryRoute } from '@/components/app/AppNavigation';
+import { type PrimaryRoute } from '@/components/app/AppNavigation';
 import { journalDayEntries } from '@/lib/journal';
 import { ConnectedHome, ConnectedTools } from '@/components/app/ConnectedHome';
-import { ProductionAssistantSheet, ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
+import { ExactHeader, ExactNavigation, ExactScope, ExactPage } from '@/components/exact/ExactShell';
+import { ProductionDocumentSheet, ProductionJourney, type JourneyProfileEntry } from '@/components/journey/ProductionJourney';
+import { AgentObservationDraft } from '@/components/journey/AgentObservationDraft';
 import { AgentPanel } from '@/components/journey/AgentPanel';
 import type { ReviewedObservation } from '@/lib/agentObservation';
 import { VoiceObservationCapture, type PrivateVoiceNoteInput } from '@/components/journey/VoiceObservationCapture';
+import { ExactVoice } from '@/components/exact/ExactVoice';
+import { ExactCare } from '@/components/exact/ExactCare';
+import { ExactConversation } from '@/components/exact/ExactConversation';
+import { ExactThings } from '@/components/exact/ExactThings';
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
 import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';
 import { RouteDeleteDialog } from '@/components/journey/RouteDeleteDialog';
@@ -30,50 +38,34 @@ import { type ObservationEditorDraft } from '@/components/care/ObservationEditor
 import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
 import type { DogModuleSummary } from '@/components/home/AllFunctionsHub';
 import { HabitScreen, type HabitDraft, type HabitView } from '@/components/habits/HabitScreen';
-import { HealthTimelineScreen } from '@/components/health/HealthTimelineScreen';
+import { ExactProfile, type ExactProfileView } from '@/components/exact/ExactProfile';
+import { ExactRecords } from '@/components/exact/ExactRecords';
 import { RecommendationCard } from '@/components/recommendations/RecommendationCard';
-import { ProfileMemoryWorkspace, type ProfileSurface } from '@/components/profile/ProfileMemoryWorkspace';
-import { ObservationDisclosure } from '@/components/today/ObservationDisclosure';
-import { CandidateCard } from '@/components/social/CandidateCard';
-import { CityCommunities, type CityCommunity } from '@/components/social/CityCommunities';
-import { RequestsPanel, type SocialRequestView } from '@/components/social/RequestsPanel';
-import { SocialProfileSheet } from '@/components/social/SocialProfileSheet';
+import { type ProfileSurface } from '@/components/profile/ProfileMemoryWorkspace';
+import { type CityCommunity } from '@/components/social/CityCommunities';
+import { type SocialRequestView } from '@/components/social/RequestsPanel';
 import { ProductionWoofWorkspace, type WoofRecommendationEntry } from '@/components/social/ProductionWoofWorkspace';
 import { SelectField } from '@/components/ui/FormControls';
 import {
-  anchorCards,
   avatarStyles,
   breedCatalog,
-  breedGroups,
-  coatOptions,
   defaultProfile,
-  energyOptions,
-  friendlinessOptions,
   getBreedGroup,
   getBreedLabel,
   getBreedCare,
   lifeStageOptions,
-  maxPhotos,
-  parasiteOptions,
-  playStyleOptions,
   sexOptions,
-  sizeOptions,
-  socialOptions,
-  temperamentOptions,
-  vaccineOptions,
-  type AvatarStyleId,
   type BreedGroupId,
   type BreedId,
   type DogProfile,
 } from '@/lib/data';
 import { getSupabaseBrowser } from '@/lib/clientSupabase';
-import { formatCount, formatReadinessLabel, formatReminderGroupLine, formatTodayTitle, formatWishlistMeta, formatZoneMeta, inflectPetName } from '@/lib/copy';
-import { fileToLocalAvatarDataUrl, filesToPhotos, loadProfile, resetProfileStorage, saveProfile } from '@/lib/profileStorage';
+import { formatCount, formatReadinessLabel, formatZoneMeta, inflectPetName } from '@/lib/copy';
+import { fileToLocalAvatarDataUrl, loadProfile, resetProfileStorage, saveProfile } from '@/lib/profileStorage';
 import { loadGuestEntityState, resetAllLocalPsoData, resetGuestEntityStorage, saveGuestEntityState } from '@/lib/guestEntityStorage';
 import { buildAppReadiness, type ReadinessLevel } from '@/lib/readiness';
 import { buildTodayCareView } from '@/lib/today';
 import { normalizeOwnerRoutes, removeOwnerRoute, upsertOwnerRoute, type OwnerRouteView } from '@/lib/mapUi';
-import { rc1Config } from '@/lib/rc1';
 import { extractObservationCandidates, ingestionFingerprint, type IngestionDecision, type ObservationCandidate } from '@/lib/observationIngestion';
 import type { CandidateGroup, CoarseLocation, SocialProfile, SocialScenario, WalkPace, WalkSignal } from '@/lib/socialCore';
 import type { ActionSuggestion } from '@/packages/contracts';
@@ -84,7 +76,7 @@ type AvatarState = 'idle' | 'rendering' | 'ready';
 type Notice = 'documentSaved' | 'idle' | 'saved' | 'mapSaved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
 type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 type ReminderTimeMode = 'exact' | 'flexible' | 'approximate';
-type ReminderView = { id: string; petId: string; type: string; title: string; dueAt: string; recurrence?: ReminderRecurrence; status: string; snoozedUntil?: string; completedAt?: string; nextDueAt?: string };
+type ReminderView = ReminderRecord;
 type ReminderHistoryItem = { id: string; eventType?: string; payload?: { dueAt?: string; completedAt?: string; nextDueAt?: string | null }; createdAt: string };
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; visibility?: 'private' | 'shared' | 'public'; share_token?: string | null; created_at?: string };
 type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; avatar_source?: 'none' | 'uploaded' | 'generated'; active_avatar_asset_id?: string | null; photo_urls?: string[] };
@@ -264,12 +256,12 @@ function AssistantActionButtons({ actions, statuses, onApply, onOpen }: {
         if (status.state === 'success') return <div className="assistant-action-result" key={key} role="status">
           <span>{status.message || 'Действие сохранено'}</span>
           <div className="assistant-action-links">
-            <button type="button" onClick={() => onOpen(action)}>{action.intent === 'add_wishlist' ? 'Открыть вещи' : 'Открыть'}</button>
-            {action.intent === 'add_wishlist' && status.plannedFor && <button type="button" onClick={() => onOpen(action, 'calendar')}>Открыть план</button>}
+            <button className="secondary" type="button" onClick={() => onOpen(action)}>{action.intent === 'add_wishlist' ? 'Открыть вещи' : 'Открыть'}</button>
+            {action.intent === 'add_wishlist' && status.plannedFor && <button className="secondary" type="button" onClick={() => onOpen(action, 'calendar')}>Открыть план</button>}
           </div>
         </div>;
-        if (status.state === 'error') return <div key={key} role="alert"><span>{status.message || 'Не удалось выполнить действие.'}</span><button type="button" onClick={() => onApply(action, key)}>Повторить</button></div>;
-        return <button key={key} type="button" disabled={status.state === 'loading'} aria-busy={status.state === 'loading'} onClick={() => onApply(action, key)}>
+        if (status.state === 'error') return <div key={key} role="alert"><span>{status.message || 'Не удалось выполнить действие.'}</span><button className="secondary" type="button" onClick={() => onApply(action, key)}>Повторить</button></div>;
+        return <button className="primary" key={key} type="button" disabled={status.state === 'loading'} aria-busy={status.state === 'loading'} onClick={() => onApply(action, key)}>
           {status.state === 'loading' ? `${action.humanLabel}…` : action.humanLabel}
         </button>;
       })}
@@ -389,32 +381,23 @@ function observationSummary(item: ObservationView) {
 }
 
 function reminderDueAt(date: string, time: string, mode: ReminderTimeMode) {
-  const fallbackTime = mode === 'flexible' ? '12:00' : mode === 'approximate' ? '10:00' : '09:00';
-  const value = `${date || dateInputValue(new Date())}T${mode === 'exact' ? (time || fallbackTime) : fallbackTime}:00`;
+  const fallbackTime = mode === 'flexible' ? '12:00' : '09:00';
+  const value = `${date || dateInputValue(new Date())}T${mode !== 'flexible' ? (time || fallbackTime) : fallbackTime}:00`;
   const parsed = new Date(value);
-  return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
+  return Number.isFinite(parsed.getTime()) && dateInputValue(parsed)===date ? parsed.toISOString() : '';
 }
 
 function reminderRecurrenceLabel(recurrence?: ReminderRecurrence) {
   return reminderRecurrenceOptions.find((option) => option.value === recurrence)?.label ?? 'Не повторяется';
 }
 
-function reminderTimeLabel(reminder: ReminderView) {
-  const date = new Date(reminder.snoozedUntil || reminder.dueAt);
-  if (!Number.isFinite(date.getTime())) return 'Дата не указана';
-  const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  const timing = time === '12:00' ? 'в течение дня' : time === '10:00' ? 'примерно' : `в ${time}`;
-  return `${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'short' })}, ${timing}`;
-}
+function reminderTimeLabel(reminder:ReminderView){return reminderTiming(reminder);}
 
 function reminderDateInputValue(reminder: ReminderView) {
   const date = new Date(reminder.snoozedUntil || reminder.dueAt);
   return Number.isFinite(date.getTime()) ? dateInputValue(date) : dateInputValue(new Date());
 }
 
-function calendarStamp(date: Date) {
-  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
-}
 
 function dbToProfile(payload: any, preferredPetId?: string): Partial<DogProfile> | null {
   const selectedDemoPet = payload?.mode === 'demo' && preferredPetId
@@ -528,6 +511,14 @@ export default function Home() {
   const error = (errorState.tab === tab ? errorState.message : '') || storageError;
   const [healthFactsDraft, setHealthFactsDraft] = useState<DogProfile | null>(null);
   const [recordDetail, setRecordDetail] = useState<RecordDetail | null>(null);
+  const [exactDocumentId, setExactDocumentId] = useState<string | null>(null);
+  const exactMemoryDrafts = useRef(new Map<string,string>());
+  const [exactAgentObservationId, setExactAgentObservationId] = useState<string | null>(null);
+  const [exactRecordId, setExactRecordId] = useState<string | null>(null);
+  const [exactProfileView, setExactProfileView] = useState<ExactProfileView>('profile');
+  const [exactProfileDraft, setExactProfileDraft] = useState<DogProfile | null>(null);
+  const [mapExactNavigation, setMapExactNavigation] = useState(0);
+  const [mapExactScreen, setMapExactScreen] = useState<'map' | 'library'>('map');
   const [profileSurface, setProfileSurface] = useState<ProfileSurface>('overview');
   type FlowOrigin = { from: Tab; to: Tab; detail: Tab | null; shellScroll: number; windowScroll: number; focusText: string };
   const secondaryOrigins = useRef<FlowOrigin[]>([]);
@@ -612,6 +603,12 @@ export default function Home() {
   const [newReminderRecurrence, setNewReminderRecurrence] = useState<ReminderRecurrence>('none');
   const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
   const [reminderMutationBusy, setReminderMutationBusy] = useState<string | null>(null);
+  const reminderOperation=useRef<{petId:string;scope:string;token:string}|null>(null);
+  const reminderDrafts=useRef(new Map<string,ReminderDraft>());
+  const [reminderIssue,setReminderIssue]=useState<{petId:string;scope:string;message:string}|null>(null);
+  const [careCalendarOpen,setCareCalendarOpen]=useState(false);
+  const [careFilterDate,setCareFilterDate]=useState(false);
+  const guestCareUndo = useRef(new Map<string, {before: ReminderView; after: ReminderView; wishlist: WishlistView[]}>());
   const [reminderHistory, setReminderHistory] = useState<Record<string, ReminderHistoryItem[]>>({});
   const [calendarCursor, setCalendarCursor] = useState(() => new Date());
   const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => dateInputValue(new Date()));
@@ -665,6 +662,8 @@ export default function Home() {
   const [publicCardLinkBusy, setPublicCardLinkBusy] = useState(false);
   const [publicCardRevokeConfirm, setPublicCardRevokeConfirm] = useState(false);
   const [assistantQuestion, setAssistantQuestion] = useState('');
+  const [exactVoiceOpen,setExactVoiceOpen]=useState(false);
+  const [exactVoiceDraft,setExactVoiceDraft]=useState('');
   const [assistantError,setAssistantError]=useState('');
   const [assistantReturnFocus,setAssistantReturnFocus]=useState<HTMLElement|null>(null);
   const [assistantAnswer, setAssistantAnswer] = useState('');
@@ -709,6 +708,14 @@ export default function Home() {
   }, [profile.backendPetId,session?.access_token,telegramSession.ownerId]);
   const [billing, setBilling] = useState<BillingView | null>(null);
   const [careFeedback, setCareFeedback] = useState<CareFeedback>(null);
+  const reminderHistoryLoading=useRef(new Set<string>());
+  const [reminderHistoryErrors,setReminderHistoryErrors]=useState<Record<string,string>>({});
+  useEffect(()=>{
+    reminderOperation.current=null;reminderDrafts.current.clear();guestCareUndo.current.clear();reminderHistoryLoading.current.clear();
+    setReminderMutationBusy(null);setReminderIssue(null);setReminderHistory({});setReminderHistoryErrors({});setCareFeedback(null);setPendingCareDeletion(null);setEditingReminderId(null);
+    setNewReminderTitle('');setNewReminderDueDate(dateInputValue(new Date()));setNewReminderDueTime('09:00');setNewReminderTimeMode('flexible');setNewReminderRecurrence('none');setNewReminderType('custom');
+  },[profile.backendPetId]);
+
   const [pendingCareDeletion, setPendingCareDeletion] = useState<PendingCareDeletion>(null);
   const [careDeletionBusy, setCareDeletionBusy] = useState(false);
   const guestPetIdRef = useRef<string | null>(null);
@@ -1984,6 +1991,8 @@ export default function Home() {
     : billing?.upgrade?.available ? 'Оплата готова через Telegram.' : 'Оплата пока недоступна.';
 
   function resetPetScopedDrafts() {
+    setExactAgentObservationId(null); setExactRecordId(null);setExactVoiceOpen(false);setExactVoiceDraft(''); setExactDocumentId(null); exactMemoryDrafts.current.clear();
+    setExactProfileDraft(null); setExactProfileView('profile'); setMapExactScreen('map');
     healthReadVersion.current++; healthLoadedPet.current=null; observationWrite.current=null;
     setHealthNextCursor(null); setHealthLoading(false); setObservationIssue(null); setHealthFactsError('');
     setObservationSaving(false); setObservationMutationBusy(false); setObservationCaptureOpen(false);
@@ -2326,28 +2335,30 @@ export default function Home() {
     }
   }
 
-  async function loadReminderHistory(reminderId: string) {
-    if (isGuestMode()) return;
-    const response = await fetch(`/api/reminders/${reminderId}/history`, { headers: authHeaders() });
-    if (!response.ok) return;
-    const payload = await response.json().catch(() => ({}));
-    const history = Array.isArray(payload.history) ? payload.history.map((item: any) => ({
-      id: String(item.id),
-      eventType: String(item.event_type || ''),
-      payload: item.payload && typeof item.payload === 'object' ? item.payload : {},
-      createdAt: String(item.created_at || new Date().toISOString()),
-    })) : [];
-    setReminderHistory((current) => ({ ...current, [reminderId]: history }));
+  async function loadReminderHistory(reminderId:string){
+    if(isGuestMode()||reminderHistoryLoading.current.has(reminderId))return;
+    const petId=profile.backendPetId;reminderHistoryLoading.current.add(reminderId);
+    try{
+      const response=await fetch(`/api/reminders/${reminderId}/history`,{headers:authHeaders()});
+      const payload=await response.json().catch(()=>({}));if(documentActivePet.current!==petId)return;
+      if(!response.ok||!Array.isArray(payload.history))throw new Error('HISTORY_NOT_CONFIRMED');
+      const history:ReminderHistoryItem[]=payload.history.map((item:Record<string,unknown>)=>{
+        if(typeof item.id!=='string'||typeof item.created_at!=='string'||!Number.isFinite(Date.parse(item.created_at)))throw new Error('INVALID_HISTORY');
+        return {id:item.id,eventType:String(item.event_type||''),payload:item.payload&&typeof item.payload==='object'?item.payload:{},createdAt:item.created_at};
+      });
+      setReminderHistory(current=>({...current,[reminderId]:history}));setReminderHistoryErrors(current=>{const next={...current};delete next[reminderId];return next;});
+    }catch{if(documentActivePet.current===petId)setReminderHistoryErrors(current=>({...current,[reminderId]:'Не удалось загрузить историю этого дела.'}));}
+    finally{if(documentActivePet.current===petId)reminderHistoryLoading.current.delete(reminderId);}
   }
 
   useEffect(() => {
-    if (careView !== 'history' || isGuestMode()) return;
+    if ((tab !== 'calendar' && careView !== 'history') || isGuestMode()) return;
     reminders.forEach((reminder) => {
       if (reminder.recurrence && reminder.recurrence !== 'none' && reminderHistory[reminder.id] === undefined) {
         void loadReminderHistory(reminder.id);
       }
     });
-  }, [careView, reminders, reminderHistory]);
+  }, [tab, careView, reminders, reminderHistory]);
 
   function observationReceipt(value: unknown, petId: string, expectedId?: string): ObservationView {
     if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('INVALID_OBSERVATION_RECEIPT');
@@ -2515,11 +2526,11 @@ export default function Home() {
     });
   }
 
-  async function deleteObservation(id: string) {
+  async function deleteObservation(id: string): Promise<boolean> {
     const observation=observations.find(item=>item.id===id);
-    if(!observation)return;
+    if(!observation)return false;
     const scope=`observation:delete:${id}`;
-    await writeObservation(id,async current=>{
+    const deleted = await writeObservation(id,async current=>{
       if(!isGuestMode()){
         const response=await fetch(`/api/observations/${id}`,{method:'DELETE',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:'{}'});
         if(!current())return;
@@ -2530,8 +2541,9 @@ export default function Home() {
       if(!current())return;
       setObservations(previous=>previous.filter(item=>item.id!==id));setRecentlyDeletedObservation(observation);
       setEditingObservationId(previous=>previous===id?null:previous);
-      setCareFeedback({kind:'observation-deleted',observationId:id,title:'запись'});finishCareMutation(scope);
+      setCareFeedback({kind:'observation-deleted',observationId:id,title:'запись'});finishCareMutation(scope); return true;
     });
+    return deleted === true;
   }
 
   async function uploadPetDocument(event: FormEvent<HTMLFormElement>) {
@@ -2570,16 +2582,18 @@ export default function Home() {
     } finally { setDocumentUploading(false); }
   }
 
-  async function deletePetDocument(id: string) {
-    if (documentBusyId || !window.confirm('Удалить этот документ без возможности восстановления?')) return;
+  async function deletePetDocument(id: string, confirmed = false): Promise<boolean> {
+    if (documentBusyId || !confirmed && !window.confirm('Удалить этот документ без возможности восстановления?')) return false;
     setDocumentBusyId(id);
     setError('');
     try {
       const response = await fetch(`/api/documents/${id}`, { method: 'DELETE', headers: authHeaders() });
       if (!response.ok) throw new Error('DELETE_FAILED');
       setDocuments((current) => current.filter((item) => item.id !== id));
+      return true;
     } catch {
       setError('Удаление документа не завершено. Повторите попытку; повтор не затронет другие файлы.');
+      return false;
     } finally {
       setDocumentBusyId(null);
     }
@@ -2874,60 +2888,43 @@ export default function Home() {
     setDocuments([]);
   }
 
-  async function createReminder(title?: string, type = newReminderType, dueInDays = 0, explicitDueDate?: string) {
-    const reminderTitle = (title || newReminderTitle).trim();
-    if (!reminderTitle) {
-      setError('Напиши, что нужно сделать для собаки.');
-      return false;
-    }
-    const dueAt = explicitDueDate
-      ? reminderDueAt(explicitDueDate, newReminderDueTime, newReminderTimeMode)
-      : title
-        ? new Date(Date.now() + dueInDays * 86400000).toISOString()
-        : reminderDueAt(newReminderDueDate, newReminderDueTime, newReminderTimeMode);
-    const recurrence = title ? 'none' : newReminderRecurrence;
-    if (!profile.backendPetId) {
-      if (!isGuestMode()) {
-        setError('Сначала сохрани профиль собаки.');
-        return false;
+  async function performReminderWrite(scope:string,task:(isCurrent:()=>boolean)=>Promise<boolean>,report?:(message:string)=>void){
+    const petId=profile.backendPetId||activePetId||'guest';
+    if(reminderOperation.current?.petId===petId)return false;
+    const operation={petId,scope,token:crypto.randomUUID()};reminderOperation.current=operation;
+    setReminderMutationBusy(scope);setReminderIssue(null);
+    const sourcePet=profile.backendPetId;
+    const isCurrent=()=>reminderOperation.current?.token===operation.token&&documentActivePet.current===sourcePet;
+    try{return await task(isCurrent);}
+    catch{if(isCurrent())(report||reportReminderError)('Не удалось подтвердить изменение дела. Ввод сохранён — повтори попытку.');return false;}
+    finally{if(reminderOperation.current?.token===operation.token){reminderOperation.current=null;setReminderMutationBusy(null);}}
+  }
+  function reportReminderError(message:string){const operation=reminderOperation.current;if(operation)setReminderIssue({petId:operation.petId,scope:operation.scope,message});}
+
+  async function createReminder(title?:string,type=newReminderType,dueInDays=0,explicitDueDate?:string){
+    return performReminderWrite(title?'assistant:create':'create',async isCurrent=>{
+      const reminderTitle=(title||newReminderTitle).trim();
+      if(!reminderTitle){reportReminderError('Напиши, что нужно сделать.');return false;}
+      const timeMode:ReminderTimeMode=title?'flexible':newReminderTimeMode;
+      const date=explicitDueDate||(title?dateAfterDays(dueInDays):newReminderDueDate);
+      const dueAt=reminderDueAt(date,title?'12:00':newReminderDueTime,timeMode);
+      if(!dueAt){reportReminderError('Выбери корректную дату и время.');return false;}
+      const recurrence=title?'none':newReminderRecurrence;
+      if(isGuestMode()){
+        const petId=ensureGuestPetId(),id=guestId('reminder');setReminders(current=>[{id,petId,type,title:reminderTitle,dueAt,recurrence,status:'active',timeMode},...current]);
+        if(!title){setNewReminderTitle('');setNewReminderRecurrence('none');}
+        setCareFeedback({kind:'created',reminderId:id,title:reminderTitle});return true;
       }
-      ensureGuestPetId();
-    }
-    if (isGuestMode()) {
-      const petId = ensureGuestPetId();
-      const id = guestId('reminder');
-      setReminders((current) => [{ id, petId, type, title: reminderTitle, dueAt, recurrence, status: 'active' }, ...current]);
-      setNewReminderTitle('');
-      setCareFeedback({ kind: 'created', reminderId: id, title: reminderTitle });
-      if (tab === 'today') resetViewScroll();
-      return true;
-    }
-    const scope = `reminder:create:${profile.backendPetId}:${reminderTitle}:${dueAt}:${type}:${recurrence}`;
-    setReminderMutationBusy(scope);
-    try {
-      const response = await fetch('/api/reminders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({ petId: profile.backendPetId, title: reminderTitle, dueAt, type, recurrence, source: 'manual_calendar' }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError('Дело не сохранилось. Всё введённое осталось в форме — проверь связь и попробуй снова.');
-        return false;
-      }
-      setNewReminderTitle('');
-      setNewReminderRecurrence('none');
-      await loadBootstrap();
-      finishCareMutation(scope);
-      setCareFeedback({ kind: 'created', reminderId: String(result.reminder?.id || ''), title: reminderTitle });
-      if (tab === 'today') resetViewScroll();
-      return true;
-    } catch {
-      setError('Дело не сохранилось. Всё введённое осталось в форме — проверь связь и попробуй снова.');
-      return false;
-    } finally {
-      setReminderMutationBusy(null);
-    }
+      const petId=profile.backendPetId;if(!petId){reportReminderError('Сначала сохрани профиль собаки.');return false;}
+      const payload={petId,title:reminderTitle,dueAt,type,recurrence,timeMode,source:title?'prepared':'manual_calendar'};
+      const scope=`reminder:create:${JSON.stringify(payload)}`;
+      const response=await fetch('/api/reminders',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify(payload)});
+      const result=await response.json().catch(()=>({}));if(!isCurrent())return false;
+      const saved=response.ok&&result.mode!=='demo'?reminderReceipt(result.reminder,petId):null;if(!saved)throw new Error('INVALID_REMINDER_RECEIPT');
+      setReminders(current=>[saved,...current.filter(item=>item.id!==saved.id)]);
+      if(!title){setNewReminderTitle('');setNewReminderRecurrence('none');}
+      finishCareMutation(scope);setCareFeedback({kind:'created',reminderId:saved.id,title:saved.title});return true;
+    });
   }
 
   async function performWishlistChange(scope: string, task: (isCurrent: () => boolean) => Promise<boolean>) {
@@ -3139,6 +3136,7 @@ export default function Home() {
       ? { type: 'route', title, petId: profile.backendPetId, path: routePoints, visibility, description: newZoneNote || null, routeSource: mapRouteMeta?.routeSource || 'planned', planning:mapRouteMeta?.planning, pathGaps: mapRouteMeta?.pathGaps, startedAt: mapRouteMeta?.startedAt, durationSeconds: mapRouteMeta?.durationSeconds ?? 0, distanceMeters: mapRouteMeta?.distanceMeters ?? 0, recommendationId }
       : { type: 'point', title, petId: profile.backendPetId, lat: pickedZonePoint?.lat, lng: pickedZonePoint?.lng, zone_type: newZoneType, visibility, description: newZoneNote || null };
 
+    const originalPetId=profile.backendPetId;
     const fingerprint=JSON.stringify(body);
     if(mapAttemptRef.current?.fingerprint!==fingerprint)mapAttemptRef.current={fingerprint,key:crypto.randomUUID()};
     const response = await fetch(editingRouteGeometryId?`/api/map/features/${encodeURIComponent(editingRouteGeometryId)}`:'/api/map/features', {
@@ -3147,11 +3145,13 @@ export default function Home() {
       body: JSON.stringify(body),
     });
     const result = await response.json().catch(() => ({}));
+    if(documentActivePet.current!==originalPetId)return;
     if (!response.ok) return setError('Не удалось сохранить место на карте');
 
     if (drawMode === 'route') {
       const createdRoute = normalizeOwnerRoutes([result.feature])[0];
-      if (createdRoute) setOwnerRoutes((current) => upsertOwnerRoute(current, createdRoute));
+      if (!createdRoute || createdRoute.petId !== profile.backendPetId) throw new Error('INVALID_ROUTE_RECEIPT');
+      setOwnerRoutes((current) => upsertOwnerRoute(current, createdRoute));
       finishRecommendationOutcome(recommendationId);
     }
     setEditingRouteGeometryId(null);setRouteEditSeed(null);mapAttemptRef.current=null;
@@ -3192,6 +3192,7 @@ export default function Home() {
 
   async function saveProductionMapDraft() {
     if (mapDraftSaving || mapSaveLockRef.current) return;
+    const originalPetId=profile.backendPetId;
     mapSaveLockRef.current = true;
     setMapDraftSaving(true);
     setError('');
@@ -3199,7 +3200,7 @@ export default function Home() {
       if (drawMode === 'route' || mapSaveMode === 'shared') await createMapFeature(mapSaveMode);
       else await createZone();
     } catch {
-      setError('Не удалось подтвердить сохранение. Черновик остался на месте.');
+      if(documentActivePet.current===originalPetId)setError('Не удалось подтвердить сохранение. Черновик остался на месте.');
     } finally {
       mapSaveLockRef.current = false;
       setMapDraftSaving(false);
@@ -3416,80 +3417,52 @@ export default function Home() {
     });
   }
 
-  async function updateReminder(id: string, patch: Partial<ReminderView>) {
-    if (isGuestMode()) {
-      setReminders((current) => current.map((reminder) => reminder.id === id ? { ...reminder, ...patch } : reminder));
-      return true;
-    }
-    const serverPatch = { title: patch.title, type: patch.type, dueAt: patch.dueAt, recurrence: patch.recurrence };
-    const scope = `reminder:update:${id}:${JSON.stringify(serverPatch)}`;
-    setReminderMutationBusy(scope);
-    try {
-      const response = await fetch(`/api/reminders/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify(serverPatch),
-      });
-      await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError('Не получилось сохранить изменение. Проверь связь и попробуй ещё раз.');
-        return false;
-      }
-      await loadBootstrap();
-      finishCareMutation(scope);
-      return true;
-    } catch {
-      setError('Не получилось сохранить изменение. Проверь связь и попробуй ещё раз.');
-      return false;
-    } finally {
-      setReminderMutationBusy(null);
-    }
+  async function updateReminder(id:string,patch:Partial<ReminderView>){
+    return performReminderWrite(id,async isCurrent=>{
+      if(isGuestMode()){setReminders(current=>current.map(item=>item.id===id?{...item,...patch,...(patch.dueAt?{snoozedUntil:undefined,nextDueAt:undefined,status:item.status==='snoozed'?'active':item.status}:{})}:item));return true;}
+      const petId=profile.backendPetId;if(!petId)return false;
+      const serverPatch={title:patch.title,type:patch.type,dueAt:patch.dueAt,recurrence:patch.recurrence,timeMode:patch.timeMode};
+      const scope=`reminder:update:${id}:${JSON.stringify(serverPatch)}`;
+      const response=await fetch(`/api/reminders/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify(serverPatch)});
+      const result=await response.json().catch(()=>({}));if(!isCurrent())return false;
+      const saved=response.ok&&result.mode!=='demo'?reminderReceipt(result.reminder,petId,id):null;if(!saved)throw new Error('INVALID_REMINDER_RECEIPT');
+      setReminders(current=>current.map(item=>item.id===id?saved:item));finishCareMutation(scope);return true;
+    });
   }
 
-  async function deleteReminder(id: string) {
-    if (isGuestMode()) {
-      setReminders((current) => current.filter((reminder) => reminder.id !== id));
-      return true;
-    }
-    const scope = `reminder:delete:${id}`;
-    try {
-      const response = await fetch(`/api/reminders/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({}),
-      });
-      await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError('Не получилось удалить дело. Проверь связь и попробуй ещё раз.');
-        return false;
+  async function deleteReminder(id:string){
+    return performReminderWrite(id,async isCurrent=>{
+      if(!isGuestMode()){
+        const scope=`reminder:delete:${id}`;
+        const response=await fetch(`/api/reminders/${id}`,{method:'DELETE',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:'{}'});
+        const result=await response.json().catch(()=>({}));if(!isCurrent())return false;
+        if(!response.ok||result.ok!==true||result.mode==='demo')throw new Error('DELETE_NOT_CONFIRMED');finishCareMutation(scope);
       }
-      await loadBootstrap();
-      finishCareMutation(scope);
-      return true;
-    } catch {
-      setError('Не получилось удалить дело. Проверь связь и попробуй ещё раз.');
-      return false;
-    }
+      setReminders(current=>current.filter(item=>item.id!==id));setReminderHistory(current=>{const next={...current};delete next[id];return next;});reminderDrafts.current.delete(id);return true;
+    });
   }
 
-  async function completeReminder(id: string, issue: (message: string) => void = setError, stillCurrent?: () => boolean) {
-    const petId = profile.backendPetId;
-    const isCurrent = stillCurrent || (() => documentActivePet.current === petId);
+  async function completeReminder(id: string, issue: (message: string) => void = reportReminderError, stillCurrent?: () => boolean) {
+    return performReminderWrite(id,async current=>{
+    const isCurrent=()=>current()&&(!stillCurrent||stillCurrent());
     const reminder = reminders.find((item) => item.id === id);
     if (!reminder) {
       issue('Не удалось найти дело в плане.');
       return false;
     }
     if (isGuestMode()) {
-      setReminders((current) => current.map((item) => item.id === id ? { ...item, status: 'done', completedAt: new Date().toISOString() } : item));
-      setWishlist((current) => current.map((item) => item.reminderId === id ? { ...item, status: 'bought' } : item));
-      setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
+      const at=new Date().toISOString(),nextDueAt=nextReminderDueAt(reminder.dueAt,reminder.recurrence||'none');
+      const after: ReminderView = {...reminder,status:nextDueAt?'active':'done',completedAt:nextDueAt?undefined:at,dueAt:nextDueAt||reminder.dueAt,nextDueAt:nextDueAt||undefined,snoozedUntil:undefined};
+      guestCareUndo.current.set(`${id}:${at}`, {before:{...reminder},after,wishlist:wishlist.filter(item=>item.reminderId===id).map(item=>({...item}))});
+      setReminders(current=>current.map(item=>item.id===id?after:item));
+      if(!nextDueAt)setWishlist(current=>current.map(item=>item.reminderId===id?{...item,status:'bought'}:item));
+      setReminderHistory(current=>({...current,[id]:[{id:guestId('care-history'),payload:{dueAt:reminder.dueAt,completedAt:at,nextDueAt},createdAt:at},...(current[id]||[])]}));
+      setCareFeedback({kind:'completed',reminderId:id,title:reminder.title,nextDueAt:nextDueAt||undefined,timeMode:reminder.timeMode});
       return true;
     }
     const scope = `reminder:complete:${id}`;
     const completedAt = careMutationTime(scope, () => new Date().toISOString());
     const recommendationId = acceptedRecommendationId('open_reminder', id);
-    setReminderMutationBusy(scope);
     try {
       const response = await fetch(`/api/reminders/${id}/complete`, {
         method: 'POST',
@@ -3502,13 +3475,11 @@ export default function Home() {
         issue('Не удалось подтвердить выполнение. Повтори — уже выполненное дело не запишется второй раз.');
         return false;
       }
-      const row = payload.reminder;
-      if (!row || row.id !== id || (row.petId ?? row.pet_id) !== reminder.petId || typeof (row.dueAt ?? row.due_at) !== 'string' || !Number.isFinite(new Date(row.dueAt ?? row.due_at).getTime()) || !['active','done'].includes(row.status)) throw new Error('INVALID_REMINDER_RECEIPT');
-      const updated: ReminderView = { ...reminder, title:typeof row.title==='string'?row.title:reminder.title, status:row.status, dueAt:row.dueAt??row.due_at,
-        recurrence:row.recurrence??reminder.recurrence, completedAt:row.completedAt??row.completed_at??undefined, snoozedUntil:row.snoozedUntil??row.snoozed_until??undefined, nextDueAt:row.nextDueAt??row.next_due_at??undefined };
+      const updated=payload.mode!=='demo'?reminderReceipt(payload.reminder,reminder.petId,id):null;
+      if(!updated||!['active','done'].includes(updated.status))throw new Error('INVALID_REMINDER_RECEIPT');
       setReminders(current => current.map(item => item.id === id ? updated : item));
       if (updated.status === 'done') setWishlist(current => current.map(item => item.reminderId === id && item.status === 'wanted' ? {...item,status:'bought'} : item));
-      if (payload.historyOccurrence) {
+      if (payload.historyOccurrence?.reminderId===id && Number.isFinite(Date.parse(payload.historyOccurrence.completedAt)) && Number.isFinite(Date.parse(payload.historyOccurrence.dueAt))) {
         setReminderHistory((current) => ({
           ...current,
           [id]: [{ id: `${id}-${completedAt}`, payload: payload.historyOccurrence, createdAt: completedAt }, ...(current[id] ?? [])],
@@ -3516,15 +3487,38 @@ export default function Home() {
       }
       finishCareMutation(scope);
       finishRecommendationOutcome(recommendationId);
-      setCareFeedback({ kind: 'completed', reminderId: id, title: reminder.title });
+      setCareFeedback({kind:'completed',reminderId:id,title:reminder.title,nextDueAt:updated.nextDueAt,timeMode:updated.timeMode});
       return true;
     } catch {
       if (!isCurrent()) return false;
       issue('Не удалось подтвердить выполнение. Повтори — уже выполненное дело не запишется второй раз.');
       return false;
-    } finally {
-      setReminderMutationBusy(null);
     }
+    },issue);
+  }
+
+  async function undoExactCareCompletion(reminder: ReminderView) {
+    if (!reminder.completedAt) return;
+    return performReminderWrite(reminder.id, async isCurrent => {
+      if (isGuestMode()) {
+        const key = `${reminder.id}:${reminder.completedAt}`, snapshot = guestCareUndo.current.get(key);
+        const currentReminder = reminders.find(item=>item.id===reminder.id);
+        if (!snapshot || JSON.stringify(currentReminder)!==JSON.stringify(snapshot.after)) { reportReminderError('Исходное состояние недоступно или дело уже изменено. Выполнение не отменено.'); return false; }
+        setReminders(current => current.map(item => item.id === reminder.id ? snapshot.before : item));
+        setReminderHistory(current => ({ ...current, [reminder.id]: (current[reminder.id] || []).filter(event => event.payload?.completedAt !== reminder.completedAt) }));
+        setWishlist(current => current.map(item => { const before=snapshot.wishlist.find(value=>value.id===item.id); return before?.status==='wanted' && JSON.stringify(item)===JSON.stringify({...before,status:'bought'}) ? before : item; }));
+        guestCareUndo.current.delete(key);
+        return true;
+      }
+      const scope = `reminder:undo-complete:${reminder.id}:${reminder.completedAt}`;
+      const response = await fetch(`/api/reminders/${reminder.id}/undo-complete`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() }, body: JSON.stringify({ completedAt: reminder.completedAt }) });
+      const body = await response.json().catch(() => ({})); if (!isCurrent()) return false;
+      const saved = response.ok ? reminderReceipt(body.reminder, reminder.petId, reminder.id) : null;
+      if (!saved) { reportReminderError(body.message || 'Не удалось отменить выполнение. Обнови список и повтори.'); return false; }
+      setReminders(current => current.map(item => item.id === reminder.id ? saved : item));
+      setReminderHistory(current => ({ ...current, [reminder.id]: (current[reminder.id] || []).filter(event => event.payload?.completedAt !== reminder.completedAt) }));
+      finishCareMutation(scope); await loadBootstrap(); return true;
+    });
   }
 
   async function undoLastCareCompletion() {
@@ -3539,53 +3533,25 @@ export default function Home() {
     setPendingCareDeletion(null);
   }
 
-  async function snoozeReminder(id: string) {
-    const scope = `reminder:snooze:${id}:day`;
-    const snoozedUntil = careMutationTime(scope, () => new Date(Date.now() + 86400000).toISOString());
-    if (isGuestMode()) { setReminders((current) => current.map((reminder) => reminder.id === id ? { ...reminder, status: 'snoozed', snoozedUntil } : reminder)); return; }
-    setReminderMutationBusy(scope);
-    try {
-      const response = await fetch(`/api/reminders/${id}/snooze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
-        body: JSON.stringify({ snoozedUntil }),
+  async function snoozeReminder(id:string){
+    return performReminderWrite(id,async isCurrent=>{
+      const reminder=reminders.find(item=>item.id===id);if(!reminder)return false;
+      const scope=`reminder:snooze:${id}:day`;
+      const snoozedUntil=careMutationTime(scope,()=>{
+        const clock=new Date(reminder.snoozedUntil||reminder.dueAt),tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);tomorrow.setHours(clock.getHours(),clock.getMinutes(),0,0);return tomorrow.toISOString();
       });
-      if (!response.ok) return setError('Не удалось перенести дело. Проверь связь и попробуй ещё раз.');
-      await loadBootstrap();
-      finishCareMutation(scope);
-    } catch {
-      setError('Не удалось перенести дело. Проверь связь и попробуй ещё раз.');
-    } finally {
-      setReminderMutationBusy(null);
-    }
-  }
-
-  async function rescheduleReminder(id: string, days: number) {
-    const next = new Date();
-    next.setDate(next.getDate() + days);
-    await updateReminder(id, { dueAt: isoFromDateInput(dateInputValue(next)) });
+      if(isGuestMode()){setReminders(current=>current.map(item=>item.id===id?{...item,status:'snoozed',snoozedUntil}:item));return true;}
+      const response=await fetch(`/api/reminders/${id}/snooze`,{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify({snoozedUntil})});
+      const payload=await response.json().catch(()=>({}));if(!isCurrent())return false;
+      const saved=response.ok&&payload.mode!=='demo'?reminderReceipt(payload.reminder,reminder.petId,id):null;if(!saved)throw new Error('SNOOZE_NOT_CONFIRMED');
+      setReminders(current=>current.map(item=>item.id===id?saved:item));finishCareMutation(scope);setCareFeedback({kind:'rescheduled',reminderId:id,title:saved.title});return true;
+    });
   }
 
   function exportReminderToCalendar(reminder: ReminderView) {
     const start = new Date(reminder.snoozedUntil || reminder.dueAt);
     if (!Number.isFinite(start.getTime())) return setError('У дела некорректная дата.');
-    const end = new Date(start);
-    end.setHours(end.getHours() + 1);
-    const petName = profile.dogName.trim() || 'питомец';
-    const lines = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Pso//Care Calendar//RU',
-      'BEGIN:VEVENT',
-      `UID:${reminder.id}@pso-mvp`,
-      `DTSTAMP:${calendarStamp(new Date())}`,
-      `DTSTART:${calendarStamp(start)}`,
-      `DTEND:${calendarStamp(end)}`,
-      `SUMMARY:${reminder.title.replace(/\n/g, ' ')}`,
-      `DESCRIPTION:Псё: дело ухода для ${petName}. Тип: ${careTypeLabel(reminder.type)}.`,
-      'END:VEVENT',
-      'END:VCALENDAR',
-    ].join('\r\n');
+    const lines=reminderCalendarText(reminder,profile.dogName.trim()||'питомец');
     const url = URL.createObjectURL(new Blob([lines], { type: 'text/calendar;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;
@@ -4309,36 +4275,13 @@ export default function Home() {
   </section>;
 
   return (
-    <main className="app-canvas" data-connected-canvas={tab === 'today' || tab === 'all' ? '' : undefined}>
-      <section ref={phoneShellRef} className={`phone-shell${hasDog ? ' journal-shell' : ''} tab-${tab}${hasDog && (isJourneyRoute || journeyDetail === 'nearby') ? ' journey-active' : ''}`}>
-        <header className="app-header">
-          <div className="app-wordmark">
-            <p>план ухода и памятка</p>
-            <h1>Псё</h1>
-          </div>
-          <TelegramPill session={telegramSession} />
-          {session
-            ? <button onClick={signOut}>Выйти</button>
-            : hasDog
-              ? <button onClick={() => setTab(tab === 'profile' ? 'today' : 'profile')}>{tab === 'profile' ? 'всё' : 'псё'}</button>
-              : <button onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>}
-        </header>
+    <ExactScope key={profile.backendPetId || activePetId || 'guest'}><main id="pso-exact-interface" className={hasDog ? `exact-interface${assistantOpen ? ' exact-conversation-open' : ''}` : 'exact-interface exact-static'} data-connected-canvas={tab === 'today' || tab === 'all' ? '' : undefined}>
+      {hasDog && <ExactHeader dogName={profile.dogName} guest={isGuestMode()} onHome={() => { setAssistantOpen(false); setTab('today'); }} onProfile={() => { setAssistantOpen(false); setProfileSurface('overview'); setExactProfileView('profile'); setTab('profile'); }} onBack={['today','map','nearby','all','profile'].includes(tab) && !journeyDetail ? undefined : () => closeSecondaryFlow('all')} />}
+        {!hasDog && <header className="exact-header"><span className="brand">Псё</span><TelegramPill session={telegramSession} /></header>}
+      <section ref={phoneShellRef} id="pso-exact-content" className={hasDog ? `exact-content tab-${tab}` : 'exact-content phone-shell exact-extension'}>
 
-        {pets.length > 0 && <section className="pet-switcher" aria-label="Активная собака">
-          <span>мои собаки</span>
-          <div>
-            {pets.map((pet) => <button key={pet.id} className={pet.id === activePetId ? 'active' : ''} type="button" disabled={petMutationBusy} onClick={() => switchActivePet(pet.id)} aria-pressed={pet.id === activePetId}>
-              {pet.name}
-            </button>)}
-            <button type="button" className="secondary" onClick={() => setAddDogOpen((open) => !open)}>Добавить собаку</button>
-          </div>
-          {addDogOpen && <div className="pet-add-row">
-            <label>Имя новой собаки<input value={newDogName} maxLength={80} autoFocus onChange={(event) => setNewDogName(event.target.value)} placeholder="Например, Луна" /></label>
-            <button type="button" className="primary" disabled={!newDogName.trim() || petMutationBusy} onClick={addDog}>{petMutationBusy ? 'Добавляю…' : 'Добавить'}</button>
-            <button type="button" className="secondary" disabled={petMutationBusy} onClick={() => { setAddDogOpen(false); setNewDogName(''); }}>Отмена</button>
-          </div>}
-          <p>Профиль, дела, места, вещи и наблюдения ниже относятся только к выбранной собаке.</p>
-        </section>}
+
+
 
         {showAuthPanel && <section className={`auth-inline-panel mode-${authPanelMode}`} aria-label="Вход и синхронизация">
           {hasConnectedAccount ? <>
@@ -4359,7 +4302,7 @@ export default function Home() {
           </>}
         </section>}
 
-        {!hasDog && <section className="first-run-activation" aria-labelledby="first-run-title">
+        {!hasDog && <section className="first-run-activation exact-first-run" aria-labelledby="first-run-title">
           <GeneratedAvatar profile={profile} ready={false} size="large" />
           <div>
             <h2 id="first-run-title">Добавь собаку</h2>
@@ -4368,7 +4311,7 @@ export default function Home() {
           <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>
         </section>}
 
-        {hasDog && tab === 'today' && !journeyDetail && <ConnectedHome
+        {hasDog && tab === 'today' && !exactVoiceOpen && !journeyDetail && <ConnectedHome
           key={`home:${profile.backendPetId || activePetId}`}
           dogName={profile.dogName} petId={profile.backendPetId} guest={isGuestMode()}
           question={assistantQuestion} loading={assistantLoading} headers={authHeaders}
@@ -4376,16 +4319,23 @@ export default function Home() {
           onQuestion={setAssistantQuestion}
           onAsk={() => { openAssistantSheet(); void askAssistant(); }}
           onContinue={run => { if (run) { setAgentRunId(run.id); setAssistantThreadId(run.thread_id || ''); } openAssistantSheet(); }}
-          onProfile={() => { setProfileSurface('overview'); setTab('profile'); }}
+          onProfile={() => { setProfileSurface('overview'); setExactProfileView('profile'); setTab('profile'); }}
           onAll={() => setTab('all')}
+          observationCount={observations.length} onHistory={() => setTab('health')}
+          onAttach={() => { setExactProfileView('documents'); setProfileSurface('passport'); setTab('profile'); setDocumentUploadOpen(true); }}
+          onVoice={() => setExactVoiceOpen(true)}
         />}
+        {hasDog && tab === 'today' && exactVoiceOpen && <ExactVoice key={profile.backendPetId || activePetId || 'guest'} active draft={exactVoiceDraft} onDraft={setExactVoiceDraft} onTranscribe={transcribeVoiceObservation} onClose={()=>{setExactVoiceOpen(false);requestAnimationFrame(()=>document.getElementById('connected-question')?.focus());}} onUse={text=>{setAssistantQuestion(current=>current.trim()?`${current.trim()}\n${text}`:text);setExactVoiceDraft('');}} />}
         {hasDog && tab === 'all' && <ConnectedTools onOpen={destination => {
-          if (destination === 'passport') {
+          if (destination === 'library') { setMapExactScreen('library'); setMapExactNavigation(value=>value+1); setTab('map'); return; }
+          if (destination === 'connections') { setWoofRecommendationEntry({ key: crypto.randomUUID(), view: 'requests' }); setTab('nearby'); return; }
+          if (destination === 'passport' || destination === 'documents') {
             const origin = { from: tab, to: 'profile' as Tab, detail: journeyDetail, shellScroll: phoneShellRef.current?.scrollTop ?? 0, windowScroll: window.scrollY, focusText: document.activeElement?.textContent?.trim() ?? '' };
-            setProfileSurface('passport'); setTab('profile'); secondaryOrigins.current.push(origin);
+            setExactProfileView(destination === 'documents' ? 'documents' : 'editprofile'); setProfileSurface('passport'); setTab('profile'); secondaryOrigins.current.push(origin);
           } else setTab(destination);
         }} />}
-        {hasDog && tab === 'diary' && !journeyDetail && <ProductionJourney route="today"
+        {hasDog&&tab==='diary'&&reminderIssue&&<p role="alert">{reminderIssue.message}</p>}
+        {hasDog && tab === 'diary' && !journeyDetail && <ExactPage viewKey="diary" onBack={()=>closeSecondaryFlow('all')}><div className="exact-extension"><ProductionJourney route="today"
           onBack={() => closeSecondaryFlow('all')}
           onOpenJournalEntry={(entry, trigger) => openPrivateRecord(entry.kind === 'care' ? 'reminder' : 'observation', entry.id.replace(/^(care|observation)-/, ''), trigger)}
           dogName={profile.dogName}
@@ -4443,9 +4393,12 @@ export default function Home() {
             setJourneyDetail(null);
             setTab(route);
           }}
-        />}
+        /></div></ExactPage>}
 
-        {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ProfileMemoryWorkspace
+        {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ExactProfile
+          documentId={exactDocumentId} onDocumentId={setExactDocumentId} memoryDrafts={exactMemoryDrafts.current}
+          view={exactProfileView} onView={setExactProfileView} draft={exactProfileDraft} onDraft={setExactProfileDraft}
+          headers={authHeaders} guest={isGuestMode()} onLibrary={() => { setMapExactScreen('library'); setMapExactNavigation(value=>value+1); setTab('map'); }}
           surface={profileSurface}
           onSurfaceChange={surface => { if (surface === 'overview' && secondaryOrigins.current.at(-1)?.to === 'profile') closeSecondaryFlow('all'); else setProfileSurface(surface); }}
           key={`profile:${profile.backendPetId || activePetId}`}
@@ -4494,7 +4447,7 @@ export default function Home() {
           }}
           onOpenRecord={openPrivateRecord}
           onOpenDocument={(id) => window.open(`/api/documents/${id}`, '_blank', 'noopener,noreferrer')}
-          onDeleteDocument={(id) => void deletePetDocument(id)}
+          onDeleteDocument={(id) => deletePetDocument(id, true)}
           documentBusyId={documentBusyId}
           onAskAssistant={openAssistantSheet}
           onOpenPlan={() => { setCareView('active'); setTab('calendar'); }}
@@ -4504,27 +4457,24 @@ export default function Home() {
           onOpenSettings={() => openJourneyDetail('profile')}
         />}
 
-        {hasDog && <ProductionDocumentSheet key={`document:${profile.backendPetId}`} open={tab === 'profile' && documentUploadOpen} dogName={petNameGent} returnFocusTo={documentUploadTriggerRef.current} onClose={() => setDocumentUploadOpen(false)}>
-          <form className="profile-life-document-form" data-slot="field-group" onSubmit={uploadPetDocument} onReset={() => { setDocumentFileName(''); setDocumentError(''); documentSaveAttempt.current = null; }}>
-            <fieldset disabled={documentUploading} style={{ border: 0, padding: 0, margin: 0, minWidth: 0, display: 'grid', gap: 16 }}>
-            <label data-slot="field"><span data-slot="field-label">Что это</span><span className="document-field-control"><TextT weight="regular" aria-hidden="true" /><input data-slot="input" name="title" required placeholder="Например, общий анализ крови" /></span></label>
-            <label data-slot="field"><span data-slot="field-label">Тип документа</span><span className="document-field-control document-select-control"><Files weight="regular" aria-hidden="true" /><select data-slot="input" name="kind" defaultValue="analysis"><option value="analysis">Анализ</option><option value="prescription">Назначение</option><option value="vaccination">Вакцинация</option><option value="other">Другое</option></select><CaretDown className="document-field-action" weight="regular" aria-hidden="true" /></span></label>
-            <label data-slot="field"><span data-slot="field-label">Дата документа <small>необязательно</small></span><span className="document-field-control"><CalendarBlank weight="regular" aria-hidden="true" /><input data-slot="input" name="documentDate" type="date" /></span></label>
-            <label data-slot="field"><span data-slot="field-label">Клиника <small>необязательно</small></span><span className="document-field-control"><Buildings weight="regular" aria-hidden="true" /><input data-slot="input" name="clinic" placeholder="Название клиники" /></span></label>
-            <label className="document-file-drop" data-slot="field"><input data-slot="input" name="file" type="file" required accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(event) => setDocumentFileName(event.currentTarget.files?.[0]?.name || '')} aria-describedby={`profile-document-help${documentError ? ' profile-document-error' : ''}`} /><span className="document-file-drop-media" aria-hidden="true">{documentFileName ? <CheckCircle weight="fill" /> : <UploadSimple weight="regular" />}</span><span className="document-file-drop-copy"><b data-document-file-name>{documentFileName || 'Выбрать PDF или фото'}</b><small data-slot="field-description" id="profile-document-help">До 4 МБ · файл останется приватным</small></span><span className="document-file-drop-action" aria-hidden="true">{documentFileName ? 'Готово' : 'Выбрать'}</span></label>
-            {documentError && <p className="profile-life-form-error" data-slot="field-error" id="profile-document-error" role="alert">{documentError}</p>}
-            <button className="primary" data-slot="button" type="submit" disabled={documentUploading}>{documentUploading ? 'Добавляю…' : <><CheckCircle weight="regular" /> Добавить в историю {petNameGent}</>}</button>
-            <button type="reset">Очистить черновик</button>
+        {hasDog && <ProductionDocumentSheet exact key={`document:${profile.backendPetId}`} open={tab === 'profile' && documentUploadOpen} dogName={petNameGent} returnFocusTo={documentUploadTriggerRef.current} onClose={() => setDocumentUploadOpen(false)}>
+          <form onSubmit={uploadPetDocument} onReset={() => { setDocumentFileName(''); setDocumentError(''); documentSaveAttempt.current = null; }}>
+            <fieldset disabled={documentUploading}>
+              <div className="field"><label htmlFor="exact-document-title">Что это</label><input id="exact-document-title" name="title" required placeholder="Например, анализ крови" maxLength={200} /></div>
+              <div className="field"><label className="secondary exact-file-choice" htmlFor="exact-document-file">{documentFileName || 'Выбрать PDF или фото'}</label><input className="sr-only" id="exact-document-file" name="file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={event => setDocumentFileName(event.currentTarget.files?.[0]?.name || '')} /><p className="hint">До 4 МБ · файл останется личным</p></div>
+              <details><summary>Тип, дата и клиника</summary><div className="field"><label htmlFor="exact-document-kind">Тип документа</label><select id="exact-document-kind" name="kind" defaultValue="analysis"><option value="analysis">Анализ</option><option value="prescription">Назначение</option><option value="vaccination">Вакцинация</option><option value="other">Другое</option></select></div>
+                <div className="field"><label htmlFor="exact-document-date">Дата документа · необязательно</label><input id="exact-document-date" name="documentDate" type="date" /></div>
+                <div className="field"><label htmlFor="exact-document-clinic">Клиника · необязательно</label><input id="exact-document-clinic" name="clinic" maxLength={200} /></div>
+              </details>
+              {documentError && <p className="error" role="alert">{documentError}</p>}
+              <button className="primary full" type="submit" disabled={documentUploading || !documentFileName}>{documentUploading ? 'Добавляю…' : 'Добавить документ'}</button>
+              <button className="text-button" type="reset">Очистить черновик</button>
             </fieldset>
           </form>
         </ProductionDocumentSheet>}
 
         {hasDog && mapActivity && tab !== 'map' && <button type="button" className="map-global-activity" onClick={() => setTab('map')}>{mapActivity==='recording'?'Прогулка записывается':'Прогулка на паузе'} · Вернуться к карте</button>}
-        {hasDog && (tab === 'map' || mapVisited) && <div hidden={tab !== 'map'} className="map-persistent-workspace"><ProductionJourney route="map"
-          dogName={profile.dogName}
-          breedLabel={breedLabel}
-          avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
-          mapWorkspace={<ProductionMapWorkspace
+        {hasDog && (tab === 'map' || mapVisited) && <div hidden={tab !== 'map'} className="map-persistent-workspace"><ProductionMapWorkspace navigationToken={mapExactNavigation} active={tab === 'map' && !assistantOpen} saveError={error} requestedScreen={mapExactScreen}
             actionNotice={notice==='mapSaved'?'Сохранено на карте':undefined}
             key={profile.backendPetId || activePetId}
             petId={profile.backendPetId || activePetId}
@@ -4558,15 +4508,13 @@ export default function Home() {
             onAppendRoutePoint={(point) => setRoutePoints((current) => [...current, point])}
             onReplaceRoutePoints={setRoutePoints}
             onClearDraft={() => { setRoutePoints([]); setPickedZonePoint(null);setNewZoneTitle('');setNewZoneNote('');setEditingRouteGeometryId(null);setRouteEditSeed(null); }}
-            onSaveDraft={() => void saveProductionMapDraft()}
+            onSaveDraft={saveProductionMapDraft}
             canSaveDraft={mapDraftReady}
             savingDraft={mapDraftSaving}
             onRouteMetaChange={setMapRouteMeta}
-          />}
-          onNavigate={(route) => { setJourneyDetail(null); setTab(route); }}
-        /></div>}
+          /></div>}
 
-        {hasDog && assistantOpen && <ProductionAssistantSheet
+        {hasDog && assistantOpen && <ExactConversation
           returnFocusTo={assistantReturnFocus}
           dogName={profile.dogName}
           avatar={<GeneratedAvatar profile={profile} ready={avatarReady || Boolean(generatedAvatarUrl) || Boolean(profile.avatarImageUrl) || demoMode} imageUrl={generatedAvatarUrl || profile.avatarImageUrl} demo={!generatedAvatarUrl && !profile.avatarImageUrl && demoMode} size="small" />}
@@ -4604,13 +4552,14 @@ export default function Home() {
                 const url=new URL(window.location.href);url.hash='map';window.history.replaceState({tab:'map'},'',url);
               }}
               onObservationSaved={record=>{const entry=normalizeObservation(record);if(entry)setObservations(current=>[{...entry,syncStatus:'saved' as const},...current.filter(item=>item.id!==entry.id)]);}}
-              onOpenObservation={(record,trigger)=>setRecordDetail({id:record.id,title:`Запись о ${petNameGent}`,text:record.note||record.value,date:record.observed_at,facts:[],trigger})}
+              onOpenObservation={record => { const entry=normalizeObservation(record); if(entry) setObservations(current => [entry,...current.filter(item=>item.id!==entry.id)]); setExactRecordId(record.id); setObservationCaptureOpen(false); setEditingObservationId(null); setAssistantOpen(false); setTab('health'); }}
               onBusy={setAssistantLoading} onRetry={question=>void askAssistant(question)} onResult={result=>{
               if(agentDelivered.current===result.runId) return;
               agentDelivered.current=result.runId;
               setAssistantAnswer(result.answer);setAssistantThreadId(result.threadId);
               setAssistantMessages(current=>[...current,{role:'assistant',content:result.answer}]);
               setAssistantDiagnostic({provider:result.provider??'openai',mode:'agent'});
+              if (result.observationDraftId) { setExactAgentObservationId(result.observationDraftId); setAssistantOpen(false); setTab('health'); }
             }}/>}
             <AssistantActionButtons actions={assistantActions} statuses={assistantActionStatuses} onApply={(action, key) => { void handleApplyAction(action, key); }} onOpen={openAssistantAction} />
           </>}
@@ -4636,7 +4585,11 @@ export default function Home() {
           suggestedDraft={suggestedHabitDraft}
         />}
 
-        {hasDog && tab === 'health' && <HealthTimelineScreen
+        {hasDog && tab === 'health' && exactAgentObservationId && profile.backendPetId && <ExactPage viewKey="observe" onBack={() => setExactAgentObservationId(null)}><AgentObservationDraft page dogName={profile.dogName} key={exactAgentObservationId} id={exactAgentObservationId} petId={profile.backendPetId} headers={authHeaders} edits={agentObservationEdits.current}
+          onSaved={record => { const entry=normalizeObservation(record); if(entry) setObservations(current=>[entry,...current.filter(item=>item.id!==entry.id)]); setExactRecordId(record.id); setExactAgentObservationId(null); }}
+          onOpen={record => { setExactRecordId(record.id); setExactAgentObservationId(null); }}
+        /></ExactPage>}
+        {hasDog && tab === 'health' && !exactAgentObservationId && <ExactRecords selectedId={exactRecordId} onSelect={setExactRecordId}
           key={profile.backendPetId || activePetId}
           dogName={profile.dogName || 'Собака'}
           entries={observations}
@@ -4713,22 +4666,14 @@ export default function Home() {
           onRetry={() => loadSocialSurface().catch(() => setNearbyState('error'))}
         />}
 
-        {hasDog && tab === 'calendar' && <WatercolorScreen onBack={() => closeSecondaryFlow('today')} backLabel="Назад" className="calendar-composition" tone="gold" eyebrow="план ухода" title="План заботы" caption="Дела, напоминания и история ухода." aside={<CalendarDots className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
-          <section className="care-workbench" aria-label="Дела ухода">
-            <div className="care-workbench-head">
-              <div><span className="eyebrow">сейчас в плане</span><h3>{activeReminders.length ? formatCount(activeReminders.length, ['активное дело', 'активных дела', 'активных дел']) : 'Добавь первое дело'}</h3></div>
-              <button className="primary" onClick={() => {
-                setNewReminderDueDate(selectedCalendarDate);
-                setCareView('active');
-                requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus());
-              }}>Добавить дело</button>
-            </div>
+        {hasDog && tab === 'calendar' && <ExactCare advanced={<>
             <div className="care-view-toggle" aria-label="Раздел плана ухода">
-              <button className={careView === 'active' ? 'active' : ''} onClick={() => setCareView('active')} aria-pressed={careView === 'active'}>Календарь</button>
+              <button className={careView === 'active' ? 'active' : ''} onClick={() => setCareView('active')} aria-pressed={careView === 'active'}>Дела</button>
               <button className={careView === 'history' ? 'active' : ''} onClick={() => setCareView('history')} aria-pressed={careView === 'history'}>История</button>
             </div>
 
             {careView === 'active' && <div className="care-calendar-view">
+              <details open={careCalendarOpen} onToggle={event=>setCareCalendarOpen(event.currentTarget.open)} className="care-calendar-disclosure"><summary>Выбрать дату</summary>
               <section className="care-calendar-panel" data-care-calendar aria-label="Календарь дел">
                 <div className="calendar-toolbar">
                   <button type="button" aria-label="Предыдущий месяц" onClick={() => setCalendarCursor((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}><ArrowLeft weight="bold" aria-hidden="true" /></button>
@@ -4741,7 +4686,7 @@ export default function Home() {
                     const today = new Date();
                     const key = dateInputValue(today);
                     setCalendarCursor(today);
-                    setSelectedCalendarDate(key);
+                    setSelectedCalendarDate(key);setCareFilterDate(true);
                   }}>Сегодня</button>
                 </div>
                 <div className="care-calendar-grid" role="grid" aria-label={calendarTitle}>
@@ -4755,7 +4700,7 @@ export default function Home() {
                     aria-label={`${day.date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, ${formatCount(day.reminders.length, ['дело', 'дела', 'дел'])}`}
                     onClick={() => {
                       setSelectedCalendarDate(day.key);
-                      setNewReminderDueDate(day.key);
+                      setCareFilterDate(true);
                       if (!day.inMonth) setCalendarCursor(day.date);
                     }}
                   >
@@ -4763,41 +4708,20 @@ export default function Home() {
                     {day.reminders.length > 0 && <b aria-hidden="true">{day.reminders.length}</b>}
                   </button>)}
                 </div>
-              </section>
+              </section></details>
 
-              <div className="selected-day-panel">
+              {careFilterDate&&<div className="selected-day-panel">
                 <div><span>Дела на выбранную дату</span><b>{selectedDateLabel}</b></div>
                 <button type="button" onClick={() => {
                   setNewReminderDueDate(selectedCalendarDate);
                   document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus();
-                }}>Добавить</button>
-              </div>
+                }}>Добавить на эту дату</button><button type="button" onClick={()=>setCareFilterDate(false)}>Все дела</button>
+              </div>}
 
               <div className="care-task-list" aria-live="polite">
-              {selectedDateReminders.length === 0 && <article className="care-empty-state"><b>На этот день дел нет</b><p>Выбери другую дату или добавь дело — выбранный день уже подставлен в форму.</p></article>}
-              {selectedDateReminders.map((reminder) => <article key={reminder.id} className={`care-task-card ${new Date(reminder.snoozedUntil || reminder.dueAt).getTime() < new Date().setHours(0, 0, 0, 0) ? 'warning' : ''}`}>
-                {editingReminderId === reminder.id ? <form className="reminder-edit-form" onSubmit={async (event) => {
-                  event.preventDefault();
-                  const data = new FormData(event.currentTarget);
-                  const saved = await updateReminder(reminder.id, {
-                    title: String(data.get('title') || reminder.title),
-                    type: String(data.get('type') || reminder.type),
-                    dueAt: reminderDueAt(String(data.get('dueDate') || reminderDateInputValue(reminder)), String(data.get('dueTime') || '09:00'), 'exact'),
-                    recurrence: String(data.get('recurrence') || reminder.recurrence || 'none') as ReminderRecurrence,
-                  });
-                  if (saved) setEditingReminderId(null);
-                }}>
-                  <input name="title" defaultValue={reminder.title} aria-label="Название дела" />
-                  <div className="reminder-edit-row">
-                    <select name="type" defaultValue={reminder.type} aria-label="Тип дела">{careTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
-                    <input name="dueDate" type="date" defaultValue={reminderDateInputValue(reminder)} aria-label="Дата дела" />
-                  </div>
-                  <div className="reminder-edit-row">
-                    <input name="dueTime" type="time" defaultValue={new Date(reminder.dueAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })} aria-label="Время дела" />
-                    <select name="recurrence" defaultValue={reminder.recurrence || 'none'} aria-label="Повтор дела">{reminderRecurrenceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
-                  </div>
-                  <div className="care-row-actions"><button type="submit" disabled={Boolean(reminderMutationBusy)}>{reminderMutationBusy ? 'Сохраняю…' : 'Сохранить'}</button><button type="button" onClick={() => setEditingReminderId(null)} disabled={Boolean(reminderMutationBusy)}>Отмена</button></div>
-                </form> : <>
+              {(careFilterDate?selectedDateReminders:activeReminders).length===0&&<p className="care-empty-state">{careFilterDate?'На эту дату дел нет.':'В плане пока нет дел.'}</p>}
+              {(careFilterDate?selectedDateReminders:[...activeReminders].sort((a,b)=>new Date(a.snoozedUntil||a.dueAt).getTime()-new Date(b.snoozedUntil||b.dueAt).getTime())).map((reminder) => <article key={reminder.id} className={`care-task-card ${new Date(reminder.snoozedUntil || reminder.dueAt).getTime() < new Date().setHours(0, 0, 0, 0) ? 'warning' : ''}`}>
+                {editingReminderId === reminder.id ? <ReminderEditor reminder={reminder} drafts={reminderDrafts.current} busy={Boolean(reminderMutationBusy)} error={reminderIssue?.scope===reminder.id?reminderIssue.message:undefined} types={careTypeOptions} recurrences={reminderRecurrenceOptions} onClose={()=>setEditingReminderId(null)} onSave={draft=>updateReminder(reminder.id,{title:draft.title,type:draft.type,dueAt:reminderDueAt(draft.date,draft.time,draft.timeMode||'exact'),recurrence:draft.recurrence,...(draft.timeMode?{timeMode:draft.timeMode}:{})})}/> : <>
                   <div className="care-task-main">
                     <span>{careTypeLabel(reminder.type)}</span>
                     <b>{reminder.title}</b>
@@ -4806,16 +4730,18 @@ export default function Home() {
                   </div>
                   <div className="care-row-actions">
                     <button disabled={Boolean(reminderMutationBusy)} onClick={() => completeReminder(reminder.id)}>Готово</button>
-                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => snoozeReminder(reminder.id)}>Отложить</button>
+                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => snoozeReminder(reminder.id)}>На завтра</button>
                     <button disabled={Boolean(reminderMutationBusy)} onClick={() => setEditingReminderId(reminder.id)}>Изменить</button>
                     <button disabled={Boolean(reminderMutationBusy)} className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button>
                   </div>
+                  {reminderIssue?.scope===reminder.id&&!pendingCareDeletion&&<p role="alert">{reminderIssue.message}</p>}
                 </>}
               </article>)}
               </div>
             </div>}
 
             {careView === 'history' && <div className="care-task-list">
+              {Object.entries(reminderHistoryErrors).map(([id,message])=><p key={id} role="alert">{message} <button type="button" onClick={()=>void loadReminderHistory(id)}>Повторить</button></p>)}
               {doneReminders.length === 0 && Object.values(reminderHistory).every((items) => items.length === 0) && <article className="care-empty-state"><b>История начнётся после первого «Готово»</b><p>Так будет видно, когда была обработка, вакцина, груминг или визит.</p></article>}
               {doneReminders.slice(0, 12).map((reminder) => <article key={reminder.id} className="care-task-card done">
                 <div className="care-task-main">
@@ -4825,39 +4751,35 @@ export default function Home() {
                 </div>
                 <div className="care-row-actions"><button onClick={() => createReminder(reminder.title, reminder.type, 0)}>Создать снова</button><button className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button></div>
               </article>)}
-              {reminders.flatMap((reminder) => (reminderHistory[reminder.id] ?? []).map((entry) => ({ reminder, entry }))).slice(0, 20).map(({ reminder, entry }) => <article key={entry.id} className="care-task-card done"><div className="care-task-main"><span>{careTypeLabel(reminder.type)}</span><b>{reminder.title}</b><p>Выполнено {new Date(entry.payload?.completedAt || entry.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>{entry.payload?.nextDueAt && <p>Следующий раз: {new Date(entry.payload.nextDueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}</div></article>)}
+              {reminders.flatMap((reminder) => (reminderHistory[reminder.id] ?? []).filter(entry=>!(reminder.status==='done'&&reminder.completedAt&&entry.payload?.completedAt&&Date.parse(reminder.completedAt)===Date.parse(entry.payload.completedAt))).map((entry) => ({ reminder, entry }))).slice(0, 20).map(({ reminder, entry }) => <article key={entry.id} className="care-task-card done"><div className="care-task-main"><span>{careTypeLabel(reminder.type)}</span><b>{reminder.title}</b><p>Выполнено {new Date(entry.payload?.completedAt || entry.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>{entry.payload?.nextDueAt && <p>Следующий раз: {new Date(entry.payload.nextDueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}</div></article>)}
             </div>}
-          </section>
 
-          <article className="today-add-care care-composer">
-            <div className="today-add-copy">
-              <span className="eyebrow">новое дело</span>
-              <b>Что нужно не забыть</b>
-              <p>Название, тип и дата. Всё остальное можно поправить прямо в списке.</p>
-            </div>
-            <label htmlFor="care-new-title">Название дела</label>
-            <div className="quick-add today-quick-add">
-              <input id="care-new-title" value={newReminderTitle} onChange={(event) => setNewReminderTitle(event.target.value)} placeholder="Например: обработка от клещей" />
-              <button aria-label="Добавить дело" onClick={() => createReminder()}><Plus aria-hidden="true" /></button>
-            </div>
-            <div className="care-form-row">
-              <select value={newReminderType} onChange={(event) => setNewReminderType(event.target.value)} aria-label="Тип дела">{careTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
-              <input type="date" value={newReminderDueDate} onChange={(event) => setNewReminderDueDate(event.target.value)} aria-label="Дата дела" />
-            </div>
-            <div className="care-form-row">
-              <select value={newReminderTimeMode} onChange={(event) => setNewReminderTimeMode(event.target.value as ReminderTimeMode)} aria-label="Точность времени">{reminderTimeModeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
-              {newReminderTimeMode === 'exact' ? <input type="time" value={newReminderDueTime} onChange={(event) => setNewReminderDueTime(event.target.value)} aria-label="Время дела" /> : <select value={newReminderRecurrence} onChange={(event) => setNewReminderRecurrence(event.target.value as ReminderRecurrence)} aria-label="Повтор дела">{reminderRecurrenceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>}
-            </div>
-            {newReminderTimeMode === 'exact' && <label>Повтор<select value={newReminderRecurrence} onChange={(event) => setNewReminderRecurrence(event.target.value as ReminderRecurrence)}>{reminderRecurrenceOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>}
-            <div className="care-preset-grid" aria-label="Быстро добавить уход">
-              <button onClick={() => createReminder('Обработка от клещей и паразитов', 'parasite', 30)}>Обработка</button>
-              <button onClick={() => createReminder('Проверить дату вакцинации', 'vaccine', 7)}>Вакцинация</button>
-              <button onClick={() => createReminder('Груминг: шерсть и когти', 'grooming', 14)}>Груминг</button>
-            </div>
-          </article>
-        </WatercolorScreen>}
+</>}
+          editActions={(() => {const reminder=reminders.find(item=>item.id===editingReminderId);return reminder ? <div className="row-actions section-gap"><button type="button" className="secondary" disabled={Boolean(reminderMutationBusy)} onClick={()=>snoozeReminder(reminder.id)}>На завтра</button><button type="button" className="secondary" onClick={()=>exportReminderToCalendar(reminder)}>В календарь телефона</button><button type="button" className="secondary" disabled={Boolean(reminderMutationBusy)} onClick={()=>setPendingCareDeletion({id:reminder.id,title:reminder.title})}>Удалить дело</button></div> : null;})()}
+          items={[...reminders, ...reminders.filter(item=>item.recurrence && item.recurrence!=='none').flatMap(item=>{const event=reminderHistory[item.id]?.find(entry=>entry.payload?.completedAt); return event?.payload?.completedAt ? [{...item,status:'done',dueAt:event.payload.dueAt || event.createdAt,completedAt:event.payload.completedAt,snoozedUntil:undefined}] : [];})]} busy={Boolean(reminderMutationBusy)} issue={reminderIssue}
+          onBack={() => closeSecondaryFlow('all')} onComplete={id => completeReminder(id)} onUndo={undoExactCareCompletion}
+          onEdit={item => setEditingReminderId(item.id)} editing={Boolean(editingReminderId)} onCloseEdit={() => setEditingReminderId(null)}
+          editingForm={(() => { const reminder = reminders.find(item => item.id === editingReminderId); return reminder ? <ReminderEditor key={reminder.id} reminder={reminder} drafts={reminderDrafts.current} busy={Boolean(reminderMutationBusy)} error={reminderIssue?.scope===reminder.id?reminderIssue.message:undefined} types={careTypeOptions} recurrences={reminderRecurrenceOptions} onClose={()=>setEditingReminderId(null)} onSave={draft=>updateReminder(reminder.id,{title:draft.title,type:draft.type,dueAt:reminderDueAt(draft.date,draft.time,draft.timeMode||'exact'),recurrence:draft.recurrence,...(draft.timeMode?{timeMode:draft.timeMode}:{})})}/> : null; })()}
+          createForm={onSaved => <form className="exact-care-create" aria-label="Новое дело" onSubmit={async event=>{event.preventDefault();if(await createReminder())onSaved();}}><fieldset  disabled={Boolean(reminderMutationBusy)}>
+              <label htmlFor="care-new-title">Новое дело</label>
+              <div className="inline-add"><input id="care-new-title" required maxLength={200} value={newReminderTitle} onChange={event=>setNewReminderTitle(event.target.value)} placeholder="Что нужно сделать…"/><button type="submit" disabled={!newReminderTitle.trim()||Boolean(reminderMutationBusy)} className="primary" aria-label="Добавить дело"><Plus aria-hidden="true"/></button></div>
+              <label className="field">Когда<input type="date" required value={newReminderDueDate} onChange={event=>setNewReminderDueDate(event.target.value)} aria-label="Дата дела"/></label>
+              <details><summary>Время, повтор и тип</summary>
+                <fieldset className="chips"><legend>Точность времени</legend>{reminderTimeModeOptions.map(option=><button type="button" key={option.value} aria-pressed={newReminderTimeMode===option.value} onClick={()=>setNewReminderTimeMode(option.value)}>{option.label}</button>)}</fieldset>
+                {newReminderTimeMode!=='flexible'&&<label>Время дела<input type="time" required value={newReminderDueTime} onChange={event=>setNewReminderDueTime(event.target.value)}/></label>}
+                <label>Повтор дела<select value={newReminderRecurrence} onChange={event=>setNewReminderRecurrence(event.target.value as ReminderRecurrence)}>{reminderRecurrenceOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+                <label>Тип дела<select value={newReminderType} onChange={event=>setNewReminderType(event.target.value)}>{careTypeOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+              </details>
+              {reminderIssue?.scope==='create'&&<p role="alert">{reminderIssue.message}</p>}
+              <details className="care-presets"><summary>Примеры дел</summary><div className="care-preset-grid" aria-label="Подготовить дело">
+                <button type="button" onClick={()=>{setNewReminderTitle('Обработка от клещей и паразитов');setNewReminderType('parasite');}}>Обработка</button>
+                <button type="button" onClick={()=>{setNewReminderTitle('Проверить дату вакцинации');setNewReminderType('vaccine');}}>Вакцинация</button>
+                <button type="button" onClick={()=>{setNewReminderTitle('Груминг: шерсть и когти');setNewReminderType('grooming');}}>Груминг</button>
+              </div></details>
+            </fieldset></form>}
+        />}
 
-        {hasDog && tab === 'card' && <WatercolorScreen onBack={() => closeSecondaryFlow('profile')} backLabel="Назад" className="public-card-screen" tone="gold" eyebrow="" title="Публичная карточка" caption="Одна безопасная ссылка для догситтера, грумера, друга или человека во дворе. Ты решаешь, что показать и когда закрыть доступ." aside={<PawPrint className="watercolor-hero-mark" weight="duotone" aria-hidden="true" />}>
+        {hasDog && tab === 'card' && <ExactPage viewKey="public-card" onBack={() => closeSecondaryFlow('profile')}><div className="exact-extension public-card-screen"><h1>Публичная карточка</h1><p className="lead">Ты решаешь, что показать и когда закрыть доступ.</p>
 
           <section className={`public-card-lifecycle ${publicCardPublished ? 'is-published' : 'is-draft'} ${publicCardHasChanges ? 'has-changes' : ''}`} aria-live="polite">
             <div className="public-card-lifecycle-icon" aria-hidden="true">{publicCardPublished ? <CheckCircle weight="fill" /> : <LinkSimple weight="duotone" />}</div>
@@ -4934,9 +4856,24 @@ export default function Home() {
             <b>Что не публикуем автоматически</b>
             <p>Точный адрес, контакты владельца, медицинские заметки, лекарства и внутреннюю историю ухода. В памятку попадает только то, что нужно человеку рядом с собакой.</p>
           </article>
-        </WatercolorScreen>}
+        </div></ExactPage>}
 
-        {hasDog && tab === 'profile' && journeyDetail === 'profile' && <WatercolorScreen onBack={closeJourneyDetail} backLabel="В профиль" className="profile-settings-screen" tone="green" eyebrow="настройки" title="Данные и доступ" caption="Аккаунт, приватность и помощь.">
+        {hasDog && tab === 'profile' && journeyDetail === 'profile' && <ExactPage viewKey="settings" onBack={closeJourneyDetail}><div className="exact-extension profile-settings-screen"><h1>Данные и доступ</h1><p className="lead">Аккаунт, приватность и помощь.</p>
+        {hasDog && <section className="exact-pet-switcher" aria-label="Активная собака">
+          <h2>Мои собаки</h2>
+          <div className="chips">
+            {pets.map((pet) => <button key={pet.id} className={pet.id === activePetId ? 'active' : ''} type="button" disabled={petMutationBusy} onClick={() => switchActivePet(pet.id)} aria-pressed={pet.id === activePetId}>
+              {pet.name}
+            </button>)}
+            <button type="button" className="secondary" onClick={() => setAddDogOpen((open) => !open)}>Добавить собаку</button>
+          </div>
+          {addDogOpen && <div className="pet-add-row">
+            <label>Имя новой собаки<input value={newDogName} maxLength={80} autoFocus onChange={(event) => setNewDogName(event.target.value)} placeholder="Например, Луна" /></label>
+            <button type="button" className="primary" disabled={!newDogName.trim() || petMutationBusy} onClick={addDog}>{petMutationBusy ? 'Добавляю…' : 'Добавить'}</button>
+            <button type="button" className="secondary" disabled={petMutationBusy} onClick={() => { setAddDogOpen(false); setNewDogName(''); }}>Отмена</button>
+          </div>}
+          <p>Профиль, дела, места, вещи и наблюдения ниже относятся только к выбранной собаке.</p>
+        </section>}
           {session && <section className="journal-account"><p>Вы вошли в аккаунт Псё.</p><button type="button" className="secondary" onClick={signOut}>Выйти из аккаунта</button></section>}
 
           <section className="profile-settings-links" aria-label="Настройки и документы">
@@ -4957,83 +4894,36 @@ export default function Home() {
             {!isGuestMode() && <details><summary>Удалить аккаунт</summary><div className="profile-delete-form"><p>Будут удалены аккаунт и данные всех собак без возможности восстановления.</p><label>Для подтверждения введи УДАЛИТЬ АККАУНТ<input value={accountDeleteConfirmation} onChange={(event) => setAccountDeleteConfirmation(event.target.value)} placeholder="УДАЛИТЬ АККАУНТ" /></label><button type="button" className="danger-action" disabled={accountDeleteConfirmation.trim() !== 'УДАЛИТЬ АККАУНТ' || petMutationBusy} onClick={deleteAccount}>Удалить аккаунт</button></div></details>}
             {isGuestMode() && <details><summary>Очистить данные на этом устройстве</summary><div className="profile-delete-form"><p>Псё удалит локальный профиль, дела, записи, вещи, места и черновики. Данные других сайтов не затрагиваются.</p><label>Для подтверждения введи ОЧИСТИТЬ ДАННЫЕ<input value={localDeleteConfirmation} onChange={(event) => setLocalDeleteConfirmation(event.target.value)} placeholder="ОЧИСТИТЬ ДАННЫЕ" /></label><button type="button" className="danger-action" disabled={localDeleteConfirmation.trim() !== 'ОЧИСТИТЬ ДАННЫЕ' || petMutationBusy} onClick={deleteLocalData}>Очистить данные на устройстве</button></div></details>}
           </section>
-        </WatercolorScreen>}
+        </div></ExactPage>}
 
-        {hasDog && tab === 'things' && <ProductionJourney route="things" onBack={() => closeSecondaryFlow('all')} dogName={profile.dogName} breedLabel={breedLabel}
-          avatar={<GeneratedAvatar profile={profile} ready={Boolean(profile.avatarImageUrl) || demoMode} imageUrl={profile.avatarImageUrl} demo={demoMode} size="small" />}
-          onNavigate={setTab} onAskAssistant={openAssistantSheet}>
-          <fieldset className="things-write-scope" disabled={wishlistBusy} aria-busy={wishlistBusy}>
-          <form className="thing-capture" onSubmit={async event => { event.preventDefault(); const saved = await createWishlistItem(); if (saved) requestAnimationFrame(() => document.getElementById('wish-quick-title')?.focus()); }}>
-            <label htmlFor="wish-quick-title">Нужно купить</label>
-            <div className="thing-quick-row"><input id="wish-quick-title" value={newWishTitle} onChange={event => setNewWishTitle(event.target.value)} placeholder="Например, корм" maxLength={160} enterKeyHint="done" />
-            <button type="submit" aria-label={newWishNeedsReminder ? 'Добавить в вещи и план' : 'Добавить в вещи'} disabled={!newWishTitle.trim() || (newWishNeedsReminder && !newWishPlannedFor)}><Plus aria-hidden="true" /></button></div>
-            <details open={thingCaptureOpen} onToggle={event => setThingCaptureOpen(event.currentTarget.open)}><summary>Категория, пояснение и срок</summary>
-            <label>Категория<select value={newWishCategory} onChange={(event) => setNewWishCategory(event.target.value)}>
-              <option value="gear">амуниция</option>
-              <option value="food">корм</option>
-              <option value="treats">лакомства</option>
-              <option value="toy">игрушка</option>
-              <option value="health">здоровье</option>
-              <option value="grooming">груминг</option>
-              <option value="service">сервис</option>
-              <option value="other">другое</option>
-            </select></label>
-            <label>Зачем <span className="field-optional">необязательно</span><input value={newWishReason} onChange={(event) => setNewWishReason(event.target.value)} placeholder="Например, старый адресник потерялся" /></label>
-            <label className="thing-plan-option">
-              <input type="checkbox" checked={newWishNeedsReminder} onChange={(event) => setNewWishNeedsReminder(event.target.checked)} />
-              <span><b>Добавить в план</b><small>Покупка появится в плане на эту дату</small></span>
-            </label>
-            {newWishNeedsReminder && <label>Купить до<input type="date" min={dateInputValue(new Date())} value={newWishPlannedFor} onChange={(event) => setNewWishPlannedFor(event.target.value)} /></label>}
-            </details>
-            {wishlistError?.scope === 'create' && <p className="things-error" role="alert">{wishlistError.message}</p>}
-          </form>
-
-          {wantedWishlist.length === 0 && boughtWishlist.length === 0 && <p className="things-empty">Пока ничего не нужно. Запиши здесь, когда что-то понадобится.</p>}
-
-          {wantedWishlist.length > 0 && <section className="things-masonry" aria-label="Вещи собаки" aria-live="polite">
-            {wantedWishlist.map((item) => <article key={item.id} data-wishlist-id={item.id} className={`wishlist-item priority-${item.priority}`}>
-              {editingWishlistId === item.id ? <form className="wishlist-edit-form" onSubmit={async (event) => { event.preventDefault(); await updateWishlistItem(item.id, { title: wishlistTitleDraft.trim(), reason: wishlistReasonDraft.trim() }); }}><label>Название<input value={wishlistTitleDraft} maxLength={160} onChange={event => { setWishlistTitleDraft(event.target.value); wishlistEditDrafts.current.set(item.id,{title:event.target.value,reason:wishlistReasonDraft}); }} /></label><label>Зачем <span className="field-optional">необязательно</span><input value={wishlistReasonDraft} maxLength={500} onChange={event => { setWishlistReasonDraft(event.target.value); wishlistEditDrafts.current.set(item.id,{title:wishlistTitleDraft,reason:event.target.value}); }} /></label><div className="wishlist-actions"><button type="submit" disabled={!wishlistTitleDraft.trim()}>Сохранить</button><button type="button" onClick={() => setEditingWishlistId(null)}>Закрыть</button></div></form> : <><div className="thing-row"><button type="button" className="thing-title" aria-label={`Изменить: ${item.title}`} onClick={() => beginWishlistEdit(item)}><b>{item.title}</b></button><button type="button" className="thing-complete" onClick={() => completeWishlistItem(item)}>Куплено</button></div><details className="thing-details"><summary>Подробнее</summary>{(item.category !== 'other' || item.reason || item.priority !== 'medium') && <p>{formatWishlistMeta(item.category, item.priority === 'medium' ? undefined : item.priority, item.reason)}</p>}<div className="wishlist-actions">
-                {item.plannedFor && <p className="wishlist-plan-date"><CalendarBlank weight="bold" aria-hidden="true" />В плане на {new Date(`${item.plannedFor}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}
-                {item.url && <a href={item.url} target="_blank" rel="noreferrer">Открыть</a>}
-                {item.plannedFor && <button type="button" onClick={() => openWishlistPlan(item)}>Открыть в плане</button>}
-                <button onClick={() => beginWishlistEdit(item)}>Изменить</button>
-                <button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button>
-              </div></details></>}
-              {wishlistError?.scope === item.id && <p className="things-error" role="alert">{wishlistError.message}</p>}
-            </article>)}
-          </section>}
-
-
-          {boughtWishlist.length > 0 && <section className="wishlist-list" aria-label="История вещей" aria-live="polite">
-            <div className="section-title"><div><span className="eyebrow">история</span><h3>Куплено</h3></div></div>
-            {boughtWishlist.map((item) => <article key={item.id} data-wishlist-id={item.id} className="wishlist-item">
-              <div><b>{item.title}</b>{(item.category !== 'other' || item.reason || item.priority !== 'medium') && <p>{formatWishlistMeta(item.category, item.priority === 'medium' ? undefined : item.priority, item.reason)}</p>}</div>
-              <div className="wishlist-actions"><button onClick={() => updateWishlistItem(item.id, { status: 'wanted', plannedFor: undefined, reminderId: undefined })}>Вернуть</button><button className="danger-action" onClick={() => deleteWishlistItem(item.id)}>Убрать</button></div>
-              {wishlistError?.scope === item.id && <p className="things-error" role="alert">{wishlistError.message}</p>}
-            </article>)}
-          </section>}
-
-          {removedWishlistItem && <div className="restore-notice" role="status">
-            <span>Вещь убрана. Вернётся без срока.</span>
-            <button type="button" onClick={restoreWishlistItem}>Вернуть</button>
-            {wishlistError?.scope === 'restore' && <p className="things-error" role="alert">{wishlistError.message}</p>}
-          </div>}
-          </fieldset>
-
-        </ProductionJourney>}
+        {hasDog && tab === 'things' && <ExactThings items={wishlist} draft={newWishTitle} onDraft={setNewWishTitle}
+          busy={wishlistBusy} issue={wishlistError} onBack={() => closeSecondaryFlow('all')}
+          onAdd={() => createWishlistItem()}
+          captureOpen={thingCaptureOpen} onCaptureOpen={setThingCaptureOpen} category={newWishCategory} onCategory={setNewWishCategory} reason={newWishReason} onReason={setNewWishReason}
+          needsReminder={newWishNeedsReminder} onNeedsReminder={setNewWishNeedsReminder} plannedFor={newWishPlannedFor} onPlannedFor={setNewWishPlannedFor}
+          onComplete={completeWishlistItem}
+          editingId={editingWishlistId} editTitle={wishlistTitleDraft} editReason={wishlistReasonDraft}
+          onEdit={beginWishlistEdit} onCloseEdit={() => setEditingWishlistId(null)}
+          onEditDraft={patch => { const title=patch.title ?? wishlistTitleDraft, reason=patch.reason ?? wishlistReasonDraft; setWishlistTitleDraft(title); setWishlistReasonDraft(reason); if(editingWishlistId) wishlistEditDrafts.current.set(editingWishlistId,{title,reason}); }}
+          onSaveEdit={id => updateWishlistItem(id,{title:wishlistTitleDraft.trim(),reason:wishlistReasonDraft.trim()})}
+          onDelete={deleteWishlistItem} removed={Boolean(removedWishlistItem)} onRestore={restoreWishlistItem} onOpenPlan={openWishlistPlan}
+          onReturn={item => updateWishlistItem(item.id, { status: 'wanted', plannedFor: undefined, reminderId: undefined })}
+        />}
 
         {error && <p className="error-text" role="alert">{error}</p>}
         {notice !== 'idle' && !(tab === 'map' && notice === 'mapSaved') && <div className="toast" role="status" aria-live="polite">{notice === 'documentSaved' ? 'Документ сохранён' : notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
       </section>
 
-      {hasDog && !(tab === 'map' && productionMapMode !== 'view') && <AppNavigation dogName={profile.dogName} active={activePrimaryRoute} onAskAssistant={openAssistantSheet} onNavigate={(route) => {
-        if (route === 'profile') { setProfileSurface('overview'); secondaryOrigins.current = []; }
+      {hasDog && <ExactNavigation active={activePrimaryRoute} onNavigate={(route) => {
+        setAssistantOpen(false);
+        if (route === 'profile') { setExactProfileView('profile'); setProfileSurface('overview'); secondaryOrigins.current = []; }
+        if (route === 'map') { setMapExactScreen('map'); setMapExactNavigation(value=>value+1); }
         setJourneyDetail(null);
         setAssistantOpen(false);
         setTab(route);
       }} />}
 
-      {tab !== 'today' && tab !== 'all' && <DesktopContextPanel
+      {!hasDog && tab !== 'today' && tab !== 'all' && <DesktopContextPanel
         mode={journeyDetail || tab}
         dogName={petName || 'собаки'}
         nearestTitle={nextBestAction.title}
@@ -5065,6 +4955,7 @@ export default function Home() {
       <DeleteCareDialog
         reminder={pendingCareDeletion}
         busy={careDeletionBusy}
+        error={reminderIssue?.scope===pendingCareDeletion?.id?reminderIssue?.message:undefined}
         onCancel={() => setPendingCareDeletion(null)}
         onConfirm={confirmCareDeletion}
       />
@@ -5098,6 +4989,6 @@ export default function Home() {
         onSubmit={saveMinimalDog}
       />
 
-    </main>
+    </main></ExactScope>
   );
 }

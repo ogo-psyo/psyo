@@ -1,3 +1,4 @@
+import {principalsAgree} from '@/lib/socialCore';
 import { NextResponse } from 'next/server';
 import { getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
@@ -11,6 +12,7 @@ export async function GET(request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const auth = await getRequestAuth(request);
   const session = getAppSessionFromRequest(request);
+  if(!principalsAgree({bearerOwnerId:auth.user?.id,sessionOwnerId:session?.ownerId}))return Response.json({error:"AUTH_REQUIRED"},{status:401});
   const supabase = auth.supabase ?? getSupabaseAdmin();
   const ownerId = auth.user?.id ?? session?.ownerId;
   if (!ownerId || !supabase) return careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401);
@@ -18,5 +20,5 @@ export async function GET(request: Request, ctx: Ctx) {
   if (owned.error || !owned.data) return careError('REMINDER_NOT_FOUND', 'Это дело не найдено или недоступно.', 404);
   const history = await supabase.from('reminder_events').select('id,event_type,payload,created_at').eq('reminder_id', id).eq('event_type', 'completed').order('created_at', { ascending: false });
   if (history.error) return careError('CARE_HISTORY_FAILED', 'Не удалось загрузить историю. Попробуйте ещё раз.', 500);
-  return NextResponse.json({ history: history.data ?? [] });
+  return NextResponse.json({ history: (history.data ?? []).filter(event => !event.payload?.undoneAt).map(event => ({ ...event, payload: { reminderId: event.payload?.reminderId, dueAt: event.payload?.dueAt, completedAt: event.payload?.completedAt, nextDueAt: event.payload?.nextDueAt } })) });
 }

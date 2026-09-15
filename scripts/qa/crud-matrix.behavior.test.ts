@@ -36,18 +36,24 @@ assertMethods('public dog cards', 'app/api/dog-cards/route.ts', ['GET', 'POST', 
 
 const page = source('app/page.tsx');
 const profileWorkspace = source('components/profile/ProfileMemoryWorkspace.tsx');
+const exactThings = source('components/exact/ExactThings.tsx');
+assert.match(exactThings, /items.find\(item => item.id === props.editingId\)/);
+assert.match(exactThings, /props.onSaveEdit\(editing.id\)/);
+assert.match(exactThings, /props.onDelete\(editing.id\)/);
+const exactProfile = source('components/exact/ExactProfile.tsx');
+assert.match(exactProfile, /props.onDeleteDocument\(document.id\)/);
+assert.match(exactProfile, /<ExactDocument/);
 for (const marker of [
   'Удалить собаку',
   'Удалить аккаунт',
   'Очистить данные на этом устройстве',
-  'editingWishlistId === item.id',
   'editingZoneId === zone.id',
   'updateOwnerRoute',
   'deleteOwnerRoute',
   'restoreObservation',
   'restoreWishlistItem',
   'restoreZone',
-  'onDeleteDocument={(id) => void deletePetDocument(id)}',
+  'onDeleteDocument={(id) => deletePetDocument(id, true)}',
 ]) assert.ok(page.includes(marker), `missing reachable CRUD UI marker: ${marker}`);
 
 assert.ok(profileWorkspace.includes("item.entityKind === 'document'"), 'document actions must be reachable from history');

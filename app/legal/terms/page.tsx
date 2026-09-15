@@ -1,8 +1,9 @@
+import { ExactPublicLayout } from '@/components/exact/ExactPublicLayout';
 import Link from 'next/link';
 
 export default function TermsPage() {
   return (
-    <main className="legal-page">
+    <ExactPublicLayout>
       <section>
         <p className="eyebrow">Псё</p>
         <h1>Условия</h1>
@@ -13,6 +14,6 @@ export default function TermsPage() {
         </div>
         <Link href="/">Вернуться в Псё</Link>
       </section>
-    </main>
+    </ExactPublicLayout>
   );
 }

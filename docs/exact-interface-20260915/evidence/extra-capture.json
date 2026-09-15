@@ -1,0 +1,42 @@
+{
+  "scope": "Synthetic APIs; no social sends, no deletes",
+  "shots": [
+    {
+      "name": "social-profile",
+      "overflow": false
+    },
+    {
+      "name": "social-filters",
+      "overflow": false
+    },
+    {
+      "name": "social-contact",
+      "overflow": false
+    },
+    {
+      "name": "public-card-editor",
+      "overflow": false
+    },
+    {
+      "name": "diary",
+      "overflow": false
+    },
+    {
+      "name": "document-delete",
+      "overflow": false
+    },
+    {
+      "name": "settings-320",
+      "overflow": false
+    },
+    {
+      "name": "settings-1280",
+      "overflow": false
+    },
+    {
+      "name": "support",
+      "overflow": false
+    }
+  ],
+  "errors": []
+}

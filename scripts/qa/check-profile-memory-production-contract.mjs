@@ -7,36 +7,27 @@ const journey = readFileSync('components/journey/ProductionJourney.tsx', 'utf8')
 const css = readFileSync('components/profile/ProfileMemoryWorkspace.module.css', 'utf8');
 const bootstrap = readFileSync('app/api/app/bootstrap/route.ts', 'utf8');
 
-assert.match(page, /<ProfileMemoryWorkspace/);
+const exactProfile = readFileSync('components/exact/ExactProfile.tsx', 'utf8');
+const fields = readFileSync('components/exact/ExactProfileFields.tsx', 'utf8');
+const exactShell = readFileSync('components/exact/ExactShell.tsx', 'utf8');
+const sourceCss = readFileSync('components/exact/exact-interface.css', 'utf8');
+assert.match(page, /<ExactProfile/);
 assert.doesNotMatch(page, /tab === 'profile'[^\n]+<ProductionJourney route="profile"/);
-
-for (const surface of ['overview', 'character', 'social', 'passport', 'history', 'capture']) {
-  assert.match(component, new RegExp(`surface === '${surface}'`), `missing production profile surface: ${surface}`);
+for (const view of ['memory', 'documents', 'document', 'editprofile', 'identity']) {
+  assert.match(exactProfile, new RegExp(`props.view === '${view}'`), `missing profile view: ${view}`);
 }
-
-for (const path of ['Использовать фото', 'Создать образ', 'Без изображения']) {
-  assert.match(component, new RegExp(path), `missing owner-controlled identity path: ${path}`);
-}
-
-assert.match(component, /avatarCapabilities\.uploadsEnabled/);
-assert.match(component, /avatarCapabilities\.generationEnabled/);
-assert.match(component, /Появится после подключения генератора изображений/);
-assert.match(component, /ничего не попадёт в память без подтверждения/i);
-assert.match(component, /Неподтверждённое не влияет на выводы/);
-assert.match(component, /showModal\(\)/);
-assert.match(component, /identityTriggerRef\.current\?\.focus\(\)/);
-assert.match(component, /editorTriggerRef\.current\?\.focus\(\)/);
-assert.match(component, /onOpenHealth/);
-assert.match(component, /openEditor\('character'/);
-assert.match(component, /openEditor\('social'/);
-assert.match(component, /openEditor\('passport'/);
-assert.match(component, /onSaveProfile/);
-assert.doesNotMatch(component, /onEditProfile|onAddObservation/);
-assert.match(page, /onOpenIdentity=\{\(\) =>/);
+for (const group of ['Паспорт и внешность','Характер и общение','Здоровье и уход']) assert.ok(fields.includes(group));
+for (const path of ['onPhotoChange','onGenerateAvatar','onUseNoAvatar','onRollbackAvatar','onActivateAvatar','onDiscardAvatarDraft','onSaveProfile','onOpenHealth','onOpenHabits','onOpenCard','onOpenSettings','onDeleteDocument']) assert.ok(exactProfile.includes(path), `missing profile action: ${path}`);
+assert.match(exactProfile, /avatarCapabilities\.uploadsEnabled/);
+assert.match(exactProfile, /avatarCapabilities\.generationEnabled/);
+assert.match(exactProfile, /avatarConsent/);
+assert.match(exactProfile, /if \(id\) \{ props.onDraft\(null\); back\(\); \}/);
+assert.match(exactShell, /heading.focus\(\{ preventScroll: true \}\)/);
 assert.match(page, /onSaveProfile=\{savePrivateProfile\}/);
-assert.match(journey, /production-today-identity/);
-assert.match(css, /min-height:\s*72px/);
-assert.match(css, /font:\s*650 16px/);
+assert.match(sourceCss, /Naris/);
+// Legacy contracts remain documented; active UI uses the exact source components above.
+assert.match(component, /Неподтверждённое не влияет на выводы/);
+assert.match(journey, /data-observation-timeline/);
 assert.match(css, /prefers-reduced-motion/);
 
 assert.match(bootstrap, /uploadsEnabled:\s*rc1Config\.flags\.uploads_enabled/);

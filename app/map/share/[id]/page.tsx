@@ -1,3 +1,4 @@
+import { ExactPublicLayout } from '@/components/exact/ExactPublicLayout';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
@@ -82,7 +83,7 @@ export default async function MapSharePage({
 
   if (!item) {
     return (
-      <main className="share-page map-share-page">
+      <ExactPublicLayout>
         <section className="share-card map-share-card">
           <div className="card-top">
             <span>Псё</span>
@@ -102,12 +103,12 @@ export default async function MapSharePage({
           </div>
           <Link className="share-create-link" href="/">Открыть Псё</Link>
         </section>
-      </main>
+      </ExactPublicLayout>
     );
   }
 
   return (
-    <main className="share-page map-share-page">
+    <ExactPublicLayout>
       <section className="share-card map-share-card">
         <div className="card-top">
           <span>Псё</span>
@@ -136,6 +137,6 @@ export default async function MapSharePage({
         <p className="privacy-hint">Псё показывает только безопасное описание места. Детальная география остаётся у владельца.</p>
         <Link className="share-create-link" href="/">Создать место в Псё</Link>
       </section>
-    </main>
+    </ExactPublicLayout>
   );
 }

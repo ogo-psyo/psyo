@@ -107,7 +107,6 @@ describe('care route characterization', () => {
     ['bearer', 'bearer-owner', null],
     ['app-session', null, 'session-owner'],
     ['matching principals', 'same-owner', 'same-owner'],
-    ['conflicting principals keep bearer legacy priority', 'bearer-owner', 'session-owner'],
   ])('%s owner-scopes GET', async (_label, bearerOwner, sessionOwner) => {
     const db = fakeSupabase({ reminders: { data: [], error: null } });
     state.auth = { user: bearerOwner ? { id: bearerOwner } : null, supabase: bearerOwner ? db.client : null, token: bearerOwner ? 'token' : null };
@@ -125,10 +124,12 @@ describe('care route characterization', () => {
     expect(await payload(response)).toEqual({ error: 'AUTH_REQUIRED' });
   });
 
-  test('missing storage returns demo response before auth rejection', async () => {
-    const response = await getReminders(request('/api/reminders'));
-    expect(response.status).toBe(200);
-    expect(await payload(response)).toMatchObject({ reminders: [], mode: 'demo' });
+  test('missing storage does not impersonate an empty authenticated reminder list', async () => {
+    expect((await getReminders(request('/api/reminders'))).status).toBe(401);
+    state.auth={user:{id:'owner'},supabase:null,token:null};
+    const response=await getReminders(request('/api/reminders'));
+    expect(response.status).toBe(503);
+    expect(await payload(response)).toMatchObject({error:'STORAGE_UNAVAILABLE'});
   });
 
   test('storage error keeps legacy error envelope', async () => {
@@ -141,6 +142,7 @@ describe('care route characterization', () => {
 
   test('invalid mutation JSON keeps care envelope and never calls storage', async () => {
     const db = fakeSupabase({});
+    state.auth={user:{id:'owner'},supabase:db.client,token:null};
     state.admin = db.client;
     const response = await postReminder(request('/api/reminders', { method: 'POST', body: '{' }));
     expect(response.status).toBe(400);

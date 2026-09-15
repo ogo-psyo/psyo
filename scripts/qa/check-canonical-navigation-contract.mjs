@@ -8,7 +8,7 @@ const woof = readFileSync('components/social/ProductionWoofWorkspace.tsx', 'utf8
 const failures = [];
 const tools = readFileSync('components/app/ConnectedHome.tsx', 'utf8');
 for (const destination of ['diary','calendar','health','habits','things','passport','card']) {
- if (!tools.includes(`id:'${destination}'`)) failures.push(`missing direct tool: ${destination}`);
+ if (!tools.includes(`destination="${destination}"`)) failures.push(`missing direct tool: ${destination}`);
 }
 if (!page.includes('onOpenJournalEntry=') || !page.includes('onOpenRecord={openPrivateRecord}')) failures.push('day and profile must resolve the same exact record');
 const primaryRoutes = [

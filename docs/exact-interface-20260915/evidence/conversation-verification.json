@@ -1,0 +1,14 @@
+{
+  "pass": true,
+  "scope": "Synthetic API only; recent thread resume, explicit send, suggested question preserves thread, close restores home",
+  "requests": [
+    {
+      "question": "Продолжим",
+      "threadId": "qa-thread"
+    },
+    {
+      "question": "Как подготовиться к прогулке?",
+      "threadId": "qa-thread"
+    }
+  ]
+}

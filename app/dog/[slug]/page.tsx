@@ -1,3 +1,4 @@
+import { ExactPublicLayout } from '@/components/exact/ExactPublicLayout';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -86,7 +87,7 @@ export default async function DogCardPage({
   const avoidText = triggers || 'резкие движения и еда без разрешения';
 
   return (
-    <main className="share-page">
+    <ExactPublicLayout>
       <section className="share-card">
         <div className="card-top">
           <span>Псё</span>
@@ -130,6 +131,6 @@ export default async function DogCardPage({
         <DogCardActions name={name} />
         <Link className="share-create-link" href="/">Создать карточку своей собаки</Link>
       </section>
-    </main>
+    </ExactPublicLayout>
   );
 }

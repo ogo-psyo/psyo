@@ -8,7 +8,7 @@ const styles = readFileSync('app/globals.css', 'utf8');
 for (const token of [
   'data-care-calendar',
   'calendarDays.map',
-  'selectedDateReminders.map',
+  'careFilterDate?selectedDateReminders:activeReminders',
   'setNewReminderDueDate(selectedCalendarDate)',
   'Предыдущий месяц',
   'Следующий месяц',
@@ -18,7 +18,7 @@ for (const token of [
 }
 
 assert.doesNotMatch(page, /visibleCareReminders\.map/, 'active care view must not render the bulk reminder list');
-assert.match(page, />Календарь<\/button>/, 'active care tab must be named Calendar');
+assert.match(readFileSync('components/exact/ExactCare.tsx','utf8'), /Календарь и история/, 'calendar and history must remain reachable');
 
 for (const token of ['.care-calendar-panel', '.care-calendar-grid', '.calendar-day.has-care', '.selected-day-panel']) {
   assert.match(styles, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `care calendar styles missing: ${token}`);

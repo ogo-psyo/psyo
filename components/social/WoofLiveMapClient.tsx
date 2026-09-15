@@ -81,14 +81,14 @@ export function WoofLiveMapClient(props: WoofLiveMapProps) {
     <Viewport signals={signals} viewerLocation={viewerLocation} selectedId={selectedId} />
     <ExplorerControls {...props} />
     {viewerLocation && <>
-      <Circle center={[viewerLocation.lat, viewerLocation.lng]} radius={viewerRadiusMeters} pathOptions={{ color: '#4d7057', fillColor: '#c4d4b8', fillOpacity: 0.055, weight: 1, dashArray: '6 8' }} interactive={false} />
-      <CircleMarker center={[viewerLocation.lat, viewerLocation.lng]} radius={7} pathOptions={{ color: '#f7fff9', fillColor: '#4d7057', fillOpacity: 1, weight: 3 }} interactive={false} />
+      <Circle center={[viewerLocation.lat, viewerLocation.lng]} radius={viewerRadiusMeters} pathOptions={{ color: '#6e6087', fillColor: '#e6dfee', fillOpacity: 0.055, weight: 1, dashArray: '6 8' }} interactive={false} />
+      <CircleMarker center={[viewerLocation.lat, viewerLocation.lng]} radius={7} pathOptions={{ color: '#ffffff', fillColor: '#6e6087', fillOpacity: 1, weight: 3 }} interactive={false} />
     </>}
     {signals.map((signal) => <Circle
       key={`${signal.id}:privacy`}
       center={[signal.approximateLocation.lat, signal.approximateLocation.lng]}
       radius={signal.privacyRadiusMeters}
-      pathOptions={{ color: signal.isMine ? '#4d7057' : '#ae7978', fillColor: signal.isMine ? '#aec9aa' : '#ae7978', fillOpacity: signal.id === selectedId ? 0.18 : 0.08, weight: signal.id === selectedId ? 2 : 1 }}
+      pathOptions={{ color: signal.isMine ? '#6e6087' : '#a79bb7', fillColor: signal.isMine ? '#e6dfee' : '#a79bb7', fillOpacity: signal.id === selectedId ? 0.18 : 0.08, weight: signal.id === selectedId ? 2 : 1 }}
       interactive={false}
     />)}
     {signals.map((signal) => <Marker

@@ -11,6 +11,8 @@ import './map-gav.css';
 import './map-route-value.css';
 import './map-gav-reference.css';
 import './gav-journey.css';
+import '@/components/exact/exact-interface.css';
+import '@/components/exact/exact-extensions.css';
 
 export const metadata: Metadata = {
   title: 'Псё — ассистент владельца собаки',
@@ -36,14 +38,14 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#fdfcf9',
+  themeColor: '#faf9fc',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" suppressHydrationWarning>
       <body className="companion-app">
-        <span hidden aria-hidden="true" data-psyo-design-contract="journal-v6-20260906" />
+        <span hidden aria-hidden="true" data-psyo-design-contract="exact-prototype-20260915" />
         <script src="https://telegram.org/js/telegram-web-app.js" async />
         <ReleaseFreshnessGuard />
         <InterfaceMotion />

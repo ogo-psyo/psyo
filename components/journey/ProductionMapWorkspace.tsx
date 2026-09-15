@@ -1,4 +1,5 @@
 'use client';
+import { ExactIcon, ExactPage, ExactRow } from '@/components/exact/ExactShell';
 import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
 
 import {isMapSearchPlace,type MapSearchPlace} from '@/lib/mapSearchPlace';
@@ -61,6 +62,10 @@ type SearchResult = {
 };
 
 type ProductionMapWorkspaceProps = {
+  active?: boolean;
+  navigationToken?: number;
+  saveError?: string;
+  requestedScreen?: 'map' | 'library';
   agentSavedRouteSelection?:{token:string;petId:string;route:OwnerRouteView}|null;
   agentWalkSelection?:{token:string;petId:string;walk:AgentWalk}|null;
   agentSelection?:{token:string;petId:string;place:MapSearchPlace;places:MapSearchPlace[]}|null;
@@ -144,6 +149,7 @@ function formatPointCount(count: number) {
 }
 
 export function ProductionMapWorkspace({
+  active = true, navigationToken = 0, saveError, requestedScreen = 'map',
   petId, guest, authHeaders, agentSelection, agentWalkSelection, agentSavedRouteSelection, onReturnToAssistant,
   draftTitle = '', draftNote = '', editingRouteId, onRestoreDraftText, savedRevision = 0, onActivityChange, routeEditSeed, onReuseRoute,
   dogName,
@@ -167,7 +173,11 @@ export function ProductionMapWorkspace({
   savingDraft = false,
   onRouteMetaChange,
 }: ProductionMapWorkspaceProps) {
+  const [mapExpanded, setMapExpanded] = useState(false);
+  const [exactSaving, setExactSaving] = useState(false);
+  const exactSaveRequested = useRef(false);
   const libraryStore = useMapLibrary(petId,guest,authHeaders);
+  const [exactTools, setExactTools] = useState(false);
   const [targetCollection,setTargetCollection] = useState('saved');
   const [collectionId,setCollectionId] = useState('saved');
   const collection=libraryStore.library.collections.find(c=>c.id===collectionId)||libraryStore.library.collections[0];
@@ -187,7 +197,9 @@ export function ProductionMapWorkspace({
   const [savedExpanded, setSavedExpanded] = useState(false);
   const [agentPlaces,setAgentPlaces]=useState<MapSearchPlace[]>([]);
   const consumedAgentPlace=useRef('');
-  const [workspaceTab,setWorkspaceTab]=useState<'places'|'walks'|'saved'>('places');
+  const [workspaceTab,setWorkspaceTab]=useState<'places'|'walks'|'saved'>(requestedScreen === 'library' ? 'saved' : 'places');
+  const navigateRequested = useEffectEvent(() => { setExactTools(false); setWorkspaceTab(requestedScreen === 'library' ? 'saved' : 'places'); if(navigationToken) { setSavedRoutePreview(null); setAgentWalkPreview(null); setFolded(true); onModeChange('view'); } });
+  useEffect(() => { navigateRequested(); }, [requestedScreen, navigationToken]);
   const [query, setQuery] = useState('');
   const [searchRequest, setSearchRequest] = useState<{query:string;lat:number;lng:number;revision:number;bounds?:MapBounds} | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -248,7 +260,7 @@ export function ProductionMapWorkspace({
   function editStops(stops:RouteStop[]){calculationAbort.current?.abort();setUndoStops(activeStops);setRouteStops(stops);setCalculationError('');setCalculationState('idle');setWalkResult(null);if(planningMode==='manual')onReplaceRoutePoints(stops.map(s=>s.point));}
   const [undoStops,setUndoStops]=useState<RouteStop[]|null>(null);
   function appendStop(stop:RouteStop){editStops([...activeStops,stop]);setCandidate(null);setSelectedSearchPoint(null);setLocationStatus('Остановка добавлена. Проверьте порядок и рассчитайте путь.');}
-  function appendPlacesToWalk(stops: RouteStop[]) {
+  function appendPlacesToWalk(stops: RouteStop[], keepSelection = false) {
     if (!['idle','planning','plan-review'].includes(routeFlow)) return;
     const previous=routeFlow==='idle'?[]:activeStops;
     const normalizedStops=stops.map(stop=>({...stop,placeId:libraryStore.library.places.find(p=>p.id===stop.placeId||p.source.id===stop.placeId)?.id||stop.placeId}));
@@ -256,7 +268,7 @@ export function ProductionMapWorkspace({
     if (!additions.length) {setLocationStatus('Эти места уже в прогулке.');return;}
     if(routeFlow==='idle'){startPlanning();setRouteStops(additions);}
     else editStops([...previous,...additions]);
-    setRouteFlow('planning');setFolded(true);onModeChange('view');setCandidate(null);setSelectedSearchPoint(null);setMapSelection(null);setSearchOpen(false);
+    setRouteFlow('planning');setFolded(true);onModeChange('view');setCandidate(null);if(!keepSelection)setSelectedSearchPoint(null);setMapSelection(null);setSearchOpen(false);
     setLocationStatus(`В прогулке ${formatPointCount(previous.length+additions.length)}. Можно добавить ещё места или изменить порядок.`);
     if(placeOrigin==='library')setSavedExpanded(true);
   }
@@ -514,7 +526,7 @@ export function ProductionMapWorkspace({
 
   const [placeOrigin,setPlaceOrigin] = useState<'search'|'library'|'map'>('search');
   function chooseMapPlace(place:MapPlaceChoice,trigger:HTMLElement){
-    if(selectedSearchPoint?.id===place.id){closeSelectedPlace();return;}
+    if(selectedSearchPoint?.id===place.id)return;
     chooseSearchResult(place,trigger);setPlaceOrigin('map');
     // Keep the selected marker in the same geographic context; no automatic zoom jump.
     setFocusPoint(null);
@@ -545,6 +557,14 @@ export function ProductionMapWorkspace({
     setSelectedSearchPoint(current=>current?{...current,id:saved.id}:current);
     setSavedPlaceNotice(`${before.includes(saved.id)?'Уже сохранено':'Сохранено'} в «${next.collections.find(c=>c.id===targetCollection)?.title}»${guest?' · в этом браузере':' · в аккаунте'}`);
     setPlaceUndo(before.includes(saved.id)?null:{collectionId:targetCollection,placeId:saved.id});
+  }
+  async function toggleExactSavedPlace() {
+    if (!selectedLibraryPlace || !exactSavedIds.includes(selectedLibraryPlace.id)) {
+      await saveSelectedPlace();
+      return;
+    }
+    const next = await libraryStore.mutate({ id: crypto.randomUUID(), kind: 'membership', collectionId: 'saved', placeId: selectedLibraryPlace.id, present: false });
+    if (next) { setSavedPlaceNotice('Убрано из сохранённого'); setPlaceUndo(null); }
   }
   function chooseSearchResult(result: SearchResult,trigger?:HTMLElement) {
     placeTriggerRef.current=trigger||(document.activeElement instanceof HTMLElement?document.activeElement:null);
@@ -726,6 +746,9 @@ export function ProductionMapWorkspace({
   const placeSearchActive=Boolean(agentPlaces.length||(searchRequest&&query.trim()===searchRequest.query));
   const visibleMapPlaces=(placeSearchActive?(agentPlaces.length?agentPlaces:mapResultPlaces):allMapPlaces.filter(p=>!mapBounds||(p.point.lat>=mapBounds.south&&p.point.lat<=mapBounds.north&&p.point.lng>=mapBounds.west&&p.point.lng<=mapBounds.east)));
   const selectedLibraryPlace=libraryStore.library.places.find(p=>p.id===selectedSearchPoint?.id||(p.source.provider==='osm'&&p.source.id===selectedSearchPoint?.id));
+  const exactStopIndex = selectedSearchPoint ? activeStops.findIndex(stop => stop.placeId===selectedSearchPoint.id || selectedLibraryPlace && stop.placeId===selectedLibraryPlace.id || selectedSearchPoint.point && stop.point[0]===selectedSearchPoint.point.lng && stop.point[1]===selectedSearchPoint.point.lat) : -1;
+  const exactSavedIds = libraryStore.library.collections.find(collection => collection.id === 'saved')?.placeIds || [];
+  const exactSavedPlaces = libraryStore.library.places.filter(place => exactSavedIds.includes(place.id));
   const selectedVisiblePlaceId=visibleMapPlaces.find(p=>p.id===selectedSearchPoint?.id||(selectedLibraryPlace?.source.provider==='osm'&&p.id===selectedLibraryPlace.source.id))?.id;
   const hiddenPlaceCount=placeSearchActive?0:allMapPlaces.length-visibleMapPlaces.length;
   function showAllMapPlaces(){if(!allMapPlaces.length)return;const south=Math.min(...allMapPlaces.map(p=>p.point.lat)),north=Math.max(...allMapPlaces.map(p=>p.point.lat)),west=Math.min(...allMapPlaces.map(p=>p.point.lng)),east=Math.max(...allMapPlaces.map(p=>p.point.lng));setLayers(v=>({...v,places:true}));setFocusPoint({lat:(south+north)/2,lng:(west+east)/2,token:Date.now(),bounds:{south,north,west,east}});}
@@ -760,12 +783,60 @@ export function ProductionMapWorkspace({
     setLocationStatus('Путь проверен. Сохраните прогулку, чтобы открыть её позже.');
   }
 
+  const advanceExactSave = useEffectEvent(() => {
+    if (!exactSaveRequested.current) return;
+    if (calculationState === 'error') { exactSaveRequested.current = false; setExactSaving(false); return; }
+    if (calculationState === 'preview') { applyWalk(); return; }
+    if (plannerReady && canSaveDraft && calculationState !== 'loading') {
+      exactSaveRequested.current = false;
+      void Promise.resolve(onSaveDraft()).finally(() => setExactSaving(false));
+    }
+  });
+  useEffect(() => { advanceExactSave(); }, [calculationState, plannerReady, canSaveDraft]);
+
+  async function saveExactWalk() {
+    if (savingDraft || exactSaving || activeStops.length < 2 || !draftTitle.trim()) return;
+    if (plannerReady && canSaveDraft) { await onSaveDraft(); return; }
+    if (guest) { setCalculationError('Войдите в Псё, чтобы рассчитать прогулку по дорожкам. Остановки и название остаются в черновике.'); return; }
+    setExactSaving(true); exactSaveRequested.current = true;
+    await calculateWalk();
+  }
+
+  const liveMap = (<LiveMap appearance="exact"
+        zones={zones.filter(z=>isRisk(z.type)?layers.risks:layers.places)}
+        features={[...features.filter(f=>f.type==='route'?layers.routes:isRisk(f.zone_type)?layers.risks:layers.places&&workspaceTab!=='saved'),...(layers.places?(workspaceTab==='saved'?collectionPlaces:libraryStore.library.places).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:p.accuracyMeters?'area' as const:'ownerPlace' as const,radiusMeters:p.accuracyMeters,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'private' as const})):[]),...(layers.places&&workspaceTab==='places'&&placeSearchActive?visibleMapPlaces.filter(p=>p.kind==='organization'&&!libraryStore.library.places.some(l=>l.id===p.id||l.source.id===p.id)).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:'ownerPlace' as const,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'public' as const})):[])]}
+        picked={candidate?{lng:candidate.point[0],lat:candidate.point[1]}:mapSelection||pickedPoint}
+        routePoints={savedRoutePreview?savedRoutePreview.path.coordinates:agentWalkPreview?agentWalkPreview.path:calculationState==='preview'&&walkResult?walkResult.path:routePoints}
+        routeStops={savedRoutePreview?savedRoutePreview.planning?.stops.map(s=>s.point)||[]:agentWalkPreview?agentWalkPreview.snaps.map(s=>s.point):routeFlow==='planning'||routeFlow==='plan-review'?activeStops.map(s=>s.point):[]}
+        routeStopIds={savedRoutePreview?savedRoutePreview.planning?.stops.map(s=>s.placeId)||[]:agentWalkPreview?agentWalkPreview.stops.map(s=>s.placeId):activeStops.map(s=>s.placeId)}
+        routeGaps={savedRoutePreview?savedRoutePreview.pathGaps:agentWalkPreview?[]:pathGaps}
+        onMapClick={agentWalkPreview||savedRoutePreview?undefined:mode === 'risk' ? onMapClick : routeFlow === 'planning' && !folded ? (event) => setCandidate({point:[event.latlng.lng,event.latlng.lat]}) : mode==='view'&&!routeFocused ? (event)=>{setMapSelection(event.latlng);setSelectedSearchPoint(null);} : undefined}
+        onCenterChange={setMapCenter}
+        onBoundsChange={setMapBounds}
+        searchBounds={workspaceTab==='saved'?null:searchRequest?.bounds}
+        filter="all"
+        selectedFeatureId={selectedLibraryPlace?.id||selectedSearchPoint?.id}
+        onSelectFeature={id=>{
+          if(routeFocused||agentWalkPreview||savedRoutePreview)return;
+          const found=visibleMapPlaces.find(p=>p.id===id);if(workspaceTab==='places'&&found){chooseMapPlace(found,document.querySelector<HTMLElement>(`.map-place-row[data-place-id="${CSS.escape(id)}"]`)||document.activeElement as HTMLElement);return;}
+          const place=libraryStore.library.places.find(p=>p.id===id);if(place){chooseLibraryPlace(place);return;}
+          const feature=features.find(f=>f.id===id);const zone=zones.find(z=>z.id===id);
+          if(feature)chooseSearchResult({id,title:feature.title,accuracyMeters:feature.type==='point'?Math.max(500,feature.radiusMeters||500):undefined,kind:feature.type==='route'?'route':'place',point:feature.type==='route'?routeStart(feature):{lat:Number(feature.lat),lng:Number(feature.lng)}});
+          else if(zone)chooseSearchResult({id,title:zone.title,accuracyMeters:Math.max(500,zone.radius_meters||zone.radiusMeters||500),detail:'Примерная область',privateNote:zone.note,kind:isRisk(zone.type)?'risk':'place',point:{lat:Number(zone.approximate_lat),lng:Number(zone.approximate_lng)}});
+        }}
+        userLocation={routeFlow === 'record-review' || routeFlow === 'plan-review' ? null : userLocation}
+        focusPoint={focusPoint}
+        searchPoint={selectedSearchPoint?.point && !selectedSearchPoint.accuracyMeters ? { ...selectedSearchPoint.point, title: selectedSearchPoint.title, detail: selectedSearchPoint.detail } : null}
+        fitDraftRoute={Boolean(savedRoutePreview)||Boolean(agentWalkPreview) || routeFlow === 'record-review' || routeFlow === 'plan-review'}
+        accessibleLabel={routeFlow === 'planning' ? 'Карта для построения маршрута. Перемещайте карту стрелками или коснитесь нужного места.' : routeFlow === 'recording' || routeFlow === 'paused' ? 'Карта записываемой прогулки' : routeFlow === 'record-review' || routeFlow === 'plan-review' ? 'Обзор всего маршрута перед сохранением' : `Карта прогулок ${dogName}`}
+      />);
+
   const selectedPlacePanel=selectedSearchPoint&&<article className="map-place-panel" aria-label="Выбранное место" onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();closeSelectedPlace();}}}>
         <button type="button" className="place-back" onClick={closeSelectedPlace}>{placeOrigin==='library'?'К подборке':placeOrigin==='map'?'К местам':'К результатам'}</button>
         <h2>{selectedSearchPoint.title}</h2>
         {selectedSearchPoint.id.startsWith('point:')&&<label className="map-point-name">Название места<input value={selectedSearchPoint.title} maxLength={160} onChange={event=>setSelectedSearchPoint({...selectedSearchPoint,title:event.target.value})}/></label>}
         <p>{selectedSearchPoint.category}{selectedSearchPoint.detail?` · ${selectedSearchPoint.detail}`:''}{selectedSearchPoint.accuracyMeters?` · примерная область около ${selectedSearchPoint.accuracyMeters} м`:''}</p>
-        {selectedSearchPoint.kind==='organization'&&<p>{dogAccessLabel(selectedSearchPoint.dogAccess)}</p>}
+        {selectedSearchPoint.kind==='organization'&&<p>{!selectedSearchPoint.dogAccess || selectedSearchPoint.dogAccess==='unknown' ? 'условия с собакой неизвестны' : dogAccessLabel(selectedSearchPoint.dogAccess)}</p>}
         {selectedSearchPoint.pointIsCenter&&<p>Показан центр объекта. Вход не подтверждён — уточните точку перед прогулкой.</p>}
         {selectedSearchPoint.privateNote&&<p>Моя заметка: {selectedSearchPoint.privateNote}</p>}
         <div className="place-primary-actions">
@@ -790,7 +861,57 @@ export function ProductionMapWorkspace({
         </section>}
         <p className="place-data-source">{selectedSearchPoint.sourceUrl?.startsWith('https://www.openstreetmap.org/')?<a href={selectedSearchPoint.sourceUrl} target="_blank" rel="noopener noreferrer">Источник: OpenStreetMap</a>:selectedSearchPoint.kind==='organization'?'Источник: OpenStreetMap':'Сохранённая запись Псё'}</p>
       </article>;
-  return <section className={`production-map-workspace${routeFocused ? ' route-focus' : ''}`} data-production-map-workspace data-production-journey="map" data-route-flow={routeFlow}>
+  const exactWalkOpen = Boolean(savedRoutePreview || agentWalkPreview) || (['planning', 'plan-review'].includes(routeFlow) && !folded);
+  const exactBack = () => { if (savedRoutePreview) { setSavedRoutePreview(null); setWorkspaceTab('saved'); return; } exactSaveRequested.current = false; setExactSaving(false); setSavedRoutePreview(null); setAgentWalkPreview(null); foldRoute(); setWorkspaceTab('places'); };
+  if (!exactTools && mode !== 'risk' && (folded || ['idle', 'planning', 'plan-review'].includes(routeFlow))) {
+    if (workspaceTab === 'saved' && !exactWalkOpen) return <ExactPage active={active} viewKey="library" onBack={() => setWorkspaceTab('places')}>
+      <h1>Сохранённое</h1><p className="lead">Возвращайся к выбранному, не ищи заново.</p>
+      <h2>Прогулки</h2><div className="list">{recordedRoutes.length ? recordedRoutes.map(route => <ExactRow key={route.id} title={route.title} detail={route.planning ? `${route.planning.stops.length} остановки` : 'Записанная прогулка'} icon="map" onClick={() => { setSavedRoutePreview(route); setAgentWalkPreview(null); }} />) : <p className="empty">Здесь появится первая сохранённая прогулка.</p>}</div>
+      <button type="button" className="text-button" onClick={() => setWorkspaceTab('places')}>Выбрать места на карте</button>
+      <ExactRow title="Управлять подборками и маршрутами" icon="map" onClick={()=>setExactTools(true)} />
+      <h2>Места</h2>{libraryStore.state === 'loading' && <p className="empty" role="status">Загружаю места…</p>}
+      {libraryStore.error && <div className="error" role="alert">{libraryStore.error}<button type="button" className="text-button" onClick={() => void libraryStore.reload()}>Повторить</button></div>}
+      {exactSavedPlaces.length ? exactSavedPlaces.map(place => <ExactRow key={place.id} title={place.title} detail="Открыть на карте" icon="pin" onClick={() => { setWorkspaceTab('places'); chooseLibraryPlace(place); }} />) : libraryStore.state === 'ready' && <p className="empty">Место можно сохранить без создания маршрута.</p>}
+    </ExactPage>;
+    const shownStops = savedRoutePreview ? savedRoutePreview.planning?.stops || [] : agentWalkPreview?.stops || activeStops;
+    return <ExactPage active={active} viewKey={exactWalkOpen ? 'walk' : 'map'} onBack={exactWalkOpen ? exactBack : undefined}>
+      <section data-production-map-workspace data-route-flow={routeFlow}>
+      {exactWalkOpen ? <><h1>{savedRoutePreview?.title || agentWalkPreview?.title || 'Твоя прогулка'}</h1><p className="lead">{savedRoutePreview ? 'Можно вернуться к этому маршруту позже.' : 'Собери остановки на одной карте.'}</p></> : <>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><h1>Куда пойдём?</h1><button type="button" className="icon-button" aria-label="Сохранённое" onClick={() => setWorkspaceTab('saved')}><ExactIcon name="save" /></button></div>
+        <form className="search-inline" onSubmit={event => { event.preventDefault(); searchArea(); }}>
+          <label className="sr-only" htmlFor="production-map-search-input">Место или адрес</label><input id="production-map-search-input" type="search" role="combobox" aria-autocomplete="list" aria-expanded={Boolean(searchOpen && query)} aria-controls="exact-map-results" placeholder="Место или адрес" value={query} onChange={event => { setQuery(event.target.value); setSearchOpen(true); setSearchState('idle'); setRemoteSearchResults([]); }} />
+          <button type="submit" className="icon-button" aria-label="Найти место" disabled={query.trim().length < 2}><ExactIcon name="search" /></button>
+        </form>
+        {searchOpen && query && <div className="list" id="exact-map-results" role="listbox" aria-label="Результаты поиска">{searchResults.map(result => <button key={result.id} className="list-row" type="button" role="option" aria-selected={selectedSearchPoint?.id === result.id} onClick={event => chooseSearchResult(result, event.currentTarget)}><span className="grow"><strong>{result.title}</strong><small>{result.detail}</small></span><ExactIcon name="next" /></button>)}{searchState === 'loading' && <p role="status">Ищу места…</p>}{['error', 'quota'].includes(searchState) && <p className="error" role="alert">Не удалось обновить поиск. Повтори попытку — выбранные места не потеряны.</p>}{searchState === 'ready' && !searchResults.length && <p className="empty">Ничего не найдено. Попробуй другое название.</p>}</div>}
+      </>}
+      <div className={`map-canvas exact-live-map${mapExpanded && !exactWalkOpen ? ' big' : ''}`}>{liveMap}{!exactWalkOpen && <div className="map-controls"><button type="button" className="icon-button" aria-label={mapExpanded ? 'Уменьшить карту' : 'Развернуть карту'} aria-expanded={mapExpanded} onClick={() => setMapExpanded(value => !value)}><ExactIcon name="expand" /></button></div>}</div>
+      {exactWalkOpen ? <>
+        {shownStops.map((stop, index) => <div className="plan-stop" key={`${index}:${stop.placeId || stop.point.join(',')}`}><span className="selection-dot">{index + 1}</span><span className="grow">{stop.title || `Точка ${index + 1}`}</span>{!savedRoutePreview && !agentWalkPreview && <button type="button" className="icon-button" aria-label={`Убрать ${stop.title || `точку ${index + 1}`}`} disabled={exactSaving || savingDraft} onClick={() => editStops(activeStops.filter((_, i) => i !== index))}><ExactIcon name="close" /></button>}</div>)}
+        {!shownStops.length && <p className="empty">{savedRoutePreview ? 'Записанный путь показан на карте.' : 'Пока нет остановок. Выбери первое место на карте.'}</p>}
+        {savedRoutePreview ? <button type="button" className="text-button" onClick={() => { setSavedRoutePreview(null); setWorkspaceTab('saved'); }}>Все сохранённые прогулки</button> : agentWalkPreview ? <><button type="button" className="primary full" disabled={!canUseAgentWalk} onClick={useAgentWalk}>Использовать этот путь</button>{!canUseAgentWalk && <p className="hint">Сначала заверши текущий черновик. Он не заменён.</p>}</> : <>
+          <button type="button" className="text-button" disabled={exactSaving || savingDraft} onClick={exactBack}><ExactIcon name="plus" />Добавить место</button>
+          <form onSubmit={event => { event.preventDefault(); void saveExactWalk(); }}><div className="field"><label htmlFor="walk-name">Название прогулки</label><input id="walk-name" value={draftTitle} maxLength={160} disabled={exactSaving || savingDraft} onChange={event => onRestoreDraftText?.(event.target.value, draftNote, editingRouteId || undefined)} required /></div>
+            <p className="hint">{planningMode === 'walking' ? 'Путь по дорожкам OpenStreetMap. Условия прохода с собакой не проверены.' : 'Ручной путь между выбранными точками. Проходы не проверены.'}</p>
+            {(calculationError || saveError) && <p className="error" role="alert">{calculationError || saveError}</p>}
+            <button type="submit" className="primary full" disabled={shownStops.length < 2 || exactSaving || savingDraft}>{exactSaving || savingDraft ? 'Сохраняю…' : 'Сохранить прогулку'}</button>
+          </form>
+        </>}
+      </> : <>
+        {selectedSearchPoint && <article className="soft place-panel" aria-label="Выбранное место"><h2 className="place-title">{selectedSearchPoint.title}</h2><p className="place-meta">{selectedSearchPoint.category || 'Место'} · {!selectedSearchPoint.dogAccess || selectedSearchPoint.dogAccess==='unknown' ? 'условия с собакой неизвестны' : dogAccessLabel(selectedSearchPoint.dogAccess)}</p>
+          {selectedSearchPoint.accuracyMeters && <p className="hint">Примерная область. Для прогулки уточни точку на карте.</p>}
+          <div className="row-actions"><button type="button" className="secondary" disabled={libraryStore.state !== 'ready' || libraryStore.busy} onClick={toggleExactSavedPlace} aria-pressed={Boolean(selectedLibraryPlace && exactSavedIds.includes(selectedLibraryPlace.id))}>{libraryStore.busy ? 'Сохраняю…' : selectedLibraryPlace && exactSavedIds.includes(selectedLibraryPlace.id) ? <><ExactIcon name="check"/> Сохранено</> : 'Сохранить'}</button><button type="button" className="primary" disabled={!selectedSearchPoint.point || Boolean(selectedSearchPoint.accuracyMeters)} onClick={() => { const place = selectedSearchPoint; if (place.point) appendPlacesToWalk([{ point: [place.point.lng, place.point.lat], title: place.title, placeId: place.id }],true); }}>{exactStopIndex>=0?`В прогулке · ${exactStopIndex+1}`:'В прогулку'}</button></div>
+          {libraryStore.error && <p className="error" role="alert">{libraryStore.error}</p>}{savedPlaceNotice && <p className="hint" role="status">{savedPlaceNotice}</p>}
+        </article>}
+        {mapSelection && <button type="button" className="list-row" onClick={() => chooseSearchResult({ id: `point:${mapSelection.lat}:${mapSelection.lng}`, title: 'Место на карте', kind: 'place', point: mapSelection })}><ExactIcon name="pin" /><span className="grow">Выбрать эту точку</span></button>}
+        {activeStops.length > 0 && <ExactRow title={`Прогулка · ${activeStops.length} остановки`} onClick={() => { setWorkspaceTab('places'); resumeRoute(); }} />}
+        <h2>На этой карте</h2><div className="list">{visibleMapPlaces.map(place => <button key={place.id} type="button" className="list-row compact-row" aria-pressed={selectedSearchPoint?.id === place.id} onClick={event => chooseMapPlace(place, event.currentTarget)}><span className="selection-dot">{selectedSearchPoint?.id === place.id ? '✓' : <ExactIcon name="pin" />}</span><span className="grow"><strong>{place.title}</strong><small>{place.category || 'Место'}{place.detail ? ` · ${place.detail}` : ''}</small></span></button>)}{!visibleMapPlaces.length && <p className="empty">Найди место или выбери точку на карте.</p>}</div>
+      </>}
+      {!exactWalkOpen && <details><summary>Запись и настройки карты</summary><div className="list"><ExactRow title="Запись прогулки, GPX и слои" detail="GPS, ручной путь, подборки и предупреждения" icon="map" onClick={()=>setExactTools(true)} /></div></details>}
+      {(agentPlaces.length > 0 || agentWalkSelection || agentSavedRouteSelection) && onReturnToAssistant && <button type="button" className="text-button" onClick={onReturnToAssistant}>К разговору</button>}
+      </section>
+    </ExactPage>;
+  }
+  return <ExactPage active={active} viewKey="map-tools" onBack={()=>{setExactTools(false);foldRoute();onModeChange('view');}}><h1>Карта и прогулки</h1><div className="exact-extension"><section className={`production-map-workspace${routeFocused ? ' route-focus' : ''}`} data-production-map-workspace data-production-journey="map" data-route-flow={routeFlow}>
 <div className="map-workspace-tools">      {(!routeFocused || routeFlow === 'planning') && <>
         {!routeFocused && <header className="production-map-topbar">
           <button className="production-map-profile" type="button" onClick={onOpenProfile} aria-label={`Открыть профиль ${dogName}`}>
@@ -823,34 +944,7 @@ export function ProductionMapWorkspace({
 
       {searchRequest && !selectedSearchPoint && <div className="map-search-area"><span>Поиск в выбранной области · OpenStreetMap</span><button type="button" onClick={searchArea}>Искать в этой области</button></div>}      <div className="production-map-status" role="status" aria-live="polite">{actionNotice||locationStatus}</div></div>
     <section className="production-map-canvas" aria-label={`Карта прогулок ${dogName}`}>
-      <LiveMap
-        zones={zones.filter(z=>isRisk(z.type)?layers.risks:layers.places)}
-        features={[...features.filter(f=>f.type==='route'?layers.routes:isRisk(f.zone_type)?layers.risks:layers.places&&workspaceTab!=='saved'),...(layers.places?(workspaceTab==='saved'?collectionPlaces:libraryStore.library.places).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:p.accuracyMeters?'area' as const:'ownerPlace' as const,radiusMeters:p.accuracyMeters,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'private' as const})):[]),...(layers.places&&workspaceTab==='places'&&placeSearchActive?visibleMapPlaces.filter(p=>p.kind==='organization'&&!libraryStore.library.places.some(l=>l.id===p.id||l.source.id===p.id)).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:'ownerPlace' as const,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'public' as const})):[])]}
-        picked={candidate?{lng:candidate.point[0],lat:candidate.point[1]}:mapSelection||pickedPoint}
-        routePoints={savedRoutePreview?savedRoutePreview.path.coordinates:agentWalkPreview?agentWalkPreview.path:calculationState==='preview'&&walkResult?walkResult.path:routePoints}
-        routeStops={savedRoutePreview?savedRoutePreview.planning?.stops.map(s=>s.point)||[]:agentWalkPreview?agentWalkPreview.snaps.map(s=>s.point):routeFlow==='planning'||routeFlow==='plan-review'?activeStops.map(s=>s.point):[]}
-        routeStopIds={savedRoutePreview?savedRoutePreview.planning?.stops.map(s=>s.placeId)||[]:agentWalkPreview?agentWalkPreview.stops.map(s=>s.placeId):activeStops.map(s=>s.placeId)}
-        routeGaps={savedRoutePreview?savedRoutePreview.pathGaps:agentWalkPreview?[]:pathGaps}
-        onMapClick={agentWalkPreview||savedRoutePreview?undefined:mode === 'risk' ? onMapClick : routeFlow === 'planning' && !folded ? (event) => setCandidate({point:[event.latlng.lng,event.latlng.lat]}) : mode==='view'&&!routeFocused ? (event)=>{setMapSelection(event.latlng);setSelectedSearchPoint(null);} : undefined}
-        onCenterChange={setMapCenter}
-        onBoundsChange={setMapBounds}
-        searchBounds={workspaceTab==='saved'?null:searchRequest?.bounds}
-        filter="all"
-        selectedFeatureId={selectedLibraryPlace?.id||selectedSearchPoint?.id}
-        onSelectFeature={id=>{
-          if(routeFocused||agentWalkPreview||savedRoutePreview)return;
-          const found=visibleMapPlaces.find(p=>p.id===id);if(workspaceTab==='places'&&found){chooseMapPlace(found,document.querySelector<HTMLElement>(`.map-place-row[data-place-id="${CSS.escape(id)}"]`)||document.activeElement as HTMLElement);return;}
-          const place=libraryStore.library.places.find(p=>p.id===id);if(place){chooseLibraryPlace(place);return;}
-          const feature=features.find(f=>f.id===id);const zone=zones.find(z=>z.id===id);
-          if(feature)chooseSearchResult({id,title:feature.title,accuracyMeters:feature.type==='point'?Math.max(500,feature.radiusMeters||500):undefined,kind:feature.type==='route'?'route':'place',point:feature.type==='route'?routeStart(feature):{lat:Number(feature.lat),lng:Number(feature.lng)}});
-          else if(zone)chooseSearchResult({id,title:zone.title,accuracyMeters:Math.max(500,zone.radius_meters||zone.radiusMeters||500),detail:'Примерная область',privateNote:zone.note,kind:isRisk(zone.type)?'risk':'place',point:{lat:Number(zone.approximate_lat),lng:Number(zone.approximate_lng)}});
-        }}
-        userLocation={routeFlow === 'record-review' || routeFlow === 'plan-review' ? null : userLocation}
-        focusPoint={focusPoint}
-        searchPoint={selectedSearchPoint?.point && !selectedSearchPoint.accuracyMeters ? { ...selectedSearchPoint.point, title: selectedSearchPoint.title, detail: selectedSearchPoint.detail } : null}
-        fitDraftRoute={Boolean(savedRoutePreview)||Boolean(agentWalkPreview) || routeFlow === 'record-review' || routeFlow === 'plan-review'}
-        accessibleLabel={routeFlow === 'planning' ? 'Карта для построения маршрута. Перемещайте карту стрелками или коснитесь нужного места.' : routeFlow === 'recording' || routeFlow === 'paused' ? 'Карта записываемой прогулки' : routeFlow === 'record-review' || routeFlow === 'plan-review' ? 'Обзор всего маршрута перед сохранением' : `Карта прогулок ${dogName}`}
-      />
+      {liveMap}
       {routeFlow === 'planning' && !folded && <span className="production-map-center-pin" aria-hidden="true"><MapPin weight="fill" /></span>}
 
 
@@ -966,7 +1060,7 @@ export function ProductionMapWorkspace({
       <div hidden={Boolean(agentWalkPreview||savedRoutePreview)||workspaceTab!=='places'}><MapPlacesPanel places={layers.places?visibleMapPlaces:[]} selectedId={placeOrigin==='map'?selectedVisiblePlaceId:undefined} selectedContent={selectedPlacePanel} onChoose={chooseMapPlace} loading={libraryStore.state==='loading'||(placeSearchActive&&searchState==='loading')} error={libraryStore.error||(placeSearchActive&&['error','quota'].includes(searchState)?'Не удалось обновить поиск. Сохранённые места не изменились.':undefined)} onRetry={()=>{libraryStore.reload();if(placeSearchActive&&!agentPlaces.length)searchArea();}} hiddenCount={hiddenPlaceCount} onShowAll={showAllMapPlaces} inRoute={new Set(activeStops.flatMap(s=>s.placeId?[s.placeId]:[]))} savedIds={new Set(libraryStore.library.places.flatMap(p=>[p.id,p.source.id]))} searching={placeSearchActive}/>{!layers.places&&<button type="button" onClick={()=>setLayers(v=>({...v,places:true}))}>Показать слой мест</button>}</div>
       <div hidden={Boolean(agentWalkPreview||savedRoutePreview)||workspaceTab!=='walks'}>
       <section className="production-route-launch" aria-label="Прогулки и маршруты">
-        <button type="button" className="production-route-start" data-route-action="start" onClick={startWalk}><NavigationArrow weight="fill" aria-hidden="true" /><span>Начать прогулку</span></button>
+        <button type="button" className="production-route-start" data-route-action="start" onClick={startWalk}><NavigationArrow weight="regular" aria-hidden="true" /><span>Начать прогулку</span></button>
         <button type="button" className="production-route-plan" data-route-action="plan" onClick={startPlanning}><PencilSimple weight="regular" aria-hidden="true" /><span>Маршрут</span></button>
         <button type="button" className="production-route-risk" data-route-action="risk" onClick={startRisk}><ShieldWarning weight="regular" aria-hidden="true" /><span>Опасность</span></button>
       </section>
@@ -989,5 +1083,5 @@ export function ProductionMapWorkspace({
       </div>
     </section>}
     </div>
-  </section>;
+  </section></div></ExactPage>;
 }

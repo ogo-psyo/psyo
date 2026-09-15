@@ -1,3 +1,4 @@
+import {principalsAgree} from '@/lib/socialCore';
 import { NextResponse } from 'next/server';
 import { getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
@@ -13,6 +14,7 @@ export async function POST(request: Request, ctx: Ctx) {
   const body = await request.json().catch(() => ({}));
   const auth = await getRequestAuth(request);
   const session = getAppSessionFromRequest(request);
+  if(!principalsAgree({bearerOwnerId:auth.user?.id,sessionOwnerId:session?.ownerId}))return Response.json({error:"AUTH_REQUIRED"},{status:401});
   const supabase = getSupabaseAdmin();
   const ownerId = auth.user?.id ?? session?.ownerId;
   if (!ownerId || !supabase) return careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401);

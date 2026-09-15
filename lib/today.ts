@@ -1,7 +1,9 @@
+import {reminderTiming,type ReminderTimeMode} from './reminder';
 export type CareReminderInput = {
   id: string;
   title: string;
   dueAt: string;
+  timeMode?:ReminderTimeMode;
   status: string;
   snoozedUntil?: string;
   completedAt?: string;
@@ -64,8 +66,8 @@ export function buildTodayCareView(
     detail: state === 'overdue'
       ? 'Срок прошёл. Закрой дело или перенеси его в Плане.'
       : state === 'today'
-        ? 'Запланировано на сегодня.'
-        : `Следующее дело: ${new Date(due).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}.`,
+        ? reminderTiming(next)
+        : reminderTiming(next),
     actionLabel: 'Готово',
     target: 'calendar',
   };

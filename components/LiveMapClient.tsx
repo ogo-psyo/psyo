@@ -6,6 +6,7 @@ import type { LiveMapProps, MapFeature } from './LiveMap';
 import { OpenFreeMapLayer } from './OpenFreeMapLayer';
 import 'leaflet/dist/leaflet.css';
 import {divIcon} from 'leaflet';
+import {exactIconPaths} from './exact/icons';
 import {clusterPoints} from '@/lib/mapClusters';
 import { splitRoute } from '@/lib/routeGeometry';
 
@@ -167,19 +168,23 @@ function MapViewport({ zones, features, userLocation, focusPoint, routePoints, f
   return null;
 }
 
-function FeaturePointMarkers({features,selectedId,onSelect}:{features:MapFeature[];selectedId?:string|null;onSelect?:(id:string)=>void}) {
+function exactMapIcon(selected = false, number?: number) {
+ return divIcon({className:`exact-map-pin${selected?' selected':''}`,html:`<span>${number ?? `<svg viewBox="0 0 24 24" aria-hidden="true">${exactIconPaths.pin}</svg>`}</span>`,iconSize:[39,39],iconAnchor:[19.5,19.5]});
+}
+function FeaturePointMarkers({features,selectedId,onSelect,exact=false}:{features:MapFeature[];selectedId?:string|null;onSelect?:(id:string)=>void;exact?:boolean}) {
  const map=useMap();const [zoom,setZoom]=useState(map.getZoom());useMapEvents({zoomend:()=>setZoom(map.getZoom())});
  const points=features.filter(f=>f.type==='point'&&f.pointKind==='ownerPlace'&&toNumber(f.lat)!==null&&toNumber(f.lng)!==null);
  const clusters=clusterPoints(points,f=>map.project([Number(f.lat),Number(f.lng)],zoom),56,selectedId);
  return <>{clusters.map(group=>{
   const center:[number,number]=[group.reduce((sum,f)=>sum+Number(f.lat),0)/group.length,group.reduce((sum,f)=>sum+Number(f.lng),0)/group.length];
-  if(group.length>1)return <Marker key={group.map(f=>f.id).join(':')} position={center} title={`Мест: ${group.length}. Приблизить`} icon={divIcon({className:'pso-map-cluster',html:`<span>${group.length}</span>`,iconSize:[44,44]})} eventHandlers={{click:()=>map.setView(center,Math.min(zoom+2,map.getMaxZoom()),{animate:!reducedMotion()})}}><Popup>{group.map(f=><button type="button" key={f.id} onClick={()=>onSelect?.(f.id)}>{f.title}</button>)}</Popup></Marker>;
+  if(group.length>1)return <Marker key={group.map(f=>f.id).join(':')} position={center} title={`Мест: ${group.length}. Приблизить`} icon={exact ? exactMapIcon(false,group.length) : divIcon({className:'pso-map-cluster',html:`<span>${group.length}</span>`,iconSize:[44,44]})} eventHandlers={{click:()=>map.setView(center,Math.min(zoom+2,map.getMaxZoom()),{animate:!reducedMotion()})}}><Popup>{group.map(f=><button type="button" key={f.id} onClick={()=>onSelect?.(f.id)}>{f.title}</button>)}</Popup></Marker>;
   const f=group[0];const symbol=/clinic|ветклиник/.test(f.zone_type||'')?'+':/shop|магазин/.test(f.zone_type||'')?'▣':/park|парк/.test(f.zone_type||'')?'♧':'●';
-  return <Marker key={f.id} position={center} title={`${f.title} · ${f.zone_type||'место'}`} icon={divIcon({className:`pso-map-marker${selectedId===f.id?' selected':''}`,html:`<span>${symbol}</span>`,iconSize:[44,44]})} eventHandlers={{click:()=>onSelect?.(f.id)}}>{!onSelect&&<Popup><b>{f.title}</b><br/>{f.zone_type||'место'}</Popup>}</Marker>;
+  return <Marker key={f.id} position={center} title={`${f.title} · ${f.zone_type||'место'}`} icon={exact ? exactMapIcon(selectedId===f.id) : divIcon({className:`pso-map-marker${selectedId===f.id?' selected':''}`,html:`<span>${symbol}</span>`,iconSize:[44,44]})} eventHandlers={{click:()=>onSelect?.(f.id)}}>{!onSelect&&<Popup><b>{f.title}</b><br/>{f.zone_type||'место'}</Popup>}</Marker>;
  })}</>;
 }
 
 export function LiveMapClient({
+  appearance = 'default',
   zones = [],
   features = [],
   picked,
@@ -218,7 +223,7 @@ export function LiveMapClient({
 
   return (
     <div className="live-map-frame">
-      <MapContainer center={defaultCenter} zoom={12} className="live-map" zoomControl attributionControl={false} aria-label={accessibleLabel}>
+      <MapContainer center={defaultCenter} zoom={12} className="live-map" zoomControl={appearance!=='exact'} attributionControl={false} aria-label={accessibleLabel}>
         <MapAccessibility label={accessibleLabel} />
         <AttributionControl prefix={false} />
         <OpenFreeMapLayer key={tileRevision} onLoad={() => { setTilesReady(true); setTilesFailed(false); }} onError={() => { setTilesReady(false); setTilesFailed(true); }} />
@@ -231,7 +236,8 @@ export function LiveMapClient({
           <CircleMarker center={[userLocation.lat, userLocation.lng]} radius={8} pathOptions={{ color: '#fafffb', fillColor: '#347dcc', fillOpacity: 1, weight: 3 }}><Popup>Вы здесь</Popup></CircleMarker>
         </>}
 
-        {searchPoint && (
+        {searchPoint && appearance==='exact' && !mappedFeatures.some(feature=>feature.id===selectedFeatureId) && <Marker position={[searchPoint.lat,searchPoint.lng]} title={searchPoint.title} icon={exactMapIcon(true)} />}
+        {searchPoint && appearance!=='exact' && (
           <CircleMarker center={[searchPoint.lat, searchPoint.lng]} radius={10} pathOptions={{ color: '#f7f6f0', fillColor: '#347dcc', fillOpacity: 1, weight: 4 }}>
             <Popup><b>{searchPoint.title}</b>{searchPoint.detail ? <><br />{searchPoint.detail}</> : null}</Popup>
           </CircleMarker>
@@ -257,7 +263,7 @@ export function LiveMapClient({
         );
         })}
 
-        <FeaturePointMarkers features={mappedFeatures} selectedId={selectedFeatureId} onSelect={onSelectFeature} />
+        <FeaturePointMarkers exact={appearance==='exact'} features={mappedFeatures} selectedId={selectedFeatureId} onSelect={onSelectFeature} />
         {mappedFeatures.map((feat) => {
         if(feat.type==='point'&&feat.pointKind!=='ownerPlace'&&toNumber(feat.lat)!==null&&toNumber(feat.lng)!==null){
           const color=zoneColor(feat.zone_type||'safe_place');
@@ -271,7 +277,7 @@ export function LiveMapClient({
               key={feat.id}
               positions={splitRoute(positions, feat.pathGaps) as [number,number][][]}
               eventHandlers={{click:()=>onSelectFeature?.(feat.id)}}
-              pathOptions={{ color: feat.visibility === 'public' ? '#2d78bd' : '#4a8aca', weight: selectedFeatureId===feat.id?6:4 }}
+              pathOptions={{ color: appearance==='exact' ? '#9580b4' : feat.visibility === 'public' ? '#2d78bd' : '#4a8aca', weight: selectedFeatureId===feat.id?6:4 }}
             >
               <Popup>
                 <b>{feat.title}</b>
@@ -285,7 +291,7 @@ export function LiveMapClient({
         return null;
         })}
 
-        {routeStops.map((p,i)=><Marker key={`stop-${i}`} position={[p[1],p[0]]} title={`Остановка ${i+1}`} zIndexOffset={800} icon={divIcon({className:'pso-route-stop-marker',html:`<span>${i+1}</span>`,iconSize:[32,32],iconAnchor:[16,16]})} eventHandlers={{click:()=>{const id=routeStopIds[i];if(id)onSelectFeature?.(id);}}} />)}
+        {routeStops.map((p,i)=><Marker key={`stop-${i}`} position={[p[1],p[0]]} title={`Остановка ${i+1}`} zIndexOffset={800} icon={appearance==='exact' ? exactMapIcon(false,i+1) : divIcon({className:'pso-route-stop-marker',html:`<span>${i+1}</span>`,iconSize:[32,32],iconAnchor:[16,16]})} eventHandlers={{click:()=>{const id=routeStopIds[i];if(id)onSelectFeature?.(id);}}} />)}
         {draftPositions.length > 1 && (
           <Polyline positions={splitRoute(draftPositions, routeGaps) as [number,number][][]} pathOptions={{ className: 'pso-active-route-path', color: '#398cce', weight: 5 }}>
             <Popup>Новый маршрут</Popup>
