@@ -1,0 +1,108 @@
+{
+  "pass": true,
+  "scope": "Real app UI, deterministic API and basemap fixtures; no production writes",
+  "writes": [
+    {
+      "body": {
+        "type": "route",
+        "title": "Проверочный маршрут",
+        "petId": "11111111-1111-4111-8111-111111111111",
+        "path": [
+          [
+            37.58938,
+            55.74555
+          ],
+          [
+            37.62714,
+            55.74555
+          ]
+        ],
+        "visibility": "private",
+        "description": null,
+        "routeSource": "planned",
+        "planning": {
+          "version": 1,
+          "mode": "walking",
+          "stops": [
+            {
+              "point": [
+                37.58938,
+                55.74555
+              ]
+            },
+            {
+              "point": [
+                37.62714,
+                55.74555
+              ]
+            }
+          ],
+          "stairs": false,
+          "estimatedMinutes": 7
+        },
+        "pathGaps": [],
+        "durationSeconds": 0,
+        "distanceMeters": 2363
+      },
+      "key": "7934074a-e8b8-44ef-9f03-8f5b0349eb7f"
+    },
+    {
+      "body": {
+        "type": "route",
+        "title": "Проверочный маршрут",
+        "petId": "11111111-1111-4111-8111-111111111111",
+        "path": [
+          [
+            37.58938,
+            55.74555
+          ],
+          [
+            37.62714,
+            55.74555
+          ]
+        ],
+        "visibility": "private",
+        "description": null,
+        "routeSource": "planned",
+        "planning": {
+          "version": 1,
+          "mode": "walking",
+          "stops": [
+            {
+              "point": [
+                37.58938,
+                55.74555
+              ]
+            },
+            {
+              "point": [
+                37.62714,
+                55.74555
+              ]
+            }
+          ],
+          "stairs": false,
+          "estimatedMinutes": 7
+        },
+        "pathGaps": [],
+        "durationSeconds": 0,
+        "distanceMeters": 2363
+      },
+      "key": "7934074a-e8b8-44ef-9f03-8f5b0349eb7f"
+    }
+  ],
+  "zones": [
+    {
+      "petId": "11111111-1111-4111-8111-111111111111",
+      "title": "Стекло у дорожки",
+      "type": "risk_zone",
+      "note": null,
+      "radiusMeters": 500,
+      "approximateLat": 55.74268,
+      "approximateLng": 37.59882,
+      "id": "zone-created",
+      "created_at": "2026-09-15T10:32:22.286Z"
+    }
+  ],
+  "errors": []
+}

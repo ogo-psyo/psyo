@@ -25,6 +25,7 @@ const blankProfile: Omit<SocialProfile, 'petId'> = {
 
 export function SocialProfileSheet({
   dogName,
+  embedded = false,
   petId,
   profile,
   busy,
@@ -34,6 +35,7 @@ export function SocialProfileSheet({
   onLocate,
 }: {
   dogName: string;
+  embedded?: boolean;
   petId?: string;
   profile: SocialProfile | null;
   busy: boolean;
@@ -51,7 +53,7 @@ export function SocialProfileSheet({
   } : blankProfile);
 
   const dirtyRef = useRef(false);
-  const hydratedRef = useRef(false);
+  const [hydrated, setHydrated] = useState(false);
   const storageKey = `pso.gav.profile-draft.v1:${petId || profile?.petId || 'guest'}`;
   const [result, setResult] = useState('');
   useEffect(() => {
@@ -64,15 +66,15 @@ export function SocialProfileSheet({
         }
       }
     } catch { /* The form remains usable when session storage is unavailable. */ }
-    hydratedRef.current = true;
+    setHydrated(true);
   }, [storageKey]);
   useEffect(() => {
     if (!dirtyRef.current && profile) setDraft({ ...profile });
   }, [profile]);
   useEffect(() => {
-    if (!hydratedRef.current || !dirtyRef.current) return;
+    if (!hydrated || !dirtyRef.current) return;
     try { sessionStorage.setItem(storageKey, JSON.stringify(draft)); } catch { /* Keep the live draft. */ }
-  }, [draft, storageKey]);
+  }, [draft, storageKey, hydrated]);
   async function save(discoverable: boolean) {
     setResult('');
     const confirmed = await onSave({ ...draft, discoverable });
@@ -98,7 +100,7 @@ export function SocialProfileSheet({
     <section onChangeCapture={() => { dirtyRef.current = true; setResult(''); }} className="social-profile-sheet" aria-labelledby="social-profile-title">
       <div className="social-section-heading">
         <div>
-          <h3 id="social-profile-title">Анкета {dogName}</h3>
+          <h3 id="social-profile-title" className={embedded ? 'sr-only' : undefined}>Анкета {dogName}</h3>
           <p>Она появится в поиске только после твоего решения.</p>
         </div>
         <span className={profile?.discoverable ? 'social-state-on' : 'social-state-off'}>
@@ -106,7 +108,7 @@ export function SocialProfileSheet({
         </span>
       </div>
 
-      <div className="social-form-grid">
+      <fieldset disabled={busy} className="social-profile-fields"><div className="social-form-grid">
         <label>
           Город
           <select
@@ -162,13 +164,14 @@ export function SocialProfileSheet({
           disabled={busy || !canPublish}
           onClick={() => save(true)}
         >
-          {busy ? 'Сохраняю…' : profile?.discoverable ? 'Сохранить опубликованную' : 'Опубликовать анкету'}
+          {busy ? 'Сохраняю…' : profile?.discoverable ? 'Сохранить изменения' : 'Опубликовать анкету'}
         </button>
-        <button className="secondary" type="button" disabled={busy} onClick={() => save(false)}>Сохранить скрытой</button>
+        {!profile?.discoverable && <button className="secondary" type="button" disabled={busy} onClick={() => save(false)}>Сохранить без публикации</button>}
         {profile?.discoverable && (
           <button className="secondary" type="button" disabled={busy} onClick={onHide}>Скрыть анкету</button>
         )}
       </div>
+      </fieldset>
       {result && <p role="status">{result}</p>}
       {!canPublish && <p className="social-inline-hint">Выбери хотя бы один сценарий.</p>}
     </section>

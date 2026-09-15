@@ -18,6 +18,11 @@ function Viewport({ viewerLocation, selectedId, signals }: Pick<WoofLiveMapProps
   const positionedFor = useRef<string|null>(null);
   const selection = useRef<string|null>(selectedId);
   useEffect(() => {
+    const observer = new ResizeObserver(() => map.invalidateSize({ animate: false, pan: false }));
+    observer.observe(map.getContainer());
+    return () => observer.disconnect();
+  }, [map]);
+  useEffect(() => {
     if (!viewerLocation) return;
     const area = `${viewerLocation.lat}:${viewerLocation.lng}`;
     if (positionedFor.current === area) return;
