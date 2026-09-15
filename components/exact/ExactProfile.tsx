@@ -2,7 +2,7 @@
 
 import { useState, type ComponentProps } from 'react';
 import type { ProfileMemoryWorkspace } from '@/components/profile/ProfileMemoryWorkspace';
-import { breedCatalog, type DogProfile } from '@/lib/data';
+import { breedCatalog, lifeStageOptions, type DogProfile } from '@/lib/data';
 import { inflectPetName } from '@/lib/copy';
 import { ExactIcon, ExactPage, ExactRow } from './ExactShell';
 import { ExactMemory } from './ExactMemory';
@@ -37,7 +37,8 @@ export function ExactProfile(props: Props) {
     <h1>О {inflectPetName(profile.dogName, 'loct')}</h1>
     <form onSubmit={async event => { event.preventDefault(); if (saving) return; setSaving(true); try { const id = await props.onSaveProfile(draft); if (id) { props.onDraft(null); back(); } } finally { setSaving(false); } }}>
       <fieldset disabled={saving}>
-        <div className="field"><label htmlFor="dog-age">Возраст</label><input id="dog-age" value={draft.age} onChange={event => update({ age: event.target.value })} maxLength={80} /></div>
+        <div className="field"><label htmlFor="exact-profile-dogName">Имя</label><input id="exact-profile-dogName" value={draft.dogName} required maxLength={80} autoComplete="off" onChange={event => update({dogName:event.target.value})} /></div>
+        <div className="field"><label htmlFor="dog-age">Возраст</label><input id="dog-age" list="exact-age-options" value={draft.age || draft.lifeStage} placeholder="Например, 3 года или щенок" onChange={event => { const age=event.target.value; update({ age, ...(lifeStageOptions.includes(age.toLocaleLowerCase('ru')) ? {lifeStage:age.toLocaleLowerCase('ru')} : !age ? {lifeStage:''} : {}) }); }} maxLength={80} /><datalist id="exact-age-options">{lifeStageOptions.map(age => <option key={age} value={age} />)}</datalist></div>
         <div className="field"><label htmlFor="exact-breed">Порода</label><input id="exact-breed" list="exact-breeds" value={draft.breedId === 'custom' ? draft.breedCustom : breedCatalog.find(item => item.id === draft.breedId)?.title || props.breedLabel} onChange={event => {
           const match = breedCatalog.find(item => item.title.toLocaleLowerCase('ru') === event.target.value.toLocaleLowerCase('ru'));
           update(match ? { breedId: match.id, breedGroupId: match.groupId, breedCustom: '' } : { breedId: 'custom', breedCustom: event.target.value });
@@ -64,7 +65,7 @@ export function ExactProfile(props: Props) {
     {props.error && <p className="error" role="alert">{props.error}</p>}
   </ExactPage>;
   return <ExactPage viewKey="profile">
-    <div className="profile-top"><button type="button" className="initial" aria-label="Изменить образ собаки" onClick={() => props.onView('identity')}>{props.imageUrl ? <img className="exact-profile-initial" src={props.imageUrl} alt="" /> : profile.dogName.charAt(0)}</button><div><h1>{profile.dogName}</h1><p>{[profile.age, props.breedLabel].filter(Boolean).join(' · ')}</p></div></div>
+    <div className="profile-top"><button type="button" className="initial" aria-label="Изменить образ собаки" onClick={() => props.onView('identity')}>{props.imageUrl ? <img className="exact-profile-initial" src={props.imageUrl} alt="" /> : profile.dogName.charAt(0)}</button><div><h1>{profile.dogName}</h1><p>{[profile.age || profile.lifeStage, props.breedLabel].filter(Boolean).join(' · ')}</p></div></div>
     <button type="button" className="text-button" onClick={() => { if (!props.draft) props.onDraft({ ...profile }); props.onView('editprofile'); }}>Изменить сведения</button>
     <div className="list section-gap">
       <ExactRow title={`История ${inflectPetName(profile.dogName, 'gent')}`} detail="Записи, которые можно найти снова" icon="book" onClick={props.onOpenHealth} />

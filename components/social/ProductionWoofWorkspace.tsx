@@ -1,5 +1,6 @@
 'use client';
 
+import { inflectPetName } from '@/lib/copy';
 import { ExactIcon, ExactPage, ExactRow } from '@/components/exact/ExactShell';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Check, ClockCountdown, Crosshair, Funnel, PawPrint, ShieldCheck, UsersThree, X } from '@phosphor-icons/react';
@@ -141,7 +142,7 @@ export function ProductionWoofWorkspace(props: Props) {
   const [livePace, setLivePace] = useState<'all' | WalkPace>('all');
   const [meetRadius, setMeetRadius] = useState<'5' | '10' | '15' | 'city'>('city');
   const [meetScenario, setMeetScenario] = useState<'all' | SocialScenario>('all');
-  const [meetLifeStage, setMeetLifeStage] = useState<'all' | 'puppy' | 'adult' | 'senior'>('all');
+  const [meetLifeStage, setMeetLifeStage] = useState<'all' | 'puppy' | 'junior' | 'adult' | 'mature' | 'senior'>('all');
   const [meetEnergy, setMeetEnergy] = useState<'all' | 'calm' | 'balanced' | 'active'>('all');
   const [pace, setPace] = useState<WalkPace>('balanced');
   const [when, setWhen] = useState<'now' | 'later'>('now');
@@ -167,7 +168,7 @@ export function ProductionWoofWorkspace(props: Props) {
         if (['all','calm','balanced','active'].includes(v.livePace)) setLivePace(v.livePace);
         if (['5','10','15','city'].includes(v.meetRadius)) setMeetRadius(v.meetRadius);
         if (['all','meet','walk','socialize','mating'].includes(v.meetScenario)) setMeetScenario(v.meetScenario);
-        if (['all','puppy','adult','senior'].includes(v.meetLifeStage)) setMeetLifeStage(v.meetLifeStage);
+        if (['all','puppy','junior','adult','mature','senior'].includes(v.meetLifeStage)) setMeetLifeStage(v.meetLifeStage);
         if (['all','calm','balanced','active'].includes(v.meetEnergy)) setMeetEnergy(v.meetEnergy);
         if (typeof v.note==='string') setNote(v.note);
         if(typeof v.browsedCandidateId==='string')setBrowsedCandidateId(v.browsedCandidateId);
@@ -186,7 +187,6 @@ export function ProductionWoofWorkspace(props: Props) {
   const composerTriggerRef = useRef<HTMLButtonElement | null>(null);
   const rootRef = useRef<HTMLElement | null>(null);
   const composerRef = useRef<HTMLElement | null>(null);
-  const profileOverlayRef = useRef<HTMLDivElement | null>(null);
   const candidateOverlayRef = useRef<HTMLDivElement | null>(null);
   const requestsOverlayRef = useRef<HTMLDivElement | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
@@ -209,8 +209,11 @@ export function ProductionWoofWorkspace(props: Props) {
       || (meetRadius === '10' && (candidate.distance === 'до 5 км' || candidate.distance === '5–10 км'))
       || (meetRadius === '5' && candidate.distance === 'до 5 км');
     const matchesScenario = meetScenario === 'all' || candidate.sharedScenarios.includes(meetScenario);
-    const matchesLifeStage = meetLifeStage === 'all' || candidate.lifeStage === meetLifeStage;
-    const matchesEnergy = meetEnergy === 'all' || candidate.energyLevel === meetEnergy;
+    // Profiles persist Russian trait values; older profiles can contain enum codes.
+    const lifeStage = ({щенок:'puppy',юниор:'junior',взрослый:'adult',взрослая:'adult',зрелый:'mature',сеньор:'senior'} as Record<string,string>)[candidate.lifeStage || ''] || candidate.lifeStage;
+    const energy = ({диванный:'calm',спокойный:'calm',средний:'balanced',активный:'active',ракета:'active'} as Record<string,string>)[candidate.energyLevel || ''] || candidate.energyLevel;
+    const matchesLifeStage = meetLifeStage === 'all' || lifeStage === meetLifeStage;
+    const matchesEnergy = meetEnergy === 'all' || energy === meetEnergy;
     return insideRadius && matchesScenario && matchesLifeStage && matchesEnergy;
   }), [allCandidates, meetEnergy, meetLifeStage, meetRadius, meetScenario]);
   const filteredLiveSignals = useMemo(() => {
@@ -302,11 +305,10 @@ export function ProductionWoofWorkspace(props: Props) {
   }
 
   useEffect(() => {
-    if (!activeModal) return;
+    if (!activeModal || activeModal === 'profile') return;
     if(document.activeElement instanceof HTMLElement && rootRef.current?.contains(document.activeElement) && document.activeElement !== document.body) restoreFocusRef.current = document.activeElement;
     const dialog = activeModal === 'composer' ? composerRef.current
-      : activeModal === 'profile' ? profileOverlayRef.current
-        : activeModal === 'candidate' ? candidateOverlayRef.current
+      : activeModal === 'candidate' ? candidateOverlayRef.current
           : requestsOverlayRef.current;
     if (!dialog) return;
     const siblings = Array.from(rootRef.current?.children || []).filter((child) => child !== dialog);
@@ -377,6 +379,19 @@ export function ProductionWoofWorkspace(props: Props) {
     {areaResults.map(result=><button type="button" key={result.id} onClick={()=>{props.onChooseViewerLocation(result.point);signalDraftRef.current=null;setLocation(result.point);setManualArea(false);}}>{result.title}{result.detail?` · ${result.detail}`:''}</button>)}
   </section>;
 
+  if (profileEditor) return <ExactPage viewKey="gav-profile" onBack={closeActiveModal}>
+    <h1>Моя анкета</h1><p className="lead">Для знакомства с другими собаками. Основные сведения берутся из профиля {inflectPetName(props.dogName,'gent')}.</p>
+    <div className="exact-extension"><SocialProfileSheet embedded petId={props.petId} dogName={props.dogName} profile={props.profile} busy={props.busyId==='profile'} locating={props.locating} onSave={async draft => { const saved=await props.onSaveProfile(draft); if(saved) closeActiveModal(); return saved; }} onHide={props.onHideProfile} onLocate={props.onLocateProfile}/></div>
+    {props.error && <p className="error" role="alert">{props.error}</p>}
+  </ExactPage>;
+  if (filtersOpen && mode==='meet') return <ExactPage viewKey="gav-filters" onBack={() => setFiltersOpen(false)}>
+    <h1>Кого искать</h1><p className="lead">Выбери, с кем хочется познакомиться. Можно оставить любые параметры.</p>
+    <div className="field"><label htmlFor="gav-radius">Расстояние</label><select id="gav-radius" value={meetRadius} onChange={event=>setMeetRadius(event.target.value as typeof meetRadius)}><option value="5">До 5 км</option><option value="10">До 10 км</option><option value="15">До 15 км</option><option value="city">Весь город</option></select></div>
+    <div className="field"><label htmlFor="gav-scenario">Для чего</label><select id="gav-scenario" value={meetScenario} onChange={event=>setMeetScenario(event.target.value as typeof meetScenario)}><option value="all">Любой повод</option><option value="meet">Знакомство</option><option value="walk">Прогулка</option><option value="socialize">Социализация</option><option value="mating">Случка</option></select></div>
+    <div className="field"><label htmlFor="gav-age">Возраст</label><select id="gav-age" value={meetLifeStage} onChange={event=>setMeetLifeStage(event.target.value as typeof meetLifeStage)}><option value="all">Любой</option><option value="puppy">Щенок</option><option value="junior">Юниор</option><option value="adult">Взрослая собака</option><option value="mature">Зрелая собака</option><option value="senior">Старшая собака</option></select></div>
+    <div className="field"><label htmlFor="gav-energy">Ритм</label><select id="gav-energy" value={meetEnergy} onChange={event=>setMeetEnergy(event.target.value as typeof meetEnergy)}><option value="all">Любой</option><option value="calm">Спокойный</option><option value="balanced">Уравновешенный</option><option value="active">Активный</option></select></div>
+    <button type="button" className="primary full" onClick={()=>setFiltersOpen(false)}>Показать анкеты · {filteredCandidates.length}</button><button type="button" className="text-button" onClick={()=>{setMeetRadius('city');setMeetScenario('all');setMeetLifeStage('all');setMeetEnergy('all');}}>Сбросить фильтры</button>
+  </ExactPage>;
   if (mode === 'meet' && !profileEditor && !manualArea && !filtersOpen && !signalComposer && !props.invite) {
     const goFeed = () => { setRequestsOpen(false); setSelectedRequestId(null); setAwaitingPartner(null); setExactMeeting(false); };
     const goConnections = () => { setRequestsOpen(true); setSelectedRequestId(null); setAwaitingPartner(null); setExactMeeting(false); };
@@ -404,25 +419,25 @@ export function ProductionWoofWorkspace(props: Props) {
         <button type="button" className="text-button" onClick={goFeed}>Посмотреть собак</button>
       </ExactPage>;
     }
-    const candidateIndex = Math.max(0, allCandidates.findIndex(item => item.petId === browsedCandidateId));
-    const candidate = allCandidates[candidateIndex];
-    const nextDog = (step = 1) => { if (exactRequestLock.current || !allCandidates.length) return; setBrowsedCandidateId(allCandidates[(candidateIndex + step + allCandidates.length) % allCandidates.length].petId); setExactRequestError(''); };
+    const candidateIndex = Math.max(0, filteredCandidates.findIndex(item => item.petId === browsedCandidateId));
+    const candidate = filteredCandidates[candidateIndex];
+    const nextDog = (step = 1) => { if (exactRequestLock.current || !filteredCandidates.length) return; setBrowsedCandidateId(filteredCandidates[(candidateIndex + step + filteredCandidates.length) % filteredCandidates.length].petId); setExactRequestError(''); };
     return <ExactPage viewKey="gav"><section ref={rootRef}>
       <div className="gav-heading"><h1>С кем гулять?</h1><button type="button" className="icon-button" aria-label="Знакомства" onClick={goConnections}><ExactIcon name="gav" /></button></div>
       <p className="lead">{props.profile?.district || candidate?.district || 'Выбери район'} · {props.viewerRadiusKm} км <button type="button" className="text-button" onClick={() => setManualArea(true)}>Изменить</button></p>
       <div className="chips" style={{ marginTop: 0 }}><button type="button" className="chip active" aria-pressed="true">Знакомства</button><button type="button" className="chip" onClick={() => setMode('live')}>Гуляют сейчас</button></div>
       {candidate ? <>
         <div className="exact-dog-photo" onPointerDown={event => { swipeOrigin.current = { x: event.clientX, y: event.clientY }; }} onPointerCancel={() => { swipeOrigin.current = null; }} onPointerUp={event => { const start = swipeOrigin.current; swipeOrigin.current = null; if (!start) return; const dx = event.clientX - start.x, dy = event.clientY - start.y; if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) nextDog(dx < 0 ? 1 : -1); }}><CandidatePhoto src={candidate.avatarUrl} name={candidate.name} /></div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h2 className="dog-identity">{candidate.name}</h2><button type="button" className="icon-button" aria-label="Следующая собака" disabled={allCandidates.length < 2 || Boolean(props.busyId)} onClick={() => nextDog()}><ExactIcon name="next" /></button></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h2 className="dog-identity">{candidate.name}</h2><button type="button" className="icon-button" aria-label="Следующая собака" disabled={filteredCandidates.length < 2 || Boolean(props.busyId)} onClick={() => nextDog()}><ExactIcon name="next" /></button></div>
         <p className="meta">{[readable(candidate.lifeStage), candidate.weightKg ? `${candidate.weightKg} кг` : '', candidate.distance].filter(Boolean).join(' · ')}</p>
         <div className="gav-cta"><button type="button" className="primary full" disabled={Boolean(props.busyId) || Boolean(props.accessMessage)} onClick={async () => {
           if (exactRequestLock.current) return; exactRequestLock.current = true; setExactRequestError('');
-          try { await respond(candidate.petId, candidate.sharedScenarios[0] || 'meet'); } catch { setExactRequestError('Отклик не подтверждён. Повтори попытку.'); } finally { exactRequestLock.current = false; }
+          try { await respond(candidate.petId, meetScenario !== 'all' ? meetScenario : candidate.sharedScenarios[0] || 'meet'); } catch { setExactRequestError('Отклик не подтверждён. Повтори попытку.'); } finally { exactRequestLock.current = false; }
         }}>{props.busyId === candidate.petId ? 'Отправляю…' : 'Откликнуться'}</button></div>
         <p className="hint">{candidate.reasons[0] || 'Сведения в анкете заполняет владелец.'}</p>
         <details><summary>Подробнее о собаке</summary><p className="hint">{[readable(candidate.temperament), readable(candidate.energyLevel), readable(candidate.dogFriendly), readable(candidate.playStyle)].filter(Boolean).join(' · ')}</p>{candidate.reasons.slice(1).map(reason => <p className="hint" key={reason}>{reason}</p>)}</details>
         <p className="photo-credit">Листание не отправляет отклик.</p>
-      </> : <p className="empty">{props.accessMessage || (props.state === 'loading' ? 'Загружаю анкеты…' : 'Пока нет анкет в этом районе. Можно изменить район или вернуться позже.')}</p>}
+      </> : <p className="empty">{props.accessMessage || (props.state === 'loading' ? 'Загружаю анкеты…' : allCandidates.length ? 'Под эти фильтры никого нет. Измени параметры поиска.' : 'Пока нет анкет в этом районе. Можно изменить район или вернуться позже.')}</p>}
       {(props.error || exactRequestError) && <p className="error" role="alert">{exactRequestError || props.error}</p>}
       <div className="list section-gap"><ExactRow title="Моя анкета" detail="Видимость и условия знакомства" icon="profile" onClick={()=>setProfileEditor(true)}/><ExactRow title="Кого искать" detail="Радиус и предпочтения" icon="gav" onClick={()=>setFiltersOpen(true)}/></div>
       {props.state === 'error' && <button type="button" className="text-button" onClick={() => void props.onRetry()}>Повторить</button>}
@@ -517,7 +532,7 @@ export function ProductionWoofWorkspace(props: Props) {
       {filtersOpen && <section id="woof-meet-filters" className="woof-meet-filters" aria-label="Фильтры знакомств">
         <label><span>Область поиска</span><select value={meetRadius} onChange={(event) => setMeetRadius(event.target.value as typeof meetRadius)}><option value="5">До 5 км</option><option value="10">До 10 км</option><option value="15">До 15 км</option><option value="city">Весь город</option></select></label>
         <label><span>Цель</span><select value={meetScenario} onChange={(event) => setMeetScenario(event.target.value as typeof meetScenario)}><option value="all">Любая</option><option value="meet">Знакомство</option><option value="walk">Прогулка</option><option value="socialize">Социализация</option><option value="mating">Случка</option></select></label>
-        <label><span>Возраст</span><select value={meetLifeStage} onChange={(event) => setMeetLifeStage(event.target.value as typeof meetLifeStage)}><option value="all">Любой</option><option value="puppy">Щенок</option><option value="adult">Взрослая</option><option value="senior">Старшая</option></select></label>
+        <label><span>Возраст</span><select value={meetLifeStage} onChange={(event) => setMeetLifeStage(event.target.value as typeof meetLifeStage)}><option value="all">Любой</option><option value="puppy">Щенок</option><option value="junior">Юниор</option><option value="adult">Взрослая</option><option value="mature">Зрелая собака</option><option value="senior">Старшая</option></select></label>
         <label><span>Ритм</span><select value={meetEnergy} onChange={(event) => setMeetEnergy(event.target.value as typeof meetEnergy)}><option value="all">Любой</option><option value="calm">Спокойный</option><option value="balanced">Уравновешенный</option><option value="active">Активный</option></select></label>
         <p>{props.profile?.coarseLocation ? `Поиск считается от вашего примерного района. Точная точка не показывается.` : 'Разрешите геолокацию или укажите район в анкете — точная точка не сохраняется.'}</p>
         <button className="woof-primary" type="button" onClick={() => setFiltersOpen(false)}>Показать анкеты · {filteredCandidates.length}</button>
@@ -540,7 +555,7 @@ export function ProductionWoofWorkspace(props: Props) {
       <button className="woof-primary" type="button" disabled={!location || props.busyId === 'signal'} onClick={submitSignal}>{props.busyId === 'signal' ? 'Сохраняю…' : !location ? 'Сначала выберите район' : ownSignal ? 'Обновить Гав' : 'Дать Гав'}</button>
     </section></GavDialog>}
 
-    {profileEditor && <GavDialog label="Моя анкета знакомства" onClose={closeActiveModal}><div ref={profileOverlayRef} className="woof-overlay" role="dialog" aria-modal="true" aria-label="Моя анкета знакомства"><button className="woof-overlay-x" type="button" onClick={closeActiveModal} aria-label="Закрыть"><X /></button>{props.error && <p role="alert">{props.error}</p>}<SocialProfileSheet petId={props.petId} dogName={props.dogName} profile={props.profile} busy={props.busyId === 'profile'} locating={props.locating} onSave={async draft => { const saved = await props.onSaveProfile(draft); if (saved && draft.discoverable) closeActiveModal(); return saved; }} onHide={props.onHideProfile} onLocate={props.onLocateProfile} /><button className="woof-overlay-close" type="button" onClick={closeActiveModal}>К анкетам</button></div></GavDialog>}
+
     {selectedCandidate && <div ref={candidateOverlayRef} className="woof-overlay" role="presentation">{props.error && <p role="alert">{props.error}</p>}<CandidateProfile candidate={selectedCandidate} busy={props.busyId === selectedCandidate.petId} onClose={() => setSelectedCandidateId(null)} onRequest={() => props.onRequest(selectedCandidate.petId, selectedCandidate.sharedScenarios[0] || 'meet')} /></div>}
     {requestsOpen && <GavDialog label={selectedRequest ? `Знакомство: ${selectedRequest.otherDog?.name || 'собака'}` : 'Отклики и связи'} onClose={closeActiveModal}><div ref={requestsOverlayRef} className="woof-overlay gav-relationship" role="dialog" aria-modal="true" aria-label="Отклики и связи"><button className="woof-overlay-x" type="button" onClick={closeActiveModal} aria-label="Закрыть"><X /></button>
       {props.error && <p role="alert">{props.error}</p>}

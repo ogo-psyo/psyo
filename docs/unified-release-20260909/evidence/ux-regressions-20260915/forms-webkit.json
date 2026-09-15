@@ -1,0 +1,164 @@
+{
+  "pass": true,
+  "socialWrites": [
+    {
+      "petId": "11111111-1111-4111-8111-111111111111",
+      "discoverable": false,
+      "city": "moscow",
+      "district": null,
+      "coarseLocation": null,
+      "scenarios": [
+        "walk"
+      ]
+    },
+    {
+      "petId": "11111111-1111-4111-8111-111111111111",
+      "discoverable": false,
+      "city": "moscow",
+      "district": null,
+      "coarseLocation": null,
+      "scenarios": [
+        "walk"
+      ]
+    }
+  ],
+  "profileWrites": [
+    {
+      "body": {
+        "profile": {
+          "avatarImageUrl": "",
+          "avatarSource": "none",
+          "photoUrls": [],
+          "dogName": "Мята",
+          "breedId": "mixed",
+          "breedGroupId": "mixed",
+          "breedCustom": "",
+          "breedHint": "",
+          "neighborhood": "",
+          "bio": "",
+          "age": "4 года",
+          "lifeStage": "взрослая",
+          "sex": "",
+          "neutered": "",
+          "weight": "",
+          "size": "",
+          "coatType": "",
+          "colorMarks": "",
+          "microchip": "",
+          "temperament": "",
+          "energyLevel": "",
+          "trainability": "",
+          "playStyle": "",
+          "socialMode": "",
+          "childFriendly": "",
+          "dogFriendly": "",
+          "catFriendly": "",
+          "aloneTime": "Исходное",
+          "triggers": "",
+          "healthNotes": "",
+          "allergies": "",
+          "diet": "",
+          "vetClinic": "",
+          "vaccineStatus": "",
+          "parasiteStatus": "",
+          "medication": "",
+          "nextCareDate": "",
+          "habits": [
+            {
+              "id": "walk",
+              "title": "Прогулки",
+              "value": "утро и вечер, любит тихие дворы"
+            },
+            {
+              "id": "food",
+              "title": "Еда",
+              "value": "ест нормально, лакомства — за команды"
+            },
+            {
+              "id": "triggers",
+              "title": "Триггеры",
+              "value": "не любит самокаты и громкие пакеты"
+            }
+          ],
+          "photos": [],
+          "selectedStyle": "city",
+          "avatarPrompt": "",
+          "isPublic": false,
+          "isOnMap": false,
+          "backendPetId": "11111111-1111-4111-8111-111111111111",
+          "profileVersion": 0
+        }
+      },
+      "key": "profile:49cd37ca-75f1-4ea4-b28b-dc76289e1dce"
+    },
+    {
+      "body": {
+        "profile": {
+          "avatarImageUrl": "",
+          "avatarSource": "none",
+          "photoUrls": [],
+          "dogName": "Мята",
+          "breedId": "mixed",
+          "breedGroupId": "mixed",
+          "breedCustom": "",
+          "breedHint": "",
+          "neighborhood": "",
+          "bio": "",
+          "age": "4 года",
+          "lifeStage": "взрослая",
+          "sex": "",
+          "neutered": "",
+          "weight": "",
+          "size": "",
+          "coatType": "",
+          "colorMarks": "",
+          "microchip": "",
+          "temperament": "",
+          "energyLevel": "",
+          "trainability": "",
+          "playStyle": "",
+          "socialMode": "",
+          "childFriendly": "",
+          "dogFriendly": "",
+          "catFriendly": "",
+          "aloneTime": "Исходное",
+          "triggers": "",
+          "healthNotes": "",
+          "allergies": "",
+          "diet": "",
+          "vetClinic": "",
+          "vaccineStatus": "",
+          "parasiteStatus": "",
+          "medication": "",
+          "nextCareDate": "",
+          "habits": [
+            {
+              "id": "walk",
+              "title": "Прогулки",
+              "value": "утро и вечер, любит тихие дворы"
+            },
+            {
+              "id": "food",
+              "title": "Еда",
+              "value": "ест нормально, лакомства — за команды"
+            },
+            {
+              "id": "triggers",
+              "title": "Триггеры",
+              "value": "не любит самокаты и громкие пакеты"
+            }
+          ],
+          "photos": [],
+          "selectedStyle": "city",
+          "avatarPrompt": "",
+          "isPublic": false,
+          "isOnMap": false,
+          "backendPetId": "11111111-1111-4111-8111-111111111111",
+          "profileVersion": 0
+        }
+      },
+      "key": "profile:49cd37ca-75f1-4ea4-b28b-dc76289e1dce"
+    }
+  ],
+  "scope": "Synthetic backend, actual UI"
+}
