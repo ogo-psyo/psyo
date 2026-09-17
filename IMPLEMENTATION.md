@@ -89,3 +89,6 @@ This repository can ship RC1 foundation before full storage/payment rollout:
 
 Everything beyond that must be implemented in reviewable stages with migrations,
 tests, release notes and deploy proof.
+
+## 2026-09-17 · Map + shared design system
+Owner authorized production transfer from local Motion/map labs, excluding new in-app route exchange. Implementation details and acceptance evidence: `docs/map-system-20260917/CONTRACT.md`. Existing auth, profile IDs, saved routes/collections and sharing links preserved; new map presence/hazards use authenticated canonical APIs and atomic SQL mutations.

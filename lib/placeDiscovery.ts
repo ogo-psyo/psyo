@@ -45,5 +45,5 @@ export function queryPlaceRegions(regions: PlaceRegion[], bounds: PlaceBounds, c
         updatedAt: covered.map(r => r.updatedAt).sort()[0], source: 'OpenStreetMap', coverage: covered.map(({ id, title }) => ({ id, title })) };
 }
 export function dogAccessLabel(value?: string): string {
-    return ({ yes: 'Собаки разрешены по данным OSM', no: 'Собаки не разрешены по данным OSM', leashed: 'С собакой на поводке по данным OSM' } as Record<string, string>)[value || ''] || 'Условия посещения с собакой: нет данных';
+    return ({ yes: 'Можно с собакой · OpenStreetMap', designated: 'Место для собак · OpenStreetMap', no: 'Собаки не разрешены по данным OSM', leashed: 'С собакой на поводке по данным OSM' } as Record<string, string>)[value || ''] || 'Условия посещения с собакой: нет данных';
 }
