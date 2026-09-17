@@ -23,6 +23,7 @@ export type WoofRecommendationEntry = {
 };
 
 type Props = {
+  onOpenMap?: () => void;
   petId: string;
   error?: string;
   accessMessage?: string;
@@ -425,7 +426,7 @@ export function ProductionWoofWorkspace(props: Props) {
     return <ExactPage viewKey="gav"><section ref={rootRef}>
       <div className="gav-heading"><h1>С кем гулять?</h1><button type="button" className="icon-button" aria-label="Знакомства" onClick={goConnections}><ExactIcon name="gav" /></button></div>
       <p className="lead">{props.profile?.district || candidate?.district || 'Выбери район'} · {props.viewerRadiusKm} км <button type="button" className="text-button" onClick={() => setManualArea(true)}>Изменить</button></p>
-      <div className="chips" style={{ marginTop: 0 }}><button type="button" className="chip active" aria-pressed="true">Знакомства</button><button type="button" className="chip" onClick={() => setMode('live')}>Гуляют сейчас</button></div>
+      <div className="chips" style={{ marginTop: 0 }}><button type="button" className="chip active" aria-pressed="true">Знакомства</button><button type="button" className="chip" onClick={() => props.onOpenMap ? props.onOpenMap() : setMode('live')}>Гуляют сейчас</button></div>
       {candidate ? <>
         <div className="exact-dog-photo" onPointerDown={event => { swipeOrigin.current = { x: event.clientX, y: event.clientY }; }} onPointerCancel={() => { swipeOrigin.current = null; }} onPointerUp={event => { const start = swipeOrigin.current; swipeOrigin.current = null; if (!start) return; const dx = event.clientX - start.x, dy = event.clientY - start.y; if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) nextDog(dx < 0 ? 1 : -1); }}><CandidatePhoto src={candidate.avatarUrl} name={candidate.name} /></div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><h2 className="dog-identity">{candidate.name}</h2><button type="button" className="icon-button" aria-label="Следующая собака" disabled={filteredCandidates.length < 2 || Boolean(props.busyId)} onClick={() => nextDog()}><ExactIcon name="next" /></button></div>
@@ -451,7 +452,7 @@ export function ProductionWoofWorkspace(props: Props) {
 
     <header className="woof-topbar">
       <div className="woof-mode-switch" aria-label="Режим Гав">
-        <button type="button" aria-pressed={mode === 'live'} onClick={() => setMode('live')}>Сейчас рядом</button>
+        <button type="button" aria-pressed={mode === 'live'} onClick={() => props.onOpenMap ? props.onOpenMap() : setMode('live')}>Сейчас рядом</button>
         <button type="button" aria-pressed={mode === 'meet'} onClick={() => setMode('meet')}>Знакомства</button>
       </div>
       <button type="button" onClick={() => openRequests()} aria-label={`Отклики и связи: ${activeRequests.length}`}><UsersThree /><span className="woof-requests-label">Отклики и связи</span>{activeRequests.length > 0 && <span>{activeRequests.length}</span>}</button>

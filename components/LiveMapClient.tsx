@@ -118,7 +118,9 @@ function MapViewport({ zones, features, userLocation, focusPoint, routePoints, f
       fittedDraftRef.current = draftSignature;
       const fitCompletedRoute = () => {
         map.invalidateSize({ animate: false });
-        const adjacent=Boolean(map.getContainer().closest('.production-map-workspace')?.querySelector('.map-work-area'));
+        const workspace=map.getContainer().closest('.production-map-workspace');
+        const overlay=workspace?.classList.contains('map-refresh');
+        const adjacent=!overlay&&Boolean(workspace?.querySelector('.map-work-area'));
         const mapHeight = map.getSize().y;
         map.fitBounds(draft, {
           paddingTopLeft: [36, adjacent?36:76],
@@ -183,8 +185,17 @@ function FeaturePointMarkers({features,selectedId,onSelect,exact=false}:{feature
  })}</>;
 }
 
+function communityIcon(kind:'presence'|'hazard',photo:string|null|undefined,title:string){
+ const node=document.createElement('span');node.className='community-pin '+kind;
+ if(photo&&/^https?:\/\//.test(photo)){const img=document.createElement('img');img.src=photo;img.alt='';node.append(img);}else node.textContent=kind==='hazard'?'!':title.charAt(0);
+ return divIcon({className:'community-marker',html:node,iconSize:[44,44],iconAnchor:[22,22]});
+}
+
+function PickingState({picking}:{picking:boolean}){const map=useMap();useEffect(()=>{if(picking)map.closePopup();},[map,picking]);return null;}
+
 export function LiveMapClient({
-  appearance = 'default',
+  appearance = 'default', pickingPoint=false,
+  communityMarks = [], onSelectCommunity,
   zones = [],
   features = [],
   picked,
@@ -222,9 +233,10 @@ export function LiveMapClient({
   const draftPositions = draftRoutePositions(routePoints);
 
   return (
-    <div className="live-map-frame">
+    <div className={`live-map-frame${pickingPoint?' is-picking-point':''}`}>
       <MapContainer center={defaultCenter} zoom={12} className="live-map" zoomControl={appearance!=='exact'} attributionControl={false} aria-label={accessibleLabel}>
         <MapAccessibility label={accessibleLabel} />
+        <PickingState picking={pickingPoint}/>
         <AttributionControl prefix={false} />
         <OpenFreeMapLayer key={tileRevision} onLoad={() => { setTilesReady(true); setTilesFailed(false); }} onError={() => { setTilesReady(false); setTilesFailed(true); }} />
         <MapEvents onMapClick={onMapClick} onPick={onPick} onCenterChange={onCenterChange} onBoundsChange={onBoundsChange} />
@@ -243,6 +255,8 @@ export function LiveMapClient({
           </CircleMarker>
         )}
 
+        {communityMarks.filter(mark=>mark.kind==='hazard').map(mark=><Circle key={`area:${mark.id}`} center={[mark.lat,mark.lng]} radius={mark.radius||50} pathOptions={{color:'#964e53',fillColor:'#f4dedb',fillOpacity:.25,weight:1}} eventHandlers={{click:()=>onSelectCommunity?.(mark.id)}}/>)}
+        {communityMarks.map(mark=><Marker key={mark.id} position={[mark.lat,mark.lng]} title={mark.title} icon={communityIcon(mark.kind,mark.photo,mark.title)} eventHandlers={{click:()=>onSelectCommunity?.(mark.id)}} />)}
         {mappedZones.map((zone) => {
         const color = zoneColor(zone.type);
         return (

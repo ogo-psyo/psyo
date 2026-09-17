@@ -4623,7 +4623,7 @@ export default function Home() {
           onSaveFacts={async () => { if (await savePrivateProfile(healthFactsDraft ?? profile,setHealthFactsError)) setHealthFactsDraft(null); }}
         />}
 
-        {hasDog && tab === 'nearby' && <ProductionWoofWorkspace
+        {hasDog && tab === 'nearby' && <ProductionWoofWorkspace onOpenMap={() => { setJourneyDetail(null); setTab('map'); }}
           key={`${profile.backendPetId || activePetId}:${woofRecommendationEntry?.key ?? 'woof-workspace'}`}
           petId={profile.backendPetId || activePetId}
           error={error}

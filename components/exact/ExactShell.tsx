@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, useCallback, type ReactNode } from 'react';
+import { MotionConfig, motion } from 'motion/react';
 import { exactIconPaths, type ExactIconName } from './icons';
 
 export type ExactPrimary = 'home' | 'map' | 'gav' | 'all' | 'profile';
@@ -23,7 +24,7 @@ export function ExactScope({ children }: { children: ReactNode }) {
     const token = Symbol('exact-view'); owner.current = token; setBack(() => callback); setView(nextView);
     return () => { if (owner.current === token) { owner.current = null; setBack(undefined); setView(undefined); } };
   }, []);
-  return <ExactBackContext.Provider value={{ back, view, scroll, register }}>{children}</ExactBackContext.Provider>;
+  return <MotionConfig reducedMotion="user"><ExactBackContext.Provider value={{ back, view, scroll, register }}>{children}</ExactBackContext.Provider></MotionConfig>;
 }
 
 export function ExactHeader({ dogName, guest, onHome, onProfile, onBack }: {
@@ -54,7 +55,7 @@ export function ExactNavigation({ active, onNavigate }: { active: string; onNavi
   return <div className="nav-wrap"><nav className="nav app-tabs" aria-label="Основная навигация">{navigation.map(item => <button type="button"
     key={item.view} data-route={item.route} className={selected === item.route ? 'active' : undefined}
     aria-current={selected === item.route ? 'page' : undefined} onClick={() => onNavigate(item.route)}
-  ><ExactIcon name={item.view} />{item.title}</button>)}</nav></div>;
+  >{selected === item.route && <motion.span className="pso-nav-indicator" layoutId="pso-navigation" transition={{duration:.28,ease:[.22,1,.36,1]}} />}<ExactIcon name={item.view} /><span>{item.title}</span></button>)}</nav></div>;
 }
 
 export function ExactPage({ children, home = false, viewKey, onBack, active = true }: { children: ReactNode; home?: boolean; viewKey: string; onBack?: () => void; active?: boolean }) {

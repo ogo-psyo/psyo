@@ -33,8 +33,12 @@ export type MapFocusPoint = { lat: number; lng: number; token: number; zoom?: nu
 export type MapBounds = {south:number;west:number;north:number;east:number};
 export type MapSearchPoint = { lat: number; lng: number; title: string; detail?: string };
 
+export type CommunityMark={id:string;lat:number;lng:number;title:string;kind:'presence'|'hazard';photo?:string|null;radius?:number};
 export type LiveMapProps = {
+  communityMarks?:CommunityMark[];
+  onSelectCommunity?:(id:string)=>void;
   appearance?: 'default' | 'exact';
+  pickingPoint?: boolean;
   zones?: ZoneFeature[];
   features?: MapFeature[];
   picked?: { lat: number; lng: number } | null;

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { ReleaseFreshnessGuard } from '@/components/ReleaseFreshnessGuard';
 import { InterfaceMotion } from '@/components/app/InterfaceMotion';
+import { LiquidBackground } from '@/components/system/LiquidBackground';
 import './globals.css';
 import './refinement.css';
 import './pouf.css';
@@ -13,6 +14,8 @@ import './map-gav-reference.css';
 import './gav-journey.css';
 import '@/components/exact/exact-interface.css';
 import '@/components/exact/exact-extensions.css';
+import '@/components/system/system.css';
+import '@/components/map/map-refresh.css';
 
 export const metadata: Metadata = {
   title: 'Псё — ассистент владельца собаки',
@@ -49,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script src="https://telegram.org/js/telegram-web-app.js" async />
         <ReleaseFreshnessGuard />
         <InterfaceMotion />
+        <LiquidBackground />
         {children}
       </body>
     </html>

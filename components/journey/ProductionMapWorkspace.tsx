@@ -1,4 +1,7 @@
 'use client';
+import {motion} from 'motion/react';
+import {useMapCommunity} from '@/components/map/useMapCommunity';
+import {MapCommunityPanel} from '@/components/map/MapCommunityPanel';
 import { ExactIcon, ExactPage, ExactRow } from '@/components/exact/ExactShell';
 import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
 
@@ -198,10 +201,10 @@ export function ProductionMapWorkspace({
   const [agentPlaces,setAgentPlaces]=useState<MapSearchPlace[]>([]);
   const consumedAgentPlace=useRef('');
   const [workspaceTab,setWorkspaceTab]=useState<'places'|'walks'|'saved'>(requestedScreen === 'library' ? 'saved' : 'places');
-  const navigateRequested = useEffectEvent(() => { setExactTools(false); setWorkspaceTab(requestedScreen === 'library' ? 'saved' : 'places'); if(navigationToken) { setSavedRoutePreview(null); setAgentWalkPreview(null); setFolded(true); onModeChange('view'); } });
+  const navigateRequested = useEffectEvent(() => { setExactTools(false); setWorkspaceTab(requestedScreen === 'library' ? 'saved' : 'places');setPanel(requestedScreen==='library'?'saved':null);setSearchOpen(false); if(navigationToken) { setSavedRoutePreview(null); setAgentWalkPreview(null); setFolded(true); onModeChange('view'); } });
   useEffect(() => { navigateRequested(); }, [requestedScreen, navigationToken]);
   const [query, setQuery] = useState('');
-  const [searchRequest, setSearchRequest] = useState<{query:string;lat:number;lng:number;revision:number;bounds?:MapBounds} | null>(null);
+  const [searchRequest, setSearchRequest] = useState<{query:string;lat:number;lng:number;revision:number;category?:string;bounds?:MapBounds} | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const returnCameraRef = useRef<{lat:number;lng:number;zoom?:number}|null>(null);
   const savedRevisionRef = useRef(savedRevision);
@@ -219,6 +222,16 @@ export function ProductionMapWorkspace({
   const placeTriggerRef=useRef<HTMLElement|null>(null);
   const placeScrollRef=useRef({shell:0,work:0});
   const [mapCenter, setMapCenter] = useState<{lat:number;lng:number;zoom?:number}>({ lat: 55.751244, lng: 37.618423 });
+  const [panel,setPanel]=useState<'places'|'saved'|'walks'|'layers'|'presence'|'hazard'|null>(null);
+  const [communityPoint,setCommunityPoint]=useState<{lat:number;lng:number}|null>(null);
+  const [selectedMark,setSelectedMark]=useState<string|null>(null);
+  const [walkersVisible,setWalkersVisible]=useState(true);
+  const [dogOnly,setDogOnly]=useState(false);
+  const community=useMapCommunity({active,guest,petId,center:mapCenter,authHeaders});
+  useEffect(()=>{setPanel(null);setCommunityPoint(null);setSelectedMark(null);},[petId]);
+  const communityEditing=panel==='presence'||panel==='hazard';
+  const communitySelection=community.signals.find(s=>s.id===selectedMark)||community.hazards.find(h=>h.id===selectedMark)||null;
+
   const [routeFlow, setRouteFlow] = useState<RouteFlow>('idle');
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [discardPrompt, setDiscardPrompt] = useState(false);
@@ -479,9 +492,11 @@ export function ProductionMapWorkspace({
     });
   }, [localSearchResults,remoteSearchResults,libraryStore.library.places]);
 
+  function searchCategory(category:string,label:string){setQuery(label);setPanel('places');setSearchOpen(true);setSelectedSearchPoint(null);setAgentPlaces([]);setSearchRequest({query:label,category,...mapCenter,revision:Date.now()});}
+
   function searchArea() {
     if (query.trim().length < 2) return;
-    setAgentPlaces([]);
+    setPanel('places');setAgentPlaces([]);
     setSelectedSearchPoint(null); setSearchOpen(true);
     setSearchRequest({query:query.trim(),...mapCenter,revision:Date.now(),bounds:mapBounds||undefined});
   }
@@ -490,6 +505,7 @@ export function ProductionMapWorkspace({
     const controller = new AbortController();
     setSearchState('loading'); setRemoteSearchResults([]);
     const params = new URLSearchParams({q:searchRequest.query,lat:searchRequest.lat.toFixed(3),lng:searchRequest.lng.toFixed(3)});
+    if(searchRequest.category)params.set('category',searchRequest.category);
     if(searchRequest.bounds)params.set('bounds',[searchRequest.bounds.south,searchRequest.bounds.west,searchRequest.bounds.north,searchRequest.bounds.east].join(','));
     (async () => {
       try {
@@ -803,18 +819,21 @@ export function ProductionMapWorkspace({
     await calculateWalk();
   }
 
-  const liveMap = (<LiveMap appearance="exact"
+  const liveMap = (<LiveMap appearance="exact" pickingPoint={communityEditing||mode==='risk'||routeFlow==='planning'&&!folded}
+        communityMarks={[...(walkersVisible?community.signals.map(s=>({id:s.id,...s.approximateLocation,title:s.name,photo:s.avatarUrl,kind:'presence' as const})):[]),...(layers.risks?community.hazards.map(h=>({id:h.id,...h.point,title:h.title,radius:h.radius,kind:'hazard' as const})):[])]}
+        onSelectCommunity={id=>{const signal=community.signals.find(s=>s.id===id);const hazard=community.hazards.find(h=>h.id===id);setSelectedMark(id);setPanel(signal?'presence':'hazard');setCommunityPoint(signal?.approximateLocation||hazard?.point||null);setSearchOpen(false);}}
+
         zones={zones.filter(z=>isRisk(z.type)?layers.risks:layers.places)}
-        features={[...features.filter(f=>f.type==='route'?layers.routes:isRisk(f.zone_type)?layers.risks:layers.places&&workspaceTab!=='saved'),...(layers.places?(workspaceTab==='saved'?collectionPlaces:libraryStore.library.places).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:p.accuracyMeters?'area' as const:'ownerPlace' as const,radiusMeters:p.accuracyMeters,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'private' as const})):[]),...(layers.places&&workspaceTab==='places'&&placeSearchActive?visibleMapPlaces.filter(p=>p.kind==='organization'&&!libraryStore.library.places.some(l=>l.id===p.id||l.source.id===p.id)).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:'ownerPlace' as const,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'public' as const})):[])]}
-        picked={mode === 'risk' ? pickedPoint : candidate?{lng:candidate.point[0],lat:candidate.point[1]}:mapSelection||pickedPoint}
+        features={[...features.filter(f=>f.type==='route'?layers.routes:isRisk(f.zone_type)?layers.risks:layers.places&&workspaceTab!=='saved'),...(layers.places?(workspaceTab==='saved'?collectionPlaces:libraryStore.library.places).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:p.accuracyMeters?'area' as const:'ownerPlace' as const,radiusMeters:p.accuracyMeters,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'private' as const})):[]),...(layers.places&&workspaceTab==='places'&&placeSearchActive?visibleMapPlaces.filter(p=>(!dogOnly||['yes','leashed','designated'].includes(p.dogAccess||''))&&p.kind==='organization'&&!libraryStore.library.places.some(l=>l.id===p.id||l.source.id===p.id)).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:'ownerPlace' as const,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'public' as const})):[])]}
+        picked={communityEditing ? communityPoint||mapCenter : mode === 'risk' ? pickedPoint : candidate?{lng:candidate.point[0],lat:candidate.point[1]}:mapSelection||pickedPoint}
         routePoints={savedRoutePreview?savedRoutePreview.path.coordinates:agentWalkPreview?agentWalkPreview.path:calculationState==='preview'&&walkResult?walkResult.path:routePoints}
         routeStops={savedRoutePreview?savedRoutePreview.planning?.stops.map(s=>s.point)||[]:agentWalkPreview?agentWalkPreview.snaps.map(s=>s.point):routeFlow==='planning'||routeFlow==='plan-review'?activeStops.map(s=>s.point):[]}
         routeStopIds={savedRoutePreview?savedRoutePreview.planning?.stops.map(s=>s.placeId)||[]:agentWalkPreview?agentWalkPreview.stops.map(s=>s.placeId):activeStops.map(s=>s.placeId)}
         routeGaps={savedRoutePreview?savedRoutePreview.pathGaps:agentWalkPreview?[]:pathGaps}
-        onMapClick={agentWalkPreview||savedRoutePreview?undefined:mode === 'risk' ? onMapClick : routeFlow === 'planning' && !folded ? (event) => setCandidate({point:[event.latlng.lng,event.latlng.lat]}) : mode==='view'&&!routeFocused ? (event)=>{setMapSelection(event.latlng);setSelectedSearchPoint(null);} : undefined}
+        onMapClick={communityEditing ? event=>setCommunityPoint(event.latlng) : agentWalkPreview||savedRoutePreview?undefined:mode === 'risk' ? onMapClick : routeFlow === 'planning' && !folded ? (event) => setCandidate({point:[event.latlng.lng,event.latlng.lat]}) : mode==='view'&&!routeFocused ? (event)=>{setMapSelection(event.latlng);setSelectedSearchPoint(null);} : undefined}
         onCenterChange={setMapCenter}
         onBoundsChange={setMapBounds}
-        searchBounds={workspaceTab==='saved'?null:searchRequest?.bounds}
+        searchBounds={null}
         filter="all"
         selectedFeatureId={selectedLibraryPlace?.id||selectedSearchPoint?.id}
         onSelectFeature={id=>{
@@ -862,125 +881,40 @@ export function ProductionMapWorkspace({
         </section>}
         <p className="place-data-source">{selectedSearchPoint.sourceUrl?.startsWith('https://www.openstreetmap.org/')?<a href={selectedSearchPoint.sourceUrl} target="_blank" rel="noopener noreferrer">Источник: OpenStreetMap</a>:selectedSearchPoint.kind==='organization'?'Источник: OpenStreetMap':'Сохранённая запись Псё'}</p>
       </article>;
-  const exactWalkOpen = Boolean(savedRoutePreview || agentWalkPreview) || (['planning', 'plan-review'].includes(routeFlow) && !folded);
-  const exactBack = () => { if (savedRoutePreview) { setSavedRoutePreview(null); setWorkspaceTab('saved'); return; } exactSaveRequested.current = false; setExactSaving(false); setSavedRoutePreview(null); setAgentWalkPreview(null); foldRoute(); setWorkspaceTab('places'); };
-  if (!exactTools && mode === 'risk') return <ExactPage active={active} viewKey="map-zone" onBack={() => onModeChange('view')}><h1>Отметить зону</h1><p className="lead">Коснись места на карте, затем добавь название и пояснение.</p><div className="map-canvas exact-live-map">{liveMap}</div><div className="exact-extension">{composer}</div>{saveError && <p className="error" role="alert">{saveError}</p>}</ExactPage>;
-  if (!exactTools && mode !== 'risk' && (folded || ['idle', 'planning', 'plan-review'].includes(routeFlow))) {
-    if (workspaceTab === 'saved' && !exactWalkOpen) return <ExactPage active={active} viewKey="library" onBack={() => setWorkspaceTab('places')}>
-      <h1>Сохранённое</h1><p className="lead">Возвращайся к выбранному, не ищи заново.</p>
-      <h2>Прогулки</h2><div className="list">{recordedRoutes.length ? recordedRoutes.map(route => <ExactRow key={route.id} title={route.title} detail={route.planning ? `${route.planning.stops.length} остановки` : 'Записанная прогулка'} icon="map" onClick={() => { setSavedRoutePreview(route); setAgentWalkPreview(null); }} />) : <p className="empty">Здесь появится первая сохранённая прогулка.</p>}</div>
-      <button type="button" className="text-button" onClick={() => setWorkspaceTab('places')}>Выбрать места на карте</button>
-      <ExactRow title="Управлять подборками и маршрутами" icon="map" onClick={()=>setExactTools(true)} />
-      <h2>Места</h2>{libraryStore.state === 'loading' && <p className="empty" role="status">Загружаю места…</p>}
-      {libraryStore.error && <div className="error" role="alert">{libraryStore.error}<button type="button" className="text-button" onClick={() => void libraryStore.reload()}>Повторить</button></div>}
-      {exactSavedPlaces.length ? exactSavedPlaces.map(place => <ExactRow key={place.id} title={place.title} detail="Открыть на карте" icon="pin" onClick={() => { setWorkspaceTab('places'); chooseLibraryPlace(place); }} />) : libraryStore.state === 'ready' && <p className="empty">Место можно сохранить без создания маршрута.</p>}
-    </ExactPage>;
-    const shownStops = savedRoutePreview ? savedRoutePreview.planning?.stops || [] : agentWalkPreview?.stops || activeStops;
-    return <ExactPage active={active} viewKey={exactWalkOpen ? 'walk' : 'map'} onBack={exactWalkOpen ? exactBack : undefined}>
-      <section data-production-map-workspace data-route-flow={routeFlow}>
-      {exactWalkOpen ? <><h1>{savedRoutePreview?.title || agentWalkPreview?.title || 'Твоя прогулка'}</h1><p className="lead">{savedRoutePreview ? 'Можно вернуться к этому маршруту позже.' : 'Собери остановки на одной карте.'}</p></> : <>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><h1>Куда пойдём?</h1><button type="button" className="icon-button" aria-label="Сохранённое" onClick={() => setWorkspaceTab('saved')}><ExactIcon name="save" /></button></div>
-        <form className="search-inline" onSubmit={event => { event.preventDefault(); searchArea(); }}>
-          <label className="sr-only" htmlFor="production-map-search-input">Место или адрес</label><input id="production-map-search-input" type="search" role="combobox" aria-autocomplete="list" aria-expanded={Boolean(searchOpen && query)} aria-controls="exact-map-results" placeholder="Место или адрес" value={query} onChange={event => { setQuery(event.target.value); setSearchOpen(true); setSearchState('idle'); setRemoteSearchResults([]); }} />
-          <button type="submit" className="icon-button" aria-label="Найти место" disabled={query.trim().length < 2}><ExactIcon name="search" /></button>
-        </form>
-        {searchOpen && query && <div className="list" id="exact-map-results" role="listbox" aria-label="Результаты поиска">{searchResults.map(result => <button key={result.id} className="list-row" type="button" role="option" aria-selected={selectedSearchPoint?.id === result.id} onClick={event => chooseSearchResult(result, event.currentTarget)}><span className="grow"><strong>{result.title}</strong><small>{result.detail}</small></span><ExactIcon name="next" /></button>)}{searchState === 'loading' && <p role="status">Ищу места…</p>}{['error', 'quota'].includes(searchState) && <p className="error" role="alert">Не удалось обновить поиск. Повтори попытку — выбранные места не потеряны.</p>}{searchState === 'ready' && !searchResults.length && <p className="empty">Ничего не найдено. Попробуй другое название.</p>}</div>}
-      </>}
-      {!exactWalkOpen && <div className="row-actions" aria-label="Действия на карте"><button type="button" className="primary" onClick={startPlanning}><ExactIcon name="map" />{activeStops.length ? 'Продолжить маршрут' : 'Построить маршрут'}</button><button type="button" className="secondary" disabled={routeFlow!=='idle'} onClick={startRisk}><ShieldWarning />Отметить зону</button><button type="button" className="text-button" onClick={locateUser} disabled={locating}><Crosshair />{locating?'Ищу…':'Найти меня'}</button>{routeFlow!=='idle' && <p className="hint">Чтобы отметить зону, сначала сохрани или удали черновик маршрута.</p>}</div>}
-      <div className={`map-canvas exact-live-map${mapExpanded && !exactWalkOpen ? ' big' : ''}`}>{liveMap}{!exactWalkOpen && <div className="map-controls"><button type="button" className="icon-button" aria-label={mapExpanded ? 'Уменьшить карту' : 'Развернуть карту'} aria-expanded={mapExpanded} onClick={() => setMapExpanded(value => !value)}><ExactIcon name="expand" /></button></div>}</div>
-      {exactWalkOpen ? <>
-        {!savedRoutePreview && !agentWalkPreview && <>
-          <div className="row-actions" role="group" aria-label="Способ построения"><button type="button" className="chip" aria-pressed={planningMode==='walking'} disabled={exactSaving || savingDraft} onClick={() => changePlanningMode('walking')}>По дорожкам</button><button type="button" className="chip" aria-pressed={planningMode==='manual'} disabled={exactSaving || savingDraft} onClick={() => changePlanningMode('manual')}>Вручную</button></div>
-          <p className="hint">Коснись карты и подтверди остановку. Порядок точек можно менять.</p>
-          {candidate && <section className="soft exact-route-candidate" aria-label="Добавить остановку"><p>{candidate.title || 'Выбранная точка'}</p><div className="row-actions"><button className="primary" type="button" onClick={() => appendStop(candidate)}>Добавить остановку</button><button className="secondary" type="button" onClick={() => setCandidate(null)}>Другая точка</button></div></section>}
-          <button type="button" className="text-button" onClick={addCenterPoint}>Выбрать центр карты</button>
-        </>}
-        {shownStops.map((stop, index) => <div className="plan-stop" key={`${index}:${stop.placeId || stop.point.join(',')}`}><span className="selection-dot">{index + 1}</span><span className="grow">{stop.title || `Точка ${index + 1}`}</span>{!savedRoutePreview && !agentWalkPreview && <><button type="button" className="icon-button" aria-label={`Точка ${index+1}: выше`} disabled={index===0 || exactSaving || savingDraft} onClick={() => { const stops=[...activeStops]; [stops[index-1],stops[index]]=[stops[index],stops[index-1]]; editStops(stops); }}><CaretUp /></button><button type="button" className="icon-button" aria-label={`Точка ${index+1}: ниже`} disabled={index===activeStops.length-1 || exactSaving || savingDraft} onClick={() => { const stops=[...activeStops]; [stops[index+1],stops[index]]=[stops[index],stops[index+1]]; editStops(stops); }}><CaretDown /></button><button type="button" className="icon-button" aria-label={`Убрать ${stop.title || `точку ${index + 1}`}`} disabled={exactSaving || savingDraft} onClick={() => editStops(activeStops.filter((_, i) => i !== index))}><ExactIcon name="close" /></button></>}</div>)}
-        {!shownStops.length && <p className="empty">{savedRoutePreview ? 'Записанный путь показан на карте.' : 'Пока нет остановок. Выбери первое место на карте.'}</p>}
-        {savedRoutePreview ? <><div className="row-actions"><button type="button" className="secondary" onClick={() => downloadRouteGpx(savedRoutePreview.title,savedRoutePreview.path.coordinates,savedRoutePreview.pathGaps,savedRoutePreview.planning?.stops)}>Скачать GPX</button><button type="button" className="secondary" disabled={!canUseAgentWalk} onClick={() => { onReuseRoute?.(savedRoutePreview.id); setSavedRoutePreview(null); }}>Повторить маршрут</button></div><button type="button" className="text-button" onClick={() => { setSavedRoutePreview(null); setWorkspaceTab('saved'); }}>Все сохранённые прогулки</button></> : agentWalkPreview ? <><button type="button" className="primary full" disabled={!canUseAgentWalk} onClick={useAgentWalk}>Использовать этот путь</button>{!canUseAgentWalk && <p className="hint">Сначала заверши текущий черновик. Он не заменён.</p>}</> : <>
-          <button type="button" className="text-button" disabled={exactSaving || savingDraft} onClick={exactBack}><ExactIcon name="plus" />Добавить место</button>
-          {undoStops && <button type="button" className="text-button" onClick={() => { const previous=undoStops; editStops(previous); setUndoStops(null); }}>Отменить изменение остановок</button>}
-          {planningMode==='walking' && <section className="section-gap" aria-label="Пеший путь">
-            <button type="button" className="secondary full" disabled={activeStops.length<2 || calculationState==='loading' || savingDraft} onClick={() => void calculateWalk()}>{calculationState==='loading'?'Рассчитываю путь…':'Рассчитать пеший путь'}</button>
-            {walkResult && <p className="hint">{formatDistance(walkResult.distanceMeters)} · ≈ {walkResult.estimatedMinutes} мин{walkResult.stairs?' · есть лестницы':''}</p>}
-            {calculationState==='preview' && <><p className="hint">Проверь путь на карте перед сохранением.</p><button type="button" className="primary full" onClick={applyWalk}>Применить этот путь</button></>}
-          </section>}
-          <form onSubmit={event => { event.preventDefault(); void saveExactWalk(); }}><div className="field"><label htmlFor="walk-name">Название прогулки</label><input id="walk-name" value={draftTitle} maxLength={160} disabled={exactSaving || savingDraft} onChange={event => onRestoreDraftText?.(event.target.value, draftNote, editingRouteId || undefined)} required /></div>
-            <p className="hint">{planningMode === 'walking' ? 'Путь по дорожкам OpenStreetMap. Условия прохода с собакой не проверены.' : 'Ручной путь между выбранными точками. Проходы не проверены.'}</p>
-            {(calculationError || saveError) && <p className="error" role="alert">{calculationError || saveError}</p>}
-            <button type="submit" className="primary full" disabled={shownStops.length < 2 || !plannerReady || !canSaveDraft || exactSaving || savingDraft}>{exactSaving || savingDraft ? 'Сохраняю…' : 'Сохранить прогулку'}</button>
-          </form>
-          {discardPrompt ? <section ref={discardDialogRef} className="soft exact-route-candidate" role="alertdialog" aria-modal="true" aria-labelledby="route-discard-title" aria-describedby="route-discard-description"><h2 id="route-discard-title">Удалить черновик?</h2><p id="route-discard-description">Несохранённые остановки и путь будут удалены.</p><div className="row-actions"><button type="button" className="secondary" onClick={continueAfterDiscard}>Продолжить маршрут</button><button type="button" className="secondary" onClick={discardRoute}>Удалить черновик</button></div></section> : <button type="button" className="text-button" disabled={exactSaving || savingDraft} onClick={requestDiscard}>Удалить черновик маршрута</button>}
-        </>}
-      </> : <>
-        {selectedSearchPoint && <article className="soft place-panel" aria-label="Выбранное место"><h2 className="place-title">{selectedSearchPoint.title}</h2><p className="place-meta">{selectedSearchPoint.category || 'Место'} · {!selectedSearchPoint.dogAccess || selectedSearchPoint.dogAccess==='unknown' ? 'условия с собакой неизвестны' : dogAccessLabel(selectedSearchPoint.dogAccess)}</p>
-          {selectedSearchPoint.accuracyMeters && <p className="hint">Примерная область. Для прогулки уточни точку на карте.</p>}
-          <div className="row-actions"><button type="button" className="secondary" disabled={libraryStore.state !== 'ready' || libraryStore.busy} onClick={toggleExactSavedPlace} aria-pressed={Boolean(selectedLibraryPlace && exactSavedIds.includes(selectedLibraryPlace.id))}>{libraryStore.busy ? 'Сохраняю…' : selectedLibraryPlace && exactSavedIds.includes(selectedLibraryPlace.id) ? <><ExactIcon name="check"/> Сохранено</> : 'Сохранить'}</button><button type="button" className="primary" disabled={!selectedSearchPoint.point || Boolean(selectedSearchPoint.accuracyMeters)} onClick={() => { const place = selectedSearchPoint; if (place.point) appendPlacesToWalk([{ point: [place.point.lng, place.point.lat], title: place.title, placeId: place.id }],true); }}>{exactStopIndex>=0?`В прогулке · ${exactStopIndex+1}`:'В прогулку'}</button></div>
-          {libraryStore.error && <p className="error" role="alert">{libraryStore.error}</p>}{savedPlaceNotice && <p className="hint" role="status">{savedPlaceNotice}</p>}
-        </article>}
-        {mapSelection && <button type="button" className="list-row" onClick={() => chooseSearchResult({ id: `point:${mapSelection.lat}:${mapSelection.lng}`, title: 'Место на карте', kind: 'place', point: mapSelection })}><ExactIcon name="pin" /><span className="grow">Выбрать эту точку</span></button>}
-        {activeStops.length > 0 && <ExactRow title={`Прогулка · ${activeStops.length} остановки`} onClick={() => { setWorkspaceTab('places'); resumeRoute(); }} />}
-        <h2>На этой карте</h2><div className="list">{visibleMapPlaces.map(place => <button key={place.id} type="button" className="list-row compact-row" aria-pressed={selectedSearchPoint?.id === place.id} onClick={event => chooseMapPlace(place, event.currentTarget)}><span className="selection-dot">{selectedSearchPoint?.id === place.id ? '✓' : <ExactIcon name="pin" />}</span><span className="grow"><strong>{place.title}</strong><small>{place.category || 'Место'}{place.detail ? ` · ${place.detail}` : ''}</small></span></button>)}{!visibleMapPlaces.length && <p className="empty">Найди место или выбери точку на карте.</p>}</div>
-      </>}
 
-      {!exactWalkOpen && <details><summary>Запись и настройки карты</summary><div className="list"><ExactRow title="Запись прогулки, GPX и слои" detail="GPS, ручной путь, подборки и предупреждения" icon="map" onClick={()=>setExactTools(true)} /></div></details>}
-      {(agentPlaces.length > 0 || agentWalkSelection || agentSavedRouteSelection) && onReturnToAssistant && <button type="button" className="text-button" onClick={onReturnToAssistant}>К разговору</button>}
-      </section>
-    </ExactPage>;
-  }
-  return <ExactPage active={active} viewKey="map-tools" onBack={()=>{setExactTools(false);foldRoute();onModeChange('view');}}><h1>Карта и прогулки</h1><div className="exact-extension"><section className={`production-map-workspace${routeFocused ? ' route-focus' : ''}`} data-production-map-workspace data-production-journey="map" data-route-flow={routeFlow}>
-<div className="map-workspace-tools">      {(!routeFocused || routeFlow === 'planning') && <>
-        {!routeFocused && <header className="production-map-topbar">
-          <button className="production-map-profile" type="button" onClick={onOpenProfile} aria-label={`Открыть профиль ${dogName}`}>
-            <span className="production-map-avatar">{avatar}</span>
-            <span><b>Карта · {dogName}</b><small>маршруты, места и предупреждения</small></span>
-          </button>
-          <button className="production-map-locate" type="button" onClick={locateUser} disabled={locating} aria-label="Найти меня">
-            <Crosshair weight={userLocation ? 'fill' : 'regular'} aria-hidden="true" />
-            <span>{locating ? 'Ищу' : 'Найти меня'}</span>
-          </button>
-        </header>}
-
-        {(mode === 'view' || routeFlow === 'planning') && <div className="production-map-search">
-          <MagnifyingGlass weight="regular" aria-hidden="true" />
-          <label htmlFor="production-map-search-input">Найти организацию, место или маршрут</label>
-          <input id="production-map-search-input" role="combobox" aria-autocomplete="list" aria-expanded={Boolean(query && searchOpen)} aria-controls="production-map-search-results" aria-activedescendant={activeSearchIndex >= 0 ? `production-map-result-${activeSearchIndex}` : undefined} aria-describedby="production-map-search-status" value={query} onChange={(event) => { setQuery(event.target.value); setSearchOpen(true); setRemoteSearchResults([]); setSearchRequest(null); setSearchState('idle'); }} onKeyDown={(event) => {
-            if (event.key === 'ArrowDown' && searchResults.length) { event.preventDefault(); setActiveSearchIndex((index) => (index + 1) % searchResults.length); }
-            if (event.key === 'ArrowUp' && searchResults.length) { event.preventDefault(); setActiveSearchIndex((index) => (index <= 0 ? searchResults.length - 1 : index - 1)); }
-            if (event.key === 'Enter') { event.preventDefault(); if (searchOpen && activeSearchIndex >= 0 && searchResults[activeSearchIndex]) chooseSearchResult(searchResults[activeSearchIndex]); else searchArea(); }
-            if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); setSearchOpen(false); setActiveSearchIndex(-1); event.currentTarget.blur(); requestAnimationFrame(()=>document.querySelector<HTMLElement>('[data-production-map-workspace] .map-home-tabs button[aria-pressed="true"], [data-production-map-workspace] .production-map-sheet-toggle')?.focus()); }
-          }} placeholder="Клиника, парк или маршрут" autoComplete="off" />
-          <button type="button" disabled={query.trim().length<2} onClick={searchArea}>Найти</button>
-          {query && <button type="button" onClick={() => setQuery('')} aria-label="Очистить поиск"><X weight="bold" aria-hidden="true" /></button>}
-          <span id="production-map-search-status" className="sr-only" role="status" aria-live="polite">{query ? searchState === 'loading' ? 'Ищу организации и места' : searchResults.length ? `Найдено: ${searchResults.length}` : 'Ничего не найдено' : ''}</span>
-          {query && searchOpen && <div id="production-map-search-results" className="production-map-search-results" role="listbox" aria-label="Результаты поиска">
-            {searchResults.length ? searchResults.map((result, index) => <button id={`production-map-result-${index}`} key={`${result.kind}-${result.id}`} type="button" role="option" aria-selected={index === activeSearchIndex} onMouseEnter={() => setActiveSearchIndex(index)} onClick={event => chooseSearchResult(result,event.currentTarget)}><span>{result.kind === 'route' ? <MapTrifold aria-hidden="true" /> : result.kind === 'risk' ? <ShieldWarning aria-hidden="true" /> : result.kind === 'organization' ? <MagnifyingGlass aria-hidden="true" /> : <MapPin aria-hidden="true" />}</span><span className="production-map-result-copy"><b>{result.title}</b>{result.detail && <em>{result.detail}</em>}</span><small>{result.kind === 'route' ? 'маршрут' : result.kind === 'risk' ? 'опасность' : result.category || 'место'}</small></button>) : searchState === 'loading' ? <p>Ищу организации и места…</p> : searchState === 'error' ? <p>Поиск мест временно недоступен. Сохранённые точки всё ещё можно найти.</p> : searchState === 'quota' ? <p>Лимит поиска исчерпан. Подождите и повторите.</p> : searchState === 'idle' ? <p>Нажмите «Найти» для поиска в этой области.</p> : <p>Ничего не найдено. Попробуйте название или тип места.</p>}
-          </div>}
-        </div>}
-      </>}
-
-      {searchRequest && !selectedSearchPoint && <div className="map-search-area"><span>Поиск в выбранной области · OpenStreetMap</span><button type="button" onClick={searchArea}>Искать в этой области</button></div>}      <div className="production-map-status" role="status" aria-live="polite">{actionNotice||locationStatus}</div></div>
-    <section className="production-map-canvas" aria-label={`Карта прогулок ${dogName}`}>
-      {liveMap}
-      {routeFlow === 'planning' && !folded && <span className="production-map-center-pin" aria-hidden="true"><MapPin weight="fill" /></span>}
-
-
-
-
-    </section>
-
-<div className="map-work-area">
-      {folded && routeFlow!=='idle' && <div className="map-resume-draft" role="status"><span><b>{routeFlow==='recording'?'Прогулка записывается':['planning','plan-review'].includes(routeFlow)?'Ваша прогулка':'Есть незавершённый маршрут'}</b><small>{formatPointCount(['planning','plan-review'].includes(routeFlow)?activeStops.length:routePoints.length)}{plannerReady&&routePoints.length>1?` · ${formatDistance(routeDistance)}`:''}</small></span><button type="button" onClick={()=>{setSavedRoutePreview(null);setAgentWalkPreview(null);setSelectedSearchPoint(null);resumeRoute();}}>Продолжить</button></div>}
-
-      {mapSelection&&mode==='view'&&!selectedSearchPoint&&<section className="map-point-actions" aria-label="Выбранная точка">
-        <b>Точка на карте</b><p>{mapSelection.lat.toFixed(5)}, {mapSelection.lng.toFixed(5)}</p>
-        <button type="button" disabled={routeFlow!=='idle'&&!['planning','plan-review'].includes(routeFlow)} onClick={()=>{const p=mapSelection;appendPlacesToWalk([{point:[p.lng,p.lat]}]);setMapSelection(null);}}>Добавить в маршрут</button>
-        <button type="button" onClick={event=>{const p=mapSelection;chooseSearchResult({id:`point:${p.lat.toFixed(6)}:${p.lng.toFixed(6)}`,title:'Место на карте',kind:'place',point:p},event.currentTarget);}}>Сохранить точку</button>
-        <button type="button" onClick={()=>{const p=mapSelection;startRisk();onMapClick({latlng:p});setMapSelection(null);}}>Предупредить здесь</button>
-        <button type="button" onClick={()=>setMapSelection(null)}>Отмена</button>
-      </section>}
-      {placeOrigin!=='map'&&selectedPlacePanel}
-    {routeFocused ? <section className="production-route-controller" data-route-controller aria-label={routeTitle}>
+  const closePanel=()=>{setPanel(null);setSelectedMark(null);setCommunityPoint(null);setSearchOpen(false);setSelectedSearchPoint(null);setMapSelection(null);setSavedRoutePreview(null);setAgentWalkPreview(null);if(routeFocused)foldRoute();if(mode==='risk')onModeChange('view');};
+  const openTab=(tab:'places'|'saved'|'walks')=>{setPanel(tab);setWorkspaceTab(tab);setSelectedMark(null);setSearchOpen(false);setSelectedSearchPoint(null);if(routeFocused)foldRoute();if(tab==='saved')openCollection(collection?.id||'saved');};
+  const displayedPanel=communityEditing||panel==='layers'||Boolean(searchOpen)||Boolean(selectedSearchPoint)||Boolean(mapSelection)||routeFocused||Boolean(savedRoutePreview||agentWalkPreview)||Boolean(panel)||mode==='risk';
+  const title=communityEditing?'':panel==='layers'?'Слои':searchOpen?'Поиск':selectedSearchPoint?'Место':routeFocused?'Маршрут':panel==='saved'?'Сохранённое':panel==='walks'?'Прогулки':mode==='risk'?'Мои зоны':'Места';
+  const filteredResults=searchResults.filter(p=>!dogOnly||['yes','leashed','designated'].includes(p.dogAccess||''));
+  return <ExactPage active={active} viewKey="map" onBack={displayedPanel?closePanel:undefined}>
+   <section className="map-refresh production-map-workspace" data-production-map-workspace data-production-journey="map" data-route-flow={routeFlow}>
+    <h1 className="sr-only">Карта прогулок</h1>
+    <div className="map-refresh-canvas">{liveMap}{routeFlow==='planning'&&!folded&&!communityEditing&&<span className="production-map-center-pin" aria-hidden="true"><MapPin/></span>}</div>
+    <form className="map-refresh-search" onSubmit={event=>{event.preventDefault();searchArea();}}>
+     <label className="sr-only" htmlFor="production-map-search-input">Место или адрес</label>
+     <input id="production-map-search-input" type="search" role="combobox" aria-expanded={searchOpen} aria-controls="map-refresh-results" aria-autocomplete="list" aria-activedescendant={activeSearchIndex>=0?`map-result-${activeSearchIndex}`:undefined} placeholder="Место или адрес" value={query} onFocus={()=>{setSearchOpen(true);setPanel('places');}} onChange={event=>{setQuery(event.target.value);setSearchRequest(null);setRemoteSearchResults([]);setSearchState('idle');setSearchOpen(true);}} onKeyDown={event=>{if(event.key==='ArrowDown'&&filteredResults.length){event.preventDefault();setActiveSearchIndex(i=>(i+1)%filteredResults.length);}if(event.key==='ArrowUp'&&filteredResults.length){event.preventDefault();setActiveSearchIndex(i=>i<=0?filteredResults.length-1:i-1);}if(event.key==='Enter'&&searchOpen&&activeSearchIndex>=0&&filteredResults[activeSearchIndex]){event.preventDefault();chooseSearchResult(filteredResults[activeSearchIndex]);setSearchOpen(false);}if(event.key==='Escape'){event.stopPropagation();setSearchOpen(false);setPanel(null);event.currentTarget.blur();}}}/>
+     <button type="submit" className="icon-button" aria-label="Найти" disabled={query.trim().length<2}><MagnifyingGlass/></button>
+    </form>
+    <div className="map-refresh-tools">
+     <button type="button" className="icon-button" aria-label="Найти меня" disabled={locating} onClick={locateUser}><Crosshair/></button>
+     <button type="button" className="icon-button" aria-label="Слои" aria-pressed={panel==='layers'} onClick={()=>{setPanel(panel==='layers'?null:'layers');setSearchOpen(false);}}><MapTrifold/></button>
+     <button type="button" className="icon-button" aria-label="Сохранённое" onClick={()=>openTab('saved')}><ExactIcon name="save"/></button>
+    </div>
+    {(actionNotice||locationStatus)&&<p className="map-refresh-status" role="status">{actionNotice||locationStatus}</p>}
+    {displayedPanel&&<motion.aside className="map-refresh-panel map-work-area" initial={{y:18,opacity:0}} animate={{y:0,opacity:1}} transition={{duration:.28,ease:[.22,1,.36,1]}} aria-label={title||'Отметка на карте'}>
+     <header className="map-refresh-panel-heading"><h2>{title}</h2><button type="button" className="icon-button" aria-label="Закрыть панель" onClick={closePanel}><X/></button></header>
+     {communityEditing?<MapCommunityPanel key={`${panel}:${selectedMark||'new'}:${petId}`} kind={panel} point={communityPoint||mapCenter} dogName={dogName} avatar={avatar} guest={guest} community={community} selected={communitySelection} onClose={closePanel}/>:panel==='layers'?<>
+      <fieldset><legend>Показывать на карте</legend>{(['routes','places','risks'] as const).map(k=><label className="map-layer-option" key={k}><input type="checkbox" checked={layers[k]} onChange={e=>setLayers(v=>({...v,[k]:e.target.checked}))}/>{k==='routes'?'Маршруты':k==='places'?'Места':'Опасности'}</label>)}<label className="map-layer-option"><input type="checkbox" checked={walkersVisible} onChange={e=>setWalkersVisible(e.target.checked)}/>Гуляют рядом</label></fieldset>
+      {community.error&&<p role="alert">{community.error}<button type="button" onClick={()=>void community.reload()}>Повторить</button></p>}
+      <button type="button" className="secondary" disabled={routeFlow!=='idle'} onClick={()=>{setPanel(null);startRisk();}}>Мои зоны</button>
+     </>:searchOpen?<>
+      <div className="map-category-list">{[['park','Парки'],['dog_park','Площадки'],['cafe','Кафе'],['veterinary','Ветклиники'],['pet','Зоомагазины']].map(([key,label])=><button type="button" className="chip" key={key} onClick={()=>searchCategory(key,label)}>{label}</button>)}</div>
+      <label className="map-layer-option"><input type="checkbox" checked={dogOnly} onChange={e=>setDogOnly(e.target.checked)}/>Можно с собакой</label>
+      {searchRequest?.category&&<p className="hint">В пределах 3 км от центра карты</p>}
+      <div className="list" id="map-refresh-results" role="listbox" aria-label="Результаты поиска">{filteredResults.map((result,index)=><button id={`map-result-${index}`} role="option" aria-selected={activeSearchIndex===index} type="button" className="list-row" key={result.id} onClick={event=>{chooseSearchResult(result,event.currentTarget);setSearchOpen(false);}}><span className="grow"><strong>{result.title}</strong><small>{result.detail}</small></span></button>)}</div>
+      {searchState==='loading'&&<p role="status">Ищу организации и места…</p>}{['error','quota'].includes(searchState)&&<p role="alert">Поиск временно недоступен. <button type="button" onClick={searchArea}>Повторить</button></p>}{searchState==='ready'&&!filteredResults.length&&<p>Ничего не найдено{dogOnly?' с подтверждённым допуском собак':''}.</p>}
+     </>:selectedSearchPoint?selectedPlacePanel:routeFocused?<section className="production-route-controller" data-route-controller aria-label={routeTitle}>
       {discardPrompt ? <section ref={discardDialogRef} className="production-route-discard" role="alertdialog" aria-modal="true" aria-labelledby="route-discard-title" aria-describedby="route-discard-description">
         <Trash weight="regular" aria-hidden="true" />
         <div><b id="route-discard-title">Удалить незавершённый маршрут?</b><p id="route-discard-description">Записанные точки и время восстановить не получится.</p></div>
@@ -1047,12 +981,9 @@ export function ProductionMapWorkspace({
           </>}
         </footer>}
       </>}
-    </section> : mode === 'risk' ? <section className="production-map-snap-sheet expanded risk-sheet" data-map-snap-sheet>
-      <header className="production-map-simple-heading"><div><b>Предупредить об опасности</b><p>{pickedPoint ? 'Место выбрано · добавьте пояснение' : 'Коснитесь места на карте'}</p></div><button type="button" onClick={() => onModeChange('view')}>Отменить</button></header>
-      <div className="production-map-sheet-body">{composer}</div>
-    </section> : <section className={`production-map-snap-sheet home-sheet${savedExpanded ? ' expanded' : ''}`} data-map-snap-sheet>
-
-      {savedRoutePreview&&<section className="agent-walk-preview" aria-label="Сохранённая прогулка">
+    </section>:mode==='risk'?<>{composer}{saveError&&<p role="alert">{saveError}</p>}</>:<>
+      {mapSelection&&<section><p>Выбранная точка</p><div className="row-actions"><button type="button" className="primary" onClick={()=>{const point=mapSelection;appendPlacesToWalk([{point:[point.lng,point.lat]}]);setMapSelection(null);}}>В маршрут</button><button type="button" className="secondary" onClick={event=>chooseSearchResult({id:`point:${mapSelection.lat}:${mapSelection.lng}`,title:'Место на карте',kind:'place',point:mapSelection},event.currentTarget)}>Сохранить место</button></div></section>}
+            {savedRoutePreview&&<section className="agent-walk-preview" aria-label="Сохранённая прогулка">
         <h3>{savedRoutePreview.title}</h3><p>{savedRoutePreview.startedAt&&Number.isFinite(Date.parse(savedRoutePreview.startedAt))?`${new Date(savedRoutePreview.startedAt).toLocaleDateString('ru-RU')} · `:''}Сохранённый маршрут · {formatDistance(savedRoutePreview.distanceMeters??measuredRouteDistance(savedRoutePreview.path.coordinates,savedRoutePreview.pathGaps))}</p>
         {savedRoutePreview.description&&<p>{savedRoutePreview.description}</p>}
         {!!savedRoutePreview.pathGaps?.length&&<p>В записи есть перерывы GPS. Пропущенные участки не соединены.</p>}
@@ -1073,7 +1004,7 @@ export function ProductionMapWorkspace({
         <button type="button" onClick={()=>{setAgentWalkPreview(null);setFolded(routeFlow==='idle');}}>Закрыть предпросмотр</button>
       </section>}
       {(agentPlaces.length>0||Boolean(agentWalkSelection)||Boolean(agentSavedRouteSelection))&&onReturnToAssistant&&<button type="button" className="agent-map-return" onClick={onReturnToAssistant}><span aria-hidden="true">←</span> К разговору</button>}
-      {!agentWalkPreview&&!savedRoutePreview&&<nav className="map-home-tabs" aria-label="Работа с картой">{(['places','walks','saved'] as const).map(t=><button key={t} type="button" aria-pressed={workspaceTab===t} onClick={()=>{setWorkspaceTab(t);setSavedExpanded(t==='saved');if(t==='saved')openCollection(collection?.id||'saved');}}>{t==='places'?'Места':t==='walks'?'Прогулки':'Сохранённое'}</button>)}</nav>}
+
       <div hidden={Boolean(agentWalkPreview||savedRoutePreview)||workspaceTab!=='places'}><MapPlacesPanel places={layers.places?visibleMapPlaces:[]} selectedId={placeOrigin==='map'?selectedVisiblePlaceId:undefined} selectedContent={selectedPlacePanel} onChoose={chooseMapPlace} loading={libraryStore.state==='loading'||(placeSearchActive&&searchState==='loading')} error={libraryStore.error||(placeSearchActive&&['error','quota'].includes(searchState)?'Не удалось обновить поиск. Сохранённые места не изменились.':undefined)} onRetry={()=>{libraryStore.reload();if(placeSearchActive&&!agentPlaces.length)searchArea();}} hiddenCount={hiddenPlaceCount} onShowAll={showAllMapPlaces} inRoute={new Set(activeStops.flatMap(s=>s.placeId?[s.placeId]:[]))} savedIds={new Set(libraryStore.library.places.flatMap(p=>[p.id,p.source.id]))} searching={placeSearchActive}/>{!layers.places&&<button type="button" onClick={()=>setLayers(v=>({...v,places:true}))}>Показать слой мест</button>}</div>
       <div hidden={Boolean(agentWalkPreview||savedRoutePreview)||workspaceTab!=='walks'}>
       <section className="production-route-launch" aria-label="Прогулки и маршруты">
@@ -1098,7 +1029,14 @@ export function ProductionMapWorkspace({
         <div data-map-saved-content>{savedContent}</div>
       </div>
       </div>
-    </section>}
-    </div>
-  </section></div></ExactPage>;
+     </>}
+    </motion.aside>}
+    <nav className="map-refresh-dock" aria-label="Действия на карте">
+     <button type="button" onClick={()=>{setPanel(null);setSearchOpen(false);setSelectedSearchPoint(null);setMapSelection(null);startPlanning();}}>{routeFlow==='idle'?'Маршрут':'Моя прогулка'}</button>
+     <button type="button" aria-pressed={panel==='presence'} onClick={()=>{setSearchOpen(false);setSelectedMark(null);setCommunityPoint(userLocation||mapCenter);setPanel('presence');}}>{community.signals.some(s=>s.isMine&&s.petId===petId)?'Гуляем сейчас':'Мы гуляем'}</button>
+     <button type="button" aria-pressed={panel==='hazard'} onClick={()=>{setSearchOpen(false);setSelectedMark(null);setCommunityPoint(mapSelection||mapCenter);setPanel('hazard');}}>Отметить</button>
+     <button type="button" className="icon-button" aria-label="Запись прогулки и GPX" onClick={()=>openTab('walks')}><Footprints/></button>
+    </nav>
+   </section>
+  </ExactPage>;
 }

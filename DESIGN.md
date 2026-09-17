@@ -1,6 +1,6 @@
 ---
 name: "Псё"
-description: "The owner-pinned connected interface: Naris headings, Arial working text, translucent lavender paper."
+description: "The owner-pinned connected interface: Naris throughout, matte lavender controls, calm Motion and light Liquid background."
 colors:
   ink: "#3e3947"
   ink-soft: "#7b7186"
@@ -34,43 +34,47 @@ typography:
     fontWeight: 400
     lineHeight: 1.2
   title:
-    fontFamily: "Arial, sans-serif"
+    fontFamily: "Naris, Arial, sans-serif"
     fontSize: "17px"
     fontWeight: 500
     lineHeight: 1.5
   body:
-    fontFamily: "Arial, sans-serif"
+    fontFamily: "Naris, Arial, sans-serif"
     fontSize: "15px"
     fontWeight: 400
     lineHeight: 1.5
   lead:
-    fontFamily: "Arial, sans-serif"
+    fontFamily: "Naris, Arial, sans-serif"
     fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.55
   control:
-    fontFamily: "Arial, sans-serif"
+    fontFamily: "Naris, Arial, sans-serif"
     fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.5
   field:
-    fontFamily: "Arial, sans-serif"
+    fontFamily: "Naris, Arial, sans-serif"
     fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.5
   label:
-    fontFamily: "Arial, sans-serif"
+    fontFamily: "Naris, Arial, sans-serif"
     fontSize: "12px"
     fontWeight: 400
     lineHeight: 1.5
   navigation:
-    fontFamily: "Arial, sans-serif"
+    fontFamily: "Naris, Arial, sans-serif"
     fontSize: "10px"
     fontWeight: 400
     lineHeight: 1.5
 rounded:
+  map-search: "18px"
+  map-panel: "24px"
+  map-tools: "14px"
+  map-dock: "20px"
   field: "16px"
-  primary: "22px"
+  primary: "16px"
   soft: "27px"
   navigation: "26px"
   navigation-item: "18px"
@@ -275,3 +279,8 @@ Profile identity is an actual image or honest initial in the source rounded-squa
 - Don't treat prototype sample data, simulated social acceptance, or a screenshot as evidence of real service behavior.
 - Don't delete product-only features merely because they were absent from the 20 source views or hide them behind a global ellipsis menu.
 - Don't use this design record as a claim of deployment, completed accessibility review, or closed functional/visual acceptance.
+
+
+## Approved update · 2026-09-17
+Latest source: local Motion lab revision 5 and map lab. All text uses Naris; inputs stay 16px. Matte selected lavender primary, no metallic gradients or decorative CTA icons. Motion indicator and panel entrance use 280ms; native disclosure height transition 340ms is intentional, reduced-motion disabled. Light Liquid uses a bounded WebGL canvas, pauses while hidden and respects reduced motion; static paper fallback.
+Map fills the available content area with a search overlay, tools, a contextual panel and a compact action dock. No new route exchange in this release. Existing account data, saved links and tools remain.

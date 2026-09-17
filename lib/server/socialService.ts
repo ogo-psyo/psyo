@@ -202,7 +202,7 @@ function signalPayload(input: WalkSignalInput & { expiresAt: string }) {
   };
 }
 
-function mapWalkSignal(row: any, ownerId: string): WalkSignal | null {
+export function mapWalkSignal(row: any, ownerId: string): WalkSignal | null {
   const pet = Array.isArray(row.pets) ? row.pets[0] : row.pets;
   if (!pet) return null;
   const profile = Array.isArray(pet.social_profiles) ? pet.social_profiles[0] : pet.social_profiles;

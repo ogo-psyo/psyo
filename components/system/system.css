@@ -1,0 +1,33 @@
+/* Approved Motion lab revision 5. Product typography/material tokens. */
+:root{--pso-font:Naris,Arial,sans-serif;--pso-ink:#3e3947;--pso-paper:#faf9fc;--pso-secondary:#675972;--pso-line:#d7cfdf;--pso-focus:#786b94;--pso-selected:#e6dfee;--pso-action:#50445f;--pso-error:#964e53;--font-body:var(--pso-font);--font-display:var(--pso-font)}
+body.companion-app{font-family:var(--pso-font);color:var(--pso-ink)}
+body.companion-app :is(h1,h2,h3,h4,p,span,a,label,summary,button,input,select,textarea,small,strong,b,dt,dd,li){font-family:var(--pso-font)}
+body.companion-app :is(button,input,select,textarea){font-family:var(--pso-font)}
+body.companion-app :is(.primary,.exact-app .primary){background:var(--pso-selected);background-image:none;border-color:transparent;box-shadow:none;color:var(--pso-action);border-radius:16px}
+body.companion-app :is(.secondary,.exact-app .secondary){background:#f1edf5;background-image:none;box-shadow:none;color:var(--pso-secondary);border-radius:16px}
+body.companion-app :is(.soft,.card,.sheet,.modal){background-image:none}
+body.companion-app :is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]){background:var(--pso-paper);border-color:var(--pso-line);font-size:16px}
+body.companion-app :is(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--pso-focus);outline-offset:3px}
+body.companion-app .primary>svg{display:none}
+.liquid-background{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--pso-paper)}
+.liquid-background canvas{width:100%;height:100%;display:block}
+body.companion-app{isolation:isolate;background:#eeedf2}
+body.companion-app .exact-app{background:#faf9fc75}
+.nav button{position:relative;isolation:isolate}
+.nav button.active{background:transparent!important}
+.nav button>svg,.nav button>span:not(.pso-nav-indicator){position:relative;z-index:1}
+.pso-nav-indicator{position:absolute;inset:0;border-radius:16px;background:var(--pso-selected);z-index:0}
+@media(prefers-reduced-motion:no-preference){details::details-content{interpolate-size:allow-keywords;transition:height .34s cubic-bezier(.22,1,.36,1),content-visibility .34s allow-discrete;height:0;overflow:clip}details[open]::details-content{height:auto}}
+@media(prefers-reduced-motion:reduce){.pso-nav-indicator{transform:none!important}}
+
+/* Override the previous exact-source cascade at its own namespace. */
+#pso-exact-interface{font-family:var(--pso-font)!important;background:#faf9fc75!important}
+#pso-exact-interface :is(h1,h2,h3,h4,p,span,a,label,summary,button,input,select,textarea,small,strong,b,dt,dd,li){font-family:var(--pso-font)!important}
+#pso-exact-interface .primary{background:var(--pso-selected)!important;background-image:none!important;box-shadow:none!important;border:1px solid transparent!important;border-radius:16px!important}
+#pso-exact-interface .secondary{background:#f1edf5!important;background-image:none!important;box-shadow:none!important;border-radius:16px!important;border-color:transparent!important}
+#pso-exact-interface :is(input,textarea,select):not([type=checkbox]):not([type=radio]):not([type=range]){background:var(--pso-paper)!important;border-color:var(--pso-line)!important;font-size:16px!important}
+#pso-exact-interface :is(.soft,.card,dialog){background-image:none!important;box-shadow:none!important}
+#pso-exact-interface .primary>.icon{display:none!important}
+#pso-exact-interface .nav button.active{background:transparent!important}
+#pso-exact-interface .nav button>.pso-nav-indicator{position:absolute!important;inset:0!important;z-index:0!important}
+#pso-exact-interface .nav button>span:not(.pso-nav-indicator){position:relative!important;z-index:1!important}
