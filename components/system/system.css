@@ -45,3 +45,92 @@ html[data-pso-composer-keyboard="open"] #pso-exact-interface .home > :not(.compo
 html[data-pso-composer-keyboard="open"] #pso-exact-interface .composer { flex-shrink:0!important; scroll-margin-block:12px; }
 html[data-pso-composer-keyboard="open"] #pso-exact-interface [data-exact-view="conversation"] { display:flex!important; flex-direction:column!important; }
 html[data-pso-composer-keyboard="open"] #pso-exact-interface [data-exact-view="conversation"] .composer { position:sticky; bottom:0; background:var(--pso-paper)!important; }
+
+/* Approved readability prototype, 2026-09-17: quiet reading area, live edges. */
+#pso-exact-interface {
+  background:linear-gradient(180deg,#faf9fc20 0%,#faf9fcba 22%,#faf9fce8 37%,#faf9fcba 66%,#faf9fc25 100%)!important;
+  color:var(--pso-ink)!important;
+}
+#pso-exact-interface :is(.lead,.muted,.meta,.hint,.eyebrow,.status-line,.tiny),
+#pso-exact-interface .home h1 span,
+#pso-exact-interface .list-row small {color:var(--pso-secondary)!important;}
+#pso-exact-interface :is(.lead,.home .lead) {font-size:16px!important;}
+#pso-exact-interface .list-row strong {font-size:18px!important;}
+#pso-exact-interface .list-row small {font-size:15px!important;}
+#pso-exact-interface .list-row {border-bottom-color:var(--pso-line)!important;}
+#pso-exact-interface :is(.soft,.card,.composer,.note-paper,.nav),
+#pso-exact-interface .exact-extension :is(.care-task-card,.habit-list>article,.public-card-preview-panel,.public-card-checklist,.public-card-publish-card,.profile-danger-zone,.profile-plus-card,.social-request-card) {
+  background:var(--pso-paper)!important;background-image:none!important;
+  border-color:var(--pso-line)!important;box-shadow:none!important;backdrop-filter:none!important;
+}
+#pso-exact-interface .nav :is(a,button) {color:var(--pso-secondary)!important;font-size:12px!important;}
+#pso-exact-interface .composer textarea {font-size:19px!important;background:transparent!important;border-radius:0!important;}
+#pso-exact-interface :is(input,textarea)::placeholder {color:var(--pso-secondary)!important;opacity:1!important;}
+
+/* Shared form language, including the previously separate extension screens. */
+#pso-exact-interface :is(label,legend),
+#pso-exact-interface .exact-extension :is(label,legend) {
+  font-family:var(--pso-font)!important;font-size:16px!important;line-height:1.5!important;
+  font-weight:400!important;color:var(--pso-secondary)!important;letter-spacing:normal!important;
+}
+#pso-exact-interface label> :is(input,select,textarea):not([type=checkbox]):not([type=radio]) {margin-top:8px!important;}
+#pso-exact-interface :is(input,select,textarea),
+#pso-exact-interface .exact-extension :is(input,select,textarea) {
+  font-family:var(--pso-font)!important;font-weight:400!important;color:var(--pso-ink)!important;
+  box-shadow:none!important;text-transform:none!important;letter-spacing:normal!important;
+}
+#pso-exact-interface :is(input,select):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),
+#pso-exact-interface .exact-extension :is(input,select):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]) {
+  min-height:50px!important;min-width:0!important;max-width:100%!important;
+  border:1px solid var(--pso-line)!important;border-radius:16px!important;padding:11px 13px!important;
+}
+#pso-exact-interface select,
+#pso-exact-interface .exact-extension select {
+  appearance:none!important;-webkit-appearance:none!important;padding-right:42px!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23675972' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;
+  background-position:right 14px center!important;background-repeat:no-repeat!important;background-size:18px!important;
+}
+#pso-exact-interface input[type=number] {appearance:textfield!important;-moz-appearance:textfield!important;}
+#pso-exact-interface input[type=number]::-webkit-inner-spin-button,
+#pso-exact-interface input[type=number]::-webkit-outer-spin-button {-webkit-appearance:none;margin:0;}
+#pso-exact-interface .exact-extension :is(.module-form,.reminder-edit-form,.profile-delete-form) {
+  background:var(--pso-paper)!important;border:1px solid var(--pso-line)!important;border-radius:26px!important;
+  padding:18px!important;margin-block:20px!important;
+}
+#pso-exact-interface :is(.module-form-actions,.care-row-actions,.row-actions) {gap:10px!important;}
+#pso-exact-interface :is(.primary,.secondary),
+#pso-exact-interface .exact-extension :is(.primary,.secondary),
+#pso-exact-interface .reminder-edit-form button[type=submit] {font-family:var(--pso-font)!important;font-size:16px!important;}
+#pso-exact-interface .exact-extension .primary,
+#pso-exact-interface .reminder-edit-form button[type=submit] {
+  background:var(--pso-selected)!important;color:var(--pso-action)!important;box-shadow:none!important;border-radius:16px!important;
+}
+#pso-exact-interface .exact-extension .module-form-actions .secondary {background:transparent!important;color:var(--pso-secondary)!important;}
+#pso-exact-interface .pso-choices,
+#pso-exact-interface .exact-extension .pso-choices {min-width:0!important;margin:20px 0!important;padding:0!important;border:0!important;background:none!important;}
+#pso-exact-interface .pso-choices legend {padding:0!important;margin-bottom:8px!important;}
+#pso-exact-interface .pso-choice-options {display:flex!important;flex-wrap:wrap!important;gap:8px!important;}
+#pso-exact-interface .pso-choice-options .pso-choice {
+  position:relative!important;display:block!important;margin:0!important;flex:1 1 auto!important;cursor:pointer;
+}
+#pso-exact-interface .pso-choice input[type=radio] {
+  position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;
+  opacity:0!important;cursor:pointer!important;z-index:1;
+}
+#pso-exact-interface .pso-choice span {
+  display:flex;align-items:center;justify-content:center;min-height:44px;padding:9px 13px;
+  background:#f1edf5;border:1px solid transparent;border-radius:14px;color:var(--pso-secondary);
+}
+#pso-exact-interface .pso-choice input:checked+span {
+  background:var(--pso-selected);border-color:var(--pso-focus);color:var(--pso-action);
+  text-decoration:underline;text-underline-offset:4px;
+}
+#pso-exact-interface .pso-choice input:focus-visible+span {outline:2px solid var(--pso-focus);outline-offset:3px;}
+#pso-exact-interface .pso-choices:disabled .pso-choice {opacity:.6;cursor:default;}
+#pso-exact-interface .pso-stepper {display:grid!important;grid-template-columns:48px minmax(48px,1fr) 48px!important;gap:8px!important;max-width:224px;margin:8px 0 22px;}
+#pso-exact-interface .exact-extension .pso-stepper button {background:var(--pso-selected)!important;color:var(--pso-action)!important;font:24px/1 var(--pso-font)!important;border:1px solid var(--pso-line)!important;}
+#pso-exact-interface .pso-stepper input {text-align:center!important;margin:0!important;}
+@media(forced-colors:active){#pso-exact-interface .pso-choice input:checked+span{border:2px solid Highlight;}#pso-exact-interface .pso-choice input:focus-visible+span{outline-color:Highlight;}}
+#pso-exact-interface .home .recent .list-row strong {font-size:18px!important;}
+#pso-exact-interface .home .recent .list-row small {font-size:15px!important;color:var(--pso-secondary)!important;}
+#pso-exact-interface .composer .send {background:var(--pso-selected)!important;border:0!important;box-shadow:none!important;}
