@@ -10,7 +10,7 @@ export function MapCommunityPanel({kind,point,dogName,avatar,guest,community,sel
  const fingerprint=useRef('');
  const mine=community.signals.find(s=>s.isMine&&s.petId===community.petId);
  const shown=signal||(!editing&&mine?mine:null);
- async function submit(event:React.FormEvent){event.preventDefault();const body=kind==='presence'?{kind,...point,minutes}:{kind,id:id.current,...point,title,radius,hours};const next=JSON.stringify(body);if(next!==fingerprint.current){fingerprint.current=next;key.current=crypto.randomUUID();}if(await community.mutate('PUT',body,key.current))onClose();}
+ async function submit(event:React.FormEvent){event.preventDefault();const body=kind==='presence'?{kind,petId:signal?.petId||community.petId,...point,minutes}:{kind,id:id.current,...point,title,radius,hours};const next=JSON.stringify(body);if(next!==fingerprint.current){fingerprint.current=next;key.current=crypto.randomUUID();}if(await community.mutate('PUT',body,key.current))onClose();}
  return <section aria-label={kind==='presence'?'Гуляем сейчас':'Опасность'}>
   <h2>{signal?signal.name:hazard&&!editing?hazard.title:kind==='presence'?'Мы гуляем':'Отметить опасность'}</h2>
   {shown?<><div className="map-dog-card">{shown.avatarUrl&&<img src={shown.avatarUrl} alt={shown.name}/>}<p>{shown.temperament}{shown.dogFriendly?` · ${shown.dogFriendly}`:''}</p></div><p>Примерное место · до {new Date(shown.expiresAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</p></>:kind==='presence'?<div className="map-dog-card">{avatar}<strong>{dogName}</strong></div>:null}

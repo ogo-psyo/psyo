@@ -21,7 +21,7 @@ export function useMapCommunity({active,guest,petId,center,authHeaders}:{active:
  },[active,guest,cell,reload]);
  async function mutate(method:'PUT'|'DELETE',body:Record<string,unknown>,key?:string){
   if(busy||guest)return false;setBusy(true);setError('');const token=epoch.current;
-  try{const r=await fetch('/api/map/live',{method,headers:{...latest.current.authHeaders(),'Content-Type':'application/json',...(key?{'Idempotency-Key':key}:{})},body:JSON.stringify({...body,petId})});if(!r.ok)throw Error();if(token!==epoch.current)return false;await reload();return true;}
+  try{const r=await fetch('/api/map/live',{method,headers:{...latest.current.authHeaders(),'Content-Type':'application/json',...(key?{'Idempotency-Key':key}:{})},body:JSON.stringify({petId,...body})});if(!r.ok)throw Error();if(token!==epoch.current)return false;await reload();return true;}
   catch{if(token===epoch.current)setError('Не удалось сохранить. Повтори — введённое осталось.');return false;}finally{setBusy(false);}
  }
  return {signals,hazards,error,busy,reload,mutate,petId};
