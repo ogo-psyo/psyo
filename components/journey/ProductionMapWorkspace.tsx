@@ -819,7 +819,7 @@ export function ProductionMapWorkspace({
     await calculateWalk();
   }
 
-  const liveMap = (<LiveMap appearance="exact"
+  const liveMap = (<LiveMap appearance="exact" pickingPoint={communityEditing||mode==='risk'||routeFlow==='planning'&&!folded}
         communityMarks={[...(walkersVisible?community.signals.map(s=>({id:s.id,...s.approximateLocation,title:s.name,photo:s.avatarUrl,kind:'presence' as const})):[]),...(layers.risks?community.hazards.map(h=>({id:h.id,...h.point,title:h.title,radius:h.radius,kind:'hazard' as const})):[])]}
         onSelectCommunity={id=>{const signal=community.signals.find(s=>s.id===id);const hazard=community.hazards.find(h=>h.id===id);setSelectedMark(id);setPanel(signal?'presence':'hazard');setCommunityPoint(signal?.approximateLocation||hazard?.point||null);setSearchOpen(false);}}
 

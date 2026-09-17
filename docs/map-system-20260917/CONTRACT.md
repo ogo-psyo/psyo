@@ -9,3 +9,5 @@ Verification: guest browser scenarios in Chromium/WebKit at 320/390 passed (manu
 Private avatar behavior: only selected active approved asset of an explicitly published map signal can get a 60-second URL for an authenticated, nonblocked viewer. Original social endpoints retain their private-asset exclusion; no document data projected.
 
 Recovery: original deployment dpl_3qNsuim3r611vAvXRWPbgRtroink. Fresh affected-table snapshot decoded successfully against local restored schema (20 pets, 1 signal); direct full pg_dump failed twice due network. Previous full backup remains. This migration adds storage/RPCs and extends the city constraint, without rewriting existing rows.
+
+Candidate verification found a real layered-map issue: existing zone popups consumed point-selection taps. Fixed with an explicit picking state, popup close and noninteractive shape hit testing during selection. Rebuilt and targeted contracts checked; candidate map scenario must be repeated. First candidate general 14-view Chromium/WebKit smoke and live Kazan search/category results passed (category retry after shared quota).

@@ -38,6 +38,7 @@ export type LiveMapProps = {
   communityMarks?:CommunityMark[];
   onSelectCommunity?:(id:string)=>void;
   appearance?: 'default' | 'exact';
+  pickingPoint?: boolean;
   zones?: ZoneFeature[];
   features?: MapFeature[];
   picked?: { lat: number; lng: number } | null;

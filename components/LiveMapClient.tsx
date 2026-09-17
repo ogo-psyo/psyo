@@ -191,8 +191,10 @@ function communityIcon(kind:'presence'|'hazard',photo:string|null|undefined,titl
  return divIcon({className:'community-marker',html:node,iconSize:[44,44],iconAnchor:[22,22]});
 }
 
+function PickingState({picking}:{picking:boolean}){const map=useMap();useEffect(()=>{if(picking)map.closePopup();},[map,picking]);return null;}
+
 export function LiveMapClient({
-  appearance = 'default',
+  appearance = 'default', pickingPoint=false,
   communityMarks = [], onSelectCommunity,
   zones = [],
   features = [],
@@ -231,9 +233,10 @@ export function LiveMapClient({
   const draftPositions = draftRoutePositions(routePoints);
 
   return (
-    <div className="live-map-frame">
+    <div className={`live-map-frame${pickingPoint?' is-picking-point':''}`}>
       <MapContainer center={defaultCenter} zoom={12} className="live-map" zoomControl={appearance!=='exact'} attributionControl={false} aria-label={accessibleLabel}>
         <MapAccessibility label={accessibleLabel} />
+        <PickingState picking={pickingPoint}/>
         <AttributionControl prefix={false} />
         <OpenFreeMapLayer key={tileRevision} onLoad={() => { setTilesReady(true); setTilesFailed(false); }} onError={() => { setTilesReady(false); setTilesFailed(true); }} />
         <MapEvents onMapClick={onMapClick} onPick={onPick} onCenterChange={onCenterChange} onBoundsChange={onBoundsChange} />
