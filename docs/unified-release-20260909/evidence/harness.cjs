@@ -1,6 +1,6 @@
 const {chromium,webkit}=require('playwright');
 const fs=require('node:fs/promises');
-const out=__dirname;const base='http://127.0.0.1:3285';
+const out=__dirname;const base=process.env.BASE_URL||'http://127.0.0.1:3285';
 async function setup(engine='chromium',width=390){
  const browser=await({chromium,webkit}[engine]).launch();const ctx=await browser.newContext({viewport:{width,height:844},reducedMotion:'reduce'});
  const pet={id:'11111111-1111-4111-8111-111111111111',owner_id:'qa-owner',name:'Мята',profile_version:0};

@@ -284,3 +284,7 @@ Profile identity is an actual image or honest initial in the source rounded-squa
 ## Approved update · 2026-09-17
 Latest source: local Motion lab revision 5 and map lab. All text uses Naris; inputs stay 16px. Matte selected lavender primary, no metallic gradients or decorative CTA icons. Motion indicator and panel entrance use 280ms; native disclosure height transition 340ms is intentional, reduced-motion disabled. Light Liquid uses a bounded WebGL canvas, pauses while hidden and respects reduced motion; static paper fallback.
 Map fills the available content area with a search overlay, tools, a contextual panel and a compact action dock. No new route exchange in this release. Existing account data, saved links and tools remain.
+
+## Approved readability and forms · 2026-09-17
+
+Owner approved the isolated readability prototype (user16909) and deployment of feedback #1–3 (user16913). Preserve Naris and Liquid; apply a quiet light reading zone, opaque paper form/card surfaces, secondary ink #675972, primary ink #3e3947, and matte actions. Do not add explanatory paragraphs. Short categorical choices may be inline native radio groups; longer lists keep a consistently styled native select. Habit frequency uses a directly editable number with bounded decrement/increment controls. Validate when submitting, preserve draft on failure, and keep persistence/API/privacy rules unchanged. This owner decision supersedes translucent reading surfaces and Arial in historical source-reference rules.

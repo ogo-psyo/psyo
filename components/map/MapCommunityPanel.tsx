@@ -1,5 +1,6 @@
 'use client';
 import {useRef,useState,type ReactNode} from 'react';
+import {ChoiceField} from '@/components/system/ChoiceField';
 import type {WalkSignal} from '@/lib/socialCore';
 import type {Hazard,useMapCommunity} from './useMapCommunity';
 type Community=ReturnType<typeof useMapCommunity>;
@@ -15,8 +16,8 @@ export function MapCommunityPanel({kind,point,dogName,avatar,guest,community,sel
   <h2>{signal?signal.name:hazard&&!editing?hazard.title:kind==='presence'?'Мы гуляем':'Отметить опасность'}</h2>
   {shown?<><div className="map-dog-card">{shown.avatarUrl&&<img src={shown.avatarUrl} alt={shown.name}/>}<p>{shown.temperament}{shown.dogFriendly?` · ${shown.dogFriendly}`:''}</p></div><p>Примерное место · до {new Date(shown.expiresAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</p></>:kind==='presence'?<div className="map-dog-card">{avatar}<strong>{dogName}</strong></div>:null}
   {selected&&!editing?<><p>{hazard?'Сообщение участника · ':''}До {new Date(selected.expiresAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</p>{selected.isMine&&<div className="row-actions"><button type="button" disabled={community.busy} onClick={()=>setEditing(true)}>Изменить</button><button type="button" disabled={community.busy} onClick={async()=>{if(await community.mutate('DELETE',{kind,id:selected.id}))onClose();}}>Убрать отметку</button></div>}</>:guest?<p>Войди в Псё, чтобы поставить отметку.</p>:<form onSubmit={submit}>
-   <p className="hint">{kind==='presence'?'Фото, имя и примерное место будут видны другим. Перемещения не передаются.':'Коснись карты, чтобы уточнить место.'}</p>
-   {kind==='presence'?<label>На сколько<select value={minutes} onChange={e=>setMinutes(Number(e.target.value))}>{[30,45,60].map(n=><option key={n} value={n}>{n} мин</option>)}</select></label>:<><label>Что случилось<input required maxLength={120} value={title} onChange={e=>setTitle(e.target.value)}/></label><label>Область<select value={radius} onChange={e=>setRadius(Number(e.target.value))}>{[20,50,100,250,500].map(n=><option key={n} value={n}>{n} м</option>)}</select></label><label>Срок<select value={hours} onChange={e=>setHours(Number(e.target.value))}>{[1,3,24].map(n=><option key={n} value={n}>{n} ч</option>)}</select></label></>}
+   {kind==='hazard'&&<p className="hint">Коснись карты, чтобы уточнить место.</p>}
+   {kind==='presence'?<ChoiceField label="На сколько" value={minutes} options={[30,45,60].map(value=>({value,label:`${value} мин`}))} onChange={setMinutes} disabled={community.busy}/>:<><label>Что случилось<input required maxLength={120} value={title} onChange={e=>setTitle(e.target.value)}/></label><ChoiceField label="Область" value={radius} options={[20,50,100,250,500].map(value=>({value,label:`${value} м`}))} onChange={setRadius} disabled={community.busy}/><ChoiceField label="Срок" value={hours} options={[1,3,24].map(value=>({value,label:`${value} ч`}))} onChange={setHours} disabled={community.busy}/></>}
    <button className="primary full" type="submit" disabled={community.busy}>{community.busy?'Сохраняю…':selected?'Сохранить':'Поставить отметку'}</button>
    {kind==='presence'&&mine&&<button type="button" disabled={community.busy} onClick={async()=>{if(await community.mutate('DELETE',{kind,id:mine.id}))onClose();}}>Закончить прогулку на карте</button>}
   </form>}

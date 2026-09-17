@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { ChoiceField } from '@/components/system/ChoiceField';
 import { ExactPage } from '@/components/exact/ExactShell';
 import { Archive, Check, PencilSimple, Plus } from '@phosphor-icons/react';
 
@@ -104,8 +105,9 @@ export function HabitScreen({
       {!adding ? (
         <button className="primary module-primary-action" type="button" disabled={!canPersist} onClick={() => { setEditingId(null); setAdding(true); }}><Plus weight="bold" aria-hidden="true" /> Добавить привычку</button>
       ) : (
-        <form className="module-form" onSubmit={async (event) => {
+        <form className="module-form pso-form" onSubmit={async (event) => {
           event.preventDefault();
+          if (busyId || !canPersist || !draft.title.trim()) return;
           const nextDraft = { ...draft, title: draft.title.trim() };
           const saved = editingId ? await onUpdate(editingId, nextDraft) : await onCreate(nextDraft);
           if (saved) {
@@ -114,13 +116,20 @@ export function HabitScreen({
             setAdding(false);
           }
         }}>
-          <label>Название<input autoFocus value={draft.title} maxLength={120} placeholder="Например, вечерняя прогулка" onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} /></label>
-          <div className="module-form-grid">
-            <label>Тип<select value={draft.kind} onChange={(event) => setDraft((current) => ({ ...current, kind: event.target.value }))}><option value="walk">Прогулка</option><option value="feeding">Кормление</option><option value="medication">Лекарство</option><option value="grooming">Уход</option><option value="training">Занятие</option><option value="custom">Другое</option></select></label>
-            <label>Ритм<select value={draft.cadence} onChange={(event) => setDraft((current) => ({ ...current, cadence: event.target.value as HabitDraft['cadence'] }))}><option value="daily">Каждый день</option><option value="weekly">Каждую неделю</option></select></label>
+          <label>Название<input required disabled={Boolean(busyId)} autoFocus value={draft.title} maxLength={120} placeholder="Например, вечерняя прогулка" onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} /></label>
+          <ChoiceField label="Тип" value={draft.kind} disabled={Boolean(busyId)}
+            options={[{ value: 'walk', label: 'Прогулка' }, { value: 'feeding', label: 'Кормление' }, { value: 'medication', label: 'Лекарство' }, { value: 'grooming', label: 'Уход' }, { value: 'training', label: 'Занятие' }, { value: 'custom', label: 'Другое' }]}
+            onChange={kind => setDraft(current => ({ ...current, kind }))} />
+          <ChoiceField<HabitDraft['cadence']> label="Ритм" value={draft.cadence} disabled={Boolean(busyId)}
+            options={[{ value: 'daily', label: 'Каждый день' }, { value: 'weekly', label: 'Каждую неделю' }]}
+            onChange={cadence => setDraft(current => ({ ...current, cadence }))} />
+          <label htmlFor="habit-count">Сколько раз</label>
+          <div className="pso-stepper">
+            <button type="button" aria-label="Уменьшить количество" disabled={Boolean(busyId) || draft.targetPerPeriod <= 1} onClick={() => setDraft(current => ({ ...current, targetPerPeriod: Math.max(1, current.targetPerPeriod - 1) }))}>−</button>
+            <input id="habit-count" type="number" inputMode="numeric" required min="1" max="12" step="1" disabled={Boolean(busyId)} value={draft.targetPerPeriod || ''} onChange={event => setDraft(current => ({ ...current, targetPerPeriod: Number(event.target.value) }))} />
+            <button type="button" aria-label="Увеличить количество" disabled={Boolean(busyId) || draft.targetPerPeriod >= 12} onClick={() => setDraft(current => ({ ...current, targetPerPeriod: Math.min(12, current.targetPerPeriod + 1) }))}>+</button>
           </div>
-          <label>Сколько раз<input type="number" min="1" max="12" value={draft.targetPerPeriod} onChange={(event) => setDraft((current) => ({ ...current, targetPerPeriod: Number(event.target.value) }))} /></label>
-          <div className="module-form-actions"><button className="primary" type="submit" disabled={!draft.title.trim() || Boolean(busyId)}>{busyId ? 'Сохраняю…' : editingId ? 'Сохранить изменения' : 'Сохранить'}</button><button className="secondary" type="button" disabled={Boolean(busyId)} onClick={() => { setAdding(false); setEditingId(null); setDraft({ title: '', kind: 'walk', cadence: 'daily', targetPerPeriod: 1 }); }}>Отмена</button></div>
+          <div className="module-form-actions"><button className="primary" type="submit" disabled={!canPersist || Boolean(busyId)}>{busyId ? 'Сохраняю…' : editingId ? 'Сохранить изменения' : 'Сохранить'}</button><button className="secondary" type="button" disabled={Boolean(busyId)} onClick={() => { setAdding(false); setEditingId(null); setDraft({ title: '', kind: 'walk', cadence: 'daily', targetPerPeriod: 1 }); }}>Отмена</button></div>
         </form>
       )}
       {!canPersist && <p className="module-persistence-note">Привычки сохраняются для профиля, открытого через Telegram.</p>}
