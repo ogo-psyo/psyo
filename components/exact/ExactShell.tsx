@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, useCallback, type ReactNode } from 'react';
 import { MotionConfig, motion } from 'motion/react';
+import { useComposerViewport } from './useComposerViewport';
 import { exactIconPaths, type ExactIconName } from './icons';
 
 export type ExactPrimary = 'home' | 'map' | 'gav' | 'all' | 'profile';
@@ -16,6 +17,7 @@ const ExactBackContext = createContext<{
   register: (back?: () => void, view?: string) => () => void;
 }>({ scroll: new Map(), register: () => () => undefined });
 export function ExactScope({ children }: { children: ReactNode }) {
+  useComposerViewport();
   const [back, setBack] = useState<(() => void) | undefined>();
   const [view, setView] = useState<string | undefined>();
   const [scroll] = useState(() => new Map<string, number>());

@@ -31,3 +31,17 @@ body.companion-app .exact-app{background:#faf9fc75}
 #pso-exact-interface .nav button.active{background:transparent!important}
 #pso-exact-interface .nav button>.pso-nav-indicator{position:absolute!important;inset:0!important;z-index:0!important}
 #pso-exact-interface .nav button>span:not(.pso-nav-indicator){position:relative!important;z-index:1!important}
+
+/* Keyboard composition: use available height, not the covered layout viewport.
+   No animated geometry or visualViewport offset/scroll feedback loop. */
+html[data-pso-composer-keyboard="open"] #pso-exact-interface {
+  height:var(--pso-composer-viewport)!important;
+  margin-block:0!important;
+}
+html[data-pso-composer-keyboard="open"] #pso-exact-interface .nav-wrap { display:none!important; }
+html[data-pso-composer-keyboard="open"] #pso-exact-interface #pso-exact-content { padding-block:12px!important; }
+html[data-pso-composer-keyboard="open"] #pso-exact-interface .home { justify-content:flex-start!important; }
+html[data-pso-composer-keyboard="open"] #pso-exact-interface .home > :not(.composer) { display:none!important; }
+html[data-pso-composer-keyboard="open"] #pso-exact-interface .composer { flex-shrink:0!important; scroll-margin-block:12px; }
+html[data-pso-composer-keyboard="open"] #pso-exact-interface [data-exact-view="conversation"] { display:flex!important; flex-direction:column!important; }
+html[data-pso-composer-keyboard="open"] #pso-exact-interface [data-exact-view="conversation"] .composer { position:sticky; bottom:0; background:var(--pso-paper)!important; }
