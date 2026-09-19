@@ -41,7 +41,15 @@ export function ExactHeader({ dogName, guest, onHome, onProfile, onBack }: {
     const button = window.Telegram?.WebApp?.BackButton;
     if (!button) return;
     if (!hasBack) { button.hide(); return; }
-    const handleBack = () => latestBack.current?.();
+    const handleBack = () => {
+      // Telegram's native Back lives outside the inert DOM of a modal.
+      const modal = document.querySelector<HTMLDialogElement>('dialog:modal');
+      if (modal) {
+        if (modal.dispatchEvent(new Event('cancel', { cancelable: true }))) modal.close();
+        return;
+      }
+      latestBack.current?.();
+    };
     button.onClick(handleBack);
     button.show();
     return () => { button.offClick(handleBack); button.hide(); };

@@ -66,12 +66,9 @@ for (const token of [
   if (!files.entitlements.includes(token)) failures.push(`entitlements API missing commercial package token: ${token}`);
 }
 
-for (const token of [
-  'plus-gate-card',
-  'startPlusCheckout',
-  'Оплата пока недоступна',
-]) {
-  if (!files.page.includes(token)) failures.push(`main UI missing Plus subscription surface token: ${token}`);
+// Owner paused the unfinished subscription offer. Backend safety gates remain above.
+for (const token of ['profile-plus-card', 'startPlusCheckout']) {
+  if (files.page.includes(token)) failures.push(`unfinished Plus offer remains reachable: ${token}`);
 }
 
 for (const token of [
