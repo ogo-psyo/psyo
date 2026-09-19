@@ -8,7 +8,7 @@ const results=[];
 for(const [engine,width] of [['chromium',390],['webkit',320]]) {
  const browser=await({chromium,webkit}[engine]).launch();
  const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
- let pet=null,failCreate=true,failUpload=true,failActivate=true,failEdit=true,profileData=null;const requests=[],errors=[];
+ let failSession=false,pet=null,failCreate=true,failUpload=true,failActivate=true,failEdit=true,profileData=null;const requests=[],errors=[];
  await context.addInitScript(()=>Object.defineProperty(window,'Telegram',{value:{WebApp:{initData:'qa-fixture-not-authentication',ready(){},expand(){},enableClosingConfirmation(){}}}}));
  await context.route('**/*',async route=>{
   const req=route.request(),url=new URL(req.url());
@@ -16,6 +16,7 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]) {
   if(!url.pathname.startsWith('/api/'))return route.continue();
   const json=(data,status=200)=>route.fulfill({json:data,status});
   if(req.method()!=='GET')requests.push({path:url.pathname,body:req.headers()['content-type']?.includes('application/json')?req.postDataJSON():null,key:req.headers()['idempotency-key']});
+  if(url.pathname==='/api/v1/session/telegram'&&failSession)return json({error:'QA_AUTH_FAILURE'},503);
   if(url.pathname==='/api/v1/session/telegram')return json({mode:'telegram',session:{psyoUserId:'qa-user',ownerId:'qa-owner'}});
   if(url.pathname==='/api/app/bootstrap')return json({mode:'owner',connected:true,empty:!pet,pet,profile:profileData,pets:pet?[pet]:[],activePetId:pet?.id,avatarCapabilities:{identityEnabled:true,uploadsEnabled:true,generationEnabled:false,providerReady:false},reminders:[],documents:[],observations:[],routes:[],zones:[],wishlist:[]});
   if(url.pathname==='/api/v1/onboarding/activate'){
@@ -41,6 +42,8 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]) {
   await page.goto(base,{waitUntil:'domcontentloaded'});
   await page.locator('#pso-exact-interface[data-auth-ready="true"]').waitFor();await page.addStyleTag({content:'nextjs-portal{display:none!important}'});await page.evaluate(()=>document.fonts.ready);
   assert.equal(await page.locator('.telegram-pill').count(),0);
+  assert.equal(await page.locator('.auth-inline-panel,.welcome-browser-note').count(),0,'connected entry has no status banner or browser note');
+  await page.getByRole('heading',{name:'Давай знакомиться',exact:true}).waitFor();
   await page.waitForFunction(()=>document.querySelector('.welcome-dog')?.naturalWidth>0);
   assert.equal(await page.locator('.welcome-dog').evaluate(el=>getComputedStyle(el).animationName),'none');
   await page.emulateMedia({reducedMotion:'no-preference'});
@@ -48,7 +51,7 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]) {
   await page.emulateMedia({reducedMotion:'reduce'});
   assert.equal(await page.getByText('Добавить образ',{exact:true}).count(),0);
   await page.screenshot({path:`${out}/${engine}-welcome.png`});
-  await page.getByRole('button',{name:'Добавить собаку',exact:true}).click();
+  await page.getByRole('button',{name:'Познакомимся',exact:true}).click();
   const dialog=page.getByRole('dialog',{name:'Профиль собаки'});
   assert.equal(await dialog.getByLabel('Возраст',{exact:true}).inputValue(),'');
   assert.equal(await dialog.getByLabel('Порода',{exact:true}).inputValue(),'');
@@ -113,14 +116,24 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]) {
   await page.screenshot({path:`${out}/${engine}-edit-saved.png`});
   profileData=null;pet=null;await page.evaluate(()=>localStorage.clear());await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('#pso-exact-interface[data-auth-ready="true"]').waitFor();
-  await page.getByRole('button',{name:'Добавить собаку',exact:true}).click();
+  await page.getByRole('button',{name:'Познакомимся',exact:true}).click();
   await dialog.getByLabel('Имя собаки').fill('Луна');
   assert.equal(await dialog.getByLabel('Возраст',{exact:true}).inputValue(),'');
   await dialog.getByRole('button',{name:'Добавить собаку',exact:true}).click();
   await page.getByRole('heading',{name:'Фото собаки',exact:true}).waitFor();
   const minimal=requests.filter(r=>r.path==='/api/v1/onboarding/activate').at(-1).body;
   assert.equal(minimal.lifeStage,'');assert.equal(minimal.sex,'');assert.equal(minimal.breedCustom,'');
-  assert.deepEqual(errors,[]);results.push({engine,width,pass:true,scope:'welcome art/reduced motion/no badge, age modes/draft toggle, RU/EN breed keyboard/touch/Escape/custom, create/profile fail-retry, reload group/rare breed, photo regression; fixture APIs only'});
+  // A real login failure must still offer recovery, never masquerade as a guest success.
+  failSession=true;pet=null;profileData=null;
+  await page.evaluate(()=>localStorage.clear());await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('#pso-exact-interface[data-session-mode="error"]').waitFor();
+  await page.getByText('Не получилось войти',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Повторить',exact:true}).waitFor();
+  assert.equal(await page.locator('.welcome-browser-note').count(),0);
+  failSession=false;await page.getByRole('button',{name:'Повторить',exact:true}).click();
+  await page.locator('#pso-exact-interface[data-session-mode="telegram"][data-auth-ready="true"]').waitFor();
+  assert.equal(await page.locator('.auth-inline-panel').count(),0);
+  assert.deepEqual(errors,[]);results.push({engine,width,pass:true,scope:'warm welcome/no status banner/auth failure retry, art/reduced motion, age modes/draft toggle, RU/EN breed keyboard/touch/Escape/custom, create/profile fail-retry, reload group/rare breed, photo regression; fixture APIs only'});
  } catch(e) {await page.screenshot({path:`${out}/${engine}-failure.png`});await fs.writeFile(`${out}/${engine}-failure.txt`,await page.locator('body').innerText());throw e;}
  finally {await browser.close();}
 }

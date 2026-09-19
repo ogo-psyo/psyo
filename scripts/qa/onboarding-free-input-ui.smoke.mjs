@@ -27,7 +27,12 @@ try {
     }));
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await page.locator('#pso-exact-interface[data-auth-ready="true"]').waitFor();await page.addStyleTag({content:'nextjs-portal{display:none!important}'});
-    await page.getByRole('button', { name: 'Добавить собаку', exact: true }).click();
+    await page.getByRole('heading', { name: 'Давай знакомиться', exact: true }).waitFor();
+    assert.equal(await page.locator('.auth-inline-panel').count(),0,'browser entry has no technical banner');
+    await page.getByText('В браузере данные останутся только на этом устройстве.',{exact:true}).waitFor();
+    await page.evaluate(()=>document.fonts.ready);
+    if(screenshotDir) await page.screenshot({path:`${screenshotDir}/${engine}-welcome-browser-${viewport.width}.png`});
+    await page.getByRole('button', { name: 'Познакомимся', exact: true }).click();
 
     const dialog = page.getByRole('dialog', { name: 'Профиль собаки' });
     await dialog.waitFor();
@@ -97,8 +102,8 @@ try {
     await page.keyboard.press('Escape');
     await dialog.waitFor({state:'hidden'});
     assert.equal(await page.locator('#pso-exact-content').evaluate(el=>el.inert),false);
-    assert.equal(await page.getByRole('button',{name:'Добавить собаку',exact:true}).evaluate(el=>document.activeElement===el),true);
-    await page.getByRole('button',{name:'Добавить собаку',exact:true}).click();
+    assert.equal(await page.getByRole('button',{name:'Познакомимся',exact:true}).evaluate(el=>document.activeElement===el),true);
+    await page.getByRole('button',{name:'Познакомимся',exact:true}).click();
     assert.equal(await dialog.locator('#dog-creation-name').inputValue(),'Боня');
     assert.equal(await dialog.locator('#dog-creation-age').inputValue(),'2 года 4 месяца');
     await dialog.getByRole('button',{name:'Добавить собаку'}).click();

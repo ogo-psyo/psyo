@@ -95,13 +95,13 @@ try {
   await demo.context.close();
 
   const empty = await openScenario(browser, emptyBootstrap);
-  await empty.page.getByRole('heading', { name: 'Добавь собаку', exact: true }).waitFor();
+  await empty.page.getByRole('heading', { name: 'Давай знакомиться', exact: true }).waitFor();
   const firstRunActions = await empty.page.locator('.first-run-activation button').count();
   if (firstRunActions !== 1) throw new Error(`first run exposes ${firstRunActions} actions instead of one`);
   if (await empty.page.locator('.app-tabs').count()) throw new Error('primary navigation is visible before the first dog exists');
   if (await empty.page.getByRole('button', { name: 'Спросить', exact: true }).count()) throw new Error('assistant is exposed before activation');
   if (screenshotDir) await empty.page.screenshot({ path: `${screenshotDir}/first-run.png`, fullPage: true });
-  const firstRunButton = empty.page.getByRole('button', { name: 'Добавить собаку', exact: true });
+  const firstRunButton = empty.page.getByRole('button', { name: 'Познакомимся', exact: true });
   await firstRunButton.click();
   const dialog = empty.page.getByRole('dialog', { name: 'Профиль собаки' });
   await dialog.waitFor();

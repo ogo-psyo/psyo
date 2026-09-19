@@ -15,7 +15,7 @@ try {
     await page.locator('.app-tabs button[data-route="profile"]').click({ force: true });
     await page.getByRole('button', { name: /Памятка/ }).first().click({ force: true });
     await page.getByRole('heading', { name: 'Публичная карточка' }).waitFor();
-    await page.getByText('Демо без входа').waitFor();
+    await page.locator('#pso-exact-interface[data-auth-ready="true"]').waitFor();
 
     const create = page.getByRole('button', { name: 'Создать публичную карточку' });
     await create.waitFor();

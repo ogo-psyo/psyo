@@ -144,6 +144,7 @@ html[data-pso-composer-keyboard="open"] #pso-exact-interface [data-exact-view="c
 #pso-exact-interface .exact-first-run>div {display:block!important;}
 #pso-exact-interface .exact-first-run .lead {margin:0!important;}
 #pso-exact-interface .exact-first-run .primary {width:100%!important;}
+#pso-exact-interface .exact-first-run .welcome-browser-note {margin:0!important;font-size:16px!important;line-height:1.4!important;color:var(--pso-secondary)!important;}
 #pso-exact-interface .dog-creation-sheet {
   width:min(100%,440px)!important;padding:24px!important;border:1px solid var(--pso-line)!important;
   border-radius:26px!important;background:var(--pso-paper)!important;box-shadow:none!important;

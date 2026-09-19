@@ -64,7 +64,7 @@ async function runOnboardingScenario() {
     return { label: 'production-journey-mobile', navigation: true, assistant: true, noHorizontalOverflow: true };
   }
 
-  await page.getByRole('button', { name: 'Добавить собаку', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Познакомимся', exact: true }).first().click();
   await page.getByText('шаг 1 из 2', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'Назад', exact: true }).waitFor();
   const continueButton = page.getByRole('button', { name: 'Продолжить', exact: true });
