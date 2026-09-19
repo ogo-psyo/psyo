@@ -8,6 +8,8 @@ const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), '
 const page = read('app/page.tsx');
 const navigation = read('components/app/AppNavigation.tsx');
 const creationSheet = read('components/onboarding/CoreOnboarding.tsx');
+const coreFields = read('components/system/AgeField.tsx') + read('components/system/BreedField.tsx');
+assert.ok(creationSheet.includes('<AgeField') && creationSheet.includes('<BreedField'), 'creation uses shared age and breed fields');
 const route = read('app/api/v1/onboarding/activate/route.ts');
 const service = read('lib/server/onboardingService.ts');
 const contracts = read('packages/contracts/index.ts');
@@ -23,7 +25,7 @@ assert.deepEqual(freshOwner.visibleTabs, ['today', 'map', 'nearby', 'all', 'prof
 assert.equal(freshOwner.blockingOnboarding, false, 'fresh owners must see the real app shell');
 
 for (const token of ['Имя собаки', 'Добавить собаку', 'Возраст', 'Пол', 'Порода', 'Не сейчас', 'role="dialog"']) {
-  assert.ok(creationSheet.includes(token), `contextual dog creation is missing: ${token}`);
+  assert.ok((`${creationSheet}\n${coreFields}`).includes(token), `contextual dog creation is missing: ${token}`);
 }
 for (const forbidden of ['шаг 1 из 2', 'шаг 2 из 2', 'Первое дело', 'firstReminder']) {
   assert.equal(creationSheet.includes(forbidden), false, `dog creation still requires care setup: ${forbidden}`);

@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { AgeField } from '@/components/system/AgeField';
+import { BreedField } from '@/components/system/BreedField';
+import { sexLabel } from '@/lib/profileFieldChoices';
 import { ChoiceField } from '@/components/system/ChoiceField';
 
 export function CoreOnboarding({
@@ -123,34 +126,12 @@ export function CoreOnboarding({
           />
           </div>
           <div className="dog-creation-core-fields">
-            <div className="dog-creation-field"><label htmlFor="dog-creation-age">Возраст</label>
-              <input
-                id="dog-creation-age"
-                value={lifeStage}
-                onChange={(event) => onLifeStageChange(event.target.value)}
-                placeholder="2 года 4 месяца"
-                autoComplete="off"
-                maxLength={60}
-                disabled={busy}
-              />
-
-            </div>
+            <AgeField id="dog-creation-age" value={lifeStage} onChange={onLifeStageChange} disabled={busy} />
             <ChoiceField label="Пол" value={sex === 'не указано' ? '' : sex}
-              options={[{value: '', label: 'Не указывать'}, ...sexOptions.filter(option => option.toLocaleLowerCase('ru') !== 'не указано').map(option => ({value: option, label: option === 'кобель' ? 'Кобель' : 'Сука'}))]}
+              options={[{value: '', label: 'Не указывать'}, ...sexOptions.filter(option => option.toLocaleLowerCase('ru') !== 'не указано').map(option => ({value: option, label: sexLabel(option)}))]}
               onChange={onSexChange} disabled={busy} />
           </div>
-          <div className="dog-creation-field"><label htmlFor="dog-creation-breed">Порода</label>
-            <input
-              id="dog-creation-breed"
-              value={breedValue}
-              onChange={(event) => onBreedChange(event.target.value)}
-              placeholder="Например, корги или метис"
-              autoComplete="off"
-              maxLength={80}
-              disabled={busy}
-            />
-
-          </div>
+          <BreedField id="dog-creation-breed" value={breedValue} onChange={onBreedChange} disabled={busy} />
           {error && <p className="error" role="alert">{error}</p>}
           <div className="onboarding-step-actions">
             <button type="button" onClick={onDismiss} disabled={busy}>Не сейчас</button>

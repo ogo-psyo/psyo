@@ -1,5 +1,7 @@
 'use client';
 
+import { breedInputValue, breedProfilePatch } from '@/lib/breedSearch';
+import { sexLabel } from '@/lib/profileFieldChoices';
 import {nextReminderDueAt} from '@/lib/reminderRecurrence';
 import {reminderTiming,reminderReceipt,reminderCalendarText,type ReminderRecord} from '@/lib/reminder';
 import {ReminderEditor,type ReminderDraft} from '@/components/care/ReminderEditor';
@@ -272,11 +274,6 @@ function AssistantActionButtons({ actions, statuses, onApply, onOpen }: {
 
 function ReadinessBadge({ level }: { level: ReadinessLevel }) {
   return <span className={`readiness-badge ${level}`}>{formatReadinessLabel(level)}</span>;
-}
-
-function TelegramPill({ session }: { session: TelegramSessionView }) {
-  const label = session.mode === 'loading' ? 'проверяю…' : session.mode === 'telegram' ? 'Telegram' : session.mode === 'error' ? 'вход не готов' : 'без Telegram';
-  return <span className={`telegram-pill mode-${session.mode}`}>{label}</span>;
 }
 
 function fromDbEnum(value: unknown, map: Record<string, string>) {
@@ -4300,9 +4297,9 @@ export default function Home() {
   </section>;
 
   return (
-    <ExactScope key={profile.backendPetId || activePetId || 'guest'}><main id="pso-exact-interface" className={hasDog ? `exact-interface${assistantOpen ? ' exact-conversation-open' : ''}` : 'exact-interface exact-static'} data-connected-canvas={tab === 'today' || tab === 'all' ? '' : undefined}>
+    <ExactScope key={profile.backendPetId || activePetId || 'guest'}><main id="pso-exact-interface" data-session-mode={telegramSession.mode} data-auth-ready={!authLoading && telegramSession.mode !== 'loading'} className={hasDog ? `exact-interface${assistantOpen ? ' exact-conversation-open' : ''}` : 'exact-interface exact-static'} data-connected-canvas={tab === 'today' || tab === 'all' ? '' : undefined}>
       {hasDog && <ExactHeader dogName={profile.dogName} guest={isGuestMode()} onHome={() => { setAssistantOpen(false); setTab('today'); }} onProfile={() => { setAssistantOpen(false); setProfileSurface('overview'); setExactProfileView('profile'); setTab('profile'); }} onBack={['today','map','nearby','all','profile'].includes(tab) && !journeyDetail ? undefined : () => closeSecondaryFlow('all')} />}
-        {!hasDog && <header className="exact-header"><span className="brand">Псё</span><TelegramPill session={telegramSession} /></header>}
+        {!hasDog && <header className="exact-header"><span className="brand">Псё</span></header>}
       <section ref={phoneShellRef} id="pso-exact-content" className={hasDog ? `exact-content tab-${tab}` : 'exact-content phone-shell exact-extension'}>
 
 
@@ -4328,6 +4325,7 @@ export default function Home() {
         </section>}
 
         {!hasDog && <section className="first-run-activation exact-first-run" aria-labelledby="first-run-title">
+          <img className="welcome-dog" src="/illustrations/welcome-dog.webp" alt="" width={768} height={512} fetchPriority="high" />
           <div>
             <h1 id="first-run-title">Добавь собаку</h1>
             <p className="lead">Сначала имя и сведения, затем фото.</p>
@@ -4382,7 +4380,7 @@ export default function Home() {
             onRetry={() => { void refreshRecommendation(); }}
           />}
           profileEntries={profileJourneyEntries}
-          profileFacts={[profile.lifeStage || profile.age, profile.sex, profile.energyLevel].filter(Boolean) as string[]}
+          profileFacts={[profile.lifeStage || profile.age, sexLabel(profile.sex), profile.energyLevel].filter(Boolean) as string[]}
           observationPoints={observations.map((item) => ({
             id: item.id,
             createdAt: item.createdAt,
@@ -4996,7 +4994,7 @@ export default function Home() {
         dogName={heroNameDraft}
         lifeStage={profile.lifeStage}
         sex={profile.sex}
-        breedValue={profile.breedId === 'custom' ? profile.breedCustom : selectedBreed.id === 'mixed' ? '' : selectedBreed.title}
+        breedValue={breedInputValue(profile)}
         sexOptions={sexOptions}
         busy={onboardingSaving}
         error={error}
@@ -5005,11 +5003,7 @@ export default function Home() {
         onSexChange={(value) => { dogCreationKeyRef.current = null; setError(''); updateProfile({ sex: value }); }}
         onBreedChange={(value) => {
           dogCreationKeyRef.current = null; setError('');
-          const normalizedValue = value.trim().toLocaleLowerCase('ru');
-          const breed = breedCatalog.find((item) => item.title.toLocaleLowerCase('ru') === normalizedValue);
-          updateProfile(breed
-            ? { breedId: breed.id, breedGroupId: breed.groupId, breedCustom: '' }
-            : { breedId: value.trim() ? 'custom' : 'mixed', breedGroupId: 'mixed', breedCustom: value });
+          updateProfile(breedProfilePatch(value));
         }}
         onDismiss={() => { if (!onboardingSaving) setDogCreationOpen(false); }}
         onSubmit={saveMinimalDog}

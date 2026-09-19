@@ -1,5 +1,6 @@
 'use client';
 
+import { sexLabel } from '@/lib/profileFieldChoices';
 import { energyOptions, friendlinessOptions, neuteredOptions, parasiteOptions, playStyleOptions, sexOptions, sizeOptions, coatOptions, socialOptions, temperamentOptions, trainabilityOptions, vaccineOptions, type DogProfile } from '@/lib/data';
 
 type Field = { key: keyof DogProfile; label: string; options?: string[]; multiline?: boolean };
@@ -19,7 +20,7 @@ export function ExactProfileFields({ draft, onChange }: { draft: DogProfile; onC
   return <>{groups.map(group => <details key={group.title}><summary>{group.title}</summary>{group.fields.map(({key,label,options,multiline}) => {
     const id=`exact-profile-${key}`,value=String(draft[key] ?? '');
     return <div className="field" key={key}><label htmlFor={id}>{label}</label>{options ? <select id={id} value={value} onChange={event=>onChange({[key]:event.target.value})}>
-      <option value="">Не указано</option>{value && !options.includes(value) && <option value={value}>{value}</option>}{options.filter(option => option.toLocaleLowerCase('ru') !== 'не указано').map(option=><option key={option} value={option}>{option}</option>)}
+      <option value="">Не указано</option>{value && !options.includes(value) && <option value={value}>{key === 'sex' ? sexLabel(value) : value}</option>}{options.filter(option => option.toLocaleLowerCase('ru') !== 'не указано').map(option=><option key={option} value={option}>{key === 'sex' ? sexLabel(option) : option}</option>)}
     </select> : multiline ? <textarea id={id} value={value} maxLength={800} onChange={event=>onChange({[key]:event.target.value})}/> : <input id={id} value={value} required={key==='dogName'} maxLength={key==='dogName'?80:180} onChange={event=>onChange({[key]:event.target.value})}/>}</div>;
   })}</details>)}</>;
 }
