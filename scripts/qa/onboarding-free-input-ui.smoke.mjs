@@ -26,33 +26,34 @@ try {
       body: JSON.stringify(emptyBootstrap),
     }));
     await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.locator('.telegram-pill:not(.mode-loading)').waitFor();
+    await page.locator('.telegram-pill:not(.mode-loading)').waitFor();await page.addStyleTag({content:'nextjs-portal{display:none!important}'});
     await page.getByRole('button', { name: 'Добавить собаку', exact: true }).click();
 
     const dialog = page.getByRole('dialog', { name: 'Профиль собаки' });
     await dialog.waitFor();
     await page.waitForFunction(() => document.activeElement === document.querySelector('.dog-creation-sheet'));
     assert.equal(await dialog.evaluate((element) => document.activeElement === element), true, 'dialog should receive focus without opening the keyboard');
-    assert.equal(await dialog.locator('input').count(), 3);
-    assert.deepEqual(await dialog.locator('#dog-creation-sex option').allTextContents(), ['Не указывать','кобель','сука']);
+    assert.equal(await dialog.locator('input:not([type=radio])').count(), 3);
+    assert.deepEqual(await dialog.getByRole('radio').evaluateAll(items=>items.map(el=>el.value)), ['', 'кобель', 'сука']);
+    assert.equal(await dialog.locator('datalist').count(),0);
     assert.equal(await page.locator('#pso-exact-content').evaluate(el=>el.inert),true);
     await dialog.evaluate(el=>Promise.all(el.getAnimations().map(animation=>animation.finished)));
     const stableTop = await dialog.evaluate(el=>el.getBoundingClientRect().top);
     await page.evaluate(()=>{Object.defineProperty(visualViewport,'offsetTop',{value:90,configurable:true});visualViewport.dispatchEvent(new Event('scroll'));});
     assert.equal(await dialog.evaluate(el=>el.getBoundingClientRect().top),stableTop,'visual viewport scroll must not reposition the sheet');
     await page.evaluate(()=>{delete visualViewport.offsetTop;});
-    assert.equal(await dialog.locator('#dog-creation-age').getAttribute('list'), 'dog-creation-age-options');
-    assert.equal(await dialog.locator('#dog-creation-breed').getAttribute('list'), 'dog-creation-breed-options');
-    assert.equal(await dialog.getByRole('button', { name: 'Завести профиль' }).isDisabled(), true);
+    assert.equal(await dialog.locator('#dog-creation-age').getAttribute('list'), null);
+    assert.equal(await dialog.locator('#dog-creation-breed').getAttribute('list'), null);
+    assert.equal(await dialog.getByRole('button', { name: 'Добавить собаку' }).isDisabled(), true);
 
     await dialog.locator('#dog-creation-name').fill('Боня');
-    assert.equal(await dialog.getByRole('button', { name: 'Завести профиль' }).isEnabled(), true);
+    assert.equal(await dialog.getByRole('button', { name: 'Добавить собаку' }).isEnabled(), true);
     await dialog.locator('#dog-creation-age').fill('2 года 4 месяца');
     await dialog.locator('#dog-creation-breed').fill('австралийский лабрадудль');
     assert.equal(await dialog.locator('#dog-creation-age').inputValue(), '2 года 4 месяца');
     assert.equal(await dialog.locator('#dog-creation-breed').inputValue(), 'австралийский лабрадудль');
 
-    assert.ok(await dialog.locator('#dog-creation-sex').evaluate(el=>el.getBoundingClientRect().height>=50),'native WebKit select must retain source-sized touch target');
+    assert.ok(await dialog.locator('.pso-choice span').evaluateAll(items=>items.every(el=>el.getBoundingClientRect().height>=44)), 'radio targets are touch sized');
     const labelGaps = await dialog.locator('.dog-creation-field').evaluateAll(fields=>fields.map(field=>{const label=field.querySelector('label').getBoundingClientRect(),input=field.querySelector('input,select').getBoundingClientRect();return input.top-label.bottom;}));
     assert.ok(labelGaps.every(gap=>gap>=8),'focus perimeter must not touch a label');
     const geometry = await dialog.evaluate((element) => {
@@ -74,7 +75,7 @@ try {
     await dialog.locator('#dog-creation-breed').focus();
     await page.setViewportSize({ width: viewport.width, height: 520 });
     await page.waitForTimeout(180);
-    await dialog.getByRole('button',{name:'Завести профиль'}).scrollIntoViewIfNeeded();
+    await dialog.getByRole('button',{name:'Добавить собаку'}).scrollIntoViewIfNeeded();
     const keyboardGeometry = await dialog.evaluate((element) => {
       const rect = element.getBoundingClientRect();
       const action = element.querySelector('.onboarding-step-actions')?.getBoundingClientRect();
@@ -97,9 +98,14 @@ try {
     await page.getByRole('button',{name:'Добавить собаку',exact:true}).click();
     assert.equal(await dialog.locator('#dog-creation-name').inputValue(),'Боня');
     assert.equal(await dialog.locator('#dog-creation-age').inputValue(),'2 года 4 месяца');
-    await dialog.getByRole('button',{name:'Завести профиль'}).click();
+    await dialog.getByRole('button',{name:'Добавить собаку'}).click();
     try { await dialog.waitFor({state:'hidden',timeout:10000}); } catch(error) { console.error(await page.locator('body').innerText()); throw error; }
     await page.getByRole('button',{name:'Боня',exact:true}).waitFor();
+    await page.getByRole('heading',{name:'Фото собаки',exact:true}).waitFor();
+    await page.getByRole('button',{name:'Не сейчас',exact:true}).click();
+    await page.locator('.nav [data-route=today]').click();
+    await page.getByRole('button',{name:'Добавить фото: Боня',exact:true}).click();
+    await page.getByRole('heading',{name:'Фото собаки',exact:true}).waitFor();
     await context.close();
   }
   console.log('onboarding free-input ui smoke ok');

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { ChoiceField } from '@/components/system/ChoiceField';
 
 export function CoreOnboarding({
   open,
@@ -8,10 +9,9 @@ export function CoreOnboarding({
   lifeStage,
   sex,
   breedValue,
-  lifeStageOptions,
   sexOptions,
-  breedOptions,
   busy,
+  error,
   onNameChange,
   onLifeStageChange,
   onSexChange,
@@ -24,10 +24,9 @@ export function CoreOnboarding({
   lifeStage: string;
   sex: string;
   breedValue: string;
-  lifeStageOptions: readonly string[];
   sexOptions: readonly string[];
-  breedOptions: readonly { id: string; title: string }[];
   busy: boolean;
+  error?: string;
   onNameChange: (value: string) => void;
   onLifeStageChange: (value: string) => void;
   onSexChange: (value: string) => void;
@@ -100,7 +99,7 @@ export function CoreOnboarding({
           if (focusable.length === 0) return;
           const first = focusable[0];
           const last = focusable[focusable.length - 1];
-          if (event.shiftKey && document.activeElement === first) {
+          if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) {
             event.preventDefault();
             last.focus();
           } else if (!event.shiftKey && document.activeElement === last) {
@@ -110,7 +109,7 @@ export function CoreOnboarding({
         }}
       >
         <h2 id="dog-creation-title">Профиль собаки</h2>
-        <p>Начни с имени. Остальное можно написать своими словами или заполнить позже.</p>
+        <p className="lead">Нужно только имя. Остальное — по желанию.</p>
         <form onSubmit={(event) => { event.preventDefault(); void onSubmit(); }}>
           <div className="dog-creation-field"><label htmlFor="dog-creation-name">Имя собаки</label>
           <input
@@ -124,10 +123,9 @@ export function CoreOnboarding({
           />
           </div>
           <div className="dog-creation-core-fields">
-            <div className="dog-creation-field"><label htmlFor="dog-creation-age">Возраст или дата рождения</label>
+            <div className="dog-creation-field"><label htmlFor="dog-creation-age">Возраст</label>
               <input
                 id="dog-creation-age"
-                list="dog-creation-age-options"
                 value={lifeStage}
                 onChange={(event) => onLifeStageChange(event.target.value)}
                 placeholder="2 года 4 месяца"
@@ -135,38 +133,29 @@ export function CoreOnboarding({
                 maxLength={60}
                 disabled={busy}
               />
-              <datalist id="dog-creation-age-options">
-                {lifeStageOptions.map((option) => <option key={option} value={option} />)}
-              </datalist>
+
             </div>
-            <div className="dog-creation-field"><label htmlFor="dog-creation-sex">Пол</label>
-              <select id="dog-creation-sex" value={sex === 'не указано' ? '' : sex} onChange={(event) => onSexChange(event.target.value)} disabled={busy}>
-                <option value="">Не указывать</option>
-                {sexOptions.filter(option => option.toLocaleLowerCase('ru') !== 'не указано').map((option) => <option key={option} value={option}>{option}</option>)}
-              </select>
-            </div>
+            <ChoiceField label="Пол" value={sex === 'не указано' ? '' : sex}
+              options={[{value: '', label: 'Не указывать'}, ...sexOptions.filter(option => option.toLocaleLowerCase('ru') !== 'не указано').map(option => ({value: option, label: option === 'кобель' ? 'Кобель' : 'Сука'}))]}
+              onChange={onSexChange} disabled={busy} />
           </div>
           <div className="dog-creation-field"><label htmlFor="dog-creation-breed">Порода</label>
             <input
               id="dog-creation-breed"
-              list="dog-creation-breed-options"
               value={breedValue}
               onChange={(event) => onBreedChange(event.target.value)}
               placeholder="Например, корги или метис"
               autoComplete="off"
               maxLength={80}
               disabled={busy}
-              aria-describedby="dog-creation-breed-note"
             />
-            <datalist id="dog-creation-breed-options">
-              {breedOptions.map((option) => <option key={option.id} value={option.title} />)}
-            </datalist>
+
           </div>
-          <small id="dog-creation-breed-note" className="dog-creation-note">Можно указать любую породу, написать «метис» или оставить поле пустым.</small>
+          {error && <p className="error" role="alert">{error}</p>}
           <div className="onboarding-step-actions">
             <button type="button" onClick={onDismiss} disabled={busy}>Не сейчас</button>
             <button className="primary" type="submit" disabled={busy || !dogName.trim()}>
-              {busy ? 'Создаю профиль…' : 'Завести профиль'}
+              {busy ? 'Создаю профиль…' : 'Добавить собаку'}
             </button>
           </div>
         </form>

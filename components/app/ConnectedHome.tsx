@@ -6,6 +6,7 @@ import { inflectPetName } from '@/lib/copy';
 
 type Recent = { id: string; question?: string; thread_id?: string; status?: string };
 export function ConnectedHome(props: {
+  imageUrl?: string; onPhoto: () => void;
   dogName: string; petId?: string; guest: boolean; question: string; loading: boolean;
   recentQuestion?: string; headers: () => Record<string, string>; onQuestion: (text: string) => void;
   onAsk: () => void; onContinue: (run?: Recent) => void; onProfile: () => void; onAll: () => void;
@@ -16,6 +17,7 @@ export function ConnectedHome(props: {
   useEffect(()=>{if(props.guest || !props.petId)return;const controller=new AbortController();readRecent(controller.signal).then(async response=>{if(!response.ok)throw new Error('READ_FAILED');const body=await response.json();if(!controller.signal.aborted){setReadError(false);setRecent(body.enabled && typeof body.latest?.id==='string'?body.latest:null);}}).catch(()=>{if(!controller.signal.aborted)setReadError(true);});return()=>controller.abort();},[props.petId,props.guest,props.recentQuestion,revision]);
   const topic=props.recentQuestion || recent?.question;
   return <ExactPage home viewKey="home"><section className="home" aria-label="Псё — разговор" data-connected-home>
+    <button type="button" className="home-dog-photo" onClick={props.onPhoto} aria-label={props.imageUrl ? `Изменить фото: ${props.dogName}` : `Добавить фото: ${props.dogName}`}><span className="home-dog-photo-frame">{props.imageUrl ? <img src={props.imageUrl} alt="" /> : <ExactIcon name="plus" />}</span>{!props.imageUrl && <span>Добавить фото</span>}</button>
     <h1 data-assistant-heading>Что сегодня<br /><span>обсудим?</span></h1>
     <p className="lead">Про {inflectPetName(props.dogName, 'accs')}. И вашу жизнь вместе.</p>
     <form className="soft composer" onSubmit={event => { event.preventDefault(); if (props.question.trim() && !props.loading) props.onAsk(); }}>
@@ -38,12 +40,11 @@ export function ConnectedHome(props: {
 export type ToolDestination = 'diary' | 'calendar' | 'health' | 'habits' | 'things' | 'passport' | 'card' | 'library' | 'connections' | 'documents';
 export function ConnectedTools({ onOpen }: { onOpen: (destination: ToolDestination) => void }) {
   return <ExactPage viewKey="all"><section data-connected-tools>
-    <h1 data-assistant-heading>Всё под рукой</h1>
-    <p className="lead">Можно открыть напрямую, без разговора с помощником.</p>
+    <h1 data-assistant-heading>Все разделы</h1>
     <div className="list">
       <ExactRow icon="heart" title="Уход" detail="Предстоящие дела и выполнение" destination="calendar" onClick={() => onOpen('calendar')} />
       <ExactRow icon="bag" title="Нужно купить" detail="Записать и не забыть в магазине" destination="things" onClick={() => onOpen('things')} />
-      <ExactRow icon="book" title="История" detail="Найти прошлую запись" destination="health" onClick={() => onOpen('health')} />
+      <ExactRow icon="book" title="Записи о собаке" detail="Наблюдения и самочувствие" destination="health" onClick={() => onOpen('health')} />
       <ExactRow icon="save" title="Сохранённое" detail="Места и прогулки" destination="library" onClick={() => onOpen('library')} />
       <ExactRow icon="file" title="Документы" detail="Открыть нужный файл" destination="documents" onClick={() => onOpen('documents')} />
       <ExactRow icon="book" title="Дневник" detail="События дня и наблюдения" destination="diary" onClick={() => onOpen('diary')} />
