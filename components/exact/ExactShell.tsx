@@ -34,6 +34,18 @@ export function ExactHeader({ dogName, guest, onHome, onProfile, onBack }: {
 }) {
   const childBack = useContext(ExactBackContext).back;
   const goBack = childBack || onBack;
+  const latestBack = useRef(goBack);
+  useLayoutEffect(() => { latestBack.current = goBack; }, [goBack]);
+  const hasBack = Boolean(goBack);
+  useEffect(() => {
+    const button = window.Telegram?.WebApp?.BackButton;
+    if (!button) return;
+    if (!hasBack) { button.hide(); return; }
+    const handleBack = () => latestBack.current?.();
+    button.onClick(handleBack);
+    button.show();
+    return () => { button.offClick(handleBack); button.hide(); };
+  }, [hasBack]);
   return <header className="exact-header">
     <div className="head-left">
       {goBack && <button type="button" className="icon-button back" aria-label="Назад" onClick={goBack}><ExactIcon name="back" /></button>}
