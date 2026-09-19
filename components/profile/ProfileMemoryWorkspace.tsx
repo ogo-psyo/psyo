@@ -1,5 +1,6 @@
 'use client';
 
+import { sexLabel } from '@/lib/profileFieldChoices';
 import { JournalMasthead } from '@/components/journal/JournalMasthead';
 import type { ChangeEvent, ReactNode } from 'react';
 import { ProfileTraitRow } from './ProfileTraitRow';
@@ -119,7 +120,7 @@ function EditorField(props: { label: string; value: string; onChange: (value: st
 }
 
 function EditorSelect(props: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
-  return <label className={styles.editorField}><span>{props.label}</span><select value={props.value} onChange={(event) => props.onChange(event.target.value)}><option value="">Не указано</option>{props.options.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>;
+  return <label className={styles.editorField}><span>{props.label}</span><select value={props.value} onChange={(event) => props.onChange(event.target.value)}><option value="">Не указано</option>{props.options.map((option) => <option key={option} value={option}>{props.label === 'Пол' ? sexLabel(option) : option}</option>)}</select></label>;
 }
 
 export function ProfileMemoryWorkspace(props: Props) {
@@ -291,9 +292,9 @@ export function ProfileMemoryWorkspace(props: Props) {
           {surface === 'passport' && <section className={styles.domainSurface}>
             {header('Паспорт и внешность')}
             <div className={styles.domainActions}><button type="button" className={styles.secondaryAction} onClick={() => setSurface('character')}>Характер <CaretRight /></button><button type="button" className={styles.secondaryAction} onClick={() => setSurface('social')}>С окружающими <CaretRight /></button><button type="button" className={styles.secondaryAction} onClick={event => { event.currentTarget.focus(); props.onOpenHabits(); }}>Повторяемые привычки <CaretRight /></button></div>
-            <div className={styles.passportIdentity}><button type="button" className={`${styles.passportPhoto} ${styles.passportPhotoButton}`} onClick={openIdentity}>{hasIdentity ? <img src={props.imageUrl} alt={`Фото ${props.profile.dogName}`} /> : <span><PawPrint weight="duotone" />Добавить образ</span>}</button><div><h2>{props.profile.dogName}</h2><p>{props.breedLabel}</p><span>{valueOrEmpty(props.profile.sex, 'Пол не указан')} · {valueOrEmpty(props.profile.lifeStage, 'Возрастная группа не указана')}</span></div></div>
+            <div className={styles.passportIdentity}><button type="button" className={`${styles.passportPhoto} ${styles.passportPhotoButton}`} onClick={openIdentity}>{hasIdentity ? <img src={props.imageUrl} alt={`Фото ${props.profile.dogName}`} /> : <span><PawPrint weight="duotone" />Добавить образ</span>}</button><div><h2>{props.profile.dogName}</h2><p>{props.breedLabel}</p><span>{valueOrEmpty(sexLabel(props.profile.sex), 'Пол не указан')} · {valueOrEmpty(props.profile.lifeStage, 'Возрастная группа не указана')}</span></div></div>
             <section className={styles.passportFacts}><header><h2>Основное</h2><button type="button" onClick={(event) => openEditor('passport', event.currentTarget)}>Редактировать</button></header>
-              <div><span>Порода</span><b>{props.breedLabel}</b></div><div><span>Возрастная группа</span><b>{valueOrEmpty(props.profile.lifeStage)}</b></div><div><span>Пол</span><b>{valueOrEmpty(props.profile.sex)}</b></div><div><span>Вес</span><b>{valueOrEmpty(props.profile.weight)}</b></div><div><span>Микрочип</span><b>{valueOrEmpty(props.profile.microchip)}</b></div><div><span>Клиника</span><b>{valueOrEmpty(props.profile.vetClinic)}</b></div>
+              <div><span>Порода</span><b>{props.breedLabel}</b></div><div><span>Возрастная группа</span><b>{valueOrEmpty(props.profile.lifeStage)}</b></div><div><span>Пол</span><b>{valueOrEmpty(sexLabel(props.profile.sex))}</b></div><div><span>Вес</span><b>{valueOrEmpty(props.profile.weight)}</b></div><div><span>Микрочип</span><b>{valueOrEmpty(props.profile.microchip)}</b></div><div><span>Клиника</span><b>{valueOrEmpty(props.profile.vetClinic)}</b></div>
             </section>
             <button className={styles.primaryAction} type="button" onClick={(event) => openEditor('passport', event.currentTarget)}><NotePencil /> Изменить постоянные данные</button>
           </section>}

@@ -8,7 +8,7 @@ const results=[];
 for(const [engine,width] of [['chromium',390],['webkit',320]]) {
  const browser=await({chromium,webkit}[engine]).launch();
  const context=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
- let pet=null,failCreate=true,failUpload=true,failActivate=true;const requests=[],errors=[];
+ let pet=null,failCreate=true,failUpload=true,failActivate=true,failEdit=true,profileData=null;const requests=[],errors=[];
  await context.addInitScript(()=>Object.defineProperty(window,'Telegram',{value:{WebApp:{initData:'qa-fixture-not-authentication',ready(){},expand(){},enableClosingConfirmation(){}}}}));
  await context.route('**/*',async route=>{
   const req=route.request(),url=new URL(req.url());
@@ -17,10 +17,16 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]) {
   const json=(data,status=200)=>route.fulfill({json:data,status});
   if(req.method()!=='GET')requests.push({path:url.pathname,body:req.headers()['content-type']?.includes('application/json')?req.postDataJSON():null,key:req.headers()['idempotency-key']});
   if(url.pathname==='/api/v1/session/telegram')return json({mode:'telegram',session:{psyoUserId:'qa-user',ownerId:'qa-owner'}});
-  if(url.pathname==='/api/app/bootstrap')return json({mode:'owner',connected:true,empty:!pet,pet,pets:pet?[pet]:[],activePetId:pet?.id,avatarCapabilities:{identityEnabled:true,uploadsEnabled:true,generationEnabled:false,providerReady:false},reminders:[],documents:[],observations:[],routes:[],zones:[],wishlist:[]});
+  if(url.pathname==='/api/app/bootstrap')return json({mode:'owner',connected:true,empty:!pet,pet,profile:profileData,pets:pet?[pet]:[],activePetId:pet?.id,avatarCapabilities:{identityEnabled:true,uploadsEnabled:true,generationEnabled:false,providerReady:false},reminders:[],documents:[],observations:[],routes:[],zones:[],wishlist:[]});
   if(url.pathname==='/api/v1/onboarding/activate'){
    if(failCreate)return json({error:'QA_CREATE_FAILURE'},503);
    const data=req.postDataJSON();pet={id:'11111111-1111-4111-8111-111111111111',name:data.name,life_stage:data.lifeStage,sex:data.sex,breed_id:data.breedId,breed_group_id:data.breedGroupId,custom_breed:data.breedCustom,avatar_source:'none',profile_version:0};return json({petId:pet.id});
+  }
+  if(url.pathname==='/api/v1/pets') {
+   if(failEdit)return json({error:'QA_PROFILE_FAILURE'},503);
+   profileData=req.postDataJSON().profile;
+   Object.assign(pet,{name:profileData.dogName,life_stage:profileData.lifeStage,sex:profileData.sex,breed_id:profileData.breedId,custom_breed:profileData.breedCustom});
+   return json({pet,profile:profileData});
   }
   if(url.pathname.endsWith('/avatar/assets'))return failUpload?json({error:'QA_UPLOAD_FAILURE'},503):json({asset:{id:'asset-test',renderUrl:`${base}/demo-avatar.png`}});
   if(url.pathname.endsWith('/activate')&&url.pathname.includes('/avatar/')){
@@ -33,7 +39,13 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]) {
  const page=await context.newPage();page.setDefaultTimeout(12000);page.on('pageerror',e=>errors.push(e.message));
  try {
   await page.goto(base,{waitUntil:'domcontentloaded'});
-  await page.locator('.telegram-pill:not(.mode-loading)').waitFor();await page.addStyleTag({content:'nextjs-portal{display:none!important}'});await page.evaluate(()=>document.fonts.ready);
+  await page.locator('#pso-exact-interface[data-auth-ready="true"]').waitFor();await page.addStyleTag({content:'nextjs-portal{display:none!important}'});await page.evaluate(()=>document.fonts.ready);
+  assert.equal(await page.locator('.telegram-pill').count(),0);
+  await page.waitForFunction(()=>document.querySelector('.welcome-dog')?.naturalWidth>0);
+  assert.equal(await page.locator('.welcome-dog').evaluate(el=>getComputedStyle(el).animationName),'none');
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  assert.equal(await page.locator('.welcome-dog').evaluate(el=>getComputedStyle(el).animationName),'pso-dog-arrives');
+  await page.emulateMedia({reducedMotion:'reduce'});
   assert.equal(await page.getByText('Добавить образ',{exact:true}).count(),0);
   await page.screenshot({path:`${out}/${engine}-welcome.png`});
   await page.getByRole('button',{name:'Добавить собаку',exact:true}).click();
@@ -43,8 +55,19 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]) {
   assert.equal(await dialog.locator('datalist').count(),0);
   await dialog.getByLabel('Имя собаки').fill('Жульен');
   await dialog.getByLabel('Возраст',{exact:true}).fill('Щенок 11 месяцев');
+  await dialog.getByRole('radio',{name:'Возрастная группа',exact:true}).check();
+  await dialog.getByRole('radio',{name:'Пожилая собака',exact:true}).check();
+  await dialog.getByRole('radio',{name:'Точный возраст',exact:true}).check();
+  assert.equal(await dialog.getByLabel('Возраст',{exact:true}).inputValue(),'Щенок 11 месяцев');
+  const breed=dialog.getByRole('combobox',{name:'Порода',exact:true});
+  await breed.fill('white swiss');await page.screenshot({path:`${out}/${engine}-breed-search.png`});await breed.press('ArrowDown');await breed.press('Enter');
+  assert.equal(await breed.inputValue(),'Белая швейцарская овчарка');assert.equal(await dialog.isVisible(),true);
+  await breed.fill('ксоло');await dialog.getByRole('option',{name:'Ксолоитцкуинтли',exact:true}).tap();
+  assert.equal(await breed.inputValue(),'Ксолоитцкуинтли');
+  await breed.fill('овч');await breed.press('Escape');assert.equal(await dialog.isVisible(),true);assert.equal(await dialog.getByRole('listbox').count(),0);
+  await breed.fill('абракадабра');await dialog.getByRole('status').filter({hasText:'Сохраним твоё название'}).waitFor();
   await dialog.getByLabel('Порода',{exact:true}).fill('лабрадудль');
-  await dialog.getByRole('radio',{name:'Кобель',exact:true}).check();
+  await dialog.getByRole('radio',{name:'Мальчик',exact:true}).check();
   const styles=await dialog.evaluate(el=>({surface:getComputedStyle(el).backgroundColor,font:getComputedStyle(el.querySelector('input')).fontFamily,button:getComputedStyle(el.querySelector('button.primary')).backgroundImage}));
   assert.equal(styles.surface,'rgb(250, 249, 252)');assert.match(styles.font,/Naris/);assert.equal(styles.button,'none');
   await page.screenshot({path:`${out}/${engine}-form.png`});
@@ -73,8 +96,23 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]) {
   await page.reload({waitUntil:'domcontentloaded'});await page.locator('.home-dog-photo img').waitFor();
   assert.equal(await page.locator('.first-run-activation').count(),0);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
-  pet=null;await page.evaluate(()=>localStorage.clear());await page.reload({waitUntil:'domcontentloaded'});
-  await page.locator('.telegram-pill:not(.mode-loading)').waitFor();
+  await page.locator('.nav [data-route=profile]').click();
+  await page.getByRole('button',{name:'Изменить сведения',exact:true}).click();
+  await page.getByRole('radio',{name:'Возрастная группа',exact:true}).check();
+  await page.getByRole('radio',{name:'Подросток',exact:true}).check();
+  const editBreed=page.getByRole('combobox',{name:'Порода',exact:true});
+  await editBreed.fill('white swiss');await editBreed.press('ArrowDown');await editBreed.press('Enter');
+  await page.getByRole('button',{name:'Сохранить',exact:true}).click();
+  await page.locator('[data-exact-view=editprofile] [role=alert]').waitFor();
+  assert.equal(await editBreed.inputValue(),'Белая швейцарская овчарка');assert.equal(await page.getByRole('radio',{name:'Подросток',exact:true}).isChecked(),true);
+  failEdit=false;await page.getByRole('button',{name:'Сохранить',exact:true}).click();await page.locator('[data-exact-view=profile]').waitFor();
+  await page.reload({waitUntil:'domcontentloaded'});await page.getByRole('button',{name:'Изменить сведения',exact:true}).click();
+  assert.equal(await page.getByRole('radio',{name:'Подросток',exact:true}).isChecked(),true);
+  assert.equal(await editBreed.inputValue(),'Белая швейцарская овчарка');
+  assert.equal(profileData.breedId,'custom');assert.equal(profileData.lifeStage,'юниор');assert.equal(profileData.sex,'кобель');
+  await page.screenshot({path:`${out}/${engine}-edit-saved.png`});
+  profileData=null;pet=null;await page.evaluate(()=>localStorage.clear());await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('#pso-exact-interface[data-auth-ready="true"]').waitFor();
   await page.getByRole('button',{name:'Добавить собаку',exact:true}).click();
   await dialog.getByLabel('Имя собаки').fill('Луна');
   assert.equal(await dialog.getByLabel('Возраст',{exact:true}).inputValue(),'');
@@ -82,7 +120,7 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]) {
   await page.getByRole('heading',{name:'Фото собаки',exact:true}).waitFor();
   const minimal=requests.filter(r=>r.path==='/api/v1/onboarding/activate').at(-1).body;
   assert.equal(minimal.lifeStage,'');assert.equal(minimal.sex,'');assert.equal(minimal.breedCustom,'');
-  assert.deepEqual(errors,[]);results.push({engine,width,pass:true,scope:'first run, arbitrary input, create fail/retry same key, photo skip/reentry, upload and activation error/retry, saved home avatar, returning user; fixture APIs only'});
+  assert.deepEqual(errors,[]);results.push({engine,width,pass:true,scope:'welcome art/reduced motion/no badge, age modes/draft toggle, RU/EN breed keyboard/touch/Escape/custom, create/profile fail-retry, reload group/rare breed, photo regression; fixture APIs only'});
  } catch(e) {await page.screenshot({path:`${out}/${engine}-failure.png`});await fs.writeFile(`${out}/${engine}-failure.txt`,await page.locator('body').innerText());throw e;}
  finally {await browser.close();}
 }

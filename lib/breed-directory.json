@@ -1,0 +1,2746 @@
+[
+  {
+    "title": "Австралийская короткохвостая пастушья собака",
+    "aliases": [
+      "australian stumpy tail cattle dog"
+    ]
+  },
+  {
+    "title": "Австралийская овчарка",
+    "aliases": [
+      "australian shepherd"
+    ]
+  },
+  {
+    "title": "Австралийский келпи",
+    "aliases": [
+      "australian kelpie"
+    ]
+  },
+  {
+    "title": "Австралийская пастушья собака",
+    "aliases": [
+      "australian cattle dog"
+    ]
+  },
+  {
+    "title": "Арденнский бувье",
+    "aliases": [
+      "bouvier des ardennes"
+    ]
+  },
+  {
+    "title": "Белая швейцарская овчарка",
+    "aliases": [
+      "white swiss shepherd dog"
+    ]
+  },
+  {
+    "title": "Бельгийская овчарка",
+    "aliases": [
+      "belgian shepherd dog"
+    ]
+  },
+  {
+    "title": "Бельгийская овчарка грюнендаль",
+    "aliases": [
+      "belgian shepherd doggroenendael"
+    ]
+  },
+  {
+    "title": "Бельгийская овчарка лакенуа",
+    "aliases": [
+      "belgian shepherd dog laekenois"
+    ]
+  },
+  {
+    "title": "Бельгийская овчарка малинуа",
+    "aliases": [
+      "belgian shepherd dog malinois"
+    ]
+  },
+  {
+    "title": "Бельгийская овчарка тервюрен",
+    "aliases": [
+      "belgian shepherd dog tervueren"
+    ]
+  },
+  {
+    "title": "Бергамская овчарка",
+    "aliases": [
+      "bergamasco shepherd dog"
+    ]
+  },
+  {
+    "title": "Богемская овчарка",
+    "aliases": [
+      "bohemian shepherd dog"
+    ]
+  },
+  {
+    "title": "Бордер колли",
+    "aliases": [
+      "border collie"
+    ]
+  },
+  {
+    "title": "Бородатый колли",
+    "aliases": [
+      "bearded collie"
+    ]
+  },
+  {
+    "title": "Босерон",
+    "aliases": [
+      "beauce sheep dog"
+    ]
+  },
+  {
+    "title": "Бриар",
+    "aliases": [
+      "briard"
+    ]
+  },
+  {
+    "title": "Вельш корги кардиган",
+    "aliases": [
+      "welsh corgi cardigan"
+    ]
+  },
+  {
+    "title": "Вельш корги пемброк",
+    "aliases": [
+      "welsh corgi pembroke"
+    ]
+  },
+  {
+    "title": "Волчья собака саарлоса",
+    "aliases": [
+      "saarloos wolfhond"
+    ]
+  },
+  {
+    "title": "Восточноевропейская овчарка",
+    "aliases": [
+      "vostochnoevropeiskaya ovcharka (east european shepherd dog)"
+    ]
+  },
+  {
+    "title": "Голландская овчарка",
+    "aliases": [
+      "dutch shepherd dog"
+    ]
+  },
+  {
+    "title": "Голландская овчарка (короткая шерсть)",
+    "aliases": [
+      "dutch shepherd dog short-haired",
+      "голландская овчарка к-ш"
+    ]
+  },
+  {
+    "title": "Голландская овчарка (длинная шерсть)",
+    "aliases": [
+      "dutch shepherd dog long-haired",
+      "голландская овчарка д-ш"
+    ]
+  },
+  {
+    "title": "Голландская овчарка (жёсткая шерсть)",
+    "aliases": [
+      "dutch shepherd dog raugh-haired",
+      "голландская овчарка ж-ш"
+    ]
+  },
+  {
+    "title": "Голландский схапендус",
+    "aliases": [
+      "dutch schapendoes"
+    ]
+  },
+  {
+    "title": "Каталонская овчарка",
+    "aliases": [
+      "catalonian sheepdog"
+    ]
+  },
+  {
+    "title": "Колли (длинная шерсть)",
+    "aliases": [
+      "collie rough",
+      "колли д-ш"
+    ]
+  },
+  {
+    "title": "Колли (короткая шерсть)",
+    "aliases": [
+      "collie smooth",
+      "колли к-ш"
+    ]
+  },
+  {
+    "title": "Комондор",
+    "aliases": [
+      "komondor"
+    ]
+  },
+  {
+    "title": "Кувас",
+    "aliases": [
+      "kuvasz"
+    ]
+  },
+  {
+    "title": "Ланкаширский хилер",
+    "aliases": [
+      "lancashire heeler"
+    ]
+  },
+  {
+    "title": "Майоркская овчарка",
+    "aliases": [
+      "majorca shepherd dog"
+    ]
+  },
+  {
+    "title": "Майоркская овчарка (длинная шерсть)",
+    "aliases": [
+      "majorca shepherd dog long-haired",
+      "майоркская овчарка д-ш"
+    ]
+  },
+  {
+    "title": "Майоркская овчарка (короткая шерсть)",
+    "aliases": [
+      "majorca shepherd dog short-haired",
+      "майоркская овчарка к-ш"
+    ]
+  },
+  {
+    "title": "Мареммо-абруцкая овчарка",
+    "aliases": [
+      "maremma and the abruzzes sheepdog"
+    ]
+  },
+  {
+    "title": "Миниатюрная американская овчарка",
+    "aliases": [
+      "miniature american shepherd"
+    ]
+  },
+  {
+    "title": "Муди",
+    "aliases": [
+      "mudi"
+    ]
+  },
+  {
+    "title": "Немецкая овчарка",
+    "aliases": [
+      "german shepherd dog"
+    ]
+  },
+  {
+    "title": "Немецкая овчарка (короткая шерсть)",
+    "aliases": [
+      "german shepherd dog double coat",
+      "немецкая овчарка к-ш"
+    ]
+  },
+  {
+    "title": "Немецкая овчарка (длинная шерсть)",
+    "aliases": [
+      "german shepherd dog long double coat",
+      "немецкая овчарка д-ш"
+    ]
+  },
+  {
+    "title": "Пикардийская овчарка",
+    "aliases": [
+      "picardy sheepdog"
+    ]
+  },
+  {
+    "title": "Пиренейская овчарка (длинная шерсть)",
+    "aliases": [
+      "pyrenean sheepdog long-haired",
+      "пиренейская овчарка д-ш"
+    ]
+  },
+  {
+    "title": "Пиренейская овчарка с гладкой шерстью на морде",
+    "aliases": [
+      "pyrenean sheepdog - smooth faced"
+    ]
+  },
+  {
+    "title": "Польская низинная овчарка",
+    "aliases": [
+      "polish lowland sheepdog"
+    ]
+  },
+  {
+    "title": "Польская подгалянская овчарка",
+    "aliases": [
+      "tatra shepherd dog"
+    ]
+  },
+  {
+    "title": "Португальская овчарка",
+    "aliases": [
+      "portuguese sheepdog"
+    ]
+  },
+  {
+    "title": "Пули",
+    "aliases": [
+      "puli"
+    ]
+  },
+  {
+    "title": "Пуми",
+    "aliases": [
+      "pumi"
+    ]
+  },
+  {
+    "title": "Румынская карпатская овчарка",
+    "aliases": [
+      "romanian carpathian shepherd dog"
+    ]
+  },
+  {
+    "title": "Румынская миоритская овчарка",
+    "aliases": [
+      "romanian mioritic shepherd dog"
+    ]
+  },
+  {
+    "title": "Словацкий чувач",
+    "aliases": [
+      "slovakian chuvach"
+    ]
+  },
+  {
+    "title": "Староанглийская овчарка",
+    "aliases": [
+      "old english sheepdog"
+    ]
+  },
+  {
+    "title": "Схипперке",
+    "aliases": [
+      "schipperke"
+    ]
+  },
+  {
+    "title": "Фландрский бувье",
+    "aliases": [
+      "bouvier des flandres"
+    ]
+  },
+  {
+    "title": "Хорватская овчарка",
+    "aliases": [
+      "croatian shepherd dog"
+    ]
+  },
+  {
+    "title": "Чехословацкая волчья собака",
+    "aliases": [
+      "czechoslovakian wolfdog"
+    ]
+  },
+  {
+    "title": "Шелти",
+    "aliases": [
+      "shetland sheepdog"
+    ]
+  },
+  {
+    "title": "Южнорусская овчарка",
+    "aliases": [
+      "yuzhnorusskaya ovcharka (south russian sheepherd dog)"
+    ]
+  },
+  {
+    "title": "Австрийский пинчер",
+    "aliases": [
+      "austrian pinscher"
+    ]
+  },
+  {
+    "title": "Американский булли",
+    "aliases": [
+      "american bully"
+    ]
+  },
+  {
+    "title": "Американский булли эксэл",
+    "aliases": [
+      "american bully xl"
+    ]
+  },
+  {
+    "title": "Американский булли классик",
+    "aliases": [
+      "american bully classic"
+    ]
+  },
+  {
+    "title": "Американский булли стандарт",
+    "aliases": [
+      "american bully standard"
+    ]
+  },
+  {
+    "title": "Американский булли покет",
+    "aliases": [
+      "american bully poket"
+    ]
+  },
+  {
+    "title": "Американский бульдог",
+    "aliases": [
+      "american bulldog"
+    ]
+  },
+  {
+    "title": "Аппенцеллер зенненхунд",
+    "aliases": [
+      "appenzell cattle dog"
+    ]
+  },
+  {
+    "title": "Аргентинский дог",
+    "aliases": [
+      "dogo argentino"
+    ]
+  },
+  {
+    "title": "Атласская горная собака (аиди)",
+    "aliases": [
+      "atlas mountain dog (aidi)"
+    ]
+  },
+  {
+    "title": "Аффенпинчер",
+    "aliases": [
+      "affenpinscher"
+    ]
+  },
+  {
+    "title": "Бернский зенненхунд",
+    "aliases": [
+      "bernese mountain dog"
+    ]
+  },
+  {
+    "title": "Большой швейцарский зенненхунд",
+    "aliases": [
+      "great swiss mountain dog"
+    ]
+  },
+  {
+    "title": "Бордоский дог",
+    "aliases": [
+      "dogue de bordeaux"
+    ]
+  },
+  {
+    "title": "Бразильский фила",
+    "aliases": [
+      "fila brasileiro"
+    ]
+  },
+  {
+    "title": "Брохольмер",
+    "aliases": [
+      "broholmer"
+    ]
+  },
+  {
+    "title": "Бульдог",
+    "aliases": [
+      "bulldog"
+    ]
+  },
+  {
+    "title": "Бульмастиф",
+    "aliases": [
+      "bullmastiff"
+    ]
+  },
+  {
+    "title": "Голландская (короткая шерсть) собака",
+    "aliases": [
+      "dutch smoushond",
+      "голландская к-ш собака"
+    ]
+  },
+  {
+    "title": "Датско-шведская фермерская собака",
+    "aliases": [
+      "danish-swedish farmdog"
+    ]
+  },
+  {
+    "title": "Доберман",
+    "aliases": [
+      "dobermann"
+    ]
+  },
+  {
+    "title": "Испанский алано",
+    "aliases": [
+      "spanish alano k"
+    ]
+  },
+  {
+    "title": "Испанский мастиф",
+    "aliases": [
+      "spanish mastiff"
+    ]
+  },
+  {
+    "title": "Итальянский кане корсо",
+    "aliases": [
+      "italian cane corso"
+    ]
+  },
+  {
+    "title": "Кавказская овчарка",
+    "aliases": [
+      "kavkazskaya ovcharka (caucasian shepherd dog)"
+    ]
+  },
+  {
+    "title": "Кангальская овчарка",
+    "aliases": [
+      "kangal shepherd dog"
+    ]
+  },
+  {
+    "title": "Карстская овчарка",
+    "aliases": [
+      "karst shepherd dog"
+    ]
+  },
+  {
+    "title": "Кастро лаборейро",
+    "aliases": [
+      "castro laboreiro dog"
+    ]
+  },
+  {
+    "title": "Континентальный бульдог",
+    "aliases": [
+      "continental bulldog"
+    ]
+  },
+  {
+    "title": "Ландсир",
+    "aliases": [
+      "landseer"
+    ]
+  },
+  {
+    "title": "Леонбергер",
+    "aliases": [
+      "leonberger"
+    ]
+  },
+  {
+    "title": "Майоркский мастиф",
+    "aliases": [
+      "majorca mastiff"
+    ]
+  },
+  {
+    "title": "Мастиф",
+    "aliases": [
+      "mastiff"
+    ]
+  },
+  {
+    "title": "Московская сторожевая",
+    "aliases": [
+      "moskovskaya storozhevaya (moscow watch dog)"
+    ]
+  },
+  {
+    "title": "Неаполитанский мастиф",
+    "aliases": [
+      "neapolitan mastiff"
+    ]
+  },
+  {
+    "title": "Немецкий боксер",
+    "aliases": [
+      "boxer"
+    ]
+  },
+  {
+    "title": "Немецкий дог",
+    "aliases": [
+      "great dane"
+    ]
+  },
+  {
+    "title": "Немецкий пинчер",
+    "aliases": [
+      "german pinscher"
+    ]
+  },
+  {
+    "title": "Ньюфаундленд",
+    "aliases": [
+      "newfoundland"
+    ]
+  },
+  {
+    "title": "Пиренейская горная собака",
+    "aliases": [
+      "pyrenean mountain dog",
+      "Пиринейская горная собака"
+    ]
+  },
+  {
+    "title": "Пиренейский мастиф",
+    "aliases": [
+      "pyrenean mastiff",
+      "Пиринейский мастиф"
+    ]
+  },
+  {
+    "title": "Преса канарио",
+    "aliases": [
+      "presa canario"
+    ]
+  },
+  {
+    "title": "Рафейро до алентейжо",
+    "aliases": [
+      "rafeiro of alentejo"
+    ]
+  },
+  {
+    "title": "Ризеншнауцер",
+    "aliases": [
+      "giant schnauzer"
+    ]
+  },
+  {
+    "title": "Ротвейлер",
+    "aliases": [
+      "rottweiler"
+    ]
+  },
+  {
+    "title": "Румынская буковинская овчарка",
+    "aliases": [
+      "romanian bucovina shepherd"
+    ]
+  },
+  {
+    "title": "Русский черный терьер",
+    "aliases": [
+      "russkiy chiorny terrier (russian black terrier)"
+    ]
+  },
+  {
+    "title": "Сан-мигельская пастушья собака",
+    "aliases": [
+      "saint miguel cattle dog"
+    ]
+  },
+  {
+    "title": "Сенбернар",
+    "aliases": [
+      "st. bernard"
+    ]
+  },
+  {
+    "title": "Сенбернар (длинная шерсть)",
+    "aliases": [
+      "st. bernard long haired",
+      "сенбернар д-ш"
+    ]
+  },
+  {
+    "title": "Сенбернар (короткая шерсть)",
+    "aliases": [
+      "st. bernard short haired",
+      "сенбернар к-ш"
+    ]
+  },
+  {
+    "title": "Среднеазиатская овчарка",
+    "aliases": [
+      "sredneasiatskaya ovcharka (central asia shepherd dog)"
+    ]
+  },
+  {
+    "title": "Тибетский мастиф",
+    "aliases": [
+      "tibetan mastiff (do-khyi)"
+    ]
+  },
+  {
+    "title": "Торняк",
+    "aliases": [
+      "tornjak"
+    ]
+  },
+  {
+    "title": "Тоса",
+    "aliases": [
+      "tosa"
+    ]
+  },
+  {
+    "title": "Трансмонтанский мастиф",
+    "aliases": [
+      "transmontano mastiff"
+    ]
+  },
+  {
+    "title": "Уругвайский симаррон",
+    "aliases": [
+      "cimarron uruguayo"
+    ]
+  },
+  {
+    "title": "Ховаварт",
+    "aliases": [
+      "hovawart"
+    ]
+  },
+  {
+    "title": "Хотошо (бурятская собака)",
+    "aliases": [
+      "hotosho (buryatian dog)"
+    ]
+  },
+  {
+    "title": "Цвергпинчер",
+    "aliases": [
+      "miniature pinscher"
+    ]
+  },
+  {
+    "title": "Цвергшнауцер",
+    "aliases": [
+      "miniature schnauzer"
+    ]
+  },
+  {
+    "title": "Чунцин",
+    "aliases": [
+      "chongqing dog"
+    ]
+  },
+  {
+    "title": "Шар пей",
+    "aliases": [
+      "shar pei"
+    ]
+  },
+  {
+    "title": "Шнауцер",
+    "aliases": [
+      "schnauzer"
+    ]
+  },
+  {
+    "title": "Энтлебухер зенненхунд",
+    "aliases": [
+      "entlebuch cattle dog"
+    ]
+  },
+  {
+    "title": "Эштрельская горная собака",
+    "aliases": [
+      "estrela mountain dog"
+    ]
+  },
+  {
+    "title": "Эштрельская горная собака (длинная шерсть)",
+    "aliases": [
+      "estrela mountain dog long-haired",
+      "эштрельская горная собака д-ш"
+    ]
+  },
+  {
+    "title": "Эштрельская горная собака (короткая шерсть)",
+    "aliases": [
+      "estrela mountain dog short-haired",
+      "эштрельская горная собака к-ш"
+    ]
+  },
+  {
+    "title": "Югославская овчарка шарпланина",
+    "aliases": [
+      "yugoslavian shepherd dog sharplanina"
+    ]
+  },
+  {
+    "title": "Южноафриканский бурбуль",
+    "aliases": [
+      "south african boerboel"
+    ]
+  },
+  {
+    "title": "Австралийский терьер",
+    "aliases": [
+      "australian terrier"
+    ]
+  },
+  {
+    "title": "Австралийский шелковистый терьер",
+    "aliases": [
+      "australian silky terrier"
+    ]
+  },
+  {
+    "title": "Американский стаффордширский терьер",
+    "aliases": [
+      "american staffordshire terrier"
+    ]
+  },
+  {
+    "title": "Американский голый терьер",
+    "aliases": [
+      "american hairless terrier"
+    ]
+  },
+  {
+    "title": "Английский той терьер",
+    "aliases": [
+      "english toy terrier (black & tan)"
+    ]
+  },
+  {
+    "title": "Бедлингтон терьер",
+    "aliases": [
+      "bedlington terrier"
+    ]
+  },
+  {
+    "title": "Бордер терьер",
+    "aliases": [
+      "border terrier"
+    ]
+  },
+  {
+    "title": "Бразильский терьер",
+    "aliases": [
+      "terrier brazilian"
+    ]
+  },
+  {
+    "title": "Бультерьер",
+    "aliases": [
+      "bull terrier"
+    ]
+  },
+  {
+    "title": "Бультерьер миниатюрный",
+    "aliases": [
+      "miniature bull terrier"
+    ]
+  },
+  {
+    "title": "Вельш терьер",
+    "aliases": [
+      "welsh terrier"
+    ]
+  },
+  {
+    "title": "Вест хайленд уайт терьер",
+    "aliases": [
+      "west highland white terrier"
+    ]
+  },
+  {
+    "title": "Денди динмонт терьер",
+    "aliases": [
+      "dandie dinmont terrier"
+    ]
+  },
+  {
+    "title": "Джек рассел терьер",
+    "aliases": [
+      "jack russell terrier"
+    ]
+  },
+  {
+    "title": "Ирландский глен оф имал терьер",
+    "aliases": [
+      "irish glen of imaal terrier"
+    ]
+  },
+  {
+    "title": "Ирландский мягкошерстный пшеничный терьер",
+    "aliases": [
+      "irish soft coated wheaten terrier"
+    ]
+  },
+  {
+    "title": "Ирландский терьер",
+    "aliases": [
+      "irish terrier"
+    ]
+  },
+  {
+    "title": "Йоркширский терьер",
+    "aliases": [
+      "yorkshire terrier"
+    ]
+  },
+  {
+    "title": "Керри блю терьер",
+    "aliases": [
+      "kerry blue terrier"
+    ]
+  },
+  {
+    "title": "Керн терьер",
+    "aliases": [
+      "cairn terrier"
+    ]
+  },
+  {
+    "title": "Лейкленд терьер",
+    "aliases": [
+      "lakeland terrier"
+    ]
+  },
+  {
+    "title": "Манчестер терьер",
+    "aliases": [
+      "manchester terrier"
+    ]
+  },
+  {
+    "title": "Немецкий охотничий терьер (ягдтерьер)",
+    "aliases": [
+      "german hunting terrier"
+    ]
+  },
+  {
+    "title": "Норвич терьер",
+    "aliases": [
+      "norwich terrier"
+    ]
+  },
+  {
+    "title": "Норфолк терьер",
+    "aliases": [
+      "norfolk terrier"
+    ]
+  },
+  {
+    "title": "Парсон рассел терьер",
+    "aliases": [
+      "parson russell terrier"
+    ]
+  },
+  {
+    "title": "Скай терьер",
+    "aliases": [
+      "skye terrier"
+    ]
+  },
+  {
+    "title": "Силихем терьер",
+    "aliases": [
+      "sealyham terrier"
+    ]
+  },
+  {
+    "title": "Стаффордширский бультерьер",
+    "aliases": [
+      "staffordshire bull terrier"
+    ]
+  },
+  {
+    "title": "Фокстерьер (гладкая шерсть)",
+    "aliases": [
+      "fox terrier (smooth)",
+      "фокстерьер г-ш"
+    ]
+  },
+  {
+    "title": "Фокстерьер (жёсткая шерсть)",
+    "aliases": [
+      "fox terrier (wire)",
+      "фокстерьер ж-ш"
+    ]
+  },
+  {
+    "title": "Чешский терьер",
+    "aliases": [
+      "czech terrier"
+    ]
+  },
+  {
+    "title": "Шотландский терьер",
+    "aliases": [
+      "scottish terrier"
+    ]
+  },
+  {
+    "title": "Эрдельтерьер",
+    "aliases": [
+      "airedale terrier"
+    ]
+  },
+  {
+    "title": "Японский терьер",
+    "aliases": [
+      "japanese terrier"
+    ]
+  },
+  {
+    "title": "Такса",
+    "aliases": [
+      "dachshund"
+    ]
+  },
+  {
+    "title": "Такса стандартная (гладкая шерсть)",
+    "aliases": [
+      "dachshund standard smooth-haired",
+      "такса стандартная г-ш"
+    ]
+  },
+  {
+    "title": "Такса стандартная (длинная шерсть)",
+    "aliases": [
+      "dachshund standard long-haired",
+      "такса стандартная д-ш"
+    ]
+  },
+  {
+    "title": "Такса стандартная (жёсткая шерсть)",
+    "aliases": [
+      "dachshund standard wire-haired",
+      "такса стандартная ж-ш"
+    ]
+  },
+  {
+    "title": "Такса миниатюрная (гладкая шерсть)",
+    "aliases": [
+      "dachshund miniature smooth-haired",
+      "такса миниатюрная г-ш"
+    ]
+  },
+  {
+    "title": "Такса миниатюрная (длинная шерсть)",
+    "aliases": [
+      "dachshund miniature long-haired",
+      "такса миниатюрная д-ш"
+    ]
+  },
+  {
+    "title": "Такса миниатюрная (жёсткая шерсть)",
+    "aliases": [
+      "dachshund miniature wire-haired",
+      "такса миниатюрная ж-ш"
+    ]
+  },
+  {
+    "title": "Такса кроличья (гладкая шерсть)",
+    "aliases": [
+      "dachshund kaninchen smooth-haired",
+      "такса кроличья г-ш"
+    ]
+  },
+  {
+    "title": "Такса кроличья (длинная шерсть)",
+    "aliases": [
+      "dachshund kaninchen long haired",
+      "такса кроличья д-ш"
+    ]
+  },
+  {
+    "title": "Такса кроличья (жёсткая шерсть)",
+    "aliases": [
+      "dachshund kaninchen wire-haired",
+      "такса кроличья ж-ш"
+    ]
+  },
+  {
+    "title": "Акита",
+    "aliases": [
+      "akita"
+    ]
+  },
+  {
+    "title": "Аляскинский маламут",
+    "aliases": [
+      "alaskan malamute"
+    ]
+  },
+  {
+    "title": "Американская акита",
+    "aliases": [
+      "american akita"
+    ]
+  },
+  {
+    "title": "Басенджи",
+    "aliases": [
+      "basenji"
+    ]
+  },
+  {
+    "title": "Восточносибирская лайка",
+    "aliases": [
+      "vostochnosibirskaya laika (east-siberian laika)"
+    ]
+  },
+  {
+    "title": "Гренландская собака",
+    "aliases": [
+      "greenland dog"
+    ]
+  },
+  {
+    "title": "Евразиер",
+    "aliases": [
+      "eurasier"
+    ]
+  },
+  {
+    "title": "Западносибирская лайка",
+    "aliases": [
+      "zapadnosibirskaya laika (west-siberian laika)"
+    ]
+  },
+  {
+    "title": "Исландская овчарка",
+    "aliases": [
+      "icelandic sheepdog"
+    ]
+  },
+  {
+    "title": "Итальянский вольпино",
+    "aliases": [
+      "italian volpino"
+    ]
+  },
+  {
+    "title": "Каи",
+    "aliases": [
+      "kai"
+    ]
+  },
+  {
+    "title": "Канадская эскимосская собака",
+    "aliases": [
+      "canadian eskimo dog"
+    ]
+  },
+  {
+    "title": "Карельская лайка",
+    "aliases": [
+      "karelskaya laika (karelian laika)"
+    ]
+  },
+  {
+    "title": "Карельская медвежья собака",
+    "aliases": [
+      "karelian bear dog"
+    ]
+  },
+  {
+    "title": "Кинтамани бали дог",
+    "aliases": [
+      "kintamani-bali dog"
+    ]
+  },
+  {
+    "title": "Кисю",
+    "aliases": [
+      "kishu"
+    ]
+  },
+  {
+    "title": "Корейская собака чиндо",
+    "aliases": [
+      "korea jindo dog"
+    ]
+  },
+  {
+    "title": "Ксолоитцкуинтли",
+    "aliases": [
+      "xoloitzcuintle"
+    ]
+  },
+  {
+    "title": "Ксолоитцкуинтли (миниатюрный)",
+    "aliases": [
+      "xoloitzcuintle (miniature)"
+    ]
+  },
+  {
+    "title": "Ксолоитцкуинтли (средний)",
+    "aliases": [
+      "xoloitzcuintle (intermediate)"
+    ]
+  },
+  {
+    "title": "Ксолоитцкуинтли (стандартный)",
+    "aliases": [
+      "xoloitzcuintle (standard)"
+    ]
+  },
+  {
+    "title": "Лапландская оленегонная собака",
+    "aliases": [
+      "lapponian herder"
+    ]
+  },
+  {
+    "title": "Немецкий шпиц",
+    "aliases": [
+      "german spitz"
+    ]
+  },
+  {
+    "title": "Немецкий вольфшпиц (кеесхонд)",
+    "aliases": [
+      "german wolfspitz (keeshond)"
+    ]
+  },
+  {
+    "title": "Немецкий шпиц большой",
+    "aliases": [
+      "german spitz giant"
+    ]
+  },
+  {
+    "title": "Немецкий шпиц миниатюрный (малый)",
+    "aliases": [
+      "german spitz miniature"
+    ]
+  },
+  {
+    "title": "Немецкий шпиц средний",
+    "aliases": [
+      "german spitz medium"
+    ]
+  },
+  {
+    "title": "Немецкий шпиц той (померанский)",
+    "aliases": [
+      "german toy spitz (pomeranian)"
+    ]
+  },
+  {
+    "title": "Норботтеншпиц",
+    "aliases": [
+      "norrbottenspitz"
+    ]
+  },
+  {
+    "title": "Норвежский бухунд",
+    "aliases": [
+      "norwegian buhund"
+    ]
+  },
+  {
+    "title": "Норвежский лундехунд",
+    "aliases": [
+      "norwegian lundehund"
+    ]
+  },
+  {
+    "title": "Норвежский элькхунд серый",
+    "aliases": [
+      "norwegian elkhound grey"
+    ]
+  },
+  {
+    "title": "Норвежский элькхунд черный",
+    "aliases": [
+      "norwegian elkhound black"
+    ]
+  },
+  {
+    "title": "Ненецкая оленегонная лайка",
+    "aliases": [
+      "nenetskaya olenegonnaya laika (nenets reindeer herding laika)"
+    ]
+  },
+  {
+    "title": "Перуанская голая собака",
+    "aliases": [
+      "peruvian hairless dog"
+    ]
+  },
+  {
+    "title": "Перуанская голая собака (большая)",
+    "aliases": [
+      "peruvian hairless dog (large)"
+    ]
+  },
+  {
+    "title": "Перуанская голая собака (малая)",
+    "aliases": [
+      "peruvian hairless dog (small)"
+    ]
+  },
+  {
+    "title": "Перуанская голая собака (средняя)",
+    "aliases": [
+      "peruvian hairless dog (medium)"
+    ]
+  },
+  {
+    "title": "Поденко ибиценко",
+    "aliases": [
+      "ibizan podenco"
+    ]
+  },
+  {
+    "title": "Поденко канарио",
+    "aliases": [
+      "canarian warren hound"
+    ]
+  },
+  {
+    "title": "Португальский поденгу",
+    "aliases": [
+      "portuguese podengo"
+    ]
+  },
+  {
+    "title": "Португальский поденгу (большой)",
+    "aliases": [
+      "portuguese podengo (large)"
+    ]
+  },
+  {
+    "title": "Португальский поденгу (малый)",
+    "aliases": [
+      "portuguese podengo (small)"
+    ]
+  },
+  {
+    "title": "Португальский поденгу (средний)",
+    "aliases": [
+      "portuguese podengo (medium)"
+    ]
+  },
+  {
+    "title": "Русско-европейская лайка",
+    "aliases": [
+      "russko-evropeiskaya laika (russian-european laika)"
+    ]
+  },
+  {
+    "title": "Самоед",
+    "aliases": [
+      "samoyed"
+    ]
+  },
+  {
+    "title": "Сиба",
+    "aliases": [
+      "shiba"
+    ]
+  },
+  {
+    "title": "Сибирский хаски",
+    "aliases": [
+      "siberian husky"
+    ]
+  },
+  {
+    "title": "Сикоку",
+    "aliases": [
+      "shikoku"
+    ]
+  },
+  {
+    "title": "Тайваньская собака",
+    "aliases": [
+      "taiwan dog"
+    ]
+  },
+  {
+    "title": "Тайский бангкеу дог",
+    "aliases": [
+      "thai bangkaew dog"
+    ]
+  },
+  {
+    "title": "Тайский риджбек",
+    "aliases": [
+      "thai ridgeback dog"
+    ]
+  },
+  {
+    "title": "Фараонова собака",
+    "aliases": [
+      "pharaoh hound"
+    ]
+  },
+  {
+    "title": "Финский лапхунд",
+    "aliases": [
+      "finnish lapponian dog"
+    ]
+  },
+  {
+    "title": "Финский шпиц",
+    "aliases": [
+      "finnish spitz"
+    ]
+  },
+  {
+    "title": "Ханаанская собака",
+    "aliases": [
+      "canaan dog"
+    ]
+  },
+  {
+    "title": "Хоккайдо",
+    "aliases": [
+      "hokkaido"
+    ]
+  },
+  {
+    "title": "Чау чау",
+    "aliases": [
+      "chow chow"
+    ]
+  },
+  {
+    "title": "Чирнеко дель’этна",
+    "aliases": [
+      "cirneco dell’etna"
+    ]
+  },
+  {
+    "title": "Чукотская ездовая лайка",
+    "aliases": [
+      "chukotskaya ezdovaya laika (chukotka sledge dog)"
+    ]
+  },
+  {
+    "title": "Шалайка (шакало-псовая собака)",
+    "aliases": [
+      "shalaika (shakalo-psovaya sobaka)"
+    ]
+  },
+  {
+    "title": "Шведский белый элькхунд",
+    "aliases": [
+      "swedish white elkhund"
+    ]
+  },
+  {
+    "title": "Шведский вальхунд",
+    "aliases": [
+      "swedish vallhund"
+    ]
+  },
+  {
+    "title": "Шведский лаппхунд",
+    "aliases": [
+      "swedish lapphund"
+    ]
+  },
+  {
+    "title": "Якутская лайка",
+    "aliases": [
+      "yakutskaya laika (yakutian laika)"
+    ]
+  },
+  {
+    "title": "Ямтхунд",
+    "aliases": [
+      "jamthund"
+    ]
+  },
+  {
+    "title": "Японский шпиц",
+    "aliases": [
+      "japanese spitz"
+    ]
+  },
+  {
+    "title": "Австрийская черно-подпалая гончая",
+    "aliases": [
+      "austrian black and tan hound"
+    ]
+  },
+  {
+    "title": "Альпийский таксообразный бракк",
+    "aliases": [
+      "alpine dachsbracke"
+    ]
+  },
+  {
+    "title": "Американский фоксхаунд",
+    "aliases": [
+      "american foxhound"
+    ]
+  },
+  {
+    "title": "Английский фоксхаунд",
+    "aliases": [
+      "english foxhound"
+    ]
+  },
+  {
+    "title": "Англо-французская малая гончая",
+    "aliases": [
+      "medium-sized anglo-french hound"
+    ]
+  },
+  {
+    "title": "Артезиано-нормандский бассет",
+    "aliases": [
+      "normand artesien basset"
+    ]
+  },
+  {
+    "title": "Арьежская гончая",
+    "aliases": [
+      "ariege hound"
+    ]
+  },
+  {
+    "title": "Баварская горная гончая",
+    "aliases": [
+      "bavarian mountain scent hound"
+    ]
+  },
+  {
+    "title": "Бассет хаунд",
+    "aliases": [
+      "basset hound"
+    ]
+  },
+  {
+    "title": "Бигль",
+    "aliases": [
+      "beagle"
+    ]
+  },
+  {
+    "title": "Бигль харьер",
+    "aliases": [
+      "beagle harrier"
+    ]
+  },
+  {
+    "title": "Билли",
+    "aliases": [
+      "billy"
+    ]
+  },
+  {
+    "title": "Бладхаунд",
+    "aliases": [
+      "bloodhound"
+    ]
+  },
+  {
+    "title": "Большая англо-французская бело-оранжевая гончая",
+    "aliases": [
+      "great anglo- french white and orange hound"
+    ]
+  },
+  {
+    "title": "Большая англо-французская бело-черная гончая",
+    "aliases": [
+      "great anglo-french white and black hound"
+    ]
+  },
+  {
+    "title": "Большая англо-французская трехцветная гончая",
+    "aliases": [
+      "great anglo-french tricolour hound"
+    ]
+  },
+  {
+    "title": "Большая голубая гасконская гончая",
+    "aliases": [
+      "great gascony blue"
+    ]
+  },
+  {
+    "title": "Большой вандейский бассет гриффон",
+    "aliases": [
+      "grand basset griffon vendeen"
+    ]
+  },
+  {
+    "title": "Большой вандейский гриффон",
+    "aliases": [
+      "grand griffon vendeen"
+    ]
+  },
+  {
+    "title": "Боснийская грубошерстная гончая (барак)",
+    "aliases": [
+      "bosnian broken-haired hound-called barak"
+    ]
+  },
+  {
+    "title": "Бретонский рыжий бассет",
+    "aliases": [
+      "basset fauve de bretagne"
+    ]
+  },
+  {
+    "title": "Бретонский рыжий гриффон",
+    "aliases": [
+      "griffon fauve de bretagne"
+    ]
+  },
+  {
+    "title": "Вандейский гриффон брике",
+    "aliases": [
+      "briquet griffon vendeen"
+    ]
+  },
+  {
+    "title": "Венгерская трансильванская гончая",
+    "aliases": [
+      "hungarian hound - transylvanian scent hound"
+    ]
+  },
+  {
+    "title": "Вестфальский таксообразный брак",
+    "aliases": [
+      "westphalian dachsbracke"
+    ]
+  },
+  {
+    "title": "Ганноверская гончая",
+    "aliases": [
+      "hannoverscher schweisshund"
+    ]
+  },
+  {
+    "title": "Гасконско-сентонжская гончая",
+    "aliases": [
+      "gascon saintongeois"
+    ]
+  },
+  {
+    "title": "Гасконско-сентонжская гончая большая",
+    "aliases": [
+      "gascon saintongeois large"
+    ]
+  },
+  {
+    "title": "Гасконско-сентонжская гончая средняя",
+    "aliases": [
+      "gascon saintongeois medium"
+    ]
+  },
+  {
+    "title": "Голубой гасконский бассет",
+    "aliases": [
+      "blue gascony basset"
+    ]
+  },
+  {
+    "title": "Голубой гасконский гриффон",
+    "aliases": [
+      "blue gascony griffon"
+    ]
+  },
+  {
+    "title": "Гончая гамильтона",
+    "aliases": [
+      "hamiltonstovare"
+    ]
+  },
+  {
+    "title": "Гончая д’артуа",
+    "aliases": [
+      "artois hound"
+    ]
+  },
+  {
+    "title": "Гончая шиллера",
+    "aliases": [
+      "schillerstovare"
+    ]
+  },
+  {
+    "title": "Греческая гончая",
+    "aliases": [
+      "hellenic hound"
+    ]
+  },
+  {
+    "title": "Далматин",
+    "aliases": [
+      "dalmatian"
+    ]
+  },
+  {
+    "title": "Древер",
+    "aliases": [
+      "drever"
+    ]
+  },
+  {
+    "title": "Испанская гончая",
+    "aliases": [
+      "spanish hound"
+    ]
+  },
+  {
+    "title": "Истрийская (жёсткая шерсть) гончая",
+    "aliases": [
+      "istrian wire-haired hound)",
+      "истрийская ж-ш гончая"
+    ]
+  },
+  {
+    "title": "Истрийская (короткая шерсть) гончая",
+    "aliases": [
+      "istrian short-haired hound",
+      "истрийская к-ш гончая"
+    ]
+  },
+  {
+    "title": "Итальянская (жёсткая шерсть) гончая",
+    "aliases": [
+      "italian rough-haired hound",
+      "итальянская ж-ш гончая"
+    ]
+  },
+  {
+    "title": "Итальянская (короткая шерсть) гончая",
+    "aliases": [
+      "italian short-haired hound",
+      "итальянская к-ш гончая"
+    ]
+  },
+  {
+    "title": "Литовская гончая",
+    "aliases": [
+      "lithuanian hound"
+    ]
+  },
+  {
+    "title": "Малая голубая гасконская гончая",
+    "aliases": [
+      "small blue gascony"
+    ]
+  },
+  {
+    "title": "Малый вандейский бассет гриффон",
+    "aliases": [
+      "petit basset griffon vendeen"
+    ]
+  },
+  {
+    "title": "Мареммская гончая",
+    "aliases": [
+      "segugio maremmano"
+    ]
+  },
+  {
+    "title": "Немецкая гончая",
+    "aliases": [
+      "german hound"
+    ]
+  },
+  {
+    "title": "Нивернезский гриффон",
+    "aliases": [
+      "griffon nivernais"
+    ]
+  },
+  {
+    "title": "Норвежская гончая дункер",
+    "aliases": [
+      "norwegian hound (dunker)"
+    ]
+  },
+  {
+    "title": "Оттерхаунд",
+    "aliases": [
+      "otterhound"
+    ]
+  },
+  {
+    "title": "Польская гончая",
+    "aliases": [
+      "polish hound"
+    ]
+  },
+  {
+    "title": "Польская охотничья собака",
+    "aliases": [
+      "polish hunting dog"
+    ]
+  },
+  {
+    "title": "Порселен",
+    "aliases": [
+      "porcelaine"
+    ]
+  },
+  {
+    "title": "Посавская гончая",
+    "aliases": [
+      "posavatz hound"
+    ]
+  },
+  {
+    "title": "Пуатевен",
+    "aliases": [
+      "poitevin"
+    ]
+  },
+  {
+    "title": "Родезийский риджбек",
+    "aliases": [
+      "rhodesian ridgeback"
+    ]
+  },
+  {
+    "title": "Русская гончая",
+    "aliases": [
+      "russkaya gonchaya (russian hound)"
+    ]
+  },
+  {
+    "title": "Русская пегая гончая",
+    "aliases": [
+      "russkaya pegaya gonchaya (russian pied hound)"
+    ]
+  },
+  {
+    "title": "Сербская гончая",
+    "aliases": [
+      "serbian hound"
+    ]
+  },
+  {
+    "title": "Сербская трехцветная гончая",
+    "aliases": [
+      "serbian tricolour hound"
+    ]
+  },
+  {
+    "title": "Словацкая гончая",
+    "aliases": [
+      "slovakian hound"
+    ]
+  },
+  {
+    "title": "Смоландская гончая",
+    "aliases": [
+      "smalandsstovare"
+    ]
+  },
+  {
+    "title": "Тирольская гончая",
+    "aliases": [
+      "tyrolean hound"
+    ]
+  },
+  {
+    "title": "Финская гончая",
+    "aliases": [
+      "finnish hound"
+    ]
+  },
+  {
+    "title": "Французская бело-оранжевая гончая",
+    "aliases": [
+      "french white and orange hound"
+    ]
+  },
+  {
+    "title": "Французская бело-черная гончая",
+    "aliases": [
+      "french white and black hound"
+    ]
+  },
+  {
+    "title": "Французская трехцветная гончая",
+    "aliases": [
+      "french tricolour hound"
+    ]
+  },
+  {
+    "title": "Хальденская гончая",
+    "aliases": [
+      "halden hound"
+    ]
+  },
+  {
+    "title": "Харьер",
+    "aliases": [
+      "harrier"
+    ]
+  },
+  {
+    "title": "Хигенская гончая",
+    "aliases": [
+      "hygen hound",
+      "Хигенская гочая"
+    ]
+  },
+  {
+    "title": "Черно-подпалый кунхаунд",
+    "aliases": [
+      "black and tan coonhound"
+    ]
+  },
+  {
+    "title": "Черногорская горная гончая",
+    "aliases": [
+      "montenegrin mountain hound"
+    ]
+  },
+  {
+    "title": "Швейцарская гончая",
+    "aliases": [
+      "swiss hound"
+    ]
+  },
+  {
+    "title": "Швейцарская гончая бернская",
+    "aliases": [
+      "swiss hound bernese"
+    ]
+  },
+  {
+    "title": "Швейцарская гончая люцернская",
+    "aliases": [
+      "swiss hound lucerne"
+    ]
+  },
+  {
+    "title": "Швейцарская гончая швицкая",
+    "aliases": [
+      "swiss hound schwyz"
+    ]
+  },
+  {
+    "title": "Швейцарская гончая юрская",
+    "aliases": [
+      "swiss hound jura"
+    ]
+  },
+  {
+    "title": "Швейцарская коротконогая гончая",
+    "aliases": [
+      "swiss short-legged hound"
+    ]
+  },
+  {
+    "title": "Швейцарская коротконогая гончая бернская",
+    "aliases": [
+      "swiss short-legged hound bernese"
+    ]
+  },
+  {
+    "title": "Швейцарская коротконогая гончая люцернская",
+    "aliases": [
+      "swiss short-legged hound lucerne"
+    ]
+  },
+  {
+    "title": "Швейцарская коротконогая гончая швицкая",
+    "aliases": [
+      "swiss short-legged hound schwyz"
+    ]
+  },
+  {
+    "title": "Швейцарская коротконогая гончая юрская",
+    "aliases": [
+      "swiss short-legged hound jura"
+    ]
+  },
+  {
+    "title": "Штирийский жесткошерстный бракк",
+    "aliases": [
+      "coarse-haired styrian hound)"
+    ]
+  },
+  {
+    "title": "Эстонская гончая",
+    "aliases": [
+      "estonian hound"
+    ]
+  },
+  {
+    "title": "Английский пойнтер",
+    "aliases": [
+      "english pointer"
+    ]
+  },
+  {
+    "title": "Английский сеттер",
+    "aliases": [
+      "english setter"
+    ]
+  },
+  {
+    "title": "Арьежская легавая",
+    "aliases": [
+      "ariege pointing dog"
+    ]
+  },
+  {
+    "title": "Богемский жесткошерстный легавый гриффон",
+    "aliases": [
+      "bohemian wire-haired pointing griffon"
+    ]
+  },
+  {
+    "title": "Большой мюнстерлендер",
+    "aliases": [
+      "large munsterlander"
+    ]
+  },
+  {
+    "title": "Бретонский эпаньоль",
+    "aliases": [
+      "brittany spaniel (epagneul breton)"
+    ]
+  },
+  {
+    "title": "Бурбонская легавая",
+    "aliases": [
+      "bourbonnais pointing dog"
+    ]
+  },
+  {
+    "title": "Бургосская легавая",
+    "aliases": [
+      "burgos pointing dog"
+    ]
+  },
+  {
+    "title": "Веймаранер",
+    "aliases": [
+      "weimaraner"
+    ]
+  },
+  {
+    "title": "Веймаранер (длинная шерсть)",
+    "aliases": [
+      "weimaraner long-haried",
+      "веймаранер д-ш"
+    ]
+  },
+  {
+    "title": "Веймаранер (короткая шерсть)",
+    "aliases": [
+      "weimaraner short-haired",
+      "веймаранер к-ш"
+    ]
+  },
+  {
+    "title": "Венгерская выжла (жёсткая шерсть)",
+    "aliases": [
+      "hungarian wire-haired pointer (vizsla)",
+      "венгерская выжла ж-ш"
+    ]
+  },
+  {
+    "title": "Венгерская выжла (короткая шерсть)",
+    "aliases": [
+      "hungarian short-haired pointer (vizsla)",
+      "венгерская выжла к-ш"
+    ]
+  },
+  {
+    "title": "Голубой пикардийский спаниель",
+    "aliases": [
+      "blue picardy spaniel"
+    ]
+  },
+  {
+    "title": "Гриффон кортальса",
+    "aliases": [
+      "wire-haired pointing griffon korthals"
+    ]
+  },
+  {
+    "title": "Дрентская куропаточная собака",
+    "aliases": [
+      "drentsche partridge dog"
+    ]
+  },
+  {
+    "title": "Ирландский красно-белый сеттер",
+    "aliases": [
+      "irish red and white setter"
+    ]
+  },
+  {
+    "title": "Ирландский красный сеттер",
+    "aliases": [
+      "irish red setter"
+    ]
+  },
+  {
+    "title": "Итальянский бракк",
+    "aliases": [
+      "italian pointing dog"
+    ]
+  },
+  {
+    "title": "Итальянский спиноне",
+    "aliases": [
+      "italian spinone"
+    ]
+  },
+  {
+    "title": "Малый мюнстерлендер",
+    "aliases": [
+      "kleiner munsterlander"
+    ]
+  },
+  {
+    "title": "Немецкая (длинная шерсть) легавая (лангхаар)",
+    "aliases": [
+      "german langhaar",
+      "немецкая д-ш легавая (лангхаар)"
+    ]
+  },
+  {
+    "title": "Немецкая (жёсткая шерсть) легавая (дратхаар)",
+    "aliases": [
+      "german wire-haired pointing dog (deutsch drahthaar)",
+      "немецкая ж-ш легавая (дратхаар)"
+    ]
+  },
+  {
+    "title": "Немецкая (короткая шерсть) легавая (курцхаар)",
+    "aliases": [
+      "german short-haired pointing dog (deutsch kurzhaar)",
+      "немецкая к-ш легавая (курцхаар)"
+    ]
+  },
+  {
+    "title": "Немецкий штихельхаар",
+    "aliases": [
+      "deutsch stichelhaar"
+    ]
+  },
+  {
+    "title": "Овернский пойнтер",
+    "aliases": [
+      "auvergne pointer"
+    ]
+  },
+  {
+    "title": "Пикардийский спаниель",
+    "aliases": [
+      "picardy spaniel"
+    ]
+  },
+  {
+    "title": "Понт-одемерский спаниель",
+    "aliases": [
+      "pont-audemer spaniel"
+    ]
+  },
+  {
+    "title": "Португальская легавая",
+    "aliases": [
+      "portuguese pointing dog"
+    ]
+  },
+  {
+    "title": "Пудельпойнтер",
+    "aliases": [
+      "pudelpointer"
+    ]
+  },
+  {
+    "title": "Сен-жерменский пойнтер",
+    "aliases": [
+      "saint germain pointer"
+    ]
+  },
+  {
+    "title": "Сеттер гордон",
+    "aliases": [
+      "gordon setter"
+    ]
+  },
+  {
+    "title": "Словацкая грубошерстная легавая",
+    "aliases": [
+      "wirehaired slovakian pointer"
+    ]
+  },
+  {
+    "title": "Стабихун",
+    "aliases": [
+      "stabijhoun"
+    ]
+  },
+  {
+    "title": "Стародатская легавая",
+    "aliases": [
+      "old danish pointing dog"
+    ]
+  },
+  {
+    "title": "Французская легавая гасконского типа",
+    "aliases": [
+      "french pointing dog - gascogne type"
+    ]
+  },
+  {
+    "title": "Французская легавая пиринейского типа",
+    "aliases": [
+      "french pointing dog pyrenean type"
+    ]
+  },
+  {
+    "title": "Французский спаниель",
+    "aliases": [
+      "french spaniel"
+    ]
+  },
+  {
+    "title": "Американский водяной спаниель",
+    "aliases": [
+      "american water spaniel"
+    ]
+  },
+  {
+    "title": "Американский кокер спаниель",
+    "aliases": [
+      "american cocker spaniel"
+    ]
+  },
+  {
+    "title": "Английский кокер спаниель",
+    "aliases": [
+      "english cocker spaniel"
+    ]
+  },
+  {
+    "title": "Английский спрингер спаниель",
+    "aliases": [
+      "english springer spaniel"
+    ]
+  },
+  {
+    "title": "Вельш спрингер спаниель",
+    "aliases": [
+      "welsh springer spaniel"
+    ]
+  },
+  {
+    "title": "Золотистый ретривер",
+    "aliases": [
+      "golden retriever"
+    ]
+  },
+  {
+    "title": "Ирландский водяной спаниель",
+    "aliases": [
+      "irish water spaniel"
+    ]
+  },
+  {
+    "title": "Испанская водяная собака",
+    "aliases": [
+      "spanish water dog"
+    ]
+  },
+  {
+    "title": "Кламбер спаниель",
+    "aliases": [
+      "clumber spaniel"
+    ]
+  },
+  {
+    "title": "Курчавошерстный ретривер",
+    "aliases": [
+      "curly coated retriever"
+    ]
+  },
+  {
+    "title": "Лабрадор ретривер",
+    "aliases": [
+      "labrador retriever"
+    ]
+  },
+  {
+    "title": "Лаготто романьоло",
+    "aliases": [
+      "romagna water dog (lagotto romagnolo)"
+    ]
+  },
+  {
+    "title": "Немецкий спаниель",
+    "aliases": [
+      "german spaniel"
+    ]
+  },
+  {
+    "title": "Нидерландский койкерхондье",
+    "aliases": [
+      "nederlandse kooikerhondje"
+    ]
+  },
+  {
+    "title": "Новошотландский ретривер",
+    "aliases": [
+      "nova scotia duck tolling retriever"
+    ]
+  },
+  {
+    "title": "Португальская водяная собака",
+    "aliases": [
+      "portuguese water dog"
+    ]
+  },
+  {
+    "title": "Прямошерстный ретривер",
+    "aliases": [
+      "flat coated retriever"
+    ]
+  },
+  {
+    "title": "Русский охотничий спаниель",
+    "aliases": [
+      "russkiy ohotnichiy spaniel (russian hunting spaniel)"
+    ]
+  },
+  {
+    "title": "Суссекс спаниель",
+    "aliases": [
+      "sussex spaniel"
+    ]
+  },
+  {
+    "title": "Филд спаниель",
+    "aliases": [
+      "field spaniel"
+    ]
+  },
+  {
+    "title": "Французская водяная собака (барбе)",
+    "aliases": [
+      "french water dog (barbet)"
+    ]
+  },
+  {
+    "title": "Фризская водяная собака",
+    "aliases": [
+      "frisian water dog"
+    ]
+  },
+  {
+    "title": "Чесапик бей ретривер",
+    "aliases": [
+      "chesapeake bay retriever"
+    ]
+  },
+  {
+    "title": "Бельгийский гриффон",
+    "aliases": [
+      "griffon belge"
+    ]
+  },
+  {
+    "title": "Бивер терьер",
+    "aliases": [
+      "biewer terrier"
+    ]
+  },
+  {
+    "title": "Бишон фризе",
+    "aliases": [
+      "bichon frise"
+    ]
+  },
+  {
+    "title": "Болоньезе",
+    "aliases": [
+      "bolognese"
+    ]
+  },
+  {
+    "title": "Бостон терьер",
+    "aliases": [
+      "boston terrier"
+    ]
+  },
+  {
+    "title": "Брюссельский гриффон",
+    "aliases": [
+      "griffon bruxellois"
+    ]
+  },
+  {
+    "title": "Кавалер кинг чарльз спаниель",
+    "aliases": [
+      "cavalier king charles spaniel"
+    ]
+  },
+  {
+    "title": "Кинг чарльз спаниель",
+    "aliases": [
+      "king charles spaniel"
+    ]
+  },
+  {
+    "title": "Китайская хохлатая собака",
+    "aliases": [
+      "chinese crested dog hairless"
+    ]
+  },
+  {
+    "title": "Континентальный той спаниель",
+    "aliases": [
+      "continental toy spaniel"
+    ]
+  },
+  {
+    "title": "Континентальный той спаниель папийон",
+    "aliases": [
+      "continental toy spaniel papillon"
+    ]
+  },
+  {
+    "title": "Континентальный той спаниель фален",
+    "aliases": [
+      "continental toy spaniel phalene"
+    ]
+  },
+  {
+    "title": "Котон де тулеар",
+    "aliases": [
+      "coton de tulear"
+    ]
+  },
+  {
+    "title": "Кромфорлендер",
+    "aliases": [
+      "kromfohrlander"
+    ]
+  },
+  {
+    "title": "Лхасский апсо",
+    "aliases": [
+      "lhasa apso"
+    ]
+  },
+  {
+    "title": "Малая львиная собака",
+    "aliases": [
+      "little lion dog"
+    ]
+  },
+  {
+    "title": "Мальтезе",
+    "aliases": [
+      "maltese"
+    ]
+  },
+  {
+    "title": "Мопс",
+    "aliases": [
+      "pug"
+    ]
+  },
+  {
+    "title": "Пекинес",
+    "aliases": [
+      "pekingese"
+    ]
+  },
+  {
+    "title": "Пражский крысарик",
+    "aliases": [
+      "prague ratter"
+    ]
+  },
+  {
+    "title": "Пти брабансон",
+    "aliases": [
+      "petit braban^on"
+    ]
+  },
+  {
+    "title": "Пудель",
+    "aliases": [
+      "poodle"
+    ]
+  },
+  {
+    "title": "Пудель миниатюрный",
+    "aliases": [
+      "poodle miniature"
+    ]
+  },
+  {
+    "title": "Пудель средний",
+    "aliases": [
+      "poodle medium"
+    ]
+  },
+  {
+    "title": "Пудель стандартный",
+    "aliases": [
+      "poodle standard"
+    ]
+  },
+  {
+    "title": "Пудель той",
+    "aliases": [
+      "poodle toy"
+    ]
+  },
+  {
+    "title": "Русская салонная собака",
+    "aliases": [
+      "russkaya salonnaya sobaka (russian salon dog)"
+    ]
+  },
+  {
+    "title": "Русская цветная болонка",
+    "aliases": [
+      "russkaya tsvetnaya bolonka (russian coloured bichon)"
+    ]
+  },
+  {
+    "title": "Русский той",
+    "aliases": [
+      "russkiy toy (russian toy)"
+    ]
+  },
+  {
+    "title": "Русский той (гладкая шерсть)",
+    "aliases": [
+      "russkiy toy (russian toy) smooth-haired",
+      "русский той г-ш"
+    ]
+  },
+  {
+    "title": "Русский той (длинная шерсть)",
+    "aliases": [
+      "russkiy toy (russian toy) long-haired",
+      "русский той д-ш"
+    ]
+  },
+  {
+    "title": "Тибетский спаниель",
+    "aliases": [
+      "tibetan spaniel"
+    ]
+  },
+  {
+    "title": "Тибетский терьер",
+    "aliases": [
+      "tibetan terrier"
+    ]
+  },
+  {
+    "title": "Той фокстерьер",
+    "aliases": [
+      "toy fox terrier"
+    ]
+  },
+  {
+    "title": "Французский бульдог",
+    "aliases": [
+      "french bulldog"
+    ]
+  },
+  {
+    "title": "Хаванез",
+    "aliases": [
+      "havanese"
+    ]
+  },
+  {
+    "title": "Чихуахуа",
+    "aliases": [
+      "chihuahua"
+    ]
+  },
+  {
+    "title": "Чихуахуа (длинная шерсть)",
+    "aliases": [
+      "chihuahua long-haired",
+      "чихуахуа д-ш"
+    ]
+  },
+  {
+    "title": "Чихуахуа (короткая шерсть)",
+    "aliases": [
+      "chihuahua smooth-haired",
+      "чихуахуа к-ш"
+    ]
+  },
+  {
+    "title": "Ши тцу",
+    "aliases": [
+      "shih tzu"
+    ]
+  },
+  {
+    "title": "Шьен партиколор а пуаль фризе",
+    "aliases": [
+      "chien particolore a poil frise"
+    ]
+  },
+  {
+    "title": "Шьен партиколор а пуаль фризе миниатюрный",
+    "aliases": [
+      "chien particolore a poil frise miniature"
+    ]
+  },
+  {
+    "title": "Шьен партиколор а пуаль фризе средний",
+    "aliases": [
+      "chien particolore a poil frise medium"
+    ]
+  },
+  {
+    "title": "Шьен партиколор а пуаль фризе стандартный",
+    "aliases": [
+      "chien particolore a poil frise standard"
+    ]
+  },
+  {
+    "title": "Шьен партиколор а пуаль фризе той",
+    "aliases": [
+      "chien particolore a poil frise toy"
+    ]
+  },
+  {
+    "title": "Японский хин",
+    "aliases": [
+      "japanese chin"
+    ]
+  },
+  {
+    "title": "Азавак",
+    "aliases": [
+      "azawakh"
+    ]
+  },
+  {
+    "title": "Афганская аборигенная борзая",
+    "aliases": [
+      "aboriginal afghan hound"
+    ]
+  },
+  {
+    "title": "Афганская борзая",
+    "aliases": [
+      "afghan hound"
+    ]
+  },
+  {
+    "title": "Венгерская борзая",
+    "aliases": [
+      "hungarian greyhound"
+    ]
+  },
+  {
+    "title": "Грейхаунд",
+    "aliases": [
+      "greyhound"
+    ]
+  },
+  {
+    "title": "Дирхаунд",
+    "aliases": [
+      "deerhound"
+    ]
+  },
+  {
+    "title": "Ирландский вольфхаунд",
+    "aliases": [
+      "irish wolfhound"
+    ]
+  },
+  {
+    "title": "Испанская борзая",
+    "aliases": [
+      "spanish greyhound"
+    ]
+  },
+  {
+    "title": "Малая итальянская борзая",
+    "aliases": [
+      "italian sighthound"
+    ]
+  },
+  {
+    "title": "Польская борзая",
+    "aliases": [
+      "polish greyhound"
+    ]
+  },
+  {
+    "title": "Русская псовая борзая",
+    "aliases": [
+      "russkaya psovaya borzaya (borzoi)"
+    ]
+  },
+  {
+    "title": "Салюки",
+    "aliases": [
+      "saluki"
+    ]
+  },
+  {
+    "title": "Слюги",
+    "aliases": [
+      "sloughi"
+    ]
+  },
+  {
+    "title": "Тазы",
+    "aliases": [
+      "tazy"
+    ]
+  },
+  {
+    "title": "Тайган",
+    "aliases": [
+      "taygan"
+    ]
+  },
+  {
+    "title": "Уиппет",
+    "aliases": [
+      "whippet"
+    ]
+  },
+  {
+    "title": "Хортая борзая",
+    "aliases": [
+      "hortaya borzaya"
+    ]
+  },
+  {
+    "title": "Южнорусская степная борзая",
+    "aliases": [
+      "youzhnorusskaya stepnaya borzaya (south russian step sighthound)"
+    ]
+  }
+]

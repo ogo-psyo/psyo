@@ -2,11 +2,14 @@
 
 import { useState, type ComponentProps } from 'react';
 import type { ProfileMemoryWorkspace } from '@/components/profile/ProfileMemoryWorkspace';
-import { breedCatalog, type DogProfile } from '@/lib/data';
+import { type DogProfile } from '@/lib/data';
 import { inflectPetName } from '@/lib/copy';
 import { ExactIcon, ExactPage, ExactRow } from './ExactShell';
 import { ExactMemory } from './ExactMemory';
 import { ExactDocument } from './ExactDocument';
+import { AgeField } from '@/components/system/AgeField';
+import { BreedField } from '@/components/system/BreedField';
+import { breedInputValue, breedProfilePatch } from '@/lib/breedSearch';
 import { ExactProfileFields } from './ExactProfileFields';
 
 export type ExactProfileView = 'profile' | 'editprofile' | 'memory' | 'documents' | 'document' | 'identity';
@@ -39,11 +42,8 @@ export function ExactProfile(props: Props) {
     <form onSubmit={async event => { event.preventDefault(); if (saving) return; setSaving(true); try { const id = await props.onSaveProfile(draft); if (id) { props.onDraft(null); back(); } } finally { setSaving(false); } }}>
       <fieldset disabled={saving}>
         <div className="field"><label htmlFor="exact-profile-dogName">Имя</label><input id="exact-profile-dogName" value={draft.dogName} required maxLength={80} autoComplete="off" onChange={event => update({dogName:event.target.value})} /></div>
-        <div className="field"><label htmlFor="dog-age">Возраст</label><input id="dog-age" value={draft.age || draft.lifeStage} placeholder="Например, 11 месяцев" onChange={event => update({age:event.target.value, lifeStage:event.target.value})} maxLength={60} autoComplete="off" /></div>
-        <div className="field"><label htmlFor="exact-breed">Порода</label><input id="exact-breed" value={draft.breedId === 'custom' ? draft.breedCustom : breedCatalog.find(item => item.id === draft.breedId)?.title || props.breedLabel} onChange={event => {
-          const match = breedCatalog.find(item => item.title.toLocaleLowerCase('ru') === event.target.value.toLocaleLowerCase('ru'));
-          update(match ? { breedId: match.id, breedGroupId: match.groupId, breedCustom: '' } : { breedId: 'custom', breedCustom: event.target.value });
-        }} autoComplete="off" placeholder="Например, такса или метис" /></div>
+        <AgeField id="dog-age" value={draft.age || draft.lifeStage} onChange={value => update({ age: value, lifeStage: value })} disabled={saving} />
+        <BreedField id="exact-breed" value={breedInputValue(draft)} onChange={value => update(breedProfilePatch(value))} disabled={saving} />
         <ExactProfileFields draft={draft} onChange={update} />
         <button type="submit" className="primary full">{saving ? 'Сохраняю…' : 'Сохранить'}</button>
         {props.error && <p className="error" role="alert">{props.error}</p>}

@@ -173,3 +173,22 @@ html[data-pso-form-keyboard="open"] #pso-exact-interface {height:var(--pso-form-
 html[data-pso-form-keyboard="open"] #pso-exact-interface .nav-wrap {display:none!important;}
 html[data-pso-form-keyboard="open"] #pso-exact-interface #pso-exact-content {min-height:0!important;padding-bottom:24px!important;scroll-padding-block:16px;}
 html[data-pso-form-keyboard="open"] #pso-exact-interface :is(input,textarea,button) {scroll-margin-block:16px;}
+
+/* Local breed suggestions participate in form scroll, never cover the action. */
+#pso-exact-interface .pso-age-field {display:grid!important;gap:16px;}
+#pso-exact-interface .pso-age-field .field {margin:0!important;}
+#pso-exact-interface .pso-age-field > .pso-choices:first-child .pso-choice,
+#pso-exact-interface .dog-creation-core-fields > .pso-choices .pso-choice {flex:1 1 0!important;min-width:0!important;}
+#pso-exact-interface .pso-age-field > .pso-choices:first-child .pso-choice span,
+#pso-exact-interface .dog-creation-core-fields > .pso-choices .pso-choice span {padding-inline:6px!important;white-space:normal!important;height:100%;}
+#pso-exact-interface .pso-breed-field {margin-top:20px;min-width:0;}
+#pso-exact-interface .pso-breed-options {list-style:none;margin:8px 0 0;padding:4px;max-height:220px;overflow:auto;overscroll-behavior:contain;background:var(--pso-paper);border:1px solid var(--pso-line);border-radius:16px;}
+#pso-exact-interface .pso-breed-options:empty {display:none;}
+#pso-exact-interface .pso-breed-options [role=option] {display:flex;align-items:center;min-height:44px;padding:10px 12px;border-radius:12px;cursor:pointer;color:var(--pso-ink);overflow-wrap:anywhere;}
+#pso-exact-interface .pso-breed-options [aria-selected=true] {background:var(--pso-selected);outline:1px solid var(--pso-focus);outline-offset:-1px;}
+@media(hover:hover){#pso-exact-interface .pso-breed-options [role=option]:hover{background:var(--pso-selected);}}
+#pso-exact-interface .exact-first-run .welcome-dog {display:block;width:min(100%,280px);height:auto;align-self:center;flex-shrink:0;object-fit:contain;pointer-events:none;}
+@media(prefers-reduced-motion:no-preference){
+  #pso-exact-interface .welcome-dog {animation:pso-dog-arrives .65s cubic-bezier(.16,1,.3,1) both;transform-origin:55% 88%;}
+  @keyframes pso-dog-arrives {from{opacity:.3;transform:translateX(-16px) rotate(-6deg) scale(.96);}to{opacity:1;transform:none;}}
+}

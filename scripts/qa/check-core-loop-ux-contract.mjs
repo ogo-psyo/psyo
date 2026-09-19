@@ -15,8 +15,10 @@ const nextCareCard = read('components/today/NextCareCard.tsx');
 const journey = read('components/journey/ProductionJourney.tsx');
 const observationDisclosure = read('components/today/ObservationDisclosure.tsx');
 const onboarding = read('components/onboarding/CoreOnboarding.tsx');
+const coreFields = read('components/system/AgeField.tsx') + read('components/system/BreedField.tsx');
 const css = read('app/globals.css');
 const failures = [];
+if (!onboarding.includes('<AgeField') || !onboarding.includes('<BreedField')) failures.push('creation must use shared age and breed fields');
 
 for (const token of ['buildTodayCareView', "'empty'", "'overdue'", "'today'", "'upcoming'", "'complete'"]) {
   if (!today.includes(token)) failures.push(`TodayService contract missing: ${token}`);
@@ -63,11 +65,11 @@ for (const token of ['<details', 'Записать наблюдение', 'По�
 }
 
 for (const token of ['Профиль собаки', 'Нужно только имя. Остальное — по желанию.', 'Имя собаки', 'Возраст', 'Пол', 'Порода', 'Не сейчас', 'Добавить собаку']) {
-  if (!onboarding.includes(token)) failures.push(`onboarding contract missing: ${token}`);
+  if (!(`${onboarding}\n${coreFields}`).includes(token)) failures.push(`onboarding contract missing: ${token}`);
 }
 
 for (const token of ['шаг 1 из 2', 'шаг 2 из 2', 'Добавить дело и открыть Сегодня']) {
-  if (onboarding.includes(token)) failures.push(`free shell must not contain mandatory onboarding step: ${token}`);
+  if ((`${onboarding}\n${coreFields}`).includes(token)) failures.push(`free shell must not contain mandatory onboarding step: ${token}`);
 }
 
 if (page.includes('Имя, правило и первое дело')) failures.push('onboarding still overloads one step');

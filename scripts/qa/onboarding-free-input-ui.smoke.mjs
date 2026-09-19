@@ -26,7 +26,7 @@ try {
       body: JSON.stringify(emptyBootstrap),
     }));
     await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.locator('.telegram-pill:not(.mode-loading)').waitFor();await page.addStyleTag({content:'nextjs-portal{display:none!important}'});
+    await page.locator('#pso-exact-interface[data-auth-ready="true"]').waitFor();await page.addStyleTag({content:'nextjs-portal{display:none!important}'});
     await page.getByRole('button', { name: 'Добавить собаку', exact: true }).click();
 
     const dialog = page.getByRole('dialog', { name: 'Профиль собаки' });
@@ -34,7 +34,7 @@ try {
     await page.waitForFunction(() => document.activeElement === document.querySelector('.dog-creation-sheet'));
     assert.equal(await dialog.evaluate((element) => document.activeElement === element), true, 'dialog should receive focus without opening the keyboard');
     assert.equal(await dialog.locator('input:not([type=radio])').count(), 3);
-    assert.deepEqual(await dialog.getByRole('radio').evaluateAll(items=>items.map(el=>el.value)), ['', 'кобель', 'сука']);
+    assert.deepEqual(await dialog.getByRole('group',{name:'Пол',exact:true}).getByRole('radio').evaluateAll(items=>items.map(el=>el.value)), ['', 'кобель', 'сука']);
     assert.equal(await dialog.locator('datalist').count(),0);
     assert.equal(await page.locator('#pso-exact-content').evaluate(el=>el.inert),true);
     await dialog.evaluate(el=>Promise.all(el.getAnimations().map(animation=>animation.finished)));
@@ -91,6 +91,9 @@ try {
     await page.waitForTimeout(250);
     assert.equal(await dialog.evaluate(el=>el.scrollTop),manualScroll,'no delayed forced centering after focus/manual scroll');
     if (screenshotDir) await page.screenshot({ path: `${screenshotDir}/${engine}-onboarding-${viewport.width}.png`, fullPage: false, animations: 'disabled' });
+    await page.keyboard.press('Escape');
+    assert.equal(await dialog.getByRole('listbox').count(),0);
+    assert.equal(await dialog.isVisible(),true,'Escape closes suggestions before their parent dialog');
     await page.keyboard.press('Escape');
     await dialog.waitFor({state:'hidden'});
     assert.equal(await page.locator('#pso-exact-content').evaluate(el=>el.inert),false);
