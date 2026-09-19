@@ -104,7 +104,7 @@ Component rules:
 Copy rules:
 
 - Use “Пиши, сокращай” discipline: short sentences, one thought per line, active verbs.
-- Prefer owner language: `дело`, `план ухода`, `памятка`, `место`, `портрет`, `Демо без входа`.
+- Prefer owner language: `дело`, `план ухода`, `памятка`, `место`, `портрет`. First entry is a warm welcome, not a demo/auth status banner; browser-only storage limits belong in a quiet contextual note.
 - Do not show technical words in primary UI: `backend`, `Supabase`, `magic-link`, `payload`, `session`, `raw`, `DEMO`, `GPS`, `Avatar`.
 - Error copy names the next step, not the implementation failure.
 - Loading states use the ellipsis character: `Думаю…`, `Отправляю…`.

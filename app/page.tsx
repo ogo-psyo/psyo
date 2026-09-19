@@ -1998,10 +1998,8 @@ export default function Home() {
   }), [activeReminders.length, assistantAnswer, demoMode, missingProfileFields, profile, profileReady, session?.access_token, telegramSession.ownerId, wantedWishlist.length, zones.length]);
   const hasSupabaseSession = Boolean(session?.access_token);
   const hasTelegramOwner = Boolean(telegramSession.ownerId);
-  const hasTelegramSession = telegramSession.mode === 'telegram';
   const hasConnectedAccount = hasSupabaseSession || hasTelegramOwner;
-  const authPanelMode = hasConnectedAccount ? 'connected' : hasTelegramSession ? 'telegram-sync' : telegramSession.mode;
-  const showAuthPanel = !hasConnectedAccount && (telegramSession.mode === 'browser' || telegramSession.mode === 'error' || telegramSession.mode === 'loading');
+  const showAuthPanel = !hasConnectedAccount && (telegramSession.mode === 'error' || telegramSession.mode === 'loading');
   const plusPlan = billing?.plans?.plus;
   const isPlusActive = billing?.entitlements?.tier === 'plus';
   const plusIncluded = plusPlan?.included?.slice(0, 4) ?? ['несколько собак', 'полная история', 'расширенные карточки', 'сводка недели'];
@@ -4305,32 +4303,23 @@ export default function Home() {
 
 
 
-        {showAuthPanel && <section className={`auth-inline-panel mode-${authPanelMode}`} aria-label="Вход и синхронизация">
-          {hasConnectedAccount ? <>
-            <div><b>{hasTelegramOwner && !hasSupabaseSession ? 'Telegram подключён' : 'Аккаунт подключён'}</b><p>{session?.user.email || 'Профиль и дела сохраняются автоматически.'}</p></div>
-            <button className="secondary" onClick={signOut}>Выйти</button>
-          </> : hasTelegramSession ? <>
-            <div><b>Telegram подключается</b><p>Псё открыто через Telegram. Сейчас включу сохранение без email.</p></div>
-            <button className="secondary" onClick={() => window.location.reload()}>Повторить</button>
-          </> : telegramSession.mode === 'loading' ? <>
-            <div><b>Проверяю вход</b><p>Смотрю, открыт ли Псё через Telegram.</p></div>
-          </> : telegramSession.mode === 'error' ? <>
-            <div><b>Telegram не подключился</b><p>Открой Псё через кнопку бота. Email здесь не нужен.</p></div>
-            <button className="secondary" onClick={() => window.location.reload()}>Повторить</button>
-          </> : telegramSession.mode === 'browser' ? <>
-            <div><b>Демо без входа</b><p>Личный профиль, Псё Плюс и сохранение доступны внутри Telegram. В браузере можно спокойно посмотреть интерфейс без входа.</p></div>
+        {showAuthPanel && <section className={`auth-inline-panel mode-${telegramSession.mode}`} aria-label="Вход и синхронизация">
+          {telegramSession.mode === 'loading' ? <>
+            <div><b>Открываем Псё…</b></div>
           </> : <>
-            <div><b>Локальный режим</b><p>Можно продолжить сейчас. Для сохранения открой через Telegram.</p></div>
+            <div><b>Не получилось войти</b><p>Попробуй ещё раз или открой Псё через кнопку бота в Telegram.</p></div>
+            <button className="secondary" onClick={() => window.location.reload()}>Повторить</button>
           </>}
         </section>}
 
         {!hasDog && <section className="first-run-activation exact-first-run" aria-labelledby="first-run-title">
           <img className="welcome-dog" src="/illustrations/welcome-dog.webp" alt="" width={768} height={512} fetchPriority="high" />
           <div>
-            <h1 id="first-run-title">Добавь собаку</h1>
-            <p className="lead">Сначала имя и сведения, затем фото.</p>
+            <h1 id="first-run-title">Давай знакомиться</h1>
+            <p className="lead">Расскажи немного о своей собаке — начнём вашу историю в Псё.</p>
           </div>
-          <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>
+          <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Познакомимся</button>
+          {!hasConnectedAccount && telegramSession.mode === 'browser' && <p className="welcome-browser-note">В браузере данные останутся только на этом устройстве.</p>}
         </section>}
 
         {hasDog && tab === 'today' && !exactVoiceOpen && !journeyDetail && <ConnectedHome
