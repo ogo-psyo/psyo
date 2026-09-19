@@ -15,14 +15,14 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]){
  if(usePostgres)sql(`begin;insert into auth.users(id) values(${quote(owner)});insert into public.pets(id,owner_id,name) values(${quote(pet.id)},${quote(owner)},'Stability fixture');commit;`);
  try{
   await page.evaluate(()=>{window.__backListeners=new Set();window.__backVisible=false;window.Telegram.WebApp.BackButton={show(){window.__backVisible=true;},hide(){window.__backVisible=false;},onClick(fn){window.__backListeners.add(fn);},offClick(fn){window.__backListeners.delete(fn);}};});
-  const nativeBack=async()=>{assert.equal(await page.evaluate(()=>window.__backVisible),true);assert.equal(await page.evaluate(()=>window.__backListeners.size),1);await page.evaluate(()=>[...window.__backListeners][0]());};
+  const nativeBack=async()=>{await page.waitForFunction(()=>window.__backVisible===true,{},{timeout:2000});assert.equal(await page.evaluate(()=>window.__backListeners.size),1);await page.evaluate(()=>[...window.__backListeners][0]());};
   await t.nav('profile');await page.getByRole('button',{name:'Изменить сведения',exact:true}).click();
   await page.locator('#exact-profile-dogName').fill('Черновик имени');
   await page.goBack();await page.locator('[data-exact-view=profile]').waitFor();
   await page.goForward();await page.locator('[data-exact-view=editprofile]').waitFor();
   assert.equal(await page.locator('#exact-profile-dogName').inputValue(),'Черновик имени');
   await nativeBack();await page.locator('[data-exact-view=profile]').waitFor();
-  assert.equal(await page.evaluate(()=>window.__backVisible),false);
+  await page.waitForFunction(()=>window.__backVisible===false,{},{timeout:2000});
   await page.getByRole('button',{name:'Изменить сведения',exact:true}).click();
   state.fail=true;await page.getByRole('button',{name:'Сохранить',exact:true}).click();await page.locator('[data-exact-view=editprofile] [role=alert]').waitFor();
   assert.equal(await page.locator('#exact-profile-dogName').inputValue(),'Черновик имени');
