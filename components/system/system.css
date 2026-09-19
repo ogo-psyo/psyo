@@ -134,3 +134,36 @@ html[data-pso-composer-keyboard="open"] #pso-exact-interface [data-exact-view="c
 #pso-exact-interface .home .recent .list-row strong {font-size:18px!important;}
 #pso-exact-interface .home .recent .list-row small {font-size:15px!important;color:var(--pso-secondary)!important;}
 #pso-exact-interface .composer .send {background:var(--pso-selected)!important;border:0!important;box-shadow:none!important;}
+
+/* First run and optional photo reuse the same Naris / matte form language. */
+#pso-exact-interface .exact-first-run {
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  min-height:62dvh!important;justify-content:center!important;gap:24px!important;
+  margin:0!important;padding:20px 0!important;
+}
+#pso-exact-interface .exact-first-run>div {display:block!important;}
+#pso-exact-interface .exact-first-run .lead {margin:0!important;}
+#pso-exact-interface .exact-first-run .primary {width:100%!important;}
+#pso-exact-interface .dog-creation-sheet {
+  width:min(100%,440px)!important;padding:24px!important;border:1px solid var(--pso-line)!important;
+  border-radius:26px!important;background:var(--pso-paper)!important;box-shadow:none!important;
+  color:var(--pso-ink)!important;
+}
+#pso-exact-interface .dog-creation-sheet h2 {margin:0 0 12px!important;color:var(--pso-ink)!important;}
+#pso-exact-interface .dog-creation-sheet .lead {margin:0 0 24px!important;}
+#pso-exact-interface .dog-creation-core-fields {grid-template-columns:1fr!important;gap:20px!important;}
+#pso-exact-interface .dog-creation-sheet .pso-choices {margin:0!important;}
+#pso-exact-interface .dog-creation-sheet .onboarding-step-actions {display:flex!important;flex-wrap:wrap!important;}
+#pso-exact-interface .dog-creation-sheet .onboarding-step-actions button {flex:1 1 100px;min-height:48px!important;}
+#pso-exact-interface .dog-creation-sheet .onboarding-step-actions button:not(.primary) {color:var(--pso-secondary)!important;}
+#pso-exact-interface .home-dog-photo {align-self:flex-start;display:flex!important;align-items:center!important;gap:12px!important;margin:0 0 20px!important;color:var(--pso-secondary)!important;}
+#pso-exact-interface .home-dog-photo-frame {display:grid;place-items:center;width:56px;height:56px;overflow:hidden;border-radius:18px;background:var(--pso-paper);border:1px solid var(--pso-line);}
+#pso-exact-interface .home-dog-photo-frame img {display:block;width:100%;height:100%;object-fit:cover;}
+#pso-exact-interface .exact-photo-upload {position:relative;}
+#pso-exact-interface .exact-photo-upload label {display:flex!important;justify-content:center;align-items:center;min-height:52px;padding:12px 16px!important;background:var(--pso-selected);color:var(--pso-action)!important;border-radius:16px;margin:0!important;}
+#pso-exact-interface .exact-photo-upload input[type=file] {position:absolute!important;inset:0!important;width:100%!important;height:100%!important;opacity:0!important;cursor:pointer;}
+#pso-exact-interface .exact-photo-upload:focus-within {outline:2px solid var(--pso-focus);outline-offset:3px;border-radius:16px;}
+#pso-exact-interface .exact-photo-upload:has(input:disabled) {opacity:.5;}
+@media(max-width:360px){#pso-exact-interface .dog-creation-sheet{padding:20px!important;}}
+
+#pso-exact-interface.exact-static #pso-exact-content {background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;}

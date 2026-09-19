@@ -1539,7 +1539,11 @@ export default function Home() {
       }
       setError('');
       setDogCreationOpen(false);
-      setTab('today');
+      setProfileSurface('overview');
+      setExactProfileView('identity');
+      setTab('profile');
+    } catch {
+      setError('Не удалось добавить собаку. Проверь соединение и попробуй ещё раз.');
     } finally {
       setOnboardingSaving(false);
     }
@@ -2644,6 +2648,7 @@ export default function Home() {
   }
 
   async function handlePhotos(event: ChangeEvent<HTMLInputElement>) {
+    setError('');
     if (!avatarCapabilities.uploadsEnabled) {
       event.target.value = '';
       return setError('Приватная загрузка фото пока готовится. Текущий образ не изменён.');
@@ -2735,6 +2740,7 @@ export default function Home() {
   async function activateAvatarDraft() {
     const petId = profile.backendPetId || activePetId;
     if (!avatarDraftAssetId || !avatarDraftSource) return;
+    setError('');
     if (!petId || avatarDraftAssetId === 'local') {
       updateProfile({ avatarImageUrl: generatedAvatarUrl, avatarSource: avatarDraftSource });
       setAvatarDraftAssetId('');
@@ -4303,10 +4309,9 @@ export default function Home() {
         </section>}
 
         {!hasDog && <section className="first-run-activation exact-first-run" aria-labelledby="first-run-title">
-          <GeneratedAvatar profile={profile} ready={false} size="large" />
           <div>
-            <h2 id="first-run-title">Добавь собаку</h2>
-            <p>Начни с имени. Возраст, пол и породу можно указать позже.</p>
+            <h1 id="first-run-title">Добавь собаку</h1>
+            <p className="lead">Сначала имя и сведения, затем фото.</p>
           </div>
           <button className="primary" type="button" onClick={() => setDogCreationOpen(true)}>Добавить собаку</button>
         </section>}
@@ -4314,6 +4319,8 @@ export default function Home() {
         {hasDog && tab === 'today' && !exactVoiceOpen && !journeyDetail && <ConnectedHome
           key={`home:${profile.backendPetId || activePetId}`}
           dogName={profile.dogName} petId={profile.backendPetId} guest={isGuestMode()}
+          imageUrl={profile.avatarImageUrl}
+          onPhoto={() => { setError(''); setProfileSurface('overview'); setExactProfileView('identity'); setTab('profile'); }}
           question={assistantQuestion} loading={assistantLoading} headers={authHeaders}
           recentQuestion={assistantMessages.findLast(message => message.role === 'user')?.content}
           onQuestion={setAssistantQuestion}
@@ -4404,7 +4411,7 @@ export default function Home() {
           key={`profile:${profile.backendPetId || activePetId}`}
           profile={profile}
           breedLabel={breedLabel}
-          imageUrl={generatedAvatarUrl || profile.avatarImageUrl || (demoMode ? '/demo-avatar.png' : '')}
+          imageUrl={generatedAvatarUrl || profile.avatarImageUrl}
           observations={observations.map((item) => ({ id: item.id, createdAt: item.createdAt, mood: item.mood, appetite: item.appetite, stool: item.stool, energy: item.energy, note: item.note }))}
           documents={documents}
           reminders={reminders}
@@ -4971,14 +4978,14 @@ export default function Home() {
         lifeStage={profile.lifeStage}
         sex={profile.sex}
         breedValue={profile.breedId === 'custom' ? profile.breedCustom : selectedBreed.id === 'mixed' ? '' : selectedBreed.title}
-        lifeStageOptions={lifeStageOptions}
         sexOptions={sexOptions}
-        breedOptions={breedCatalog}
         busy={onboardingSaving}
+        error={error}
         onNameChange={(value) => { setHeroNameDraft(value); dogCreationKeyRef.current = null; setError(''); }}
-        onLifeStageChange={(value) => updateProfile({ lifeStage: value })}
-        onSexChange={(value) => updateProfile({ sex: value })}
+        onLifeStageChange={(value) => { dogCreationKeyRef.current = null; setError(''); updateProfile({ lifeStage: value }); }}
+        onSexChange={(value) => { dogCreationKeyRef.current = null; setError(''); updateProfile({ sex: value }); }}
         onBreedChange={(value) => {
+          dogCreationKeyRef.current = null; setError('');
           const normalizedValue = value.trim().toLocaleLowerCase('ru');
           const breed = breedCatalog.find((item) => item.title.toLocaleLowerCase('ru') === normalizedValue);
           updateProfile(breed

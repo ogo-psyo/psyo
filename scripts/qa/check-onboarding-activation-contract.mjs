@@ -22,13 +22,12 @@ if (!failures.length) {
 
   for (const token of [
     'id="dog-creation-age"',
-    'list="dog-creation-age-options"',
     'id="dog-creation-breed"',
-    'list="dog-creation-breed-options"',
     'disabled={busy || !dogName.trim()}',
   ]) {
     if (!onboarding.includes(token)) failures.push(`core onboarding free-input UX missing: ${token}`);
   }
+  if (onboarding.includes('<datalist')) failures.push('onboarding must not prefill age categories or unexplained breed suggestions');
   if (/<select id="dog-creation-(?:age|breed)"/.test(onboarding)) failures.push('age and breed must allow free text instead of forcing a select');
 
   for (const token of [

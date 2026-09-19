@@ -2,7 +2,7 @@
 
 import { useState, type ComponentProps } from 'react';
 import type { ProfileMemoryWorkspace } from '@/components/profile/ProfileMemoryWorkspace';
-import { breedCatalog, lifeStageOptions, type DogProfile } from '@/lib/data';
+import { breedCatalog, type DogProfile } from '@/lib/data';
 import { inflectPetName } from '@/lib/copy';
 import { ExactIcon, ExactPage, ExactRow } from './ExactShell';
 import { ExactMemory } from './ExactMemory';
@@ -19,6 +19,7 @@ type Props = Omit<ComponentProps<typeof ProfileMemoryWorkspace>, 'onDeleteDocume
 export function ExactProfile(props: Props) {
   const selectedDocument = props.documentId, setSelectedDocument = props.onDocumentId;
   const [saving, setSaving] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const profile = props.profile, draft = props.draft ?? profile;
   const update = (patch: Partial<DogProfile>) => props.onDraft({ ...draft, ...patch });
   const back = () => props.onView('profile');
@@ -38,11 +39,11 @@ export function ExactProfile(props: Props) {
     <form onSubmit={async event => { event.preventDefault(); if (saving) return; setSaving(true); try { const id = await props.onSaveProfile(draft); if (id) { props.onDraft(null); back(); } } finally { setSaving(false); } }}>
       <fieldset disabled={saving}>
         <div className="field"><label htmlFor="exact-profile-dogName">Имя</label><input id="exact-profile-dogName" value={draft.dogName} required maxLength={80} autoComplete="off" onChange={event => update({dogName:event.target.value})} /></div>
-        <div className="field"><label htmlFor="dog-age">Возраст</label><input id="dog-age" list="exact-age-options" value={draft.age || draft.lifeStage} placeholder="Например, 3 года или щенок" onChange={event => { const age=event.target.value; update({ age, ...(lifeStageOptions.includes(age.toLocaleLowerCase('ru')) ? {lifeStage:age.toLocaleLowerCase('ru')} : !age ? {lifeStage:''} : {}) }); }} maxLength={80} /><datalist id="exact-age-options">{lifeStageOptions.map(age => <option key={age} value={age} />)}</datalist></div>
-        <div className="field"><label htmlFor="exact-breed">Порода</label><input id="exact-breed" list="exact-breeds" value={draft.breedId === 'custom' ? draft.breedCustom : breedCatalog.find(item => item.id === draft.breedId)?.title || props.breedLabel} onChange={event => {
+        <div className="field"><label htmlFor="dog-age">Возраст</label><input id="dog-age" value={draft.age || draft.lifeStage} placeholder="Например, 11 месяцев" onChange={event => update({age:event.target.value, lifeStage:event.target.value})} maxLength={60} autoComplete="off" /></div>
+        <div className="field"><label htmlFor="exact-breed">Порода</label><input id="exact-breed" value={draft.breedId === 'custom' ? draft.breedCustom : breedCatalog.find(item => item.id === draft.breedId)?.title || props.breedLabel} onChange={event => {
           const match = breedCatalog.find(item => item.title.toLocaleLowerCase('ru') === event.target.value.toLocaleLowerCase('ru'));
           update(match ? { breedId: match.id, breedGroupId: match.groupId, breedCustom: '' } : { breedId: 'custom', breedCustom: event.target.value });
-        }} /><datalist id="exact-breeds">{breedCatalog.map(item => <option key={item.id} value={item.title} />)}</datalist></div>
+        }} autoComplete="off" placeholder="Например, такса или метис" /></div>
         <ExactProfileFields draft={draft} onChange={update} />
         <button type="submit" className="primary full">{saving ? 'Сохраняю…' : 'Сохранить'}</button>
         {props.error && <p className="error" role="alert">{props.error}</p>}
@@ -50,22 +51,25 @@ export function ExactProfile(props: Props) {
     </form>
   </ExactPage>;
   if (props.view === 'identity') return <ExactPage viewKey="identity" onBack={back}>
-    <h1>Образ {inflectPetName(profile.dogName, 'gent')}</h1>
+    <h1>Фото собаки</h1>
     {props.imageUrl && <img className="exact-profile-image" src={props.imageUrl} alt={profile.dogName} />}
-    <div className="field"><label htmlFor="exact-avatar-file">Фотография собаки</label><input id="exact-avatar-file" type="file" accept="image/jpeg,image/png,image/webp" disabled={!props.avatarCapabilities.uploadsEnabled || props.avatarState === 'rendering'} onChange={props.onPhotoChange} /></div>
-    {props.avatarDraftUrl && <div className="row-actions"><button type="button" className="primary" onClick={props.onActivateAvatar}>Использовать</button><button type="button" className="secondary" onClick={props.onDiscardAvatarDraft}>Отменить</button></div>}
+    <div className="field exact-photo-upload"><label htmlFor="exact-avatar-file">{photoBusy ? 'Сохраняю фото…' : props.imageUrl ? 'Выбрать другое фото' : 'Выбрать фото'}</label><input id="exact-avatar-file" type="file" aria-label="Фотография собаки" accept="image/jpeg,image/png,image/webp" disabled={photoBusy || !props.avatarCapabilities.uploadsEnabled || props.avatarState === 'rendering'} onChange={async event => { setPhotoBusy(true); try { await props.onPhotoChange(event); } finally { setPhotoBusy(false); } }} /></div>
+    {!props.avatarCapabilities.uploadsEnabled && <p className="hint">Загрузка фото пока недоступна.</p>}
+    {props.avatarDraftUrl && <div className="row-actions"><button type="button" className="primary" disabled={photoBusy} onClick={async () => {setPhotoBusy(true); try {await props.onActivateAvatar();} finally {setPhotoBusy(false);}}}>Использовать</button><button type="button" className="secondary" disabled={photoBusy} onClick={props.onDiscardAvatarDraft}>Отменить</button></div>}
     {props.avatarCapabilities.generationEnabled && <details><summary>Создать образ</summary>
       <div className="field"><label htmlFor="exact-avatar-prompt">Каким должен быть образ</label><textarea id="exact-avatar-prompt" maxLength={280} value={props.avatarOwnerPrompt} onChange={event=>props.onAvatarPromptChange(event.target.value)}/></div>
       <label className="exact-checkbox"><input type="checkbox" checked={props.avatarConsent} onChange={event=>props.onAvatarConsentChange(event.target.checked)}/>Разрешаю передать описание сервису генерации.</label>
       <button type="button" className="primary" disabled={!props.avatarConsent || props.avatarState==='rendering'} onClick={props.onGenerateAvatar}>{props.avatarState==='rendering'?'Создаю черновик…':'Создать образ'}</button>
     </details>}
-    <button type="button" className="text-button" onClick={props.onUseNoAvatar}>Оставить инициалы</button>
+    {!props.avatarDraftUrl && <button type="button" className={props.imageUrl ? "primary full" : "text-button"} disabled={photoBusy} onClick={back}>{props.imageUrl ? 'Готово' : 'Не сейчас'}</button>}
+    {profile.avatarSource !== 'none' && <button type="button" className="text-button" onClick={props.onUseNoAvatar}>Убрать фото</button>}
     {profile.avatarSource !== 'none' && <button type="button" className="text-button" onClick={props.onRollbackAvatar}>Вернуть предыдущий образ</button>}
     <p className="hint">Фото хранится приватно и не публикуется автоматически.</p>
     {props.error && <p className="error" role="alert">{props.error}</p>}
   </ExactPage>;
   return <ExactPage viewKey="profile">
-    <div className="profile-top"><button type="button" className="initial" aria-label="Изменить образ собаки" onClick={() => props.onView('identity')}>{props.imageUrl ? <img className="exact-profile-initial" src={props.imageUrl} alt="" /> : profile.dogName.charAt(0)}</button><div><h1>{profile.dogName}</h1><p>{[profile.age || profile.lifeStage, props.breedLabel].filter(Boolean).join(' · ')}</p></div></div>
+    <div className="profile-top"><button type="button" className="initial" aria-label={props.imageUrl ? "Изменить фото собаки" : "Добавить фото собаки"} onClick={() => props.onView('identity')}>{props.imageUrl ? <img className="exact-profile-initial" src={props.imageUrl} alt="" /> : profile.dogName.charAt(0)}</button><div><h1>{profile.dogName}</h1><p>{[profile.age || profile.lifeStage, props.breedLabel].filter(Boolean).join(' · ')}</p></div></div>
+    {!props.imageUrl && <button type="button" className="text-button" onClick={() => props.onView('identity')}>Добавить фото</button>}
     <button type="button" className="text-button" onClick={() => { if (!props.draft) props.onDraft({ ...profile }); props.onView('editprofile'); }}>Изменить сведения</button>
     <div className="list section-gap">
       <ExactRow title={`История ${inflectPetName(profile.dogName, 'gent')}`} detail="Записи, которые можно найти снова" icon="book" onClick={props.onOpenHealth} />
@@ -75,7 +79,7 @@ export function ExactProfile(props: Props) {
       <ExactRow title="План ухода" detail="Дела, календарь и история" icon="clock" onClick={props.onOpenPlan} />
       <ExactRow title="Привычки" detail="Повторяющиеся занятия и отметки" icon="book" onClick={props.onOpenHabits} />
       <ExactRow title="Памятка для других" detail="Выбрать сведения и управлять ссылкой" icon="file" onClick={props.onOpenCard} />
-      <ExactRow title="Данные и доступ" detail="Мои собаки, аккаунт и приватность" icon="profile" onClick={props.onOpenSettings} />
+      <ExactRow title="Настройки" detail="Мои собаки, аккаунт и приватность" icon="profile" onClick={props.onOpenSettings} />
     </div>
   </ExactPage>;
 }
