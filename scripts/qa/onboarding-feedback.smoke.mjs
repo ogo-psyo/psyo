@@ -74,6 +74,7 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]) {
   assert.equal(await page.locator('.first-run-activation').count(),0);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
   pet=null;await page.evaluate(()=>localStorage.clear());await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('.telegram-pill:not(.mode-loading)').waitFor();
   await page.getByRole('button',{name:'Добавить собаку',exact:true}).click();
   await dialog.getByLabel('Имя собаки').fill('Луна');
   assert.equal(await dialog.getByLabel('Возраст',{exact:true}).inputValue(),'');

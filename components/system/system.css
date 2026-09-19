@@ -167,3 +167,9 @@ html[data-pso-composer-keyboard="open"] #pso-exact-interface [data-exact-view="c
 @media(max-width:360px){#pso-exact-interface .dog-creation-sheet{padding:20px!important;}}
 
 #pso-exact-interface.exact-static #pso-exact-content {background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;}
+
+/* All text forms share the keyboard-safe shell; no viewport-offset scrolling. */
+html[data-pso-form-keyboard="open"] #pso-exact-interface {height:var(--pso-form-viewport)!important;margin-block:0!important;}
+html[data-pso-form-keyboard="open"] #pso-exact-interface .nav-wrap {display:none!important;}
+html[data-pso-form-keyboard="open"] #pso-exact-interface #pso-exact-content {min-height:0!important;padding-bottom:24px!important;scroll-padding-block:16px;}
+html[data-pso-form-keyboard="open"] #pso-exact-interface :is(input,textarea,button) {scroll-margin-block:16px;}

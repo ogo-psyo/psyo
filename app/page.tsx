@@ -108,6 +108,7 @@ type TelegramWebApp = {
   expand?: () => void;
   enableClosingConfirmation?: () => void;
   openTelegramLink?: (url: string) => void;
+  BackButton?: { show: () => void; hide: () => void; onClick: (callback: () => void) => void; offClick: (callback: () => void) => void };
   HapticFeedback?: { impactOccurred?: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void };
 };
 
@@ -796,6 +797,19 @@ export default function Home() {
     }
   }
 
+  function navigateProfileView(nextView: ExactProfileView) {
+    if (nextView === exactProfileView) return;
+    const state = window.history.state;
+    if (state?.profileView === exactProfileView && state?.profileReturn === nextView && state?.profilePet === profile.backendPetId) {
+      window.history.back();
+      return;
+    }
+    // Store the subview, not the private draft, in browser history.
+    window.history.replaceState({ ...state, profileView: exactProfileView, profilePet: profile.backendPetId }, '', window.location.href);
+    window.history.pushState({ ...state, tab: 'profile', profileView: nextView, profileReturn: exactProfileView, profilePet: profile.backendPetId }, '', window.location.href);
+    setExactProfileView(nextView);
+  }
+
   function closeSecondaryFlow(parent: 'today' | 'profile' | 'all') {
     const origin = secondaryOrigins.current.at(-1);
     const valid = origin?.to === tab ? secondaryOrigins.current.pop() : undefined;
@@ -849,6 +863,11 @@ export default function Home() {
     const handlePopState = () => {
       if (assistantOpen) setAssistantOpen(false);
       if (journeyDetail) setJourneyDetail(null);
+      const state = window.history.state;
+      if (window.location.hash === '#profile') {
+        const views: ExactProfileView[] = ['profile', 'editprofile', 'memory', 'documents', 'document', 'identity'];
+        setExactProfileView(state?.profilePet === documentActivePet.current && views.includes(state?.profileView) ? state.profileView : 'profile');
+      }
       syncTabFromLocation();
     };
     syncTabFromLocation();
@@ -4404,7 +4423,7 @@ export default function Home() {
 
         {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ExactProfile
           documentId={exactDocumentId} onDocumentId={setExactDocumentId} memoryDrafts={exactMemoryDrafts.current}
-          view={exactProfileView} onView={setExactProfileView} draft={exactProfileDraft} onDraft={setExactProfileDraft}
+          view={exactProfileView} onView={navigateProfileView} draft={exactProfileDraft} onDraft={setExactProfileDraft}
           headers={authHeaders} guest={isGuestMode()} onLibrary={() => { setMapExactScreen('library'); setMapExactNavigation(value=>value+1); setTab('map'); }}
           surface={profileSurface}
           onSurfaceChange={surface => { if (surface === 'overview' && secondaryOrigins.current.at(-1)?.to === 'profile') closeSecondaryFlow('all'); else setProfileSurface(surface); }}
