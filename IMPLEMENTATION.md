@@ -2,6 +2,10 @@
 
 Source: owner-provided RC1 spec, 2026-06-25.
 
+## Current launch decision · 2026-09-20
+
+Owner paused the unfinished Псё Плюс offer: no subscription marketing or checkout action in the app. Keep existing backend billing gates disabled; do not reintroduce the offer without an explicit product decision.
+
 ## Product Target
 
 Псё is a Telegram Mini App for dog owners. RC1 must prove a recurring care loop:

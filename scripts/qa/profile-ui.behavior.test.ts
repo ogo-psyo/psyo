@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 
 const page = readFileSync('app/page.tsx', 'utf8');
 const profileMemory = readFileSync('components/profile/ProfileMemoryWorkspace.tsx', 'utf8');
-const ui = `${page}\n${profileMemory}`;
+const deletionDialog = readFileSync('components/profile/ProfileDeletionDialog.tsx', 'utf8');
+const ui = `${page}\n${profileMemory}\n${deletionDialog}`;
 
 for (const token of [
   "fetch('/api/v1/pets'",
@@ -16,9 +17,9 @@ for (const token of [
   'onSaveProfile',
   'Сохранить',
   'Добавить собаку',
-  'Удалить собаку',
+  'Удалить профиль собаки',
   'Удалить аккаунт',
-  'Введите имя собаки полностью',
+  'Удалить профиль «${target.name}»?',
   'УДАЛИТЬ АККАУНТ',
 ]) {
   assert.ok(ui.includes(token), `profile lifecycle UI missing ${token}`);

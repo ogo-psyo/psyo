@@ -44,7 +44,7 @@ const exactProfile = source('components/exact/ExactProfile.tsx');
 assert.match(exactProfile, /props.onDeleteDocument\(document.id\)/);
 assert.match(exactProfile, /<ExactDocument/);
 for (const marker of [
-  'Удалить собаку',
+  'Удалить профиль собаки',
   'Удалить аккаунт',
   'Очистить данные на этом устройстве',
   'editingZoneId === zone.id',

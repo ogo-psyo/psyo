@@ -29,6 +29,7 @@ import { ExactConversation } from '@/components/exact/ExactConversation';
 import { ExactThings } from '@/components/exact/ExactThings';
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
 import type { ProductionMapMode, RouteDraftMeta } from '@/components/journey/ProductionMapWorkspace';
+import { ProfileDeletionDialog, type ProfileDeletionTarget } from '@/components/profile/ProfileDeletionDialog';
 import { RouteDeleteDialog } from '@/components/journey/RouteDeleteDialog';
 import { RecordDetailDialog, type RecordDetail } from '@/components/profile/RecordDetailDialog';
 import { ProfileConflictDialog } from '@/components/profile/ProfileConflictDialog';
@@ -75,7 +76,7 @@ import type { Recommendation, RecommendationAction, RecommendationLifecycleComma
 import { loadMainRecommendation, RecommendationRequestError, transitionRecommendation } from '@/lib/recommendations/client';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
-type Notice = 'documentSaved' | 'idle' | 'saved' | 'mapSaved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
+type Notice = 'profileDeleted' | 'accountDeleted' | 'localCleared' | 'documentSaved' | 'idle' | 'saved' | 'mapSaved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
 type ReminderRecurrence = 'none' | 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 type ReminderTimeMode = 'exact' | 'flexible' | 'approximate';
 type ReminderView = ReminderRecord;
@@ -96,12 +97,6 @@ type ViralFactKey = 'social' | 'energy' | 'care' | 'triggers' | 'area' | 'breed'
 type PublicCardFieldKey = 'breed' | 'character' | 'triggers' | 'area';
 type PublicCardCheck = { label: string; done: boolean; missing: string; optional?: boolean };
 type TelegramSessionView = { mode: 'loading' | 'browser' | 'telegram' | 'error'; psyoUserId?: string; ownerId?: string; firstName?: string; username?: string; message?: string };
-type BillingView = {
-  entitlements?: { tier?: 'free' | 'plus'; expiresAt?: string | null };
-  plans?: { plus?: { name: string; priceStars: number; headline: string; included: string[]; cta: string } };
-  upgrade?: { available: boolean; disabledReason?: string | null };
-  meta?: { billingEnabled: boolean; newInvoicesEnabled?: boolean; priceStars: number };
-};
 type TelegramWebApp = {
   initData?: string;
   platform?: string;
@@ -684,9 +679,8 @@ export default function Home() {
   const [newDogName, setNewDogName] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [petMutationBusy, setPetMutationBusy] = useState(false);
-  const [dogDeleteName, setDogDeleteName] = useState('');
-  const [accountDeleteConfirmation, setAccountDeleteConfirmation] = useState('');
-  const [localDeleteConfirmation, setLocalDeleteConfirmation] = useState('');
+  const [profileDeletion, setProfileDeletion] = useState<ProfileDeletionTarget | null>(null);
+  const [profileDeletionError, setProfileDeletionError] = useState('');
   const [telegramSession, setTelegramSession] = useState<TelegramSessionView>({ mode: 'loading' });
   const assistantActionBusyRef = useRef(new Set<string>());
 
@@ -704,7 +698,6 @@ export default function Home() {
     setAssistantSuggestedQuestions([]);
     setAssistantDiagnostic({});
   }, [profile.backendPetId,session?.access_token,telegramSession.ownerId]);
-  const [billing, setBilling] = useState<BillingView | null>(null);
   const [careFeedback, setCareFeedback] = useState<CareFeedback>(null);
   const reminderHistoryLoading=useRef(new Set<string>());
   const [reminderHistoryErrors,setReminderHistoryErrors]=useState<Record<string,string>>({});
@@ -1684,14 +1677,6 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/billing/entitlements', { headers: authHeaders() })
-      .then((response) => response.json())
-      .then((payload) => { if (!cancelled) setBilling(payload); })
-      .catch(() => null);
-    return () => { cancelled = true; };
-  }, [session?.access_token, telegramSession.ownerId]);
-  useEffect(() => {
-    let cancelled = false;
     async function connectTelegramSession() {
       let webApp = window.Telegram?.WebApp;
       for (let attempt = 0; !webApp && attempt < 6; attempt += 1) {
@@ -2000,13 +1985,7 @@ export default function Home() {
   const hasTelegramOwner = Boolean(telegramSession.ownerId);
   const hasConnectedAccount = hasSupabaseSession || hasTelegramOwner;
   const showAuthPanel = !hasConnectedAccount && (telegramSession.mode === 'error' || telegramSession.mode === 'loading');
-  const plusPlan = billing?.plans?.plus;
-  const isPlusActive = billing?.entitlements?.tier === 'plus';
-  const plusIncluded = plusPlan?.included?.slice(0, 4) ?? ['несколько собак', 'полная история', 'расширенные карточки', 'сводка недели'];
-  const plusPriceLabel = plusPlan?.priceStars ? `${plusPlan.priceStars} звёзд Telegram / 30 дней` : 'цена готовится';
-  const plusGateLine = isPlusActive
-    ? billing?.entitlements?.expiresAt ? `Плюс активен до ${new Date(billing.entitlements.expiresAt).toLocaleDateString('ru-RU')}.` : 'Плюс активен.'
-    : billing?.upgrade?.available ? 'Оплата готова через Telegram.' : 'Оплата пока недоступна.';
+
 
   function resetPetScopedDrafts() {
     setExactAgentObservationId(null); setExactRecordId(null);setExactVoiceOpen(false);setExactVoiceDraft(''); setExactDocumentId(null); exactMemoryDrafts.current.clear();
@@ -3752,22 +3731,6 @@ export default function Home() {
     setAssistantActionStatuses((current) => ({ ...current, [key]: { state: 'success', message, plannedFor } }));
   }
 
-  async function startPlusCheckout() {
-    setError('');
-    const response = await fetch('/api/billing/telegram-stars/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || !result?.invoiceLink) {
-      const reason = result?.meta?.disabledReason || billing?.upgrade?.disabledReason || 'Оплата Псё Плюс пока закрыта до release gate.';
-      setError(reason);
-      return;
-    }
-    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('medium');
-    window.Telegram?.WebApp?.openTelegramLink?.(result.invoiceLink) ?? window.open(result.invoiceLink, '_blank', 'noopener,noreferrer');
-  }
-
   function seedDemoExperience() {
     const now = Date.now();
     const petId = profile.backendPetId || guestPetIdRef.current || `guest-pet-${crypto.randomUUID()}`;
@@ -3918,10 +3881,13 @@ export default function Home() {
     }
   }
 
-  async function deleteCurrentDog() {
+  async function deleteCurrentDog(target: Extract<ProfileDeletionTarget, { kind: 'dog' }>) {
     const expectedName = profile.dogName.trim();
     const petId = profile.backendPetId || activePetId;
-    if (!expectedName || dogDeleteName.trim() !== expectedName || petMutationBusy || (!isGuestMode() && !petId)) return;
+    if (!expectedName || target.name !== expectedName || target.petId !== petId || petMutationBusy || (!isGuestMode() && !petId)) {
+      setProfileDeletionError('Выбранная собака изменилась. Закрой окно и выбери профиль заново.');
+      return;
+    }
     setPetMutationBusy(true);
     setError('');
     try {
@@ -3932,7 +3898,7 @@ export default function Home() {
           headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify({ petId, confirmation: 'DELETE_DOG' }),
         });
-        if (!response.ok) throw new Error('PET_DELETE_FAILED');
+        if (!response.ok && response.status !== 404) throw new Error('PET_DELETE_FAILED');
       }
       if (isGuestMode()) {
         resetGuestEntityStorage(window.localStorage, petId);
@@ -3940,7 +3906,7 @@ export default function Home() {
       }
       const remainingPets = pets.filter((pet) => pet.id !== petId);
       setPets(remainingPets);
-      setDogDeleteName('');
+      setProfileDeletion(null);
       setPublishedPublicCardPath('');
       if (remainingPets[0]) {
         const nextPetId = remainingPets[0].id;
@@ -3965,19 +3931,20 @@ export default function Home() {
         setOwnerRoutes([]);
         setObservations([]);
         setDocuments([]);
+        setJourneyDetail(null);
         setTab('today');
       }
-      setNotice('saved');
+      setNotice('profileDeleted');
       window.setTimeout(() => setNotice('idle'), 1400);
     } catch {
-      setError('Не удалось удалить собаку. Ничего не изменилось — попробуй ещё раз.');
+      setProfileDeletionError('Не удалось подтвердить удаление профиля. Проверь соединение и попробуй ещё раз.');
     } finally {
       setPetMutationBusy(false);
     }
   }
 
-  async function deleteAccount() {
-    if (accountDeleteConfirmation.trim() !== 'УДАЛИТЬ АККАУНТ' || petMutationBusy || isGuestMode()) return;
+  async function deleteAccount(confirmation: string) {
+    if (confirmation.trim() !== 'УДАЛИТЬ АККАУНТ' || petMutationBusy || isGuestMode()) return;
     setPetMutationBusy(true);
     setError('');
     try {
@@ -4001,17 +3968,19 @@ export default function Home() {
       setObservations([]);
       setDocuments([]);
       setPublishedPublicCardPath('');
-      setAccountDeleteConfirmation('');
+      setProfileDeletion(null);
+      setJourneyDetail(null);
       setTab('today');
+      setNotice('accountDeleted');
     } catch {
-      setError('Не удалось удалить аккаунт. Данные не изменились — попробуй ещё раз.');
+      setProfileDeletionError('Не удалось подтвердить удаление аккаунта. Проверь соединение и попробуй ещё раз.');
     } finally {
       setPetMutationBusy(false);
     }
   }
 
-  function deleteLocalData() {
-    if (localDeleteConfirmation.trim() !== 'ОЧИСТИТЬ ДАННЫЕ' || petMutationBusy || !isGuestMode()) return;
+  function deleteLocalData(confirmation: string) {
+    if (confirmation.trim() !== 'ОЧИСТИТЬ ДАННЫЕ' || petMutationBusy || !isGuestMode()) return;
     resetAllLocalPsoData(window.localStorage);
     guestPetIdRef.current = null;
     setProfile(defaultProfile);
@@ -4024,10 +3993,10 @@ export default function Home() {
     setObservations([]);
     setDocuments([]);
     setPublishedPublicCardPath('');
-    setLocalDeleteConfirmation('');
+    setProfileDeletion(null);
     setJourneyDetail(null);
     setTab('today');
-    setNotice('saved');
+    setNotice('localCleared');
     window.setTimeout(() => setNotice('idle'), 1400);
   }
 
@@ -4896,16 +4865,13 @@ export default function Home() {
             <a href="/support"><span><b>Помощь</b><small>Поддержка и частые вопросы</small></span><ArrowRight weight="bold" aria-hidden="true" /></a>
           </section>
 
-          <section className="plus-gate-card profile-plus-card" aria-label="Псё Плюс">
-            <div><span className="eyebrow">{isPlusActive ? 'подписка активна' : 'псё плюс'}</span><h3>{plusPlan?.name || 'Псё Плюс'} · {plusPriceLabel}</h3><p>{plusPlan?.headline || 'Больше истории и собак без ограничения базовой безопасности.'}</p><small className="plus-gate-note">{plusGateLine}</small></div>
-            <button className="primary" type="button" disabled={isPlusActive} onClick={startPlusCheckout}>{isPlusActive ? 'Подписка активна' : plusPlan?.cta || 'Оформить'}</button>
-          </section>
-
           <section className="profile-danger-zone" aria-label="Удаление данных">
-            <div><span className="eyebrow">управление данными</span><h3>Удаление</h3><p>Перед отправкой Псё попросит точное подтверждение. Действия необратимы.</p></div>
-            {profile.dogName.trim() && <details><summary>Удалить собаку</summary><div className="profile-delete-form"><p>Будут удалены профиль {profile.dogName}, дела, записи, вещи и места.</p><label>Введите имя собаки полностью<input value={dogDeleteName} onChange={(event) => setDogDeleteName(event.target.value)} placeholder={profile.dogName} /></label><button type="button" className="danger-action" disabled={dogDeleteName.trim() !== profile.dogName.trim() || petMutationBusy} onClick={deleteCurrentDog}>Удалить собаку</button></div></details>}
-            {!isGuestMode() && <details><summary>Удалить аккаунт</summary><div className="profile-delete-form"><p>Будут удалены аккаунт и данные всех собак без возможности восстановления.</p><label>Для подтверждения введи УДАЛИТЬ АККАУНТ<input value={accountDeleteConfirmation} onChange={(event) => setAccountDeleteConfirmation(event.target.value)} placeholder="УДАЛИТЬ АККАУНТ" /></label><button type="button" className="danger-action" disabled={accountDeleteConfirmation.trim() !== 'УДАЛИТЬ АККАУНТ' || petMutationBusy} onClick={deleteAccount}>Удалить аккаунт</button></div></details>}
-            {isGuestMode() && <details><summary>Очистить данные на этом устройстве</summary><div className="profile-delete-form"><p>Псё удалит локальный профиль, дела, записи, вещи, места и черновики. Данные других сайтов не затрагиваются.</p><label>Для подтверждения введи ОЧИСТИТЬ ДАННЫЕ<input value={localDeleteConfirmation} onChange={(event) => setLocalDeleteConfirmation(event.target.value)} placeholder="ОЧИСТИТЬ ДАННЫЕ" /></label><button type="button" className="danger-action" disabled={localDeleteConfirmation.trim() !== 'ОЧИСТИТЬ ДАННЫЕ' || petMutationBusy} onClick={deleteLocalData}>Очистить данные на устройстве</button></div></details>}
+            <h2>Управление данными</h2>
+            <div className="profile-settings-links">
+              {profile.dogName.trim() && <button type="button" className="profile-delete-entry" disabled={petMutationBusy} onClick={event => { event.currentTarget.focus({ preventScroll: true }); setProfileDeletionError(''); setProfileDeletion({ kind: 'dog', petId: profile.backendPetId || activePetId, name: profile.dogName.trim() }); }}><span><b>Удалить профиль собаки</b><small>Только «{profile.dogName}» и связанные записи</small></span><ArrowRight aria-hidden="true" /></button>}
+              {!isGuestMode() && <button type="button" className="profile-delete-entry" disabled={petMutationBusy} onClick={event => { event.currentTarget.focus({ preventScroll: true }); setProfileDeletionError(''); setProfileDeletion({ kind: 'account' }); }}><span><b>Удалить аккаунт</b><small>Все собаки и данные аккаунта</small></span><ArrowRight aria-hidden="true" /></button>}
+              {isGuestMode() && <button type="button" className="profile-delete-entry" disabled={petMutationBusy} onClick={event => { event.currentTarget.focus({ preventScroll: true }); setProfileDeletionError(''); setProfileDeletion({ kind: 'local' }); }}><span><b>Очистить данные на этом устройстве</b><small>Только данные в этом браузере</small></span><ArrowRight aria-hidden="true" /></button>}
+            </div>
           </section>
         </div></ExactPage>}
 
@@ -4924,7 +4890,7 @@ export default function Home() {
         />}
 
         {error && <p className="error-text" role="alert">{error}</p>}
-        {notice !== 'idle' && !(tab === 'map' && notice === 'mapSaved') && <div className="toast" role="status" aria-live="polite">{notice === 'documentSaved' ? 'Документ сохранён' : notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
+        {notice !== 'idle' && !(tab === 'map' && notice === 'mapSaved') && <div className="toast" role="status" aria-live="polite">{notice === 'profileDeleted' ? 'Профиль удалён' : notice === 'accountDeleted' ? 'Аккаунт удалён' : notice === 'localCleared' ? 'Данные на устройстве очищены' : notice === 'documentSaved' ? 'Документ сохранён' : notice === 'loaded' ? 'Данные загружены' : notice === 'mapSaved' ? 'Сохранено на карте' : notice === 'copied' ? 'Скопировано' : notice === 'sharing' ? 'Открываю отправку' : notice === 'downloaded' ? 'Карточка сохранена' : notice === 'applied' ? 'Действие выполнено' : 'Профиль сохранён'}</div>}
       </section>
 
       {hasDog && <ExactNavigation active={activePrimaryRoute} onNavigate={(route) => {
@@ -4954,6 +4920,14 @@ export default function Home() {
         onOpenHistory={() => { setCareView('history'); setTab('calendar'); }}
         onOpenCard={() => setTab('card')}
       />}
+      {profileDeletion && <ProfileDeletionDialog target={profileDeletion} busy={petMutationBusy} error={profileDeletionError}
+        onCancel={() => { if (!petMutationBusy) { setProfileDeletion(null); setProfileDeletionError(''); } }}
+        onConfirm={async confirmation => {
+          setProfileDeletionError('');
+          if (profileDeletion.kind === 'dog') await deleteCurrentDog(profileDeletion);
+          else if (profileDeletion.kind === 'account') await deleteAccount(confirmation);
+          else { try { deleteLocalData(confirmation); } catch { setProfileDeletionError('Не удалось очистить данные. Попробуй ещё раз.'); } }
+        }} />}
       <CareActionNotice
         feedback={careFeedback?.kind === 'observation-deleted' ? null : careFeedback}
         onUndo={undoLastCareCompletion}
