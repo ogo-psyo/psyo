@@ -26,7 +26,7 @@ export function ExactProfile(props: Props) {
   const profile = props.profile, draft = props.draft ?? profile;
   const update = (patch: Partial<DogProfile>) => props.onDraft({ ...draft, ...patch });
   const back = () => props.onView('profile');
-  if (props.view === 'memory') return <ExactMemory key={profile.backendPetId} petId={profile.backendPetId} guest={props.guest} draftsStore={props.memoryDrafts} headers={props.headers} onBack={back} dogName={profile.dogName} chatOpen={props.memoryChatOpen} />;
+  if (props.view === 'memory') return <ExactMemory key={profile.backendPetId} petId={profile.backendPetId} guest={props.guest} draftsStore={props.memoryDrafts} headers={props.headers} onBack={back} profile={profile} onEditProfile={() => { props.onDraft({ ...profile }); props.onView('editprofile'); }} chatOpen={props.memoryChatOpen} />;
   if (props.view === 'document') {
     const document = props.documents.find(item => item.id === selectedDocument);
     return document ? <ExactDocument key={document.id} document={document} dogName={profile.dogName} headers={props.headers} onBack={() => props.onView('documents')} onDiscuss={props.onAskAssistant} onDelete={async () => { if (await props.onDeleteDocument(document.id)) props.onView('documents'); }} deleting={props.documentBusyId === document.id} deleteError={props.error} /> : <ExactPage viewKey="missing-document" onBack={() => props.onView('documents')}><h1>Документ недоступен</h1><p className="lead">Вернись к списку, чтобы выбрать другой документ.</p></ExactPage>;
