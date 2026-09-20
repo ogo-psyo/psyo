@@ -224,17 +224,21 @@ html[data-pso-form-keyboard="open"] #pso-exact-interface :is(input,textarea,butt
 #pso-exact-interface .observation-examples li {font-size:18px;line-height:1.4;}
 #pso-exact-interface .observations-history .primary,
 #pso-exact-interface .observation-composer .primary {font-size:18px!important;min-height:52px!important;}
-#pso-exact-interface .observation-composer {margin-top:24px!important;}
+#pso-exact-interface .observation-composer {margin-top:0!important;}
+#pso-exact-interface .observation-intro {margin-bottom:16px!important;}
 #pso-exact-interface .observation-composer fieldset {padding:0;border:0;min-width:0;margin:0;}
-#pso-exact-interface .observation-composer .observation-page {background:var(--pso-paper);border-radius:20px;padding:20px;box-shadow:0 10px 28px -16px #67597240;}
-#pso-exact-interface .observation-page label {font-size:18px!important;color:var(--pso-ink)!important;margin-bottom:12px!important;}
-#pso-exact-interface .observation-page #observe-text {min-height:180px!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;font-size:20px!important;line-height:1.6!important;background:transparent!important;resize:vertical!important;}
-#pso-exact-interface .observation-page #observe-text::placeholder {color:var(--pso-secondary)!important;opacity:1!important;}
-#pso-exact-interface .observation-page .observation-writing-hint {font-size:16px!important;line-height:1.5!important;color:var(--pso-secondary)!important;margin-top:16px!important;}
-#pso-exact-interface .observation-composer .observation-details {margin:16px 0!important;}
-#pso-exact-interface .observation-details summary,
+#pso-exact-interface .observation-checkin {display:grid;gap:12px;}
+#pso-exact-interface .observation-choice legend {font-family:var(--pso-font);font-size:18px;color:var(--pso-ink);padding:0;margin-bottom:6px;}
+#pso-exact-interface .observation-options {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
+#pso-exact-interface .observation-options button {min-height:46px!important;padding:8px 4px!important;border:1px solid var(--pso-line)!important;border-radius:14px!important;background:var(--pso-paper)!important;color:var(--pso-ink)!important;font-size:16px!important;line-height:1.35!important;}
+#pso-exact-interface .observation-options button[aria-pressed="true"] {background:var(--pso-selected)!important;border-color:var(--pso-focus)!important;text-decoration:underline;text-underline-offset:4px;}
+#pso-exact-interface .observation-options .observation-custom-choice {grid-column:1/-1;overflow-wrap:anywhere;}
+#pso-exact-interface .observation-composer .observation-choice-hint {font-size:15px!important;line-height:1.4!important;color:var(--pso-secondary)!important;margin:10px 0 14px!important;}
+#pso-exact-interface .observation-note label {font-size:18px!important;line-height:1.4!important;color:var(--pso-ink)!important;}
+#pso-exact-interface .observation-note label span {font-size:15px!important;color:var(--pso-secondary)!important;display:inline;}
+#pso-exact-interface .observation-note #observe-text {min-height:80px!important;padding:12px!important;font-size:18px!important;line-height:1.5!important;resize:vertical!important;}
+#pso-exact-interface .observation-composer .observation-save {margin-top:16px!important;}
 #pso-exact-interface .observation-filters summary {font-size:16px!important;line-height:1.5!important;min-height:44px;align-content:center;color:var(--pso-secondary)!important;cursor:pointer;}
-#pso-exact-interface .observation-details label,
 #pso-exact-interface .observation-filters label {font-size:16px!important;color:var(--pso-secondary)!important;}
 #pso-exact-interface .observation-filters {margin-top:28px;}
 #pso-exact-interface .observation-list {margin-top:12px;}
@@ -242,5 +246,5 @@ html[data-pso-form-keyboard="open"] #pso-exact-interface :is(input,textarea,butt
 @media(max-width:360px) {
   #pso-exact-interface .observations-welcome {gap:14px;}
   #pso-exact-interface .observations-welcome .observations-illustration {width:165px;}
-  #pso-exact-interface .observation-composer .observation-page {padding:16px;}
+  #pso-exact-interface .observation-options {grid-template-columns:repeat(2,minmax(0,1fr));}
 }

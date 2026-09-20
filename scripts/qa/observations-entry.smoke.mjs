@@ -22,7 +22,9 @@ for(const [engine,width] of [['chromium',390],['webkit',320],['chromium',1100]])
   await capture('empty');
   await page.getByRole('button',{name:'Добавить наблюдение',exact:true}).click();
   const input=page.locator('#observe-text');assert.equal(await input.inputValue(),'');
-  assert.equal(await page.locator('.observation-details').getAttribute('open'),null);
+  assert.equal(await page.locator('.observation-composer details,.observation-composer select').count(),0);
+  assert.equal(await page.locator('.observation-options button').count(),16);
+  assert.equal(await page.locator('.observation-options [aria-pressed=true]').count(),0);
   const save=page.getByRole('button',{name:'Сохранить запись',exact:true});assert.equal(await save.isDisabled(),true);
   await capture('editor');
   const note='После прогулки ел с аппетитом';await input.fill(note);
@@ -47,7 +49,7 @@ for(const [engine,width] of [['chromium',390],['webkit',320],['chromium',1100]])
   assert.ok(fonts.every(f=>f.font.startsWith('Naris')),JSON.stringify(fonts));
   await page.reload({waitUntil:'domcontentloaded'});await page.locator('.app-tabs').waitFor();await open();
   await page.getByRole('button').filter({hasText:note}).click();await page.locator('.note-body').filter({hasText:note}).waitFor();
-  assert.deepEqual(t.errors,[]);results.push({engine,width,pass:true,fonts,scenarios:'loading/error not misrepresented as empty, read retry; empty invitation/no filters; no invented draft; collapsed optional metrics; back preserves draft; error preserves note/retry; saved detail; text/date no-results/reset; reload persistence via API fixture; no overflow'});
+  assert.deepEqual(t.errors,[]);results.push({engine,width,pass:true,fonts,scenarios:'loading/error not misrepresented as empty, read retry; empty invitation/no filters; no invented draft; open optional one-tap metrics; back preserves draft; error preserves note/retry; saved detail; text/date no-results/reset; reload persistence via API fixture; no overflow'});
  }finally{await t.browser.close();}
 }
 await fs.writeFile(`${out}/results.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(results));

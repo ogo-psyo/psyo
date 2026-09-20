@@ -9,6 +9,12 @@ import { inflectPetName } from '@/lib/copy';
 import { ExactIcon, ExactPage, ExactRow } from './ExactShell';
 
 type Props = Omit<ComponentProps<typeof HealthTimelineScreen>, 'onDelete'> & { onDelete: (id: string) => Promise<boolean> } & { selectedId: string | null; onSelect: (id: string | null) => void; };
+const choiceLabels = {
+  mood: ['Спокойно', 'Радостно', 'Тревожно', 'Вяло'],
+  appetite: ['Обычно', 'Меньше', 'Больше', 'Не ест'],
+  stool: ['Обычный', 'Мягкий', 'Твёрдый', 'Не было'],
+  energy: ['Обычно', 'Меньше', 'Больше', 'Нет сил'],
+};
 const date = (value: string) => new Date(value).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 
 export function ExactRecords(props: Props) {
@@ -26,8 +32,8 @@ export function ExactRecords(props: Props) {
   const issue = props.issue?.scope === (props.editingId || 'create') ? props.issue.message : '';
 
   if (editor) return <ExactPage viewKey={editing ? `edit:${props.editingId}` : 'observe'} onBack={() => editing ? props.onCancelEdit() : props.onCaptureOpen(false)}>
-    <h1>{editing ? 'Изменить запись' : 'Новое наблюдение'}</h1>
-    <p className="lead">О {inflectPetName(props.dogName, 'loct')} — своими словами. Достаточно пары строк.</p>
+    <h1>{editing ? 'Изменить запись' : `Как дела у ${inflectPetName(props.dogName, 'gent')}?`}</h1>
+    <p className="lead observation-intro">Отметь то, что заметил. Можно выбрать не всё или просто написать заметку.</p>
     <form className="observation-composer" onSubmit={async event => {
       event.preventDefault(); if (busy) return;
       if (props.editingId) { await props.onSaveEdit(props.editingId); }
@@ -35,15 +41,24 @@ export function ExactRecords(props: Props) {
     }}>
       <fieldset disabled={busy}>
         {isPrimaryObservationFact(draft.type) && <div className="field"><label htmlFor="exact-fact-value">{observationTypeLabel(draft.type)}</label><input id="exact-fact-value" required value={draft.value || ''} onChange={event => change({ value: event.target.value })} /></div>}
-        <div className="observation-page">
-        <label htmlFor="observe-text">Твоя заметка</label>
-        <textarea id="observe-text" value={draft.note || ''} onChange={event => change({ note: event.target.value })} placeholder="Например, сегодня ел с аппетитом, а на прогулке быстро устал…" maxLength={8000} aria-invalid={Boolean(issue)} aria-describedby={`observation-writing-hint${issue ? ' exact-observation-error' : ''}`} />
-        <p id="observation-writing-hint" className="observation-writing-hint">Что изменилось в еде, сне, настроении или на прогулке?</p>
+        <div className="observation-checkin">
+          {observationMetricDefinitions.map(metric => {
+            const value = draft[metric.key] || '';
+            const custom = value && !(metric.options as readonly string[]).includes(value);
+            return <fieldset className="observation-choice" key={metric.key}>
+              <legend>{metric.key === 'stool' ? 'Стул' : metric.label}</legend>
+              <div className="observation-options">
+                {metric.options.map((option, index) => <button key={option} type="button" aria-pressed={value === option} onClick={() => change({ [metric.key]: value === option ? '' : option })}>{choiceLabels[metric.key][index]}</button>)}
+                {custom && <button type="button" className="observation-custom-choice" aria-pressed="true" onClick={() => change({ [metric.key]: '' })}>{value}</button>}
+              </div>
+            </fieldset>;
+          })}
         </div>
-        <details className="observation-details"><summary>Добавить подробности о самочувствии</summary>{observationMetricDefinitions.map(metric => <div className="field" key={metric.key}>
-          <label htmlFor={`exact-${metric.key}`}>{metric.label}</label><select id={`exact-${metric.key}`} value={draft[metric.key] || ''} onChange={event => change({ [metric.key]: event.target.value })}>
-            <option value="">Не указан</option>{draft[metric.key] && !(metric.options as readonly string[]).includes(draft[metric.key]) && <option value={draft[metric.key]}>{draft[metric.key]}</option>}{metric.options.map(option=><option key={option} value={option}>{option}</option>)}
-          </select></div>)}</details>
+        <p className="observation-choice-hint">Повторное нажатие снимет отметку.</p>
+        <div className="observation-note">
+          <label htmlFor="observe-text">Заметка <span>· необязательно</span></label>
+          <textarea id="observe-text" rows={2} value={draft.note || ''} onChange={event => change({ note: event.target.value })} placeholder="Например, быстрее устал на прогулке" maxLength={8000} aria-invalid={Boolean(issue)} aria-describedby={issue ? 'exact-observation-error' : undefined} />
+        </div>
         <p id="exact-observation-error" className="error" role="alert">{issue}</p>
         <button type="submit" className="primary full observation-save" disabled={busy || !draft.note?.trim() && !draft.value?.trim() && !observationMetricDefinitions.some(metric => draft[metric.key])}>{busy ? 'Сохраняю…' : editing ? 'Сохранить изменения' : 'Сохранить запись'}</button>
       </fieldset>
