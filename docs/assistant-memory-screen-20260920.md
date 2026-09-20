@@ -1,14 +1,15 @@
-# Assistant memory — owner control, not a second questionnaire
+# Assistant memory — direct context management
 
-Approved flow: explicit remember request in existing chat → confirmed memory → personalized future chat → owner can review/edit/forget here. This UI change does not change assistant policy, execution, or backend memory behavior.
+Supersedes PR46 chat-led entry after owner clarification: the home assistant is good; a duplicate chat inside memory adds no value. Here the owner explicitly creates, reads, edits and forgets context.
 
-- Profile entry and page: «Память помощника».
-- Empty: explains what will appear, one explicitly illustrative “Запомни…” example, “Перейти в чат”. No separate creation form.
-- CTA calls existing assistant opener. Does not submit, prefill, clear draft, or incur a model request by itself.
-- Return from chat re-reads existing owner/pet memory API, reactivates page Back handler and scroll context.
-- Saved: readable content/source first, inline edit only on demand; cancel, save, forget. Draft/error/pending guards remain. No schema/API/auth/config changes.
-- Loading, read failure/retry and guest availability are distinct from empty. Update/delete require server receipt before success.
-- Unique original Imagegen paper-notes/paperclip/paw illustration; public/illustrations/assistant-memory.webp (768×512, alpha, ~45KB). Reduced illustration in populated state. One short entrance; reduced-motion disables it. Lavender/plum/cream/apricot print graphic matching user's reference direction. Welcome and observations art unchanged.
-- Original generated PNG retained in generated_images/01a0aed1-99b0-7bd1-bdf0-7753b8bcdcf4/exec-4438a3a4-cbd2-467e-a928-6ce4e7258520.png.
+- Entry/page remain «Память помощника», unique paper/paw art and Naris/lavender.
+- Empty shows one text field personalized to active dog and “Запомнить”. No topic/key field, no generated advice, no chat transition.
+- Populated shows saved content/source and “Добавить важное”, edit/cancel/save/forget.
+- Existing owned /api/agent/memory API remains source of truth. One UUID-based key per draft retained in draft store across lost-response retries; successful confirmed receipt clears draft. No API/schema mutation changes.
+- Existing main assistant's ordinary route now reads agent_memories by authorized owner+pet (bounded40, nonnull) alongside profile context; only canonical server values reach provider prompt, data not instructions. Rereads each question. On memory read error returns retryable context error, not falsely memoryless advice. Agent-enabled route already has recall_memory, unchanged. No provider/flag/assistant UI changes.
+- Deleting memory removes it from the current saved-memory block; it does not erase statements from old conversation transcripts.
+- Distinct loading/read-error/guest states; changed record requires server receipt. No private user records mutated by QA.
 
-Verification: scripts/qa/memory-screen.smoke.mjs in Chromium390/WebKit320 with synthetic Telegram/API fixture: load error vs empty, no creation fields, illustration loaded, reduced motion, no message send, existing chat draft intact, refreshed records on return, native Back after chat, edit/cancel/error/retry, forget/error/retry preserves other record, final empty. Local qa:local241/build/contracts. Browser fixture evidence does not claim a live model memory write or physical iPhone test.
+Verification: memory-screen.smoke.mjs Chromium390/WebKit320: direct input/no chat call, keyboard visibility, lost POST response after save/retry samekey one record, reload, edit/cancel/error/retry, forget error/retry/other-record retained. assistant-context.behavior.test.ts: canonical memory passed into generation after save/edit, absent after forget, client spoof ignored, owner+pet filters, failed memoryread stops generation. These are API/DB/provider fixtures, not a live paid-model quality evaluation or physical iPhone test.
+
+Art unchanged: public/illustrations/assistant-memory.webp,768×512 realalpha~45KB; original generated PNG retained in generated_images/01a0aed1-99b0-7bd1-bdf0-7753b8bcdcf4/exec-4438a3a4-cbd2-467e-a928-6ce4e7258520.png. Brief: two cream paper notes, plum clip, apricot paw, irregular print lines. Compact when populated, single entrance disabled for reduced motion.
