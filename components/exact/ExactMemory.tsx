@@ -3,11 +3,15 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import Image from 'next/image';
 import { inflectPetName } from '@/lib/copy';
+import type { DogProfile } from '@/lib/data';
+import { memoryProfileFacts } from '@/lib/memoryProfileFacts';
 import { ExactPage } from './ExactShell';
 
 type Memory = { id: string; memory_key: string; content: string; updated_at?: string; source_run_id?: string | null };
-type Props = { draftsStore: Map<string,string>; petId?: string; guest: boolean; headers: () => Record<string, string>; onBack: () => void; dogName: string; chatOpen: boolean };
-export function ExactMemory({ petId, guest, headers, onBack, dogName, chatOpen, draftsStore }: Props) {
+type Props = { draftsStore: Map<string,string>; petId?: string; guest: boolean; headers: () => Record<string, string>; onBack: () => void; profile: DogProfile; onEditProfile: () => void; chatOpen: boolean };
+export function ExactMemory({ petId, guest, headers, onBack, profile, onEditProfile, chatOpen, draftsStore }: Props) {
+  const dogName = profile.dogName;
+  const knownProfile = memoryProfileFacts(profile);
   const [newContent, setNewContent] = useState(() => draftsStore.get('$memory-new-content') || '');
   const [creating, setCreating] = useState(() => draftsStore.has('$memory-new-content'));
   const [items, setItems] = useState<Memory[]>([]);
@@ -78,20 +82,21 @@ export function ExactMemory({ petId, guest, headers, onBack, dogName, chatOpen, 
   const empty = available && !loading && !readError && !items.length;
   return <ExactPage viewKey="memory" onBack={onBack} active={!chatOpen}>
     <div className="assistant-memory">
-      {(empty || items.length > 0 || !available) && <Image className={`memory-illustration${items.length ? ' memory-illustration-small' : ''}`} src="/illustrations/assistant-memory.webp" alt="" width={768} height={512} sizes="190px" />}
+      <Image className="memory-illustration memory-illustration-small" src="/illustrations/assistant-memory.webp" alt="" width={768} height={512} sizes="86px" />
       <h1>Память помощника</h1>
-      {loading && <p role="status">Загружаю записи…</p>}
-      {readError && <div className="memory-load-error"><p className="error" role="alert">{readError}</p><button type="button" className="secondary" onClick={() => { setLoading(true); setReadError(''); setRevision(value => value + 1); }}>Повторить</button></div>}
-      {!available && <p className="lead">Память помощника доступна при входе через Telegram. Сведения о собаке остаются в профиле.</p>}
-      {empty && <p className="lead">Сохрани привычки и предпочтения, которые Псё стоит учитывать в разговорах о {inflectPetName(dogName, 'loct')}.</p>}
-      {items.length > 0 && <p className="lead">Сохранённое о {inflectPetName(dogName, 'loct')} для следующих разговоров. Здесь можно добавить важное, изменить запись или забыть её.</p>}
-      {available && !loading && !readError && (empty || creating) && <form className="memory-add" onSubmit={event => { event.preventDefault(); void remember(); }}><fieldset disabled={Boolean(busy)}>
-        <label htmlFor="memory-new">Что Псё стоит знать о {inflectPetName(dogName, 'loct')}?</label>
-        <textarea id="memory-new" rows={3} maxLength={2000} value={newContent} placeholder="Например: не любит мячи и игрушки с пищалкой" onChange={event => { setNewContent(event.target.value); draftsStore.set('$memory-new-content',event.target.value); }} />
-        <div className="row-actions"><button type="submit" className="primary" disabled={!newContent.trim() || Boolean(busy)}>{busy === '$new' ? 'Запоминаю…' : 'Запомнить'}</button>{!empty && <button type="button" className="secondary" onClick={() => setCreating(false)}>Свернуть</button>}</div>
-        <p className="memory-caption">Сохраняется в память, не отправляется в чат. Основные сведения уже есть в профиле.</p>
-      </fieldset></form>}
-      {available && items.length > 0 && !creating && !editing && <button type="button" className="secondary memory-add-trigger" disabled={Boolean(busy)} onClick={() => { setCreating(true); setError(''); setNotice(''); }}>Добавить важное</button>}
+      <p className="lead">Здесь видно, что Псё может учитывать в разговорах о {inflectPetName(dogName, 'loct')}.</p>
+      <section className="memory-known" aria-labelledby="memory-known-title">
+        <h2 id="memory-known-title">Что Псё уже знает</h2>
+        <div className="memory-profile-context">
+          <h3>Из профиля</h3>
+          {knownProfile.length ? <dl>{knownProfile.map(fact => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl> : <p className="memory-caption">Профиль пока не заполнен. Псё не будет придумывать сведения о собаке.</p>}
+          <button type="button" className="text-button" onClick={onEditProfile}>Изменить профиль</button>
+        </div>
+        <h3>Ты попросил запомнить</h3>
+        {loading && <p role="status">Загружаю записи…</p>}
+        {readError && <div className="memory-load-error"><p className="error" role="alert">{readError}</p><button type="button" className="secondary" onClick={() => { setLoading(true); setReadError(''); setRevision(value => value + 1); }}>Повторить</button></div>}
+        {!available && <p className="memory-caption">Сохранённая память доступна при входе через Telegram.</p>}
+        {empty && <p className="memory-caption">Дополнительных записей пока нет. Можно добавить важное ниже — сведения из профиля повторять не нужно.</p>}
       {error && <p className="error" role="alert">{error}</p>}
       {notice && <p className="memory-notice" role="status">{notice}</p>}
       <div className="memory-list">{items.map(item => <article className="memory-item" key={item.id}>
@@ -105,6 +110,16 @@ export function ExactMemory({ petId, guest, headers, onBack, dogName, chatOpen, 
           <div className="row-actions"><button type="button" className="text-button" disabled={Boolean(busy)} onClick={() => { setEditing(item.id); setCreating(false); setError(''); setNotice(''); }}>Изменить</button><button type="button" className="text-button" disabled={Boolean(busy)} onClick={() => void write(item, true)}>{busy === item.id ? 'Убираю…' : 'Забыть'}</button></div>
         </>}
       </article>)}</div>
+      </section>
+      {available && !loading && !readError && (empty || creating) && <h2 className="memory-add-title">Добавить важное</h2>}
+      {available && !loading && !readError && (empty || creating) && <form className="memory-add" onSubmit={event => { event.preventDefault(); void remember(); }}><fieldset disabled={Boolean(busy)}>
+        <label htmlFor="memory-new">Что Псё стоит знать о {inflectPetName(dogName, 'loct')}?</label>
+        <textarea id="memory-new" rows={3} maxLength={2000} value={newContent} placeholder="Например: не любит мячи и игрушки с пищалкой" onChange={event => { setNewContent(event.target.value); draftsStore.set('$memory-new-content',event.target.value); }} />
+        <div className="row-actions"><button type="submit" className="primary" disabled={!newContent.trim() || Boolean(busy)}>{busy === '$new' ? 'Запоминаю…' : 'Запомнить'}</button>{!empty && <button type="button" className="secondary" onClick={() => setCreating(false)}>Свернуть</button>}</div>
+        <p className="memory-caption">После сохранения запись появится в блоке выше.</p>
+      </fieldset></form>}
+      {available && items.length > 0 && !creating && !editing && <button type="button" className="secondary memory-add-trigger" disabled={Boolean(busy)} onClick={() => { setCreating(true); setError(''); setNotice(''); }}>Добавить важное</button>}
+
     </div>
   </ExactPage>;
 }

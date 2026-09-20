@@ -16,7 +16,12 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]){
   await t.nav('profile');await page.getByRole('button',{name:'Память помощника Что учитывать в разговорах'}).click();
   const screen=page.locator('[data-exact-view=memory]');await screen.getByRole('alert').waitFor();assert.equal(await screen.locator('.memory-add').count(),0);
   readFail=false;await screen.getByRole('button',{name:'Повторить',exact:true}).click();await screen.locator('.memory-add').waitFor();
-  assert.equal(await screen.locator('textarea').count(),1);assert.equal(await screen.getByRole('button',{name:'Перейти в чат'}).count(),0);
+  assert.equal(await screen.locator('textarea').count(),1);
+  await screen.getByRole('heading',{name:'Что Псё уже знает',exact:true}).waitFor();
+  const known=screen.locator('.memory-profile-context');assert.match(await known.innerText(),/Мята/);assert.doesNotMatch(await known.innerText(),/Не указано|unknown|qa-owner/);
+  const contextOrder=await screen.evaluate(el=>Boolean(el.querySelector('.memory-known').compareDocumentPosition(el.querySelector('.memory-add')) & Node.DOCUMENT_POSITION_FOLLOWING));assert.ok(contextOrder);
+  await screen.getByRole('button',{name:'Изменить профиль',exact:true}).click();await page.locator('[data-exact-view=editprofile]').waitFor();assert.equal(await page.locator('#exact-profile-dogName').inputValue(),'Мята');await page.goBack();await screen.waitFor({state:'visible'});
+assert.equal(await screen.getByRole('button',{name:'Перейти в чат'}).count(),0);
   await page.waitForFunction(()=>[...document.querySelectorAll('.memory-illustration')].every(i=>i.complete&&i.naturalWidth>0));
   assert.equal(await screen.locator('.memory-illustration').evaluate(el=>getComputedStyle(el).animationName),'none');
   assert.ok(await screen.evaluate(el=>el.scrollWidth<=el.clientWidth+1));
