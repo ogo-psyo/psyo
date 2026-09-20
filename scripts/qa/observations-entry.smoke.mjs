@@ -18,7 +18,7 @@ for(const [engine,width] of [['chromium',390],['webkit',320],['chromium',1100]])
   failRead=false;await page.getByRole('button',{name:'Повторить',exact:true}).click();
   await page.getByRole('region',{name:'Первая заметка'}).waitFor();
   assert.equal(await page.locator('#history-search').count(),0);assert.equal(await page.locator('#exact-history-date').count(),0);
-  const capture=async name=>{await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.querySelectorAll('#pso-exact-content img')].map(img=>img.decode()));});await page.screenshot({path:`${out}/${engine}-${width}-${name}.png`});assert.ok(await page.locator('#pso-exact-content').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'horizontal overflow');};
+  const capture=async name=>{await page.waitForFunction(()=>[...document.querySelectorAll('#pso-exact-content img')].filter(img=>img.getClientRects().length).every(img=>img.complete&&img.naturalWidth>0));await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.querySelectorAll('#pso-exact-content img')].filter(img=>img.getClientRects().length).map(img=>img.decode()));});await page.screenshot({path:`${out}/${engine}-${width}-${name}.png`});assert.ok(await page.locator('#pso-exact-content').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'horizontal overflow');};
   await capture('empty');
   await page.getByRole('button',{name:'Добавить наблюдение',exact:true}).click();
   const input=page.locator('#observe-text');assert.equal(await input.inputValue(),'');
