@@ -4378,7 +4378,7 @@ export default function Home() {
         /></div></ExactPage>}
 
         {hasDog && tab === 'profile' && journeyDetail !== 'profile' && <ExactProfile
-          documentId={exactDocumentId} onDocumentId={setExactDocumentId} memoryDrafts={exactMemoryDrafts.current}
+          documentId={exactDocumentId} onDocumentId={setExactDocumentId} memoryDrafts={exactMemoryDrafts.current} memoryChatOpen={assistantOpen}
           view={exactProfileView} onView={navigateProfileView} draft={exactProfileDraft} onDraft={setExactProfileDraft}
           headers={authHeaders} guest={isGuestMode()} onLibrary={() => { setMapExactScreen('library'); setMapExactNavigation(value=>value+1); setTab('map'); }}
           surface={profileSurface}

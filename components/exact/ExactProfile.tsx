@@ -16,7 +16,7 @@ export type ExactProfileView = 'profile' | 'editprofile' | 'memory' | 'documents
 type Props = Omit<ComponentProps<typeof ProfileMemoryWorkspace>, 'onDeleteDocument'> & {
   onDeleteDocument: (id: string) => Promise<boolean>;
   view: ExactProfileView; onView: (view: ExactProfileView) => void; guest: boolean; headers: () => Record<string, string>;
-  documentId: string | null; onDocumentId: (id: string | null) => void; memoryDrafts: Map<string, string>;
+  documentId: string | null; onDocumentId: (id: string | null) => void; memoryDrafts: Map<string, string>; memoryChatOpen: boolean;
   draft: DogProfile | null; onDraft: (draft: DogProfile | null) => void; onLibrary: () => void;
 };
 export function ExactProfile(props: Props) {
@@ -26,7 +26,7 @@ export function ExactProfile(props: Props) {
   const profile = props.profile, draft = props.draft ?? profile;
   const update = (patch: Partial<DogProfile>) => props.onDraft({ ...draft, ...patch });
   const back = () => props.onView('profile');
-  if (props.view === 'memory') return <ExactMemory key={profile.backendPetId} petId={profile.backendPetId} guest={props.guest} draftsStore={props.memoryDrafts} headers={props.headers} onBack={back} />;
+  if (props.view === 'memory') return <ExactMemory key={profile.backendPetId} petId={profile.backendPetId} guest={props.guest} draftsStore={props.memoryDrafts} headers={props.headers} onBack={back} onChat={props.onAskAssistant} chatOpen={props.memoryChatOpen} />;
   if (props.view === 'document') {
     const document = props.documents.find(item => item.id === selectedDocument);
     return document ? <ExactDocument key={document.id} document={document} dogName={profile.dogName} headers={props.headers} onBack={() => props.onView('documents')} onDiscuss={props.onAskAssistant} onDelete={async () => { if (await props.onDeleteDocument(document.id)) props.onView('documents'); }} deleting={props.documentBusyId === document.id} deleteError={props.error} /> : <ExactPage viewKey="missing-document" onBack={() => props.onView('documents')}><h1>Документ недоступен</h1><p className="lead">Вернись к списку, чтобы выбрать другой документ.</p></ExactPage>;
@@ -74,7 +74,7 @@ export function ExactProfile(props: Props) {
     <div className="list section-gap">
       <ExactRow title="Наблюдения" detail="Заметки о самочувствии и привычках" icon="book" onClick={props.onOpenHealth} />
       <ExactRow title="Документы" detail="Хранятся отдельно от разговора" icon="file" onClick={() => props.onView('documents')} />
-      <ExactRow title="Что помнит Псё" detail="Посмотреть, исправить, забыть" icon="memory" onClick={() => props.onView('memory')} />
+      <ExactRow title="Память помощника" detail="Что учитывать в разговорах" icon="memory" onClick={() => props.onView('memory')} />
       <ExactRow title="Прогулки и места" detail="Сохранённое вами" icon="map" onClick={props.onLibrary} />
       <ExactRow title="План ухода" detail="Дела, календарь и история" icon="clock" onClick={props.onOpenPlan} />
       <ExactRow title="Привычки" detail="Повторяющиеся занятия и отметки" icon="book" onClick={props.onOpenHabits} />
