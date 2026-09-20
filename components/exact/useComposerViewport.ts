@@ -9,10 +9,31 @@ export function useComposerViewport() {
     const viewport = window.visualViewport;
     let restingHeight = window.innerHeight;
     let frame = 0;
+    let revealFrame = 0;
     let composerEngaged = false;
     let formEngaged = false;
 
+    const revealFormInput = (input: HTMLElement, height: number) => {
+      // iOS may focus before the keyboard finishes resizing. Wait for the
+      // resized shell, then move only its inner scroller — never the window.
+      revealFrame = requestAnimationFrame(() => {
+        if (document.activeElement !== input || root.dataset.psoFormKeyboard !== 'open') return;
+        const scroller = input.closest<HTMLElement>('#pso-exact-content');
+        if (!scroller) return;
+        const area = scroller.getBoundingClientRect();
+        const field = input.getBoundingClientRect();
+        const top = area.top + 12;
+        const bottom = Math.min(area.bottom, height) - 12;
+        if (bottom <= top) return;
+        const delta = field.height > bottom - top || field.top < top
+          ? field.top - top
+          : field.bottom > bottom ? field.bottom - bottom : 0;
+        if (Math.abs(delta) > 1) scroller.scrollTop += delta;
+      });
+    };
+
     const update = () => {
+      cancelAnimationFrame(revealFrame);
       const input = document.activeElement;
       const textControl = input instanceof HTMLTextAreaElement || input instanceof HTMLInputElement && ['text', 'search', 'email', 'tel', 'url', 'password', 'number'].includes(input.type);
       const editing = textControl && Boolean(input.closest('#pso-exact-interface .composer'));
@@ -26,6 +47,7 @@ export function useComposerViewport() {
       if (formKeyboardOpen) {
         root.dataset.psoFormKeyboard = 'open';
         root.style.setProperty('--pso-form-viewport', `${height}px`);
+        if (formEditing && input instanceof HTMLElement) revealFormInput(input, height);
       } else {
         delete root.dataset.psoFormKeyboard;
         root.style.removeProperty('--pso-form-viewport');
@@ -50,6 +72,7 @@ export function useComposerViewport() {
     viewport?.addEventListener('resize', schedule);
     return () => {
       cancelAnimationFrame(frame);
+      cancelAnimationFrame(revealFrame);
       document.removeEventListener('focusin', schedule);
       document.removeEventListener('focusout', schedule);
       window.removeEventListener('resize', schedule);
