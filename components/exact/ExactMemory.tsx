@@ -2,11 +2,14 @@
 
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import Image from 'next/image';
+import { inflectPetName } from '@/lib/copy';
 import { ExactPage } from './ExactShell';
 
 type Memory = { id: string; memory_key: string; content: string; updated_at?: string; source_run_id?: string | null };
-type Props = { draftsStore: Map<string,string>; petId?: string; guest: boolean; headers: () => Record<string, string>; onBack: () => void; onChat: () => void; chatOpen: boolean };
-export function ExactMemory({ petId, guest, headers, onBack, onChat, chatOpen, draftsStore }: Props) {
+type Props = { draftsStore: Map<string,string>; petId?: string; guest: boolean; headers: () => Record<string, string>; onBack: () => void; dogName: string; chatOpen: boolean };
+export function ExactMemory({ petId, guest, headers, onBack, dogName, chatOpen, draftsStore }: Props) {
+  const [newContent, setNewContent] = useState(() => draftsStore.get('$memory-new-content') || '');
+  const [creating, setCreating] = useState(() => draftsStore.has('$memory-new-content'));
   const [items, setItems] = useState<Memory[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>(() => Object.fromEntries(draftsStore));
   const [editing, setEditing] = useState<string | null>(null);
@@ -37,6 +40,25 @@ export function ExactMemory({ petId, guest, headers, onBack, onChat, chatOpen, d
     draftsStore.delete(id);
     setDrafts(current => { const next = { ...current }; delete next[id]; return next; });
   }
+  async function remember() {
+    if (pending.current || guest || !petId) return;
+    const content = newContent.trim();
+    if (!content) { setError('Напиши, что Псё стоит запомнить.'); return; }
+    // One stable key per draft survives a lost response and leaving the screen.
+    const key = draftsStore.get('$memory-new-key') || `owner-note-${crypto.randomUUID()}`;
+    draftsStore.set('$memory-new-key', key);
+    pending.current = true; setBusy('$new'); setError(''); setNotice('');
+    try {
+      const response = await fetch('/api/agent/memory', { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers() }, body: JSON.stringify({ petId, key, content }) });
+      const data = await response.json();
+      if (!response.ok || data.memory?.memory_key !== key || typeof data.memory?.id !== 'string' || data.memory?.content !== content) throw new Error('NOT_CONFIRMED');
+      if (!alive.current) return;
+      setItems(current => [data.memory, ...current.filter(item => item.memory_key !== key)]);
+      draftsStore.delete('$memory-new-key'); draftsStore.delete('$memory-new-content');
+      setNewContent(''); setCreating(false); setNotice('Запомнил. Запись можно изменить или убрать в любой момент.');
+    } catch { if (alive.current) setError('Сохранение не подтверждено. Текст остался здесь — попробуй ещё раз.'); }
+    finally { pending.current = false; if (alive.current) setBusy(''); }
+  }
   async function write(item: Memory, remove = false) {
     if (pending.current || guest || !petId) return;
     const content = (drafts[item.id] ?? item.content).trim();
@@ -61,13 +83,15 @@ export function ExactMemory({ petId, guest, headers, onBack, onChat, chatOpen, d
       {loading && <p role="status">Загружаю записи…</p>}
       {readError && <div className="memory-load-error"><p className="error" role="alert">{readError}</p><button type="button" className="secondary" onClick={() => { setLoading(true); setReadError(''); setRevision(value => value + 1); }}>Повторить</button></div>}
       {!available && <p className="lead">Память помощника доступна при входе через Telegram. Сведения о собаке остаются в профиле.</p>}
-      {empty && <div className="memory-welcome">
-        <p className="lead">Здесь будет то, что ты попросишь Псё запомнить — чтобы не повторять это в следующих разговорах.</p>
-        <div className="memory-example"><p>Например, напиши в чате:</p><blockquote>«Запомни: мы любим гулять в тихих местах»</blockquote></div>
-        <button type="button" className="primary memory-chat" onClick={onChat}>Перейти в чат</button>
-        <p className="memory-caption">Сведения о собаке уже есть в профиле. Заполнять ещё одну анкету не нужно.</p>
-      </div>}
-      {items.length > 0 && <p className="lead">Это Псё может учитывать в разговорах. Если что-то изменилось, поправь запись или попроси забыть её.</p>}
+      {empty && <p className="lead">Сохрани привычки и предпочтения, которые Псё стоит учитывать в разговорах о {inflectPetName(dogName, 'loct')}.</p>}
+      {items.length > 0 && <p className="lead">Сохранённое о {inflectPetName(dogName, 'loct')} для следующих разговоров. Здесь можно добавить важное, изменить запись или забыть её.</p>}
+      {available && !loading && !readError && (empty || creating) && <form className="memory-add" onSubmit={event => { event.preventDefault(); void remember(); }}><fieldset disabled={Boolean(busy)}>
+        <label htmlFor="memory-new">Что Псё стоит знать о {inflectPetName(dogName, 'loct')}?</label>
+        <textarea id="memory-new" rows={3} maxLength={2000} value={newContent} placeholder="Например: не любит мячи и игрушки с пищалкой" onChange={event => { setNewContent(event.target.value); draftsStore.set('$memory-new-content',event.target.value); }} />
+        <div className="row-actions"><button type="submit" className="primary" disabled={!newContent.trim() || Boolean(busy)}>{busy === '$new' ? 'Запоминаю…' : 'Запомнить'}</button>{!empty && <button type="button" className="secondary" onClick={() => setCreating(false)}>Свернуть</button>}</div>
+        <p className="memory-caption">Сохраняется в память, не отправляется в чат. Основные сведения уже есть в профиле.</p>
+      </fieldset></form>}
+      {available && items.length > 0 && !creating && !editing && <button type="button" className="secondary memory-add-trigger" disabled={Boolean(busy)} onClick={() => { setCreating(true); setError(''); setNotice(''); }}>Добавить важное</button>}
       {error && <p className="error" role="alert">{error}</p>}
       {notice && <p className="memory-notice" role="status">{notice}</p>}
       <div className="memory-list">{items.map(item => <article className="memory-item" key={item.id}>
@@ -78,10 +102,9 @@ export function ExactMemory({ petId, guest, headers, onBack, onChat, chatOpen, d
         </fieldset></form> : <>
           <p className="memory-content">{item.content}</p>
           <p className="memory-source">{item.source_run_id ? 'Из разговора с Псё' : 'Добавлено тобой'}</p>
-          <div className="row-actions"><button type="button" className="text-button" disabled={Boolean(busy)} onClick={() => { setEditing(item.id); setError(''); setNotice(''); }}>Изменить</button><button type="button" className="text-button" disabled={Boolean(busy)} onClick={() => void write(item, true)}>{busy === item.id ? 'Убираю…' : 'Забыть'}</button></div>
+          <div className="row-actions"><button type="button" className="text-button" disabled={Boolean(busy)} onClick={() => { setEditing(item.id); setCreating(false); setError(''); setNotice(''); }}>Изменить</button><button type="button" className="text-button" disabled={Boolean(busy)} onClick={() => void write(item, true)}>{busy === item.id ? 'Убираю…' : 'Забыть'}</button></div>
         </>}
       </article>)}</div>
-      {items.length > 0 && <button type="button" className="secondary memory-chat" disabled={Boolean(busy)} onClick={onChat}>Перейти в чат</button>}
     </div>
   </ExactPage>;
 }

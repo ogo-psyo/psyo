@@ -7,7 +7,7 @@ process.env.PSYO_SESSION_SIGNING_KEY = 'qa-assistant-context-key';
 
 function query(data: unknown, error: unknown = null) {
   const value: any = {
-    select: () => value, eq: () => value, neq: () => value, is: () => value,
+    select: () => value, eq: () => value, neq: () => value, not: () => value, is: () => value,
     order: () => value, limit: () => value,
     maybeSingle: async () => ({ data, error }),
     single: async () => ({ data, error }),
@@ -18,6 +18,7 @@ function query(data: unknown, error: unknown = null) {
 
 function fixtureSupabase(failingTable?: string, petMissing = false) {
   const tables: string[] = [];
+  const filters: unknown[][] = [];
   let threadInserts = 0;
   const messageInserts: unknown[] = [];
   const data: Record<string, unknown> = {
@@ -37,6 +38,7 @@ function fixtureSupabase(failingTable?: string, petMissing = false) {
     pet_observations: [{ type: 'energy', value: 'бодрая', note: 'Увидел сыпь после прогулки', observed_at: '2026-08-21T09:00:00Z' }],
     pet_documents: [{ title: 'Общий анализ крови', kind: 'analysis', document_date: '2026-08-20' }],
     map_routes: [{ title: 'Вечерний маршрут', route_source: 'recorded', distance_meters: 1800, started_at: '2026-08-20T18:00:00Z' }],
+    agent_memories: [{ content: 'Плутон не любит мячи' }],
     assistant_threads: { id: 'thread-existing', pet_id: 'pet-1', kind: 'training' },
     assistant_messages: [
       { role: 'user', content: 'Мята тянет вечером' },
@@ -54,10 +56,12 @@ function fixtureSupabase(failingTable?: string, petMissing = false) {
       if (table === 'assistant_messages') {
         return { ...query(data[table]), insert: async (payload: unknown) => { messageInserts.push(payload); return { data: [], error: null }; } };
       }
-      return query(data[table]);
+      const result = query(data[table]);
+      result.eq = (key: string, value: unknown) => { filters.push([table,key,value]); return result; };
+      return result;
     },
   };
-  return { supabase, tables, get threadInserts() { return threadInserts; }, messageInserts };
+  return { supabase, tables, data, filters, get threadInserts() { return threadInserts; }, messageInserts };
 }
 
 function ownerRequest(body: Record<string, unknown>) {
@@ -114,7 +118,7 @@ test('rules fallback translates database enums and never leaks internal product 
   assert.match(body.answer, /порода: Ксолоитцкуинтли \/ ксоло/);
 });
 
-for (const table of ['pets','pet_passports','social_profiles','reminders','pet_observations','pet_documents','map_routes','assistant_threads','assistant_messages']) {
+for (const table of ['pets','pet_passports','social_profiles','reminders','pet_observations','pet_documents','map_routes','agent_memories','assistant_threads','assistant_messages']) {
   test(`failed ${table} read is retryable, not missing context`, async () => {
     const fixture = fixtureSupabase(table);
     let calls = 0;
@@ -131,4 +135,21 @@ test('unavailable pet stops before private context reads or generation',async()=
   const POST=createAssistantPostHandler({admin:()=>fixture.supabase as never,generate:async()=>{throw new Error('must not generate');}});
   const response=await POST(ownerRequest({petId:'pet-1',question:'Что было вчера?'}));
   assert.equal(response.status,404);assert.deepEqual(fixture.tables,['pets']);
+});
+
+// The normal assistant must get the current memory on every question, not
+// client-supplied facts or a snapshot left over from a previous request.
+test('normal assistant rereads saved, edited and forgotten memory; ignores client memory', async () => {
+  const fixture = fixtureSupabase();
+  const prompts: string[] = [];
+  const POST = createAssistantPostHandler({admin:()=>fixture.supabase as never, generate:async(input:any)=>{
+    prompts.push(input.prompt);
+    return {answer:'Контекст получен',provider:'rules',mode:'rules_fallback_test',safetyLevel:'bounded_rules',confidence:'rules_based',sourceBasis:'owner_context'} as never;
+  }});
+  const ask=()=>POST(ownerRequest({petId:'pet-1',question:'Чем заняться?',context:{memories:[{content:'Поддельный факт от клиента'}]}}));
+  assert.equal((await ask()).status,200);assert.match(prompts.at(-1)!,/Плутон не любит мячи/);assert.ok(fixture.filters.some(x=>JSON.stringify(x)===JSON.stringify(['agent_memories','owner_id','owner-1'])));assert.ok(fixture.filters.some(x=>JSON.stringify(x)===JSON.stringify(['agent_memories','pet_id','pet-1'])));assert.doesNotMatch(prompts.at(-1)!,/Поддельный факт/);
+  fixture.data.agent_memories=[{content:'Теперь любит маленький мяч'}];
+  assert.equal((await ask()).status,200);assert.match(prompts.at(-1)!,/Теперь любит маленький мяч/);assert.doesNotMatch(prompts.at(-1)!,/Плутон не любит мячи/);
+  fixture.data.agent_memories=[];
+  assert.equal((await ask()).status,200);assert.doesNotMatch(prompts.at(-1)!,/Теперь любит маленький мяч|Плутон не любит мячи/);
 });
