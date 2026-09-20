@@ -80,7 +80,7 @@ for (const token of [
 for (const token of ['<ExactRecords', 'onStartEdit={startObservationEdit}', 'onDelete={deleteObservation}']) {
   if (!files.page.includes(token)) failures.push(`canonical health wiring missing: ${token}`);
 }
-for (const token of ['Новая запись', 'props.onSaveEdit', 'observationMetricDefinitions', 'exact-history-date', 'props.onLoadMore', 'props.onDelete', 'props.onRestore', 'selected.note || selected.value', 'Изменить', 'Убрать']) {
+for (const token of ['Добавить наблюдение', 'props.onSaveEdit', 'observationMetricDefinitions', 'exact-history-date', 'props.onLoadMore', 'props.onDelete', 'props.onRestore', 'selected.note || selected.value', 'Изменить', 'Убрать']) {
   if (!files.health.includes(token)) failures.push(`canonical health lifecycle missing: ${token}`);
 }
 if (files.profileMemory.includes("surface === 'health'")) {

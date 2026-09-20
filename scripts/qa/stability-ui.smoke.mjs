@@ -40,7 +40,7 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]){
   await page.getByRole('button',{name:'Документы Хранятся отдельно от разговора'}).click();
   await page.locator('[data-exact-view=documents]').waitFor();await nativeBack();await page.locator('[data-exact-view=profile]').waitFor();
   await t.nav('all');await page.locator('[data-tool-destination=health]').click();
-  await page.getByRole('button',{name:'Новая запись',exact:true}).click();
+  await page.getByRole('button',{name:'Добавить наблюдение',exact:true}).click();
   const note='Контроль реального сохранения '+engine;
   const input=page.locator('#observe-text');await input.fill(note);
   await page.evaluate(()=>{window.__qaHeight=350;Object.defineProperty(window.visualViewport,'height',{configurable:true,get:()=>window.__qaHeight});window.visualViewport.dispatchEvent(new Event('resize'));});
@@ -51,7 +51,7 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]){
   const rect=await save.boundingBox();assert.ok(rect.y>=0&&rect.y+rect.height<=350,JSON.stringify(rect));
   await page.screenshot({path:`${out}/${engine}-keyboard.png`});
   await page.evaluate(()=>{window.__qaHeight=innerHeight;window.visualViewport.dispatchEvent(new Event('resize'));});await page.locator('.nav-wrap').waitFor({state:'visible'});
-  await nativeBack();await page.getByRole('button',{name:'Новая запись',exact:true}).click();assert.equal(await input.inputValue(),note);
+  await nativeBack();await page.getByRole('button',{name:'Добавить наблюдение',exact:true}).click();assert.equal(await input.inputValue(),note);
   await ctx.route('**/api/observations',async route=>{
    const req=route.request();if(req.method()!=='POST')return route.fallback();
    const body=req.postDataJSON(),key=req.headers()['idempotency-key'];keys.push(key);

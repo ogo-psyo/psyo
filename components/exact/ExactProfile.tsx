@@ -72,7 +72,7 @@ export function ExactProfile(props: Props) {
     {!props.imageUrl && <button type="button" className="text-button" onClick={() => props.onView('identity')}>Добавить фото</button>}
     <button type="button" className="text-button" onClick={() => { if (!props.draft) props.onDraft({ ...profile }); props.onView('editprofile'); }}>Изменить сведения</button>
     <div className="list section-gap">
-      <ExactRow title={`История ${inflectPetName(profile.dogName, 'gent')}`} detail="Записи, которые можно найти снова" icon="book" onClick={props.onOpenHealth} />
+      <ExactRow title="Наблюдения" detail="Заметки о самочувствии и привычках" icon="book" onClick={props.onOpenHealth} />
       <ExactRow title="Документы" detail="Хранятся отдельно от разговора" icon="file" onClick={() => props.onView('documents')} />
       <ExactRow title="Что помнит Псё" detail="Посмотреть, исправить, забыть" icon="memory" onClick={() => props.onView('memory')} />
       <ExactRow title="Прогулки и места" detail="Сохранённое вами" icon="map" onClick={props.onLibrary} />
