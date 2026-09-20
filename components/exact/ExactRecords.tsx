@@ -82,7 +82,7 @@ export function ExactRecords(props: Props) {
           {hasFilter && <button type="button" className="text-button" onClick={() => { setQuery(''); setFilterDate(''); }}>Сбросить поиск и дату</button>}
         </div>
       </> : !props.loading && !props.error && <section className="observations-welcome" aria-label="Первая заметка">
-        <Image src="/illustrations/welcome-dog.webp" width={768} height={512} alt="" className="observations-dog" />
+        <Image src="/illustrations/observations-calendar.webp" width={768} height={512} sizes="210px" alt="" className="observations-illustration" />
         <h2>Как дела у {inflectPetName(props.dogName, 'gent')}?</h2>
         <p>Записывай, как ест, спит и ведёт себя твоя собака. Так проще заметить изменения и рассказать о них ветеринару.</p>
         <div className="observation-examples">
