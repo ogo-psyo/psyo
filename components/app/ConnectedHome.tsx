@@ -44,7 +44,7 @@ export function ConnectedTools({ onOpen }: { onOpen: (destination: ToolDestinati
     <div className="list">
       <ExactRow icon="heart" title="Уход" detail="Предстоящие дела и выполнение" destination="calendar" onClick={() => onOpen('calendar')} />
       <ExactRow icon="bag" title="Нужно купить" detail="Записать и не забыть в магазине" destination="things" onClick={() => onOpen('things')} />
-      <ExactRow icon="book" title="Записи о собаке" detail="Наблюдения и самочувствие" destination="health" onClick={() => onOpen('health')} />
+      <ExactRow icon="book" title="Наблюдения" detail="Заметки о самочувствии и привычках" destination="health" onClick={() => onOpen('health')} />
       <ExactRow icon="save" title="Сохранённое" detail="Места и прогулки" destination="library" onClick={() => onOpen('library')} />
       <ExactRow icon="file" title="Документы" detail="Открыть нужный файл" destination="documents" onClick={() => onOpen('documents')} />
       <ExactRow icon="book" title="Дневник" detail="События дня и наблюдения" destination="diary" onClick={() => onOpen('diary')} />
