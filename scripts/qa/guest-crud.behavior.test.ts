@@ -4,6 +4,7 @@ import {
   guestEntityStorageKey,
   loadGuestEntityState,
   resetAllLocalPsoData,
+  resetGuestEntityStorage,
   saveGuestEntityState,
 } from '../../lib/guestEntityStorage';
 
@@ -30,6 +31,11 @@ saveGuestEntityState(storage, petId, state);
 assert.deepEqual(loadGuestEntityState(storage, petId), state, 'guest CRUD must survive reload');
 assert.match(guestEntityStorageKey(petId), /guest-pet-a/);
 
+storage.setItem('pso.care.history.v1:guest-pet-a', 'sensitive');
+storage.setItem('pso.care.history.v1:guest-pet-b', 'keep');
+resetGuestEntityStorage(storage, petId);
+assert.equal(storage.getItem('pso.care.history.v1:guest-pet-a'), null);
+assert.equal(storage.getItem('pso.care.history.v1:guest-pet-b'), 'keep');
 storage.setItem('unrelated.preference', 'keep');
 storage.setItem('pso.product.profile.v5', '{}');
 storage.setItem('pso.topapp.observations.v2:guest-pet-a', '[]');

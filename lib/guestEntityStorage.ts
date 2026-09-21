@@ -43,6 +43,7 @@ export function saveGuestEntityState(storage: Storage, petId: string | undefined
 
 export function resetGuestEntityStorage(storage: Storage, petId?: string) {
   storage.removeItem(guestEntityStorageKey(petId));
+  storage.removeItem(`pso.care.history.v1:${safePetScope(petId)}`);
 }
 
 export function resetAllLocalPsoData(storage: Storage) {
