@@ -1,4 +1,4 @@
-import {reminderMode} from '@/lib/reminder';
+import {reminderMode,careDetails} from '@/lib/reminder';
 import { NextResponse } from 'next/server';
 import type { AppBootstrap } from '@/lib/domain';
 import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
@@ -44,7 +44,7 @@ function demoBootstrap(): AppBootstrap {
 }
 
 function mapReminder(row: any) {
-  return { id: row.id, petId: row.pet_id, type: row.type, title: row.title, dueAt: row.due_at, recurrence: row.recurrence, status: row.status, completedAt: row.completed_at, snoozedUntil: row.snoozed_until, nextDueAt: row.next_due_at, timeMode: reminderMode(row.metadata?.timeMode) };
+  return { id: row.id, petId: row.pet_id, type: row.type, title: row.title, dueAt: row.due_at, recurrence: row.recurrence, status: row.status, completedAt: row.completed_at, snoozedUntil: row.snoozed_until, nextDueAt: row.next_due_at, timeMode: reminderMode(row.metadata?.timeMode),...careDetails(row) };
 }
 
 function mapWishlist(row: any) {

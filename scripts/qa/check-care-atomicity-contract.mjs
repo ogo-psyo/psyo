@@ -44,7 +44,7 @@ for (const rpc of [
 ]) {
   assert.ok(combinedRoutes.includes(`'${rpc}'`), `missing atomic RPC ${rpc}`);
 }
-assert.match(routes[0], /supabase\.rpc\(body\.timeMode\?'care_create_reminder_v2':'care_create_reminder_atomic'/);
+assert.match(routes[0], /supabase\.rpc\(extended\?'care_create_reminder_v3':body\.timeMode\?'care_create_reminder_v2':'care_create_reminder_atomic'/);
 assert.doesNotMatch(combinedRoutes, /beginCareMutation|finishCareMutation|abortCareMutation/);
 assert.match(combinedRoutes, /getSupabaseAdmin\(\)/);
 

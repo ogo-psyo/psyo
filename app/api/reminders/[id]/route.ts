@@ -1,3 +1,4 @@
+import {careDetailsSchema} from '@/lib/server/careDetailsSchema';
 import {z} from 'zod';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {reminderMode} from '@/lib/reminder';
@@ -36,7 +37,11 @@ export async function PATCH(request: Request, ctx: Ctx) {
   if (!idempotencyKey) return careError('IDEMPOTENCY_KEY_REQUIRED', 'Не удалось безопасно сохранить изменения. Повторите попытку.', 400);
   if(!body||typeof body!=='object'||Array.isArray(body))return careError('NO_VALID_FIELDS','Проверьте поля дела.',400);
   if(('timeMode' in body&&!reminderMode(body.timeMode))||('dueAt' in body&&!z.iso.datetime({offset:true}).safeParse(body.dueAt).success))return careError('INVALID_TIME_MODE','Проверьте дату и точность времени.',400);
+  const details=careDetailsSchema.extend({title:z.string().trim().min(1).max(200).optional(),type:z.string().min(1).max(80).optional(),recurrence:z.enum(['none','daily','weekly','monthly','quarterly','yearly']).optional()}).safeParse(body);
+  if(!details.success)return careError('INVALID_FIELDS','Проверь поля дела.',400);
   const patch: Record<string, unknown> = {};
+  const metadata=careDetailsSchema.parse(details.data);
+  if(Object.keys(metadata).length)patch.care_details=metadata;
   if(body.timeMode)patch.time_mode=body.timeMode;
   if (typeof body.title === 'string' && body.title.trim()) patch.title = body.title.trim();
   if (body.dueAt) patch.due_at = body.dueAt;

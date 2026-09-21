@@ -3,15 +3,17 @@
 import { breedInputValue, breedProfilePatch } from '@/lib/breedSearch';
 import { sexLabel } from '@/lib/profileFieldChoices';
 import {nextReminderDueAt} from '@/lib/reminderRecurrence';
-import {reminderTiming,reminderReceipt,reminderCalendarText,type ReminderRecord} from '@/lib/reminder';
-import {ReminderEditor,type ReminderDraft} from '@/components/care/ReminderEditor';
+import {reminderReceipt,reminderCalendarText,type ReminderRecord} from '@/lib/reminder';
+import {type ReminderDraft} from '@/components/care/ReminderEditor';
+import {CareWorkspace} from '@/components/care/CareWorkspace';
+import {careDraftPayload,type CareDraft} from '@/lib/careDomains';
 import { isPrimaryObservationFact } from '@/lib/observationLabels';
 import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
 import {isMapSearchPlace,type MapSearchPlace} from '@/lib/mapSearchPlace';
 import {downloadRouteGpx,type RoutePlanning} from '@/lib/routePlanning';
 
 import { ChangeEvent, type FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle, CopySimple, FilePdf, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, PawPrint, Plus, ShieldWarning } from '@phosphor-icons/react';
+import { ArrowRight, CheckCircle, CopySimple, FilePdf, LinkSimple, MapPin, MapTrifold, PaperPlaneTilt, ShieldWarning } from '@phosphor-icons/react';
 import { GeneratedAvatar } from '@/components/GeneratedAvatar';
 import { normalizeWishlistReceipt, type WishlistView } from '@/lib/wishlistView';
 import { type PrimaryRoute } from '@/components/app/AppNavigation';
@@ -24,7 +26,6 @@ import { AgentPanel } from '@/components/journey/AgentPanel';
 import type { ReviewedObservation } from '@/lib/agentObservation';
 import { VoiceObservationCapture, type PrivateVoiceNoteInput } from '@/components/journey/VoiceObservationCapture';
 import { ExactVoice } from '@/components/exact/ExactVoice';
-import { ExactCare } from '@/components/exact/ExactCare';
 import { ExactConversation } from '@/components/exact/ExactConversation';
 import { ExactThings } from '@/components/exact/ExactThings';
 import { ProductionMapWorkspace } from '@/components/journey/ProductionMapWorkspace';
@@ -63,7 +64,7 @@ import {
   type DogProfile,
 } from '@/lib/data';
 import { getSupabaseBrowser } from '@/lib/clientSupabase';
-import { formatCount, formatReadinessLabel, formatZoneMeta, inflectPetName } from '@/lib/copy';
+import { formatReadinessLabel, formatZoneMeta, inflectPetName } from '@/lib/copy';
 import { fileToLocalAvatarDataUrl, loadProfile, resetProfileStorage, saveProfile } from '@/lib/profileStorage';
 import { loadGuestEntityState, resetAllLocalPsoData, resetGuestEntityStorage, saveGuestEntityState } from '@/lib/guestEntityStorage';
 import { buildAppReadiness, type ReadinessLevel } from '@/lib/readiness';
@@ -156,20 +157,9 @@ const defaultObservationDraft: ObservationDraft = {
   note: '',
 };
 
-const reminderRecurrenceOptions: { value: ReminderRecurrence; label: string }[] = [
-  { value: 'none', label: 'Не повторять' },
-  { value: 'daily', label: 'Каждый день' },
-  { value: 'weekly', label: 'Каждую неделю' },
-  { value: 'monthly', label: 'Каждый месяц' },
-  { value: 'quarterly', label: 'Раз в три месяца' },
-  { value: 'yearly', label: 'Каждый год' },
-];
 
-const reminderTimeModeOptions: { value: ReminderTimeMode; label: string }[] = [
-  { value: 'exact', label: 'Точное время' },
-  { value: 'flexible', label: 'В течение дня' },
-  { value: 'approximate', label: 'Примерно' },
-];
+
+
 
 const viralCardFormats: { id: ViralCardFormat; label: string; caption: string; size: string }[] = [
   { id: 'story', label: 'История', caption: 'вертикально для Telegram и Instagram', size: '1080x1920' },
@@ -325,15 +315,7 @@ function safePublicArea(value?: string) {
   return looksExact ? 'район скрыт' : clean.slice(0, 80);
 }
 
-const careTypeOptions = [
-  { value: 'custom', label: 'Другое' },
-  { value: 'parasite', label: 'Обработка' },
-  { value: 'vaccine', label: 'Вакцина' },
-  { value: 'grooming', label: 'Груминг' },
-  { value: 'food', label: 'Корм' },
-  { value: 'training', label: 'Тренировка' },
-  { value: 'vet', label: 'Ветеринар' },
-];
+
 
 const onboardingCareOptions = [
   { type: 'parasite', title: 'Обработка от клещей и паразитов', dueInDays: 30, label: 'Обработка', dueLabel: 'через 30 дней' },
@@ -341,9 +323,7 @@ const onboardingCareOptions = [
   { type: 'grooming', title: 'Груминг: шерсть и когти', dueInDays: 14, label: 'Груминг', dueLabel: 'через 2 недели' },
 ];
 
-function careTypeLabel(type: string) {
-  return careTypeOptions.find((option) => option.value === type)?.label ?? 'Дело';
-}
+
 
 function dateInputValue(date: Date) {
   const year = date.getFullYear();
@@ -380,11 +360,8 @@ function reminderDueAt(date: string, time: string, mode: ReminderTimeMode) {
   return Number.isFinite(parsed.getTime()) && dateInputValue(parsed)===date ? parsed.toISOString() : '';
 }
 
-function reminderRecurrenceLabel(recurrence?: ReminderRecurrence) {
-  return reminderRecurrenceOptions.find((option) => option.value === recurrence)?.label ?? 'Не повторяется';
-}
 
-function reminderTimeLabel(reminder:ReminderView){return reminderTiming(reminder);}
+
 
 function reminderDateInputValue(reminder: ReminderView) {
   const date = new Date(reminder.snoozedUntil || reminder.dueAt);
@@ -599,12 +576,10 @@ export default function Home() {
   const reminderOperation=useRef<{petId:string;scope:string;token:string}|null>(null);
   const reminderDrafts=useRef(new Map<string,ReminderDraft>());
   const [reminderIssue,setReminderIssue]=useState<{petId:string;scope:string;message:string}|null>(null);
-  const [careCalendarOpen,setCareCalendarOpen]=useState(false);
-  const [careFilterDate,setCareFilterDate]=useState(false);
   const guestCareUndo = useRef(new Map<string, {before: ReminderView; after: ReminderView; wishlist: WishlistView[]}>());
   const [reminderHistory, setReminderHistory] = useState<Record<string, ReminderHistoryItem[]>>({});
-  const [calendarCursor, setCalendarCursor] = useState(() => new Date());
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => dateInputValue(new Date()));
+  const [, setCalendarCursor] = useState(() => new Date());
+  const [, setSelectedCalendarDate] = useState(() => dateInputValue(new Date()));
   const calendarAutoSelectedPetRef = useRef<string | null>(null);
   const [careView, setCareView] = useState<'active' | 'history'>('active');
   const [mapVisited, setMapVisited] = useState(false);
@@ -707,6 +682,17 @@ export default function Home() {
     setNewReminderTitle('');setNewReminderDueDate(dateInputValue(new Date()));setNewReminderDueTime('09:00');setNewReminderTimeMode('flexible');setNewReminderRecurrence('none');setNewReminderType('custom');
   },[profile.backendPetId]);
 
+  const guestHistoryScope=useRef<string|null>(null);
+  useEffect(()=>{
+    if(!profileHydrated||!profile.backendPetId||!isGuestMode()){guestHistoryScope.current=null;return;}
+    const key=`pso.care.history.v1:${profile.backendPetId}`;
+    if(guestHistoryScope.current!==key){
+      guestHistoryScope.current=key;
+      try{const saved=JSON.parse(localStorage.getItem(key)||'{}');setReminderHistory(saved.history||{});guestCareUndo.current=new Map(saved.undo||[]);}catch{setReminderHistory({});}
+      return;
+    }
+    try{localStorage.setItem(key,JSON.stringify({history:reminderHistory,undo:[...guestCareUndo.current]}));}catch{setStorageError('Не удалось сохранить историю на устройстве.');}
+  },[profile.backendPetId,profileHydrated,telegramSession.mode,session?.access_token,reminderHistory,reminders]);
   const [pendingCareDeletion, setPendingCareDeletion] = useState<PendingCareDeletion>(null);
   const [careDeletionBusy, setCareDeletionBusy] = useState(false);
   const guestPetIdRef = useRef<string | null>(null);
@@ -1845,36 +1831,6 @@ export default function Home() {
     const hook = viralCardMood === 'safety' ? 'Сохрани перед прогулкой:' : viralCardMood === 'club' ? 'Официальная карточка хорошей собаки:' : 'Смотри, какая карточка получилась в Псё:';
     return `${hook} ${name}. Правило контакта: ${rule}.`;
   }, [profile.dogName, profile.socialMode, viralCardMood]);
-  const remindersByDate = useMemo(() => activeReminders.reduce<Record<string, ReminderView[]>>((index, reminder) => {
-    const key = reminderDateInputValue(reminder);
-    index[key] = [...(index[key] ?? []), reminder];
-    return index;
-  }, {}), [activeReminders]);
-  const calendarDays = useMemo(() => {
-    const first = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth(), 1);
-    const gridStart = new Date(first);
-    const mondayOffset = (first.getDay() + 6) % 7;
-    gridStart.setDate(first.getDate() - mondayOffset);
-    return Array.from({ length: 42 }, (_, index) => {
-      const date = new Date(gridStart);
-      date.setDate(gridStart.getDate() + index);
-      const key = dateInputValue(date);
-      return {
-        key,
-        date,
-        inMonth: date.getMonth() === calendarCursor.getMonth(),
-        isToday: key === dateInputValue(new Date()),
-        isSelected: key === selectedCalendarDate,
-        reminders: remindersByDate[key] ?? [],
-      };
-    });
-  }, [calendarCursor, remindersByDate, selectedCalendarDate]);
-  const calendarTitle = useMemo(() => calendarCursor.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }), [calendarCursor]);
-  const selectedDateReminders = useMemo(() => (remindersByDate[selectedCalendarDate] ?? []).sort((a, b) => new Date(a.snoozedUntil || a.dueAt).getTime() - new Date(b.snoozedUntil || b.dueAt).getTime()), [remindersByDate, selectedCalendarDate]);
-  const selectedDateLabel = useMemo(() => {
-    const date = new Date(`${selectedCalendarDate}T10:00:00`);
-    return Number.isFinite(date.getTime()) ? date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'long' }) : 'выбранный день';
-  }, [selectedCalendarDate]);
   useEffect(() => {
     const petKey = profile.backendPetId || 'guest';
     if (tab !== 'calendar' || careView !== 'active' || activeReminders.length === 0 || calendarAutoSelectedPetRef.current === petKey) return;
@@ -2332,6 +2288,21 @@ export default function Home() {
     }
   }
 
+  const [careRead,setCareRead]=useState<{petId:string;status:'loading'|'ready'|'error'}|null>(null);
+  async function refreshCare(){
+    const petId=profile.backendPetId;if(!petId||isGuestMode())return;
+    setCareRead({petId,status:'loading'});
+    try{
+      const response=await fetch(`/api/reminders?petId=${encodeURIComponent(petId)}`,{headers:authHeaders(),cache:'no-store'});
+      const body=await response.json();if(documentActivePet.current!==petId)return;
+      if(!response.ok||!Array.isArray(body.reminders)||body.mode==='demo')throw new Error('CARE_READ_FAILED');
+      const rows=body.reminders.map((r:unknown)=>reminderReceipt(r,petId));
+      if(rows.some((r:ReminderView|null)=>!r))throw new Error('INVALID_RECEIPT');
+      setReminders(rows);setCareRead({petId,status:'ready'});
+    }catch{if(documentActivePet.current===petId)setCareRead({petId,status:'error'});}
+  }
+  useEffect(()=>{if(tab==='calendar'&&!isGuestMode()&&telegramSession.mode!=='loading')void refreshCare();},[tab,profile.backendPetId,telegramSession.mode,session?.access_token]);
+
   async function loadReminderHistory(reminderId:string){
     if(isGuestMode()||reminderHistoryLoading.current.has(reminderId))return;
     const petId=profile.backendPetId;reminderHistoryLoading.current.add(reminderId);
@@ -2351,7 +2322,7 @@ export default function Home() {
   useEffect(() => {
     if ((tab !== 'calendar' && careView !== 'history') || isGuestMode()) return;
     reminders.forEach((reminder) => {
-      if (reminder.recurrence && reminder.recurrence !== 'none' && reminderHistory[reminder.id] === undefined) {
+      if (reminder.recurrence && reminder.recurrence !== 'none' && reminderHistory[reminder.id] === undefined && !reminderHistoryErrors[reminder.id]) {
         void loadReminderHistory(reminder.id);
       }
     });
@@ -2900,6 +2871,27 @@ export default function Home() {
   }
   function reportReminderError(message:string){const operation=reminderOperation.current;if(operation)setReminderIssue({petId:operation.petId,scope:operation.scope,message});}
 
+  async function createCareEvent(draft:CareDraft){
+    return performReminderWrite('create',async isCurrent=>{
+      const fields=careDraftPayload(draft);
+      if(!fields.title){reportReminderError('Напиши, что нужно сделать.');return false;}
+      if(isGuestMode()){
+        const petId=ensureGuestPetId(),id=guestId('reminder');
+        const saved:ReminderView={...fields,id,petId,status:draft.mode==='done'?'done':'active'};
+        setReminders(current=>[saved,...current]);
+        if(saved.completedAt)guestCareUndo.current.set(`${id}:${saved.completedAt}`,{before:{...saved,status:'active',completedAt:undefined},after:saved,wishlist:[]});
+        return true;
+      }
+      const petId=profile.backendPetId;if(!petId){reportReminderError('Сначала сохрани профиль собаки.');return false;}
+      const payload={petId,...fields,source:'manual_calendar'},scope=`reminder:create:${JSON.stringify(payload)}`;
+      const response=await fetch('/api/reminders',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify(payload)});
+      const result=await response.json().catch(()=>({}));if(!isCurrent())return false;
+      const saved=response.ok&&result.mode!=='demo'?reminderReceipt(result.reminder,petId):null;
+      if(!saved)throw new Error('INVALID_REMINDER_RECEIPT');
+      setReminders(current=>[saved,...current.filter(item=>item.id!==saved.id)]);finishCareMutation(scope);return true;
+    });
+  }
+
   async function createReminder(title?:string,type=newReminderType,dueInDays=0,explicitDueDate?:string){
     return performReminderWrite(title?'assistant:create':'create',async isCurrent=>{
       const reminderTitle=(title||newReminderTitle).trim();
@@ -3420,7 +3412,7 @@ export default function Home() {
     return performReminderWrite(id,async isCurrent=>{
       if(isGuestMode()){setReminders(current=>current.map(item=>item.id===id?{...item,...patch,...(patch.dueAt?{snoozedUntil:undefined,nextDueAt:undefined,status:item.status==='snoozed'?'active':item.status}:{})}:item));return true;}
       const petId=profile.backendPetId;if(!petId)return false;
-      const serverPatch={title:patch.title,type:patch.type,dueAt:patch.dueAt,recurrence:patch.recurrence,timeMode:patch.timeMode};
+      const serverPatch={title:patch.title,type:patch.type,dueAt:patch.dueAt,recurrence:patch.recurrence,timeMode:patch.timeMode,careDomain:patch.careDomain,note:patch.note,recurrenceBasis:patch.recurrenceBasis,reminderPreference:patch.reminderPreference};
       const scope=`reminder:update:${id}:${JSON.stringify(serverPatch)}`;
       const response=await fetch(`/api/reminders/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify(serverPatch)});
       const result=await response.json().catch(()=>({}));if(!isCurrent())return false;
@@ -3441,7 +3433,7 @@ export default function Home() {
     });
   }
 
-  async function completeReminder(id: string, issue: (message: string) => void = reportReminderError, stillCurrent?: () => boolean) {
+  async function completeReminder(id: string, issue: (message: string) => void = reportReminderError, stillCurrent?: () => boolean, actualAt?:string) {
     return performReminderWrite(id,async current=>{
     const isCurrent=()=>current()&&(!stillCurrent||stillCurrent());
     const reminder = reminders.find((item) => item.id === id);
@@ -3450,7 +3442,7 @@ export default function Home() {
       return false;
     }
     if (isGuestMode()) {
-      const at=new Date().toISOString(),nextDueAt=nextReminderDueAt(reminder.dueAt,reminder.recurrence||'none');
+      const at=actualAt||new Date().toISOString(),nextDueAt=nextReminderDueAt(reminder.recurrenceBasis==='completed'?at:reminder.dueAt,reminder.recurrence||'none');
       const after: ReminderView = {...reminder,status:nextDueAt?'active':'done',completedAt:nextDueAt?undefined:at,dueAt:nextDueAt||reminder.dueAt,nextDueAt:nextDueAt||undefined,snoozedUntil:undefined};
       guestCareUndo.current.set(`${id}:${at}`, {before:{...reminder},after,wishlist:wishlist.filter(item=>item.reminderId===id).map(item=>({...item}))});
       setReminders(current=>current.map(item=>item.id===id?after:item));
@@ -3459,8 +3451,8 @@ export default function Home() {
       setCareFeedback({kind:'completed',reminderId:id,title:reminder.title,nextDueAt:nextDueAt||undefined,timeMode:reminder.timeMode});
       return true;
     }
-    const scope = `reminder:complete:${id}`;
-    const completedAt = careMutationTime(scope, () => new Date().toISOString());
+    const scope = `reminder:complete:${id}:${actualAt||'now'}`;
+    const completedAt = careMutationTime(scope, () => actualAt||new Date().toISOString());
     const recommendationId = acceptedRecommendationId('open_reminder', id);
     try {
       const response = await fetch(`/api/reminders/${id}/complete`, {
@@ -3530,21 +3522,6 @@ export default function Home() {
     setCareDeletionBusy(false);
     if (!deleted) return;
     setPendingCareDeletion(null);
-  }
-
-  async function snoozeReminder(id:string){
-    return performReminderWrite(id,async isCurrent=>{
-      const reminder=reminders.find(item=>item.id===id);if(!reminder)return false;
-      const scope=`reminder:snooze:${id}:day`;
-      const snoozedUntil=careMutationTime(scope,()=>{
-        const clock=new Date(reminder.snoozedUntil||reminder.dueAt),tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);tomorrow.setHours(clock.getHours(),clock.getMinutes(),0,0);return tomorrow.toISOString();
-      });
-      if(isGuestMode()){setReminders(current=>current.map(item=>item.id===id?{...item,status:'snoozed',snoozedUntil}:item));return true;}
-      const response=await fetch(`/api/reminders/${id}/snooze`,{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify({snoozedUntil})});
-      const payload=await response.json().catch(()=>({}));if(!isCurrent())return false;
-      const saved=response.ok&&payload.mode!=='demo'?reminderReceipt(payload.reminder,reminder.petId,id):null;if(!saved)throw new Error('SNOOZE_NOT_CONFIRMED');
-      setReminders(current=>current.map(item=>item.id===id?saved:item));finishCareMutation(scope);setCareFeedback({kind:'rescheduled',reminderId:id,title:saved.title});return true;
-    });
   }
 
   function exportReminderToCalendar(reminder: ReminderView) {
@@ -4648,117 +4625,17 @@ export default function Home() {
           onRetry={() => loadSocialSurface().catch(() => setNearbyState('error'))}
         />}
 
-        {hasDog && tab === 'calendar' && <ExactCare advanced={<>
-            <div className="care-view-toggle" aria-label="Раздел плана ухода">
-              <button className={careView === 'active' ? 'active' : ''} onClick={() => setCareView('active')} aria-pressed={careView === 'active'}>Дела</button>
-              <button className={careView === 'history' ? 'active' : ''} onClick={() => setCareView('history')} aria-pressed={careView === 'history'}>История</button>
-            </div>
-
-            {careView === 'active' && <div className="care-calendar-view">
-              <details open={careCalendarOpen} onToggle={event=>setCareCalendarOpen(event.currentTarget.open)} className="care-calendar-disclosure"><summary>Выбрать дату</summary>
-              <section className="care-calendar-panel" data-care-calendar aria-label="Календарь дел">
-                <div className="calendar-toolbar">
-                  <button type="button" aria-label="Предыдущий месяц" onClick={() => setCalendarCursor((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}><ArrowLeft weight="bold" aria-hidden="true" /></button>
-                  <b>{calendarTitle}</b>
-                  <button type="button" aria-label="Следующий месяц" onClick={() => setCalendarCursor((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))}><ArrowRight weight="bold" aria-hidden="true" /></button>
-                </div>
-                <div className="calendar-mode-row">
-                  <span>{formatCount(activeReminders.length, ['дело в плане', 'дела в плане', 'дел в плане'])}</span>
-                  <button type="button" onClick={() => {
-                    const today = new Date();
-                    const key = dateInputValue(today);
-                    setCalendarCursor(today);
-                    setSelectedCalendarDate(key);setCareFilterDate(true);
-                  }}>Сегодня</button>
-                </div>
-                <div className="care-calendar-grid" role="grid" aria-label={calendarTitle}>
-                  {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map((weekday) => <span className="calendar-weekday" role="columnheader" key={weekday}>{weekday}</span>)}
-                  {calendarDays.map((day) => <button
-                    type="button"
-                    role="gridcell"
-                    key={day.key}
-                    className={`calendar-day${day.inMonth ? '' : ' muted'}${day.reminders.length ? ' has-care' : ''}${day.isToday ? ' today' : ''}${day.isSelected ? ' selected' : ''}`}
-                    aria-pressed={day.isSelected}
-                    aria-label={`${day.date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, ${formatCount(day.reminders.length, ['дело', 'дела', 'дел'])}`}
-                    onClick={() => {
-                      setSelectedCalendarDate(day.key);
-                      setCareFilterDate(true);
-                      if (!day.inMonth) setCalendarCursor(day.date);
-                    }}
-                  >
-                    <span>{day.date.getDate()}</span>
-                    {day.reminders.length > 0 && <b aria-hidden="true">{day.reminders.length}</b>}
-                  </button>)}
-                </div>
-              </section></details>
-
-              {careFilterDate&&<div className="selected-day-panel">
-                <div><span>Дела на выбранную дату</span><b>{selectedDateLabel}</b></div>
-                <button type="button" onClick={() => {
-                  setNewReminderDueDate(selectedCalendarDate);
-                  document.querySelector<HTMLInputElement>('.today-quick-add input')?.focus();
-                }}>Добавить на эту дату</button><button type="button" onClick={()=>setCareFilterDate(false)}>Все дела</button>
-              </div>}
-
-              <div className="care-task-list" aria-live="polite">
-              {(careFilterDate?selectedDateReminders:activeReminders).length===0&&<p className="care-empty-state">{careFilterDate?'На эту дату дел нет.':'В плане пока нет дел.'}</p>}
-              {(careFilterDate?selectedDateReminders:[...activeReminders].sort((a,b)=>new Date(a.snoozedUntil||a.dueAt).getTime()-new Date(b.snoozedUntil||b.dueAt).getTime())).map((reminder) => <article key={reminder.id} className={`care-task-card ${new Date(reminder.snoozedUntil || reminder.dueAt).getTime() < new Date().setHours(0, 0, 0, 0) ? 'warning' : ''}`}>
-                {editingReminderId === reminder.id ? <ReminderEditor reminder={reminder} drafts={reminderDrafts.current} busy={Boolean(reminderMutationBusy)} error={reminderIssue?.scope===reminder.id?reminderIssue.message:undefined} types={careTypeOptions} recurrences={reminderRecurrenceOptions} onClose={()=>setEditingReminderId(null)} onSave={draft=>updateReminder(reminder.id,{title:draft.title,type:draft.type,dueAt:reminderDueAt(draft.date,draft.time,draft.timeMode||'exact'),recurrence:draft.recurrence,...(draft.timeMode?{timeMode:draft.timeMode}:{})})}/> : <>
-                  <div className="care-task-main">
-                    <span>{careTypeLabel(reminder.type)}</span>
-                    <b>{reminder.title}</b>
-                    <p>{reminderTimeLabel(reminder)} · {reminderRecurrenceLabel(reminder.recurrence)}</p>
-                    {reminder.nextDueAt && <p>Следующий раз: {new Date(reminder.nextDueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}
-                  </div>
-                  <div className="care-row-actions">
-                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => completeReminder(reminder.id)}>Готово</button>
-                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => snoozeReminder(reminder.id)}>На завтра</button>
-                    <button disabled={Boolean(reminderMutationBusy)} onClick={() => setEditingReminderId(reminder.id)}>Изменить</button>
-                    <button disabled={Boolean(reminderMutationBusy)} className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button>
-                  </div>
-                  {reminderIssue?.scope===reminder.id&&!pendingCareDeletion&&<p role="alert">{reminderIssue.message}</p>}
-                </>}
-              </article>)}
-              </div>
-            </div>}
-
-            {careView === 'history' && <div className="care-task-list">
-              {Object.entries(reminderHistoryErrors).map(([id,message])=><p key={id} role="alert">{message} <button type="button" onClick={()=>void loadReminderHistory(id)}>Повторить</button></p>)}
-              {doneReminders.length === 0 && Object.values(reminderHistory).every((items) => items.length === 0) && <article className="care-empty-state"><b>История начнётся после первого «Готово»</b><p>Так будет видно, когда была обработка, вакцина, груминг или визит.</p></article>}
-              {doneReminders.slice(0, 12).map((reminder) => <article key={reminder.id} className="care-task-card done">
-                <div className="care-task-main">
-                  <span>{careTypeLabel(reminder.type)}</span>
-                  <b>{reminder.title}</b>
-                  <p>{new Date(reminder.completedAt || reminder.dueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                </div>
-                <div className="care-row-actions"><button onClick={() => createReminder(reminder.title, reminder.type, 0)}>Создать снова</button><button className="danger-action" onClick={() => setPendingCareDeletion({ id: reminder.id, title: reminder.title })}>Удалить</button></div>
-              </article>)}
-              {reminders.flatMap((reminder) => (reminderHistory[reminder.id] ?? []).filter(entry=>!(reminder.status==='done'&&reminder.completedAt&&entry.payload?.completedAt&&Date.parse(reminder.completedAt)===Date.parse(entry.payload.completedAt))).map((entry) => ({ reminder, entry }))).slice(0, 20).map(({ reminder, entry }) => <article key={entry.id} className="care-task-card done"><div className="care-task-main"><span>{careTypeLabel(reminder.type)}</span><b>{reminder.title}</b><p>Выполнено {new Date(entry.payload?.completedAt || entry.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>{entry.payload?.nextDueAt && <p>Следующий раз: {new Date(entry.payload.nextDueAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>}</div></article>)}
-            </div>}
-
-</>}
-          editActions={(() => {const reminder=reminders.find(item=>item.id===editingReminderId);return reminder ? <div className="row-actions section-gap"><button type="button" className="secondary" disabled={Boolean(reminderMutationBusy)} onClick={()=>snoozeReminder(reminder.id)}>На завтра</button><button type="button" className="secondary" onClick={()=>exportReminderToCalendar(reminder)}>В календарь телефона</button><button type="button" className="secondary" disabled={Boolean(reminderMutationBusy)} onClick={()=>setPendingCareDeletion({id:reminder.id,title:reminder.title})}>Удалить дело</button></div> : null;})()}
-          items={[...reminders, ...reminders.filter(item=>item.recurrence && item.recurrence!=='none').flatMap(item=>{const event=reminderHistory[item.id]?.find(entry=>entry.payload?.completedAt); return event?.payload?.completedAt ? [{...item,status:'done',dueAt:event.payload.dueAt || event.createdAt,completedAt:event.payload.completedAt,snoozedUntil:undefined}] : [];})]} busy={Boolean(reminderMutationBusy)} issue={reminderIssue}
-          onBack={() => closeSecondaryFlow('all')} onComplete={id => completeReminder(id)} onUndo={undoExactCareCompletion}
-          onEdit={item => setEditingReminderId(item.id)} editing={Boolean(editingReminderId)} onCloseEdit={() => setEditingReminderId(null)}
-          editingForm={(() => { const reminder = reminders.find(item => item.id === editingReminderId); return reminder ? <ReminderEditor key={reminder.id} reminder={reminder} drafts={reminderDrafts.current} busy={Boolean(reminderMutationBusy)} error={reminderIssue?.scope===reminder.id?reminderIssue.message:undefined} types={careTypeOptions} recurrences={reminderRecurrenceOptions} onClose={()=>setEditingReminderId(null)} onSave={draft=>updateReminder(reminder.id,{title:draft.title,type:draft.type,dueAt:reminderDueAt(draft.date,draft.time,draft.timeMode||'exact'),recurrence:draft.recurrence,...(draft.timeMode?{timeMode:draft.timeMode}:{})})}/> : null; })()}
-          createForm={onSaved => <form className="exact-care-create" aria-label="Новое дело" onSubmit={async event=>{event.preventDefault();if(await createReminder())onSaved();}}><fieldset  disabled={Boolean(reminderMutationBusy)}>
-              <label htmlFor="care-new-title">Новое дело</label>
-              <div className="inline-add"><input id="care-new-title" required maxLength={200} value={newReminderTitle} onChange={event=>setNewReminderTitle(event.target.value)} placeholder="Что нужно сделать…"/><button type="submit" disabled={!newReminderTitle.trim()||Boolean(reminderMutationBusy)} className="primary" aria-label="Добавить дело"><Plus aria-hidden="true"/></button></div>
-              <label className="field">Когда<input type="date" required value={newReminderDueDate} onChange={event=>setNewReminderDueDate(event.target.value)} aria-label="Дата дела"/></label>
-              <details><summary>Время, повтор и тип</summary>
-                <fieldset className="chips"><legend>Точность времени</legend>{reminderTimeModeOptions.map(option=><button type="button" key={option.value} aria-pressed={newReminderTimeMode===option.value} onClick={()=>setNewReminderTimeMode(option.value)}>{option.label}</button>)}</fieldset>
-                {newReminderTimeMode!=='flexible'&&<label>Время дела<input type="time" required value={newReminderDueTime} onChange={event=>setNewReminderDueTime(event.target.value)}/></label>}
-                <label>Повтор дела<select value={newReminderRecurrence} onChange={event=>setNewReminderRecurrence(event.target.value as ReminderRecurrence)}>{reminderRecurrenceOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-                <label>Тип дела<select value={newReminderType} onChange={event=>setNewReminderType(event.target.value)}>{careTypeOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-              </details>
-              {reminderIssue?.scope==='create'&&<p role="alert">{reminderIssue.message}</p>}
-              <details className="care-presets"><summary>Примеры дел</summary><div className="care-preset-grid" aria-label="Подготовить дело">
-                <button type="button" onClick={()=>{setNewReminderTitle('Обработка от клещей и паразитов');setNewReminderType('parasite');}}>Обработка</button>
-                <button type="button" onClick={()=>{setNewReminderTitle('Проверить дату вакцинации');setNewReminderType('vaccine');}}>Вакцинация</button>
-                <button type="button" onClick={()=>{setNewReminderTitle('Груминг: шерсть и когти');setNewReminderType('grooming');}}>Груминг</button>
-              </div></details>
-            </fieldset></form>}
+        {hasDog && tab === 'calendar' && <CareWorkspace key={profile.backendPetId||activePetId||'guest'}
+          loading={!isGuestMode()&&(careRead?.petId!==profile.backendPetId||careRead?.status==='loading')} loadError={!isGuestMode()&&careRead?.status==='error'} onRetry={()=>void refreshCare()}
+          dogName={profile.dogName} contexts={{food:profile.diet,behavior:profile.triggers}}
+          items={[...reminders,...reminders.flatMap(item=>(reminderHistory[item.id]||[]).filter(entry=>entry.payload?.completedAt&&!(item.status==='done'&&item.completedAt===entry.payload.completedAt)).map(entry=>({...item,status:'done',dueAt:entry.payload!.dueAt||entry.createdAt,completedAt:entry.payload!.completedAt,snoozedUntil:undefined})))]}
+          busy={Boolean(reminderMutationBusy)} issue={reminderIssue}
+          onBack={()=>closeSecondaryFlow('all')} onProfile={()=>{setTab('profile');}}
+          onCreate={createCareEvent} onUpdate={(id,draft)=>updateReminder(id,careDraftPayload(draft))}
+          onComplete={(id,at)=>completeReminder(id,reportReminderError,undefined,at)} onUndo={undoExactCareCompletion}
+          onDelete={item=>setPendingCareDeletion({id:item.id,title:item.title})} onExport={exportReminderToCalendar}
+          editingItem={reminders.find(item=>item.id===editingReminderId)} onCloseEdit={()=>setEditingReminderId(null)}
+          historyErrors={reminderHistoryErrors} onRetryHistory={id=>void loadReminderHistory(id)}
         />}
 
         {hasDog && tab === 'card' && <ExactPage viewKey="public-card" onBack={() => closeSecondaryFlow('profile')}><div className="exact-extension public-card-screen"><h1>Публичная карточка</h1><p className="lead">Ты решаешь, что показать и когда закрыть доступ.</p>
