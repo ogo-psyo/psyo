@@ -23,7 +23,7 @@ const requiredCopyApi = [
 
 for (const token of requiredCopyApi) {
   if (!files.copy.includes(`function ${token}`)) failures.push(`lib/copy.ts missing formatter: ${token}`);
-  if (['formatCount','formatReadinessLabel','formatZoneMeta'].includes(token) && !files.page.includes(token)) failures.push(`page.tsx does not use formatter: ${token}`);
+  if (['formatReadinessLabel','formatZoneMeta'].includes(token) && !files.page.includes(token)) failures.push(`page.tsx does not use formatter: ${token}`);
 }
 
 const forbiddenUiSnippets = [

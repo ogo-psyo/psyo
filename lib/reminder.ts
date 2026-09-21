@@ -1,6 +1,8 @@
 export type ReminderTimeMode='exact'|'flexible'|'approximate';
 export type ReminderRecurrence='none'|'daily'|'weekly'|'monthly'|'quarterly'|'yearly';
-export type ReminderRecord={id:string;petId:string;type:string;title:string;dueAt:string;recurrence?:ReminderRecurrence;status:string;timeMode?:ReminderTimeMode;snoozedUntil?:string;completedAt?:string;nextDueAt?:string};
+export type CareDomain='health'|'activity'|'food'|'care'|'behavior';
+export type CareDetails={careDomain?:CareDomain|null;note?:string;recurrenceBasis?:'planned'|'completed';reminderPreference?:'off'|'day'|'before'};
+export type ReminderRecord=CareDetails & {id:string;petId:string;type:string;title:string;dueAt:string;recurrence?:ReminderRecurrence;status:string;timeMode?:ReminderTimeMode;snoozedUntil?:string;completedAt?:string;nextDueAt?:string};
 export function reminderMode(value:unknown):ReminderTimeMode|undefined{return value==='exact'||value==='flexible'||value==='approximate'?value:undefined;}
 export function reminderTiming(item:Pick<ReminderRecord,'dueAt'|'snoozedUntil'|'timeMode'>){
  const date=new Date(item.snoozedUntil||item.dueAt);
@@ -17,7 +19,7 @@ export function reminderReceipt(value:unknown,petId:string,expectedId?:string):R
  const mode=reminderMode(row.timeMode??metadata.timeMode);
  const recurrence=['none','daily','weekly','monthly','quarterly','yearly'].includes(String(row.recurrence))?row.recurrence as ReminderRecurrence:undefined;
  const optionalDate=(value:unknown)=>typeof value==='string'&&Number.isFinite(Date.parse(value))?value:undefined;
- return {id:row.id,petId,title:row.title,type:row.type,dueAt:due,status:String(row.status),timeMode:mode,recurrence,
+ return {id:row.id,petId,title:row.title,type:row.type,dueAt:due,status:String(row.status),timeMode:mode,recurrence,...careDetails(row),
   completedAt:optionalDate(row.completedAt??row.completed_at),snoozedUntil:optionalDate(row.snoozedUntil??row.snoozed_until),nextDueAt:optionalDate(row.nextDueAt??row.next_due_at)};
 }
 
@@ -31,4 +33,13 @@ export function reminderCalendarText(item:ReminderRecord,petName:string,now=new 
  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Pso//Care Calendar//RU','BEGIN:VEVENT',`UID:${esc(item.id)}@pso-mvp`,`DTSTAMP:${stamp(now)}`,
   dateOnly?`DTSTART;VALUE=DATE:${day(start)}`:`DTSTART:${stamp(start)}`,dateOnly?`DTEND;VALUE=DATE:${day(end)}`:`DTEND:${stamp(end)}`,
   `SUMMARY:${esc(item.title)}`,`DESCRIPTION:${esc(`Псё: ${petName}. ${reminderTiming(item)}. Экспортировано одно дело; повтор ведётся в Псё.`)}`,'END:VEVENT','END:VCALENDAR'].join('\r\n');
+}
+
+export function careDetails(row:Record<string,unknown>):CareDetails{
+ const m=row.metadata&&typeof row.metadata==='object'?row.metadata as Record<string,unknown>:{};
+ const v={...m,...row}; const d=v.careDomain;
+ return {...(d===null||['health','activity','food','care','behavior'].includes(String(d))?{careDomain:d as CareDomain|null}:{}),
+ ...(typeof v.note==='string'?{note:v.note}:{}),
+ ...(v.recurrenceBasis==='planned'||v.recurrenceBasis==='completed'?{recurrenceBasis:v.recurrenceBasis}:{}),
+ ...(v.reminderPreference==='off'||v.reminderPreference==='day'||v.reminderPreference==='before'?{reminderPreference:v.reminderPreference}:{})};
 }

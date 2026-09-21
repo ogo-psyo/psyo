@@ -1,5 +1,5 @@
-import {z} from 'zod';
-import {reminderMode} from '@/lib/reminder';
+import {careCreateSchema,careDetailsSchema} from '@/lib/server/careDetailsSchema';
+import {reminderMode,careDetails} from '@/lib/reminder';
 import {principalsAgree} from '@/lib/socialCore';
 import { NextResponse } from 'next/server';
 import { getRequestAuth } from '@/lib/server/auth';
@@ -17,7 +17,7 @@ export const runtime = 'nodejs';
 type DueFilter = 'today' | 'upcoming' | 'overdue';
 
 function mapReminder(row: any) {
-  return { id: row.id, petId: row.pet_id, type: row.type, title: row.title, dueAt: row.due_at, recurrence: row.recurrence, status: row.status, completedAt: row.completed_at, snoozedUntil: row.snoozed_until, nextDueAt: row.next_due_at, timeMode: reminderMode(row.metadata?.timeMode) };
+  return { id: row.id, petId: row.pet_id, type: row.type, title: row.title, dueAt: row.due_at, recurrence: row.recurrence, status: row.status, completedAt: row.completed_at, snoozedUntil: row.snoozed_until, nextDueAt: row.next_due_at, timeMode: reminderMode(row.metadata?.timeMode), ...careDetails(row) };
 }
 
 export async function GET(request: Request) {
@@ -59,8 +59,11 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (!ownerId) return careError('AUTH_REQUIRED', 'Откройте Псё из Telegram и попробуйте снова.', 401);
   if (!supabase) return careError('STORAGE_UNAVAILABLE','Не удалось сохранить дело. Повторите попытку позже.',503);
-  const parsed=z.object({title:z.string().trim().min(1).max(200),petId:z.string().min(1),dueAt:z.iso.datetime({offset:true}),type:z.string().min(1).max(80).optional(),recurrence:z.enum(['none','daily','weekly','monthly','quarterly','yearly']).optional(),timeMode:z.enum(['exact','flexible','approximate']).optional()}).safeParse(body);
+  const parsed=careCreateSchema.safeParse(body);
   if(!parsed.success)return careError('REMINDER_FIELDS_REQUIRED','Проверьте название, дату и время дела.',400);
+  const details=careDetailsSchema.parse(parsed.data);
+  const extended=Object.keys(details).length>0||Boolean(parsed.data.completedAt);
+  if(parsed.data.completedAt&&(Date.parse(parsed.data.completedAt)>Date.now()+60000||parsed.data.recurrence&&parsed.data.recurrence!=='none'))return careError('INVALID_DATE','Проверь дату выполненного дела.',400);
   const idempotencyKey = readCareIdempotencyKey(request, body);
   if (!idempotencyKey) return careError('IDEMPOTENCY_KEY_REQUIRED', 'Не удалось безопасно сохранить дело. Повторите попытку.', 400);
 
@@ -70,10 +73,10 @@ export async function POST(request: Request) {
     dueAt: body.dueAt,
     type: body.type || 'custom',
     recurrence: body.recurrence || 'none',
-    ...(body.timeMode?{timeMode:body.timeMode}:{}),
+    ...(body.timeMode?{timeMode:body.timeMode}:{}),...details,...(parsed.data.completedAt?{completedAt:parsed.data.completedAt}:{}),
   });
   try {
-    const { data, error } = await supabase.rpc(body.timeMode?'care_create_reminder_v2':'care_create_reminder_atomic', {
+    const { data, error } = await supabase.rpc(extended?'care_create_reminder_v3':body.timeMode?'care_create_reminder_v2':'care_create_reminder_atomic', {
       p_owner_id: ownerId,
       p_idempotency_key: idempotencyKey,
       p_request_fingerprint: fingerprint,
@@ -83,7 +86,7 @@ export async function POST(request: Request) {
       p_due_at: body.dueAt,
       p_recurrence: body.recurrence || 'none',
       p_source: body.source || 'manual',
-      ...(body.timeMode?{p_time_mode:body.timeMode}:{}),
+      ...(extended?{p_time_mode:body.timeMode||'flexible',p_details:details,p_completed_at:parsed.data.completedAt||null}:body.timeMode?{p_time_mode:body.timeMode}:{}),
     });
     if (error) throw error;
     return NextResponse.json(data, { status: 201 });
