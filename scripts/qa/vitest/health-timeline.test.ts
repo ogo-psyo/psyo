@@ -1,6 +1,6 @@
 import {test,expect,vi} from 'vitest';
 import {createClient} from '@supabase/supabase-js';
-import {healthTimelinePageForOwner,parseHealthCursor} from '@/lib/server/healthTimelineService';
+import {healthTimelinePageForOwner,parseHealthCursor,parseHealthWindow} from '@/lib/server/healthTimelineService';
 const pet='11111111-1111-4111-8111-111111111111';
 const id=(n:number)=>`22222222-2222-4222-8222-${String(n).padStart(12,'0')}`;
 const rows=[3,2,1].map(n=>({id:id(n),pet_id:pet,observed_at:'2026-09-09T09:00:00+00:00',created_at:'2026-09-09T09:00:00+00:00',note:'Исходный текст',type:'appetite',value:'обычный',metadata:{mood:'спокойное',energy:'ниже обычного'},pets:{owner_id:'owner-a'}}));
@@ -27,4 +27,16 @@ test('microsecond timestamp stays intact in the next-page cursor',async()=>{
  const supabase=createClient('https://fixture.invalid','not-a-real-key',{global:{fetch:async()=>new Response(JSON.stringify(rows.map(row=>({...row,observed_at:'2026-09-09T09:00:00.123456+00:00'}))),{headers:{'Content-Type':'application/json'}})}});
  const result=await healthTimelinePageForOwner({supabase,ownerId:'owner-a',petId:pet,limit:2});
  expect(parseHealthCursor(result.nextCursor)?.at).toBe('2026-09-09T09:00:00.123456+00:00');
+});
+
+
+test('calendar window filters observed time, retains owner boundary and pagination',async()=>{
+ const c=client(),window=parseHealthWindow('2026-08-30T21:00:00Z','2026-10-11T21:00:00Z');
+ const page=await healthTimelinePageForOwner({...c,ownerId:'owner-a',petId:pet,limit:2,window});
+ await healthTimelinePageForOwner({...c,ownerId:'owner-a',petId:pet,limit:2,window,before:parseHealthCursor(page.nextCursor)});
+ for(const url of c.urls){expect(url.searchParams.getAll('observed_at')).toEqual(['gte.2026-08-30T21:00:00Z','lt.2026-10-11T21:00:00Z']);expect(url.searchParams.get('pets.owner_id')).toBe('eq.owner-a');expect(url.searchParams.get('pet_id')).toBe(`eq.${pet}`);}
+});
+test('date-window validation rejects partial, inverted, overlong and injected ranges',()=>{
+ expect(parseHealthWindow(null,null)).toBeUndefined();
+ for(const [from,to] of [[null,'2026-09-01T00:00:00Z'],['invalid','2026-09-01T00:00:00Z'],['2026-09-02T00:00:00Z','2026-09-01T00:00:00Z'],['2026-01-01T00:00:00Z','2026-09-01T00:00:00Z'],['2026-09-01T00:00:00Z),pet_id.neq.x','2026-09-02T00:00:00Z']])expect(()=>parseHealthWindow(from,to)).toThrow('INVALID_HEALTH_WINDOW');
 });

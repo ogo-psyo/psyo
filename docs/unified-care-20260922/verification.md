@@ -10,3 +10,11 @@
 - Physical iPhone and live Telegram integration not tested in this pass. Guest persistence paths and backend contracts unchanged.
 
 Review: no dependency additions, data conversions or deletes. A parent-return marker preserves the selected care domain. The only mutation change is scoped checkin-error presentation; existing endpoint/idempotency behavior retained.
+
+## Shared calendar correction
+- Full unit suite: 252 tests passed. Added coverage for ISO range validation, inclusive-start/exclusive-end observation-window filters, continuation under the same owner/pet constraint, and 400 before reads for partial/invalid ranges.
+- Browser: Chromium 390 and WebKit 320 passed shared-care-calendar.smoke.mjs with mocked APIs: 35 older records spanning two pages; care and observations on same selected day; edit/back to the same day/month; observation filter; month search; delete and restore from the calendar; failure/retry without a false empty day; stale month response cannot overwrite a new selection.
+- Original unified-care smoke also passed Chromium 390/1100 and WebKit 320 after history navigation updated to shared calendar.
+- Evidence: artifacts/shared-care-calendar/results.json, *-calendar.png and *-day.png. No live user data writes.
+- Prior documentation limitation (care-only calendar) is superseded by the owner's explicit correction; the active observation history now redirects to the shared calendar instead of mounting its old separate date filter.
+- Final build/TypeScript/redesign contract passed after undo wiring. All source contracts passed after updating the calendar handler checks to the shared-date navigation. Final changed-file lint: 0 errors; full lint budget 219/220. Design scan: 21 advisory findings in incumbent components, no severe findings.

@@ -7,6 +7,8 @@ import {ExactIcon,ExactPage} from '../exact/ExactShell';
 import {careDomains,domainOf,eventDay,localDay,newCareDraft,editCareDraft, type CareDraft} from '@/lib/careDomains';
 import {reminderTiming,type ReminderRecord,type CareDomain} from '@/lib/reminder';
 import {nextReminderDueAt} from '@/lib/reminderRecurrence';
+import {useCalendarObservations,type CalendarObservationSource} from './useCalendarObservations';
+import {observationTypeLabel} from '@/lib/observationLabels';
 import 'react-day-picker/style.css';
 import './care-workspace.css';
 
@@ -14,8 +16,10 @@ const domains=Object.keys(careDomains) as CareDomain[];
 const parse=(d:string)=>new Date(`${d}T12:00:00`);
 const dateLabel=(d:string)=>parse(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
 const repeatLabels={none:'Без повтора',daily:'Каждый день',weekly:'Каждую неделю',monthly:'Каждый месяц',quarterly:'Раз в три месяца',yearly:'Каждый год'};
+export type CareLocation={view:'overview'}|{view:'domain';domain:CareDomain}|{view:'calendar';day:string;month:string};
 export type CareWorkspaceProps={
- initialDomain?:CareDomain|null;onDomainChange?:(domain:CareDomain|null)=>void;
+ observationUndo?:(refresh:()=>void)=>ReactNode;
+ location?:CareLocation;onLocationChange?:(location:CareLocation)=>void;observations?:CalendarObservationSource;
  daily?:ReactNode;regular?:ReactNode;regularForDomain?:(domain:CareDomain)=>ReactNode;
  loading:boolean;loadError:boolean;onRetry:()=>void;
  items:ReminderRecord[];busy:boolean;issue?:{scope:string;message:string}|null;dogName:string;
@@ -27,12 +31,16 @@ export type CareWorkspaceProps={
  historyErrors:Record<string,string>;onRetryHistory:(id:string)=>void;
 };
 export function CareWorkspace(p:CareWorkspaceProps){
- const [view,setView]=useState<'overview'|'calendar'|'domain'|'detail'|'form'|'complete'|'reschedule'>(p.initialDomain?'domain':'overview');
+ const [view,setView]=useState<'overview'|'calendar'|'domain'|'detail'|'form'|'complete'|'reschedule'>(p.location?.view||'overview');
  const [returnView,setReturnView]=useState<'overview'|'calendar'|'domain'>('overview');
- const [domain,setDomain]=useState<CareDomain|null>(p.initialDomain||null);
- const [selected,setSelected]=useState(localDay(new Date()));
- const [month,setMonth]=useState(new Date());
- const [filter,setFilter]=useState<CareDomain|'all'|'free'>('all');
+ const [domain,setDomain]=useState<CareDomain|null>(p.location?.view==='domain'?p.location.domain:null);
+ const [selected,setSelected]=useState(p.location?.view==='calendar'?p.location.day:localDay(new Date()));
+ const [month,setMonth]=useState(p.location?.view==='calendar'?parse(p.location.month):new Date());
+ const [filter,setFilter]=useState<CareDomain|'all'|'free'|'observations'>('all');
+ const [search,setSearch]=useState('');
+ const journal=useCalendarObservations(p.observations,month,view==='calendar');
+ useEffect(()=>{if(p.location?.view==='calendar'){setView('calendar');setSelected(p.location.day);setMonth(parse(p.location.month));}},[p.location]);
+ function calendar(day:string,nextMonth:Date=month){setSearch('');setSelected(day);setMonth(nextMonth);p.onLocationChange?.({view:'calendar',day,month:localDay(nextMonth)});}
  const [detail,setDetail]=useState<ReminderRecord|null>(null);
  const [draft,setDraft]=useState<CareDraft>(()=>newCareDraft());
  const draftCache=useRef<CareDraft|null>(null);
@@ -44,10 +52,15 @@ export function CareWorkspace(p:CareWorkspaceProps){
  useEffect(()=>{if(detail&&!p.items.some(r=>r.id===detail.id)&&!busy){setDetail(null);setView(returnView);}},[p.items,detail,p.busy,returnView]);
  const effective=view==='form'?'form':p.editingItem?'external':view;
  const busy=p.busy||saving;
- const plans=p.items.filter(r=>r.status!=='done').sort((a,b)=>Date.parse(a.snoozedUntil||a.dueAt)-Date.parse(b.snoozedUntil||b.dueAt));
- const history=p.items.filter(r=>r.status==='done').sort((a,b)=>Date.parse(b.completedAt||b.dueAt)-Date.parse(a.completedAt||a.dueAt));
+ const careItems=p.loading||p.loadError?[]:p.items;
+ const plans=careItems.filter(r=>r.status!=='done').sort((a,b)=>Date.parse(a.snoozedUntil||a.dueAt)-Date.parse(b.snoozedUntil||b.dueAt));
+ const history=careItems.filter(r=>r.status==='done').sort((a,b)=>Date.parse(b.completedAt||b.dueAt)-Date.parse(a.completedAt||a.dueAt));
+ const query=search.trim().toLocaleLowerCase('ru');
+ const inDate=(day:string)=>query?day.slice(0,7)===localDay(month).slice(0,7):day===selected;
+ const calendarCare=careItems.filter(r=>inDate(eventDay(r))&&(filter==='all'||(filter==='free'?domainOf(r)===null:domainOf(r)===filter))&&(!query||`${r.title} ${r.note||''}`.toLocaleLowerCase('ru').includes(query)));
+ const calendarNotes=(filter==='all'||filter==='observations')?journal.entries.filter(e=>inDate(localDay(new Date(e.createdAt)))&&(!query||[e.note,e.value,e.mood,e.appetite,e.stool,e.energy].filter(Boolean).join(' ').toLocaleLowerCase('ru').includes(query))):[];
  const chosen=detail?(detail.status==='done'?p.items.find(r=>r.id===detail.id&&r.completedAt===detail.completedAt):p.items.find(r=>r.id===detail.id&&r.status!=='done'))||detail:null;
- const go=(next:typeof view)=>{setError('');setView(next);if(next==='overview'||next==='calendar')p.onDomainChange?.(null);};
+ const go=(next:typeof view)=>{setError('');setView(next);if(next==='overview')p.onLocationChange?.({view:'overview'});if(next==='calendar')calendar(selected);};
  const back=()=>{if(busy)return;if(p.editingItem)p.onCloseEdit();if(view==='form')draftCache.current=draft;go(view==='complete'||view==='reschedule'?'detail':view==='detail'||view==='form'?returnView:'overview');};
  async function run(action:()=>Promise<unknown>,done:()=>void){
   if(lock.current)return;lock.current=true;setSaving(true);setError('');
@@ -67,14 +80,14 @@ export function CareWorkspace(p:CareWorkspaceProps){
  const tabs=<div className="cw-tabs" aria-label="Вид заботы">{(['overview','calendar'] as const).map(v=><button type="button" key={v} aria-pressed={view===v} onClick={()=>go(v)}>{v==='overview'?'Обзор':'Календарь'}</button>)}</div>;
  const add=<div className="cw-add"><button type="button" className="primary" onClick={()=>start('plan',view==='domain'?domain:null)}>Запланировать</button><button type="button" className="text-button" onClick={()=>start('done',view==='domain'?domain:null)}>Уже сделали</button></div>;
  const title=view==='domain'&&domain?careDomains[domain].title:'Забота';
- if(p.loading||p.loadError)return <ExactPage viewKey="care" onBack={p.onBack}><div className="cw"><h1>Забота</h1>{p.loading?<p role="status">Загружаю дела…</p>:<><p role="alert">Не удалось загрузить дела. Сохранённые записи не потеряны.</p><button type="button" className="primary" onClick={p.onRetry}>Повторить</button></>}{p.daily}{p.regular}</div></ExactPage>;
+ if((p.loading||p.loadError)&&view!=='calendar')return <ExactPage viewKey="care" onBack={p.onBack}><div className="cw"><h1>Забота</h1>{p.loading?<p role="status">Загружаю дела…</p>:<><p role="alert">Не удалось загрузить дела. Сохранённые записи не потеряны.</p><button type="button" className="primary" onClick={p.onRetry}>Повторить</button></>}{p.daily}{p.regular}</div></ExactPage>;
  if(effective==='external')return <ExactPage viewKey="care-edit" onBack={()=>p.onCloseEdit()}><div className="cw"><h1>Изменить дело</h1><CareForm key={p.editingItem!.id} initial={editCareDraft(p.editingItem!)} busy={busy} error={issue} editing onSave={d=>run(()=>p.onUpdate(p.editingItem!.id,d),p.onCloseEdit)} onCancel={p.onCloseEdit}/></div></ExactPage>;
  return <ExactPage viewKey={`care:${view}`} onBack={view==='overview'||view==='calendar'?p.onBack:back}><div className="cw">
  {(view==='overview'||view==='calendar'||view==='domain')&&<><h1>{title}</h1>{view!=='domain'&&<p className="cw-lead">Для {p.dogName?inflectPetName(p.dogName,'gent'):'твоей собаки'} — сегодня и дальше.</p>}{view!=='domain'&&tabs}</>}
  {view==='overview'&&<>
   {p.daily}
   {plans[0]?<section className="cw-next" aria-label="Ближайшее дело"><span className="cw-meta">{reminderTiming(plans[0])}</span><h2>{plans[0].title}</h2><div className="cw-actions"><button type="button" onClick={()=>open(plans[0])}>Открыть</button><button type="button" onClick={()=>{setDetail(plans[0]);setActual(localDay(new Date()));go('complete');}}>Уже сделано</button></div></section>:!p.daily&&<p className="cw-empty">Пока ничего не запланировано.</p>}
-  <div className="cw-domains">{domains.map(d=>{const next=plans.find(r=>domainOf(r)===d),last=history.find(r=>domainOf(r)===d),context=p.contexts[d];return <button type="button" className="cw-domain" data-domain={d} key={d} onClick={()=>{setDomain(d);p.onDomainChange?.(d);go('domain');}}>
+  <div className="cw-domains">{domains.map(d=>{const next=plans.find(r=>domainOf(r)===d),last=history.find(r=>domainOf(r)===d),context=p.contexts[d];return <button type="button" className="cw-domain" data-domain={d} key={d} onClick={()=>{setDomain(d);p.onLocationChange?.({view:'domain',domain:d});go('domain');}}>
    <span className="cw-art"><img src={`/illustrations/care-${d}.webp`} alt="" width="320" height="220"/></span><span className="cw-domain-content"><strong>{careDomains[d].title}<ExactIcon name="next"/></strong><span>{next?.title||context||last?.title||'Пока без записей'}</span><small>{next?dateLabel(eventDay(next)):context?'Из профиля':last?`Сделано ${dateLabel(eventDay(last))}`:'Добавить своё'}</small></span>
   </button>;})}</div>
   {p.regular}
@@ -89,12 +102,18 @@ export function CareWorkspace(p:CareWorkspaceProps){
   {add}<section className="cw-section"><h2>История</h2>{historyIssues}{history.filter(r=>domainOf(r)===domain).map(row)}{!history.some(r=>domainOf(r)===domain)&&!historyIssues.length&&<p className="cw-empty">Здесь останется то, что вы сделали.</p>}</section>
  </>}
  {view==='calendar'&&<>
-  <section className="cw-calendar" data-care-calendar aria-label="Календарь дел"><DayPicker locale={ru} mode="single" selected={parse(selected)} onSelect={d=>d&&setSelected(localDay(d))} month={month} onMonthChange={setMonth} showOutsideDays fixedWeeks weekStartsOn={1} modifiers={{planned:plans.map(r=>parse(eventDay(r))),done:history.map(r=>parse(eventDay(r)))}} modifiersClassNames={{planned:'has-plan',done:'has-done'}} labels={{labelPrevious:()=> 'Предыдущий месяц',labelNext:()=> 'Следующий месяц'}}/>
-   <div className="cw-legend"><span>● План</span><span>○ Сделано</span></div>
-  </section><div className="cw-filters" aria-label="Категория">{([{value:'all',label:'Все'},...domains.map(d=>({value:d,label:careDomains[d].title})),{value:'free',label:'Без категории'}] as const).map(f=><button type="button" key={f.value} aria-pressed={filter===f.value} onClick={()=>setFilter(f.value)}>{f.label}</button>)}</div>
-  <div className="cw-actions"><h2>{dateLabel(selected)}</h2><button type="button" onClick={()=>{setSelected(localDay(new Date()));setMonth(new Date());}}>Сегодня</button></div>
-  {historyIssues}{p.items.filter(r=>eventDay(r)===selected&&(filter==='all'||(filter==='free'?domainOf(r)===null:domainOf(r)===filter))).map(row)}
-  {!p.items.some(r=>eventDay(r)===selected&&(filter==='all'||(filter==='free'?domainOf(r)===null:domainOf(r)===filter)))&&<p className="cw-empty">На эту дату записей нет.</p>}{add}
+  <section className="cw-calendar" data-care-calendar aria-label="Календарь дел"><DayPicker locale={ru} mode="single" selected={parse(selected)} onSelect={d=>d&&calendar(localDay(d),d)} month={month} onMonthChange={d=>calendar(selected,d)} showOutsideDays fixedWeeks weekStartsOn={1} modifiers={{planned:plans.map(r=>parse(eventDay(r))),done:history.map(r=>parse(eventDay(r))),observed:journal.entries.map(e=>new Date(e.createdAt))}} modifiersClassNames={{planned:'has-plan',done:'has-done',observed:'has-observation'}} labels={{labelPrevious:()=> 'Предыдущий месяц',labelNext:()=> 'Следующий месяц'}}/>
+   <div className="cw-legend"><span>● План</span><span>○ Сделано</span><span>· Наблюдение</span></div>
+  </section><div className="cw-filters" aria-label="Категория">{([{value:'all',label:'Все'},...domains.map(d=>({value:d,label:careDomains[d].title})),{value:'free',label:'Без категории'},{value:'observations',label:'Наблюдения'}] as const).map(f=><button type="button" key={f.value} aria-pressed={filter===f.value} onClick={()=>setFilter(f.value)}>{f.label}</button>)}</div>
+  <details className="cw-search"><summary>Найти запись</summary><label htmlFor="care-history-search">Поиск в этом месяце</label><input id="care-history-search" type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Дело или наблюдение"/></details>
+  <div className="cw-actions"><h2>{query?`Результаты за ${month.toLocaleDateString('ru-RU',{month:'long',year:'numeric'})}`:dateLabel(selected)}</h2><button type="button" onClick={()=>{calendar(localDay(new Date()),new Date());}}>Сегодня</button></div>
+  {historyIssues}{p.loading?<p role="status">Загружаю дела…</p>:p.loadError?<p role="alert">Не удалось загрузить дела. <button type="button" onClick={p.onRetry}>Повторить</button></p>:null}
+  {calendarCare.map(row)}
+  {p.observationUndo?.(journal.retry)}
+  {(filter==='all'||filter==='observations')&&<section aria-label="Наблюдения за выбранный день">
+   {journal.loading?<p role="status">Загружаю наблюдения за месяц…</p>:journal.error?<p className="cw-error" role="alert">Не удалось загрузить наблюдения. <button type="button" onClick={journal.retry}>Повторить</button></p>:calendarNotes.map(e=><article className="cw-event" key={e.id} data-observation-id={e.id}><button type="button" className="cw-event-open" onClick={()=>p.observations?.onOpen(e)}><span className="cw-meta">Наблюдение · {query&&`${dateLabel(localDay(new Date(e.createdAt)))} · `}{new Date(e.createdAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</span><strong>{e.note||e.value||observationTypeLabel(e.type)}</strong>{!e.note&&!e.value&&<small>{[e.mood,e.appetite,e.stool,e.energy].filter(Boolean).join(' · ')}</small>}</button></article>)}
+  </section>}
+  {!p.loading&&!p.loadError&&!journal.loading&&!journal.error&&!calendarCare.length&&!calendarNotes.length&&<p className="cw-empty">{query?'По этому запросу записей нет.':'На эту дату записей нет.'}</p>}{!p.loading&&!p.loadError&&add}
  </>}
  {view==='form'&&<><h1>{editingId?'Изменить дело':draft.mode==='done'?'Уже сделали':'Новое дело'}</h1><CareForm key={editingId||'new'} initial={draft} busy={busy} error={issue} editing={!!editingId} onChange={setDraft} onCancel={back} onSave={d=>{setDraft(d);return run(()=>editingId?p.onUpdate(editingId,d):p.onCreate(d),()=>{draftCache.current=null;setDetail(null);go(returnView);});}}/></>}
  {view==='detail'&&chosen&&<><span className="cw-meta">{domainOf(chosen)?careDomains[domainOf(chosen)!].title:'Своё дело'}</span><h1>{chosen.title}</h1><section className="cw-detail"><p>{chosen.status==='done'?`Сделано ${dateLabel(eventDay(chosen))}`:reminderTiming(chosen)}</p>{chosen.status==='done'&&<p className="cw-meta">Планировали: {dateLabel(localDay(new Date(chosen.dueAt)))}</p>}{chosen.note&&<p className="cw-note">{chosen.note}</p>}<p>{repeatLabels[chosen.recurrence||'none']}</p>{chosen.recurrence&&chosen.recurrence!=='none'&&<p className="cw-meta">{chosen.recurrenceBasis==='completed'?'После выполнения':'От плановой даты'}</p>}<p className="cw-meta">{chosen.reminderPreference&&chosen.reminderPreference!=='off'?'Напоминание сохранено, но сообщения бота пока недоступны.':'Без сообщения от бота'}</p></section>

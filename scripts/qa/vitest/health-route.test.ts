@@ -8,3 +8,5 @@ beforeEach(()=>{state.owner='owner-a';state.session=null;state.reads=0;});
 const get=(query='petId=test-pet')=>GET(new Request(`http://localhost/api/health?${query}`));
 test('anonymous and conflicting identities never read records',async()=>{state.owner='';expect((await get()).status).toBe(401);state.owner='owner-a';state.session={ownerId:'owner-b'};expect((await get()).status).toBe(403);expect(state.reads).toBe(0);});
 test('invalid continuation fails closed before a query',async()=>{expect((await get('petId=test-pet&before=not-json')).status).toBe(400);expect(state.reads).toBe(0);});
+
+test('invalid calendar window fails closed before a query',async()=>{expect((await get('petId=test-pet&from=2026-09-01T00:00:00Z')).status).toBe(400);expect(state.reads).toBe(0);});

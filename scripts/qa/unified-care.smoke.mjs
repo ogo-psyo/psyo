@@ -47,12 +47,12 @@ for(const [engine,width] of [['chromium',390],['webkit',320],['chromium',1100]])
   await page.locator('#observe-text').fill('После прогулки спокойно отдыхает');
   await page.getByRole('button',{name:'Сохранить запись',exact:true}).click();
   await page.getByText('Запись сохранена',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'В историю',exact:true}).click();await back();
+  await page.getByRole('button',{name:'В календарь',exact:true}).click();await page.getByRole('button',{name:'Обзор',exact:true}).click();
   await page.getByRole('heading',{name:'Забота',exact:true}).waitFor();
   await page.locator('.cw-observation').filter({hasText:'После прогулки спокойно отдыхает'}).waitFor();
   await page.getByRole('button',{name:'История наблюдений',exact:true}).click();
   await page.getByRole('button').filter({hasText:'Контрольная запись для открытия'}).click();
-  await page.locator('.note-body').filter({hasText:'Контрольная запись для открытия'}).waitFor();await back();await back();
+  await page.locator('.note-body').filter({hasText:'Контрольная запись для открытия'}).waitFor();await back();await page.getByRole('button',{name:'Обзор',exact:true}).click();
   await page.locator('[data-domain=food]').click();await page.getByRole('heading',{name:'Питание',exact:true}).waitFor();
   await page.getByRole('button',{name:'Выполнено: Вечернее кормление',exact:true}).waitFor();
   await page.getByRole('button',{name:'Все регулярные дела',exact:true}).click();await page.getByRole('heading',{name:/Регулярные дела/}).waitFor();await back();

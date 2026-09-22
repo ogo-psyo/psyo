@@ -83,3 +83,11 @@
 #pso-exact-interface .cw-habit{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #e4ddeb}
 #pso-exact-interface .cw-habit:last-child{border-bottom:0}
 #pso-exact-interface .cw-habit .cw-check:disabled{opacity:.6}
+
+#pso-exact-interface .cw .rdp-day.has-observation .rdp-day_button:before{content:'';position:absolute;width:5px;height:5px;bottom:4px;left:calc(50% + 6px);background:#835b80;border-radius:1px}
+#pso-exact-interface .cw-legend{flex-wrap:wrap;gap:8px 16px}
+
+#pso-exact-interface .cw-search{margin:16px 0}
+#pso-exact-interface .cw-search summary{min-height:44px;cursor:pointer}
+#pso-exact-interface .cw-search label{display:block;margin:8px 0}
+#pso-exact-interface .cw-search input{width:100%;min-height:48px;font:inherit;color:#3e3947;background:#faf9fc;border:1px solid #d7cfdf;border-radius:12px;padding:10px;box-sizing:border-box}

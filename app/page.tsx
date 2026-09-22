@@ -3,11 +3,11 @@
 import { breedInputValue, breedProfilePatch } from '@/lib/breedSearch';
 import { sexLabel } from '@/lib/profileFieldChoices';
 import {nextReminderDueAt} from '@/lib/reminderRecurrence';
-import {reminderReceipt,reminderCalendarText,type ReminderRecord,type CareDomain} from '@/lib/reminder';
+import {reminderReceipt,reminderCalendarText,type ReminderRecord} from '@/lib/reminder';
 import {type ReminderDraft} from '@/components/care/ReminderEditor';
 import {CareObservations, CareHabits} from '@/components/care/CareDaily';
-import {CareWorkspace} from '@/components/care/CareWorkspace';
-import {careDraftPayload,type CareDraft} from '@/lib/careDomains';
+import {CareWorkspace,type CareLocation} from '@/components/care/CareWorkspace';
+import {careDraftPayload,localDay,type CareDraft} from '@/lib/careDomains';
 import { isPrimaryObservationFact } from '@/lib/observationLabels';
 import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
 import {isMapSearchPlace,type MapSearchPlace} from '@/lib/mapSearchPlace';
@@ -583,7 +583,7 @@ export default function Home() {
   const [, setCalendarCursor] = useState(() => new Date());
   const [, setSelectedCalendarDate] = useState(() => dateInputValue(new Date()));
   const calendarAutoSelectedPetRef = useRef<string | null>(null);
-  const [careReturnDomain, setCareReturnDomain] = useState<CareDomain|null>(null);
+  const [careLocation, setCareLocation] = useState<CareLocation>({view:'overview'});
   const [careView, setCareView] = useState<'active' | 'history'>('active');
   const [mapVisited, setMapVisited] = useState(false);
   const [agentSavedRouteSelection,setAgentSavedRouteSelection]=useState<{token:string;petId:string;route:OwnerRouteView}|null>(null);
@@ -765,7 +765,7 @@ export default function Home() {
 
   function setTab(nextTab: Tab) {
     if (nextTab === tab) return;
-    if (nextTab === 'calendar' && tab !== 'health' && tab !== 'habits') setCareReturnDomain(null);
+    if (nextTab === 'calendar' && tab !== 'health' && tab !== 'habits') setCareLocation({view:'overview'});
     if (['calendar', 'habits', 'health', 'card', 'diary', 'things'].includes(nextTab)) {
       secondaryOrigins.current.push({ from: tab, to: nextTab, detail: journeyDetail, shellScroll: phoneShellRef.current?.scrollTop ?? 0, windowScroll: window.scrollY, focusText: document.activeElement instanceof HTMLButtonElement ? document.activeElement.textContent?.trim() ?? '' : '' });
     } else secondaryOrigins.current = [];
@@ -800,6 +800,19 @@ export default function Home() {
     const nextUrl = new URL(window.location.href);
     nextUrl.hash = target;
     window.history.replaceState({ tab: target, detail: valid?.detail }, '', nextUrl);
+  }
+
+  function openObservationCalendar(at?:string) {
+    setCareLocation(current=>{
+      const day=at?localDay(new Date(at)):current.view==='calendar'?current.day:localDay(new Date());
+      return {view:'calendar',day,month:current.view==='calendar'&&current.day===day?current.month:day};
+    });
+    setExactRecordId(null);setObservationCaptureOpen(false);
+    if(tab==='health'){
+      if(secondaryOrigins.current.at(-1)?.to==='health')secondaryOrigins.current.pop();
+      setTabState('calendar');
+      const url=new URL(window.location.href);url.hash='calendar';window.history.replaceState({tab:'calendar'},'',url);
+    }else if(tab!=='calendar')setTab('calendar');
   }
 
   function openPrivateRecord(kind: 'observation' | 'reminder', id: string, trigger: HTMLButtonElement) {
@@ -2178,7 +2191,7 @@ export default function Home() {
 
   useEffect(() => {
     setHabitCheckinError('');
-    setCareReturnDomain(null);
+    setCareLocation({view:'overview'});
     if (!profile.backendPetId || isGuestMode()) return;
     const controller = new AbortController();
     void loadRealModules(profile.backendPetId, controller.signal);
@@ -4555,7 +4568,7 @@ export default function Home() {
           onSaved={record => { const entry=normalizeObservation(record); if(entry) setObservations(current=>[entry,...current.filter(item=>item.id!==entry.id)]); setExactRecordId(record.id); setExactAgentObservationId(null); }}
           onOpen={record => { setExactRecordId(record.id); setExactAgentObservationId(null); }}
         /></ExactPage>}
-        {hasDog && tab === 'health' && !exactAgentObservationId && <ExactRecords selectedId={exactRecordId} onSelect={setExactRecordId}
+        {hasDog && tab === 'health' && !exactAgentObservationId && <ExactRecords onHistory={openObservationCalendar} selectedId={exactRecordId} onSelect={setExactRecordId}
           key={profile.backendPetId || activePetId}
           dogName={profile.dogName || 'Собака'}
           entries={observations}
@@ -4632,10 +4645,19 @@ export default function Home() {
           onRetry={() => loadSocialSurface().catch(() => setNearbyState('error'))}
         />}
 
-        {hasDog && tab === 'calendar' && <CareWorkspace key={profile.backendPetId||activePetId||'guest'} initialDomain={careReturnDomain} onDomainChange={setCareReturnDomain}
+        {hasDog && tab === 'calendar' && <CareWorkspace key={profile.backendPetId||activePetId||'guest'} location={careLocation} onLocationChange={setCareLocation}
+          observationUndo={refresh=>recentlyDeletedObservation&&<div role="status"><span>Наблюдение убрано.</span><button type="button" className="text-button" disabled={observationMutationBusy} onClick={async()=>{await restoreObservation();refresh();}}>Вернуть</button>{observationIssue&&<p role="alert">{observationIssue.message}</p>}</div>}
+          observations={{petKey:profile.backendPetId||activePetId||'guest',guest:isGuestMode(),entries:observations,
+            read:async(from,to,before,signal)=>{
+              const params=new URLSearchParams({petId:profile.backendPetId||'',from,to});if(before)params.set('before',before);
+              const response=await fetch(`/api/health?${params}`,{headers:authHeaders(),credentials:'include',signal});
+              const body=await response.json();
+              if(!response.ok||!Array.isArray(body.entries)||(body.hasMore&&typeof body.nextCursor!=='string'))throw new Error('CALENDAR_READ_FAILED');
+              return {entries:body.entries.map((entry:unknown)=>observationReceipt(entry,profile.backendPetId!)),nextCursor:body.hasMore?body.nextCursor:null};
+            },onOpen:entry=>{setObservations(current=>[...current.filter(e=>e.id!==entry.id),entry].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)));setExactRecordId(entry.id);setObservationCaptureOpen(false);setTab('health');}}}
           daily={<CareObservations dogName={profile.dogName} entries={observations} loading={healthLoading} error={moduleErrors.health}
             onRetry={()=>void loadHealthTimeline()} onCreate={()=>{setExactRecordId(null);setObservationCaptureOpen(true);setTab('health');}}
-            onHistory={()=>{setExactRecordId(null);setObservationCaptureOpen(false);setTab('health');}}
+            onHistory={()=>openObservationCalendar()}
             onOpen={id=>{setExactRecordId(id);setObservationCaptureOpen(false);setTab('health');}} />}
           regular={<CareHabits habits={habits} loading={habitLoading} error={moduleErrors.habits} mutationError={habitCheckinError}
             busyId={habitBusyId} canPersist={!isGuestMode()&&Boolean(profile.backendPetId)}

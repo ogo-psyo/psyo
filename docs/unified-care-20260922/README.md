@@ -20,7 +20,10 @@ Integrate observation and habit scenarios around the existing Уход/Забо�
 - Old #health/#habits links remain compatible; their fallback Back goes to care. Assistant destination contracts remain intact.
 
 ## Boundaries
-This is UI integration, not a new unified event schema. The care calendar still shows dated care events, not a fabricated merged timeline of observations/habit checkins. Existing observation dates/search stay in the observation history reached from care. Guest habit persistence is not introduced; its current Telegram requirement is retained. No backend/auth/privacy/dependency changes.
+The same care calendar now shows dated care events and observation records by their actual observed date. Observation dates are not converted into reminder dates; entities remain separate. Month search covers care text and observations. The existing owner-scoped health timeline API has an additive validated from/to window; its original cursor-based callers retain their contract. Guest observations use existing local data, and guest habit persistence is not introduced. No schema/auth/privacy/dependency changes.
 
 ## Verification
 See verification.md for final results. Browser fixture checks never write real user data. No claim of physical iPhone or live authenticated persistence verification.
+
+## Calendar correction · owner 17:37
+Observation history must share Care's calendar. Add read-only from/to window to the existing owner-scoped health timeline endpoint (no schema changes); paginate inside that window so older months are complete. Same calendar marks observations and dated care events; one selected day, detail/edit/back retains it. Loading/failure never implies an empty day. Replace active standalone history/date filtering with shared-calendar navigation.
