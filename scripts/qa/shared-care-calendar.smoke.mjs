@@ -47,11 +47,15 @@ for(const [engine,width] of [['chromium',390],['webkit',320]]){
   await page.locator(`[data-observation-id="${entry.id}"]`).filter({hasText:'Уточнение давнего наблюдения'}).waitFor();
   await page.getByRole('button',{name:'Наблюдения',exact:true}).click();
   assert.equal(await page.getByRole('button').filter({hasText:'Груминг в этот день'}).count(),0);
+  const chip=page.locator('.cw-calendar-filters').getByRole('button',{name:'Наблюдения',exact:true});
+  const selectedStyle=await chip.evaluate(el=>({bg:getComputedStyle(el).backgroundColor,border:getComputedStyle(el).borderTopWidth,radius:getComputedStyle(el).borderRadius,height:el.getBoundingClientRect().height}));
+  assert.equal(selectedStyle.bg,'rgb(230, 223, 238)');assert.equal(selectedStyle.border,'1px');assert.ok(selectedStyle.height>=44);assert.equal(selectedStyle.radius,'999px');
   await page.getByRole('button',{name:'Все',exact:true}).click();
+  assert.equal(await chip.evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(250, 249, 252)');
   await page.evaluate(()=>document.fonts.ready);await page.locator('#pso-exact-content').evaluate(el=>el.scrollTop=0);await page.screenshot({path:`${out}/${engine}-calendar.png`});
-  await page.locator(`[data-observation-id="${entry.id}"]`).scrollIntoViewIfNeeded();await page.screenshot({path:`${out}/${engine}-day.png`});
+  await page.locator('#care-history-search').scrollIntoViewIfNeeded();await page.locator('#pso-exact-content').evaluate(el=>el.scrollTop-=8);await page.screenshot({path:`${out}/${engine}-day.png`});
   assert.ok(await page.locator('#pso-exact-content').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
-  await page.getByText('Найти запись',{exact:true}).click();await page.locator('#care-history-search').fill('Уточнение давнего');await page.locator(`[data-observation-id="${entry.id}"]`).waitFor();assert.equal(await page.getByRole('button').filter({hasText:'Груминг в этот день'}).count(),0);await page.locator('#care-history-search').fill('');
+  assert.equal(await page.locator('#care-history-search').isVisible(),true);await page.locator('#care-history-search').fill('Уточнение давнего');await page.locator(`[data-observation-id="${entry.id}"]`).waitFor();assert.equal(await page.getByRole('button').filter({hasText:'Груминг в этот день'}).count(),0);await page.locator('#care-history-search').fill('');
   await page.locator(`[data-observation-id="${entry.id}"] button`).click();await page.getByRole('button',{name:'Удалить запись',exact:true}).click();await page.getByRole('button',{name:'Убрать запись',exact:true}).click();
   await page.getByText('Наблюдение убрано.',{exact:true}).waitFor();assert.equal(await page.locator(`[data-observation-id="${entry.id}"]`).count(),0);
   await page.getByRole('button',{name:'Вернуть',exact:true}).click();await page.locator(`[data-observation-id="${entry.id}"]`).waitFor();

@@ -18,3 +18,6 @@ Review: no dependency additions, data conversions or deletes. A parent-return ma
 - Evidence: artifacts/shared-care-calendar/results.json, *-calendar.png and *-day.png. No live user data writes.
 - Prior documentation limitation (care-only calendar) is superseded by the owner's explicit correction; the active observation history now redirects to the shared calendar instead of mounting its old separate date filter.
 - Final build/TypeScript/redesign contract passed after undo wiring. All source contracts passed after updating the calendar handler checks to the shared-date navigation. Final changed-file lint: 0 errors; full lint budget 219/220. Design scan: 21 advisory findings in incumbent components, no severe findings.
+
+## Search / filter presentation · 18:32 owner correction
+Replaced collapsed search with an always-visible, labelled search input above category chips. Fixed the shell's important transparent-button reset overriding chip backgrounds/borders. Matte outlined chips and selected lavender state; no data/logic changes. Build/typecheck/redesign contract passed, existing shared-calendar smoke passed Chromium390/WebKit320 including computed fill/border/radius/44px target checks and search/filter results. Screenshot: artifacts/shared-care-calendar/search-chips-390.png. Production unchanged.
