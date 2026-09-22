@@ -3,8 +3,9 @@
 import { breedInputValue, breedProfilePatch } from '@/lib/breedSearch';
 import { sexLabel } from '@/lib/profileFieldChoices';
 import {nextReminderDueAt} from '@/lib/reminderRecurrence';
-import {reminderReceipt,reminderCalendarText,type ReminderRecord} from '@/lib/reminder';
+import {reminderReceipt,reminderCalendarText,type ReminderRecord,type CareDomain} from '@/lib/reminder';
 import {type ReminderDraft} from '@/components/care/ReminderEditor';
+import {CareObservations, CareHabits} from '@/components/care/CareDaily';
 import {CareWorkspace} from '@/components/care/CareWorkspace';
 import {careDraftPayload,type CareDraft} from '@/lib/careDomains';
 import { isPrimaryObservationFact } from '@/lib/observationLabels';
@@ -527,6 +528,7 @@ export default function Home() {
   const [documentBusyId, setDocumentBusyId] = useState<string | null>(null);
   const documentUploadTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [habits, setHabits] = useState<HabitView[]>([]);
+  const [habitCheckinError, setHabitCheckinError] = useState('');
   const [habitLoading, setHabitLoading] = useState(false);
   const [habitBusyId, setHabitBusyId] = useState<string | null>(null);
   const [suggestedHabitDraft, setSuggestedHabitDraft] = useState<HabitDraft | null>(null);
@@ -581,6 +583,7 @@ export default function Home() {
   const [, setCalendarCursor] = useState(() => new Date());
   const [, setSelectedCalendarDate] = useState(() => dateInputValue(new Date()));
   const calendarAutoSelectedPetRef = useRef<string | null>(null);
+  const [careReturnDomain, setCareReturnDomain] = useState<CareDomain|null>(null);
   const [careView, setCareView] = useState<'active' | 'history'>('active');
   const [mapVisited, setMapVisited] = useState(false);
   const [agentSavedRouteSelection,setAgentSavedRouteSelection]=useState<{token:string;petId:string;route:OwnerRouteView}|null>(null);
@@ -762,6 +765,7 @@ export default function Home() {
 
   function setTab(nextTab: Tab) {
     if (nextTab === tab) return;
+    if (nextTab === 'calendar' && tab !== 'health' && tab !== 'habits') setCareReturnDomain(null);
     if (['calendar', 'habits', 'health', 'card', 'diary', 'things'].includes(nextTab)) {
       secondaryOrigins.current.push({ from: tab, to: nextTab, detail: journeyDetail, shellScroll: phoneShellRef.current?.scrollTop ?? 0, windowScroll: window.scrollY, focusText: document.activeElement instanceof HTMLButtonElement ? document.activeElement.textContent?.trim() ?? '' : '' });
     } else secondaryOrigins.current = [];
@@ -786,7 +790,7 @@ export default function Home() {
     setExactProfileView(nextView);
   }
 
-  function closeSecondaryFlow(parent: 'today' | 'profile' | 'all') {
+  function closeSecondaryFlow(parent: 'today' | 'profile' | 'all' | 'calendar') {
     const origin = secondaryOrigins.current.at(-1);
     const valid = origin?.to === tab ? secondaryOrigins.current.pop() : undefined;
     const target = valid?.from ?? parent;
@@ -2173,6 +2177,8 @@ export default function Home() {
   }
 
   useEffect(() => {
+    setHabitCheckinError('');
+    setCareReturnDomain(null);
     if (!profile.backendPetId || isGuestMode()) return;
     const controller = new AbortController();
     void loadRealModules(profile.backendPetId, controller.signal);
@@ -2218,7 +2224,7 @@ export default function Home() {
     if (!profile.backendPetId || isGuestMode() || habitBusyId) return;
     const scope = `habit:checkin:${habitId}`;
     setHabitBusyId(habitId);
-    setError('');
+    setHabitCheckinError('');
     try {
       const recommendationId = acceptedRecommendationId('open_habits');
       const response = await fetch(`/api/habits/${encodeURIComponent(habitId)}/checkins`, {
@@ -2228,14 +2234,14 @@ export default function Home() {
         body: JSON.stringify({ recommendationId }),
       });
       if (!response.ok) {
-        setError('Не получилось отметить привычку. Попробуй снова.');
+        setHabitCheckinError('Не получилось отметить дело. Попробуй снова.');
         return;
       }
       finishCareMutation(scope);
       finishRecommendationOutcome(recommendationId);
       await loadRealModules(profile.backendPetId);
     } catch {
-      setError('Не получилось отметить привычку. Проверь соединение и попробуй снова.');
+      setHabitCheckinError('Не получилось отметить дело. Проверь соединение и попробуй снова.');
     } finally {
       setHabitBusyId(null);
     }
@@ -4280,7 +4286,7 @@ export default function Home() {
           onContinue={run => { if (run) { setAgentRunId(run.id); setAssistantThreadId(run.thread_id || ''); } openAssistantSheet(); }}
           onProfile={() => { setProfileSurface('overview'); setExactProfileView('profile'); setTab('profile'); }}
           onAll={() => setTab('all')}
-          observationCount={observations.length} onHistory={() => setTab('health')}
+          onCare={() => setTab('calendar')}
           onAttach={() => { setExactProfileView('documents'); setProfileSurface('passport'); setTab('profile'); setDocumentUploadOpen(true); }}
           onVoice={() => setExactVoiceOpen(true)}
         />}
@@ -4533,9 +4539,10 @@ export default function Home() {
           habits={habits}
           loading={habitLoading}
           error={moduleErrors.habits}
+          mutationError={habitCheckinError}
           busyId={habitBusyId}
           canPersist={!isGuestMode() && Boolean(profile.backendPetId)}
-          onBack={() => closeSecondaryFlow('today')}
+          onBack={() => closeSecondaryFlow('calendar')}
           onCreate={createHabit}
           onUpdate={updateHabit}
           onArchive={archiveHabit}
@@ -4555,7 +4562,7 @@ export default function Home() {
           draft={observationDraft}
           saving={observationSaving}
           error={moduleErrors.health}
-          onBack={() => closeSecondaryFlow('today')}
+          onBack={() => closeSecondaryFlow('calendar')}
           onDraftChange={updateObservationDraft}
           onSave={submitObservation}
           onRetry={() => loadHealthTimeline()}
@@ -4625,7 +4632,18 @@ export default function Home() {
           onRetry={() => loadSocialSurface().catch(() => setNearbyState('error'))}
         />}
 
-        {hasDog && tab === 'calendar' && <CareWorkspace key={profile.backendPetId||activePetId||'guest'}
+        {hasDog && tab === 'calendar' && <CareWorkspace key={profile.backendPetId||activePetId||'guest'} initialDomain={careReturnDomain} onDomainChange={setCareReturnDomain}
+          daily={<CareObservations dogName={profile.dogName} entries={observations} loading={healthLoading} error={moduleErrors.health}
+            onRetry={()=>void loadHealthTimeline()} onCreate={()=>{setExactRecordId(null);setObservationCaptureOpen(true);setTab('health');}}
+            onHistory={()=>{setExactRecordId(null);setObservationCaptureOpen(false);setTab('health');}}
+            onOpen={id=>{setExactRecordId(id);setObservationCaptureOpen(false);setTab('health');}} />}
+          regular={<CareHabits habits={habits} loading={habitLoading} error={moduleErrors.habits} mutationError={habitCheckinError}
+            busyId={habitBusyId} canPersist={!isGuestMode()&&Boolean(profile.backendPetId)}
+            onRetry={()=>void loadRealModules()} onManage={()=>{setSuggestedHabitDraft(null);setTab('habits');}} onCheckIn={checkInHabit} />}
+          regularForDomain={domain=><CareHabits domain={domain} habits={habits} loading={habitLoading} error={moduleErrors.habits} mutationError={habitCheckinError}
+            busyId={habitBusyId} canPersist={!isGuestMode()&&Boolean(profile.backendPetId)}
+            onRetry={()=>void loadRealModules()} onManage={()=>{setSuggestedHabitDraft(null);setTab('habits');}} onCheckIn={checkInHabit} />}
+
           loading={!isGuestMode()&&(careRead?.petId!==profile.backendPetId||careRead?.status==='loading')} loadError={!isGuestMode()&&careRead?.status==='error'} onRetry={()=>void refreshCare()}
           dogName={profile.dogName} contexts={{food:profile.diet,behavior:profile.triggers}}
           items={[...reminders,...reminders.flatMap(item=>(reminderHistory[item.id]||[]).filter(entry=>entry.payload?.completedAt&&!(item.status==='done'&&item.completedAt===entry.payload.completedAt)).map(entry=>({...item,status:'done',dueAt:entry.payload!.dueAt||entry.createdAt,completedAt:entry.payload!.completedAt,snoozedUntil:undefined})))]}

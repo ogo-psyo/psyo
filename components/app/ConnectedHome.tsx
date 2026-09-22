@@ -10,7 +10,7 @@ export function ConnectedHome(props: {
   dogName: string; petId?: string; guest: boolean; question: string; loading: boolean;
   recentQuestion?: string; headers: () => Record<string, string>; onQuestion: (text: string) => void;
   onAsk: () => void; onContinue: (run?: Recent) => void; onProfile: () => void; onAll: () => void;
-  observationCount: number; onHistory: () => void; onAttach: () => void; onVoice: () => void;
+  onCare: () => void; onAttach: () => void; onVoice: () => void;
 }) {
   const [recent,setRecent]=useState<Recent|null>(null),[readError,setReadError]=useState(false),[revision,setRevision]=useState(0);
   const readRecent=useEffectEvent((signal:AbortSignal)=>fetch(`/api/agent/runs?petId=${encodeURIComponent(props.petId || '')}`,{headers:props.headers(),signal}));
@@ -33,7 +33,7 @@ export function ConnectedHome(props: {
     </form>
     {(topic || recent) && <div className="recent"><ExactRow title="Продолжить разговор" detail={topic || 'Последний разговор'} onClick={()=>props.onContinue(props.recentQuestion?undefined:recent??undefined)}/></div>}
     {readError && !topic && <div className="status-line" role="status">Недавний разговор не загрузился.<button type="button" className="text-button" onClick={()=>setRevision(value=>value+1)}>Повторить</button></div>}
-    <div className="recent"><ExactRow title={`Записи о ${inflectPetName(props.dogName, 'loct')}`} detail={`Записей в истории: ${props.observationCount}`} onClick={props.onHistory} /></div>
+    <div className="recent"><ExactRow title={`Забота о ${inflectPetName(props.dogName, 'loct')}`} detail="Дела, наблюдения и привычки" onClick={props.onCare} /></div>
   </section></ExactPage>;
 }
 
@@ -42,13 +42,11 @@ export function ConnectedTools({ onOpen }: { onOpen: (destination: ToolDestinati
   return <ExactPage viewKey="all"><section data-connected-tools>
     <h1 data-assistant-heading>Все разделы</h1>
     <div className="list">
-      <ExactRow icon="heart" title="Уход" detail="Предстоящие дела и выполнение" destination="calendar" onClick={() => onOpen('calendar')} />
+      <ExactRow icon="heart" title="Уход" detail="Дела, наблюдения и привычки" destination="calendar" onClick={() => onOpen('calendar')} />
       <ExactRow icon="bag" title="Нужно купить" detail="Записать и не забыть в магазине" destination="things" onClick={() => onOpen('things')} />
-      <ExactRow icon="book" title="Наблюдения" detail="Заметки о самочувствии и привычках" destination="health" onClick={() => onOpen('health')} />
       <ExactRow icon="save" title="Сохранённое" detail="Места и прогулки" destination="library" onClick={() => onOpen('library')} />
       <ExactRow icon="file" title="Документы" detail="Открыть нужный файл" destination="documents" onClick={() => onOpen('documents')} />
       <ExactRow icon="book" title="Дневник" detail="События дня и наблюдения" destination="diary" onClick={() => onOpen('diary')} />
-      <ExactRow icon="clock" title="Привычки" detail="Регулярные занятия" destination="habits" onClick={() => onOpen('habits')} />
       <ExactRow icon="profile" title="Сведения о собаке" detail="Паспорт, характер и здоровье" destination="passport" onClick={() => onOpen('passport')} />
       <ExactRow icon="file" title="Памятка для других" detail="Приватность и ссылка" destination="card" onClick={() => onOpen('card')} />
       <ExactRow icon="gav" title="Знакомства" detail="Ответы и места встреч" destination="connections" onClick={() => onOpen('connections')} />

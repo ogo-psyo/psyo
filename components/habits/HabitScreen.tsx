@@ -41,6 +41,7 @@ export function HabitScreen({
   habits,
   loading,
   error,
+  mutationError,
   busyId,
   canPersist,
   onBack,
@@ -55,6 +56,7 @@ export function HabitScreen({
   habits: HabitView[];
   loading: boolean;
   error?: string;
+  mutationError?: string;
   busyId: string | null;
   canPersist: boolean;
   onBack: () => void;
@@ -79,10 +81,10 @@ export function HabitScreen({
 
   return (
     <ExactPage viewKey="habits" onBack={onBack}><section className="exact-extension" aria-labelledby="habit-screen-title">
-      <h1 id="habit-screen-title">Привычки {dogName}</h1><p className="lead">{habits.length ? `${completed} отметок в текущем периоде` : 'Регулярные дела появятся здесь'}</p>
+      <h1 id="habit-screen-title">Регулярные дела {dogName}</h1><p className="lead">{habits.length ? `${completed} отметок в текущем периоде` : 'Регулярные дела появятся здесь'}</p>
 
-      {loading ? <div className="module-skeleton" aria-label="Загружаю привычки" /> : error ? (
-        <div className="module-error" role="alert"><b>Привычки не загрузились</b><p>{error}</p><button type="button" onClick={() => void onRetry()}>Повторить</button></div>
+      {loading ? <div className="module-skeleton" aria-label="Загружаю регулярные дела" /> : error ? (
+        <div className="module-error" role="alert"><b>Регулярные дела не загрузились</b><p>{error}</p><button type="button" onClick={() => void onRetry()}>Повторить</button></div>
       ) : habits.length ? (
         <div className="habit-list">
           {habits.map((habit) => {
@@ -100,10 +102,12 @@ export function HabitScreen({
             );
           })}
         </div>
-      ) : <div className="module-empty"><b>Пока без привычек</b><p>Добавь только то, что действительно повторяется: прогулку, кормление, лекарство или уход.</p></div>}
+      ) : <div className="module-empty"><b>Пока без регулярных дел</b><p>Добавь только то, что действительно повторяется: прогулку, кормление, лекарство или уход.</p></div>}
+
+      {mutationError && <p className="error" role="alert">{mutationError}</p>}
 
       {!adding ? (
-        <button className="primary module-primary-action" type="button" disabled={!canPersist} onClick={() => { setEditingId(null); setAdding(true); }}><Plus weight="bold" aria-hidden="true" /> Добавить привычку</button>
+        <button className="primary module-primary-action" type="button" disabled={!canPersist} onClick={() => { setEditingId(null); setAdding(true); }}><Plus weight="bold" aria-hidden="true" /> Добавить регулярное дело</button>
       ) : (
         <form className="module-form pso-form" onSubmit={async (event) => {
           event.preventDefault();
@@ -132,7 +136,7 @@ export function HabitScreen({
           <div className="module-form-actions"><button className="primary" type="submit" disabled={!canPersist || Boolean(busyId)}>{busyId ? 'Сохраняю…' : editingId ? 'Сохранить изменения' : 'Сохранить'}</button><button className="secondary" type="button" disabled={Boolean(busyId)} onClick={() => { setAdding(false); setEditingId(null); setDraft({ title: '', kind: 'walk', cadence: 'daily', targetPerPeriod: 1 }); }}>Отмена</button></div>
         </form>
       )}
-      {!canPersist && <p className="module-persistence-note">Привычки сохраняются для профиля, открытого через Telegram.</p>}
+      {!canPersist && <p className="module-persistence-note">Регулярные дела сохраняются для профиля, открытого через Telegram.</p>}
     </section></ExactPage>
   );
 }

@@ -17,7 +17,10 @@ for (const view of ['memory', 'documents', 'document', 'editprofile', 'identity'
   assert.match(exactProfile, new RegExp(`props.view === '${view}'`), `missing profile view: ${view}`);
 }
 for (const group of ['Паспорт и внешность','Характер и общение','Здоровье и уход']) assert.ok(fields.includes(group));
-for (const path of ['onPhotoChange','onGenerateAvatar','onUseNoAvatar','onRollbackAvatar','onActivateAvatar','onDiscardAvatarDraft','onSaveProfile','onOpenHealth','onOpenHabits','onOpenCard','onOpenSettings','onDeleteDocument']) assert.ok(exactProfile.includes(path), `missing profile action: ${path}`);
+for (const path of ['onPhotoChange','onGenerateAvatar','onUseNoAvatar','onRollbackAvatar','onActivateAvatar','onDiscardAvatarDraft','onSaveProfile','onOpenPlan','onOpenCard','onOpenSettings','onDeleteDocument']) assert.ok(exactProfile.includes(path), `missing profile action: ${path}`);
+assert.doesNotMatch(exactProfile, /title="(?:Наблюдения|Привычки)"/);
+assert.match(page, /daily=\{<CareObservations/);
+assert.match(page, /regular=\{<CareHabits/);
 assert.match(exactProfile, /avatarCapabilities\.uploadsEnabled/);
 assert.match(exactProfile, /avatarCapabilities\.generationEnabled/);
 assert.match(exactProfile, /avatarConsent/);

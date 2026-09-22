@@ -72,12 +72,10 @@ export function ExactProfile(props: Props) {
     {!props.imageUrl && <button type="button" className="text-button" onClick={() => props.onView('identity')}>Добавить фото</button>}
     <button type="button" className="text-button" onClick={() => { if (!props.draft) props.onDraft({ ...profile }); props.onView('editprofile'); }}>Изменить сведения</button>
     <div className="list section-gap">
-      <ExactRow title="Наблюдения" detail="Заметки о самочувствии и привычках" icon="book" onClick={props.onOpenHealth} />
       <ExactRow title="Документы" detail="Хранятся отдельно от разговора" icon="file" onClick={() => props.onView('documents')} />
       <ExactRow title="Память помощника" detail="Что учитывать в разговорах" icon="memory" onClick={() => props.onView('memory')} />
       <ExactRow title="Прогулки и места" detail="Сохранённое вами" icon="map" onClick={props.onLibrary} />
-      <ExactRow title="План ухода" detail="Дела, календарь и история" icon="clock" onClick={props.onOpenPlan} />
-      <ExactRow title="Привычки" detail="Повторяющиеся занятия и отметки" icon="book" onClick={props.onOpenHabits} />
+      <ExactRow title="Уход" detail="Дела, наблюдения и привычки" icon="clock" onClick={props.onOpenPlan} />
       <ExactRow title="Памятка для других" detail="Выбрать сведения и управлять ссылкой" icon="file" onClick={props.onOpenCard} />
       <ExactRow title="Настройки" detail="Мои собаки, аккаунт и приватность" icon="profile" onClick={props.onOpenSettings} />
     </div>

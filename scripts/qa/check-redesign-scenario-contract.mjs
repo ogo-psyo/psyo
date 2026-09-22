@@ -44,7 +44,9 @@ requireText(page, 'navigateFromAssistant(action.destination', 'assistant typed d
 requireText(page, "overlay: 'assistant'", 'assistant Back integration');
 requireText(page, 'openJourneyDetail', 'detail Back integration');
 requireText(profile, 'onOpenPlan', 'mobile profile plan reachability');
-requireText(profile, 'onOpenHabits', 'mobile profile habits reachability');
+requireText(source('components/care/CareDaily.tsx'), 'onManage', 'habits reachable inside care');
+rejectText(profile, 'title="Привычки"', 'no standalone habits section');
+rejectText(profile, 'title="Наблюдения"', 'no standalone observations section');
 requireText(profile, 'onOpenCard', 'mobile public-card reachability');
 requireText(profile, 'onOpenSettings', 'mobile settings reachability');
 requireText(social, 'inviteState', 'active incoming invite states');
