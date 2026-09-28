@@ -66,6 +66,8 @@ type SearchResult = {
   point: { lat: number; lng: number } | null;
 };
 
+const quickPlaceCategories=[['park','Парки'],['dog_park','Площадки'],['cafe','Кафе'],['veterinary','Ветклиники'],['pet','Зоомагазины']] as const;
+
 type ProductionMapWorkspaceProps = {
   active?: boolean;
   navigationToken?: number;
@@ -915,8 +917,8 @@ export function ProductionMapWorkspace({
       <fieldset><legend>Показывать на карте</legend>{(['routes','places','risks'] as const).map(k=><label className="map-layer-option" key={k}><input type="checkbox" checked={layers[k]} onChange={e=>setLayers(v=>({...v,[k]:e.target.checked}))}/>{k==='routes'?'Маршруты':k==='places'?'Места':'Опасности'}</label>)}<label className="map-layer-option"><input type="checkbox" checked={walkersVisible} onChange={e=>setWalkersVisible(e.target.checked)}/>Гуляют рядом</label></fieldset>
       {community.error&&<p role="alert">{community.error}<button type="button" onClick={()=>void community.reload()}>Повторить</button></p>}
       <button type="button" className="secondary" disabled={routeFlow!=='idle'} onClick={()=>{setPanel(null);startRisk();}}>Мои зоны</button>
-     </>:searchOpen&&!query.trim()&&!searchRequest?<PlaceDiscoveryPanel discovery={discovery} onChoose={chooseDiscoveredPlace} savedIds={new Set(libraryStore.library.places.flatMap(place=>[place.id,place.source.id]))}/>:searchOpen?<>
-      <div className="map-category-list">{[['park','Парки'],['dog_park','Площадки'],['cafe','Кафе'],['veterinary','Ветклиники'],['pet','Зоомагазины']].map(([key,label])=><button type="button" className="chip" key={key} onClick={()=>searchCategory(key,label)}>{label}</button>)}</div>
+     </>:searchOpen&&!query.trim()&&!searchRequest?<><PlaceDiscoveryPanel discovery={discovery} onChoose={chooseDiscoveredPlace} savedIds={new Set(libraryStore.library.places.flatMap(place=>[place.id,place.source.id]))}/>{discovery.state==='coverage'&&<section className="map-place-fallback" aria-label="Поиск мест вне каталога"><p className="hint">Собственный список для этого города ещё готовится. Категории можно искать рядом с центром карты через OpenStreetMap.</p><div className="map-category-list">{quickPlaceCategories.map(([key,label])=><button type="button" className="chip" key={key} onClick={()=>searchCategory(key,label)}>{label}</button>)}</div><label className="map-layer-option"><input type="checkbox" checked={dogOnly} onChange={e=>setDogOnly(e.target.checked)}/>Можно с собакой</label></section>}</>:searchOpen?<>
+      <div className="map-category-list">{quickPlaceCategories.map(([key,label])=><button type="button" className="chip" key={key} onClick={()=>searchCategory(key,label)}>{label}</button>)}</div>
       <label className="map-layer-option"><input type="checkbox" checked={dogOnly} onChange={e=>setDogOnly(e.target.checked)}/>Можно с собакой</label>
       {searchRequest?.category&&<p className="hint">В пределах 3 км от центра карты</p>}
       <div className="list" id="map-refresh-results" role="listbox" aria-label="Результаты поиска">{filteredResults.map((result,index)=><button id={`map-result-${index}`} role="option" aria-selected={activeSearchIndex===index} type="button" className="list-row" key={result.id} onClick={event=>{chooseSearchResult(result,event.currentTarget);setSearchOpen(false);}}><span className="grow"><strong>{result.title}</strong><small>{result.detail}</small></span></button>)}</div>

@@ -26,6 +26,7 @@ for(const [engine,browserType] of [['chromium',chromium],['webkit',webkit]] as c
   page.setDefaultTimeout(30000);
   const errors:string[]=[];
   const catalogResponses:number[]=[];
+  let fallbackSearches=0;
   let library=emptyMapLibrary();
   page.on('pageerror',error=>errors.push(error.message));
   page.on('response',response=>{if(new URL(response.url()).pathname==='/api/map/places')catalogResponses.push(response.status());});
@@ -35,6 +36,14 @@ for(const [engine,browserType] of [['chromium',chromium],['webkit',webkit]] as c
   await page.route('**/api/app/bootstrap**',route=>json(route,{mode:'owner',connected:true,pet,pets:[pet],profile,activePetId:pet.id,reminders:[],wishlist:[],zones:[],routes:[],observations:[],documents:[]}));
   await page.route('**/api/map/features**',route=>json(route,{features:[]}));
   await page.route('**/api/social/**',route=>json(route,{signals:[],requests:[],profile:null,candidates:[]}));
+  await page.route('**/api/map/search?**',route=>{
+    const url=new URL(route.request().url());
+    if(url.searchParams.get('category')){
+      fallbackSearches++;
+      return json(route,{results:[{id:'osm-node-fallback-park',title:'Парк вне регионального каталога',detail:'Поиск OpenStreetMap',category:'парк',kind:'organization',dogAccess:'unknown',point:{lat:55.75,lng:37.61}}]});
+    }
+    return json(route,{results:[{id:'osm-node-moscow',title:'Москва',detail:'Россия',category:'город',kind:'place',point:{lat:55.75,lng:37.61}}]});
+  });
   await page.route('**/api/map/library**',route=>{
     if(route.request().method()==='POST')library=applyLibraryCommand(library,route.request().postDataJSON().command);
     return json(route,{library});
@@ -59,9 +68,22 @@ for(const [engine,browserType] of [['chromium',chromium],['webkit',webkit]] as c
   assert.equal(library.places[0]?.source.provider,'osm');
   assert.equal(library.places[0]?.source.id,'osm-way-31106566');
   assert.equal(catalogResponses.includes(200),true);
+  await page.getByRole('button',{name:'Закрыть панель',exact:true}).click();
+  const search=page.getByRole('combobox',{name:'Место или адрес',exact:true});
+  await search.fill('Москва');
+  await page.getByRole('button',{name:'Найти',exact:true}).click();
+  await page.getByRole('option',{name:/Москва/}).click();
+  await page.getByRole('button',{name:'Закрыть панель',exact:true}).click();
+  await search.fill('');
+  await search.focus();
+  await page.getByRole('button',{name:'Показать места в этой области',exact:true}).click();
+  await page.getByRole('status').filter({hasText:'список мест ещё не подключён'}).waitFor();
+  await page.getByRole('button',{name:'Парки',exact:true}).click();
+  await page.getByRole('option',{name:/Парк вне регионального каталога/}).waitFor();
+  assert.equal(fallbackSearches,1);
   assert.deepEqual(errors,[]);
   await page.screenshot({path:`${out}/${engine}-yaroslavl-place.png`,fullPage:true});
-  console.log(JSON.stringify({engine,catalogResponses,saved:library.places[0]?.title,unknownDogAccess:true}));
+  console.log(JSON.stringify({engine,catalogResponses,saved:library.places[0]?.title,unknownDogAccess:true,fallbackSearches}));
   await context.close();
   await browser.close();
 }
