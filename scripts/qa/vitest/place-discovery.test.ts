@@ -3,6 +3,8 @@ import { parsePlaceBounds, queryPlaceRegions, dogAccessLabel, type PlaceRegion }
 import { collectionPlaces, applyLibraryCommand, emptyMapLibrary } from '@/lib/mapLibrary';
 import { parseRoutePlanning, routeGpx } from '@/lib/routePlanning';
 import { normalizeOsmPlaces } from '@/lib/osmPlaces';
+import catalog from '@/data/map-places/catalog.json';
+import { GET as discoverPlaces } from '@/app/api/map/places/route';
 const bounds = { south: 55, west: 37, north: 56, east: 38 };
 const region: PlaceRegion = { id: 'test', title: 'Контрольная область', bounds, updatedAt: '2026-09-07', sourceUrl: 'https://www.openstreetmap.org', places: [
     { id: 'osm-node-1', title: 'Парк', detail: '', category: 'парк', group: 'parks', point: { lat: 55.5, lng: 37.5 } },
@@ -10,6 +12,25 @@ const region: PlaceRegion = { id: 'test', title: 'Контрольная обл�
     { id: 'osm-node-3', title: 'За границей', detail: '', category: 'парк', group: 'parks', point: { lat: 57, lng: 37.5 } },
 ] };
 describe('geographic discovery contract', () => {
+    it('serves the Yaroslavl viewport from the owned catalog without a provider request', async () => {
+        const response = await discoverPlaces(new Request('http://localhost/api/map/places?bounds=57.59%2C39.82%2C57.67%2C39.95&category=all'));
+        const body = await response.json();
+        expect(response.status).toBe(200);
+        expect(body.source).toBe('OpenStreetMap');
+        expect(body.coverage).toEqual([{ id: 'yaroslavl-city', title: 'Ярославль' }]);
+        expect(body.results.length).toBeGreaterThan(0);
+        expect(body.results.every((place: { dogAccess?: string }) => place.dogAccess === undefined)).toBe(true);
+    });
+    it('ships a bounded Yaroslavl pilot without inventing dog-friendly access', () => {
+        const yaroslavl = (catalog.regions as PlaceRegion[]).find(item => item.id === 'yaroslavl-city');
+        expect(yaroslavl?.bounds).toEqual({ south: 57.54, west: 39.73, north: 57.75, east: 40.05 });
+        expect(yaroslavl?.places.length).toBe(377);
+        expect(yaroslavl?.places.filter(place => place.group === 'dogParks')).toHaveLength(11);
+        expect(yaroslavl?.places.filter(place => place.group === 'vets')).toHaveLength(13);
+        expect(yaroslavl?.places.some(place => place.title === 'о. Даманский')).toBe(true);
+        expect(yaroslavl?.places.filter(place => place.title.endsWith(' без названия')).every(place => place.group === 'dogParks')).toBe(true);
+        expect(yaroslavl?.places.every(place => place.dogAccess === undefined)).toBe(true);
+    });
     it('imports only allowlisted public POIs and does not invent access or entrance data', () => {
         const raw={type:'way',id:5,center:{lat:55.5,lon:37.5},tags:{leisure:'park',name:'Парк',phone:'private contact',operator:'person'}};
         const result=normalizeOsmPlaces([raw,{...raw,id:6,tags:{...raw.tags,access:'private'}},{...raw,id:7,center:{lat:60,lon:37.5}}],bounds);

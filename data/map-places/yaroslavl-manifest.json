@@ -1,0 +1,11 @@
+{
+  "id": "yaroslavl-city",
+  "title": "Ярославль",
+  "bounds": {
+    "south": 57.54,
+    "west": 39.73,
+    "north": 57.75,
+    "east": 40.05
+  },
+  "sourceUrl": "https://www.openstreetmap.org/copyright"
+}

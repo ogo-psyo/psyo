@@ -14,7 +14,9 @@ const bounds=b&&parsePlaceBounds([b.south,b.west,b.north,b.east].join(','));
 if(!bounds)throw Error('Explicit valid coverage is required');
 const sourceUrl=new URL(manifest.sourceUrl);if(sourceUrl.protocol!=='https:'||sourceUrl.username||sourceUrl.password)throw Error('Public HTTPS source URL required');
 if(typeof source.osm3s?.timestamp_osm_base!=='string'||!Number.isFinite(Date.parse(source.osm3s.timestamp_osm_base)))throw Error('Source timestamp required');
-const places=normalizeOsmPlaces(source.elements,bounds);
+// A generic unnamed cafe/park/clinic is not actionable in a consumer catalog.
+// Dedicated dog areas are the exception: their mapped location is useful even without a name.
+const places=normalizeOsmPlaces(source.elements,bounds).filter(place=>place.group==='dogParks'||!place.title.endsWith(' без названия'));
 if(!places.length||places.length>25000)throw Error('Import must contain 1–25000 eligible POIs');
 const region:PlaceRegion={id:manifest.id,title:manifest.title,bounds,updatedAt:source.osm3s.timestamp_osm_base,sourceUrl:sourceUrl.href,places};
 // Candidate output only: review coverage/counts/age, then explicitly add to the runtime catalog.

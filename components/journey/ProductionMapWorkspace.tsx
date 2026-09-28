@@ -7,7 +7,9 @@ import {isAgentWalk,type AgentWalk} from '@/lib/agentWalk';
 
 import {isMapSearchPlace,type MapSearchPlace} from '@/lib/mapSearchPlace';
 import { MapPlacesPanel, type MapPlaceChoice } from '@/components/map/MapPlacesPanel';
-import { dogAccessLabel } from '@/lib/placeDiscovery';
+import { PlaceDiscoveryPanel } from '@/components/map/PlaceDiscoveryPanel';
+import { usePlaceDiscovery } from '@/components/map/usePlaceDiscovery';
+import { dogAccessLabel, type DiscoveredPlace } from '@/lib/placeDiscovery';
 import { useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowCounterClockwise,
@@ -217,6 +219,7 @@ export function ProductionMapWorkspace({
   const [userLocation, setUserLocation] = useState<MapUserLocation | null>(null);
   const [focusPoint, setFocusPoint] = useState<MapFocusPoint | null>(null);
   const [mapBounds,setMapBounds]=useState<MapBounds|null>(null);
+  const discovery=usePlaceDiscovery(mapBounds);
 
   const [mapSelection,setMapSelection]=useState<{lat:number;lng:number}|null>(null);
   const placeTriggerRef=useRef<HTMLElement|null>(null);
@@ -547,6 +550,9 @@ export function ProductionMapWorkspace({
     // Keep the selected marker in the same geographic context; no automatic zoom jump.
     setFocusPoint(null);
   }
+  function chooseDiscoveredPlace(place:DiscoveredPlace,trigger:HTMLElement){
+    chooseMapPlace({...place,kind:'organization'},trigger);
+  }
   function closeSelectedPlace(){
     setSelectedSearchPoint(null);setSearchOpen(placeOrigin==='search');
     if(placeOrigin==='library')setSavedExpanded(true);
@@ -758,6 +764,7 @@ export function ProductionMapWorkspace({
             : 'Маршрут готов';
 
   const mapResultPlaces:MapPlaceChoice[]=searchResults.filter((p):p is SearchResult&{point:{lat:number;lng:number};kind:'place'|'organization'}=>!!p.point&&(p.kind==='place'||p.kind==='organization'));
+  const discoveredMapPlaces:MapPlaceChoice[]=(discovery.data?.results||[]).map(place=>({...place,kind:'organization' as const}));
   const knownMapPlaces:MapPlaceChoice[]=[...libraryStore.library.places.map(p=>({id:p.id,title:p.title,detail:p.detail,category:p.category,accuracyMeters:p.accuracyMeters,privateNote:p.note,kind:p.source.provider==='osm'?'organization' as const:'place' as const,point:p.point})),...features.filter(f=>f.type==='point'&&!isRisk(f.zone_type)&&numberOrNull(f.lat)!==null&&numberOrNull(f.lng)!==null).map(f=>({id:f.id,title:f.title,category:f.zone_type||'Место',accuracyMeters:Math.max(500,f.radiusMeters||500),kind:'place' as const,point:{lat:Number(f.lat),lng:Number(f.lng)}})),...zones.filter(z=>!isRisk(z.type)&&numberOrNull(z.approximate_lat)!==null&&numberOrNull(z.approximate_lng)!==null).map(z=>({id:z.id,title:z.title,category:z.type,accuracyMeters:Math.max(500,z.radius_meters||z.radiusMeters||500),privateNote:z.note,kind:'place' as const,point:{lat:Number(z.approximate_lat),lng:Number(z.approximate_lng)}}))];
   const allMapPlaces=[...new Map(knownMapPlaces.map(p=>[p.id,p])).values()];
   const placeSearchActive=Boolean(agentPlaces.length||(searchRequest&&query.trim()===searchRequest.query));
@@ -766,7 +773,7 @@ export function ProductionMapWorkspace({
   const exactStopIndex = selectedSearchPoint ? activeStops.findIndex(stop => stop.placeId===selectedSearchPoint.id || selectedLibraryPlace && stop.placeId===selectedLibraryPlace.id || selectedSearchPoint.point && stop.point[0]===selectedSearchPoint.point.lng && stop.point[1]===selectedSearchPoint.point.lat) : -1;
   const exactSavedIds = libraryStore.library.collections.find(collection => collection.id === 'saved')?.placeIds || [];
   const exactSavedPlaces = libraryStore.library.places.filter(place => exactSavedIds.includes(place.id));
-  const selectedVisiblePlaceId=visibleMapPlaces.find(p=>p.id===selectedSearchPoint?.id||(selectedLibraryPlace?.source.provider==='osm'&&p.id===selectedLibraryPlace.source.id))?.id;
+  const selectedVisiblePlaceId=[...visibleMapPlaces,...discoveredMapPlaces].find(p=>p.id===selectedSearchPoint?.id||(selectedLibraryPlace?.source.provider==='osm'&&p.id===selectedLibraryPlace.source.id))?.id;
   const hiddenPlaceCount=placeSearchActive?0:allMapPlaces.length-visibleMapPlaces.length;
   function showAllMapPlaces(){if(!allMapPlaces.length)return;const south=Math.min(...allMapPlaces.map(p=>p.point.lat)),north=Math.max(...allMapPlaces.map(p=>p.point.lat)),west=Math.min(...allMapPlaces.map(p=>p.point.lng)),east=Math.max(...allMapPlaces.map(p=>p.point.lng));setLayers(v=>({...v,places:true}));setFocusPoint({lat:(south+north)/2,lng:(west+east)/2,token:Date.now(),bounds:{south,north,west,east}});}
   const acceptAgentSelection=useEffectEvent(()=>{
@@ -824,7 +831,7 @@ export function ProductionMapWorkspace({
         onSelectCommunity={id=>{const signal=community.signals.find(s=>s.id===id);const hazard=community.hazards.find(h=>h.id===id);setSelectedMark(id);setPanel(signal?'presence':'hazard');setCommunityPoint(signal?.approximateLocation||hazard?.point||null);setSearchOpen(false);}}
 
         zones={zones.filter(z=>isRisk(z.type)?layers.risks:layers.places)}
-        features={[...features.filter(f=>f.type==='route'?layers.routes:isRisk(f.zone_type)?layers.risks:layers.places&&workspaceTab!=='saved'),...(layers.places?(workspaceTab==='saved'?collectionPlaces:libraryStore.library.places).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:p.accuracyMeters?'area' as const:'ownerPlace' as const,radiusMeters:p.accuracyMeters,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'private' as const})):[]),...(layers.places&&workspaceTab==='places'&&placeSearchActive?visibleMapPlaces.filter(p=>(!dogOnly||['yes','leashed','designated'].includes(p.dogAccess||''))&&p.kind==='organization'&&!libraryStore.library.places.some(l=>l.id===p.id||l.source.id===p.id)).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:'ownerPlace' as const,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'public' as const})):[])]}
+        features={[...features.filter(f=>f.type==='route'?layers.routes:isRisk(f.zone_type)?layers.risks:layers.places&&workspaceTab!=='saved'),...(layers.places?(workspaceTab==='saved'?collectionPlaces:libraryStore.library.places).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:p.accuracyMeters?'area' as const:'ownerPlace' as const,radiusMeters:p.accuracyMeters,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'private' as const})):[]),...(layers.places&&workspaceTab==='places'?(placeSearchActive?visibleMapPlaces:discoveredMapPlaces).filter(p=>(!dogOnly||['yes','leashed','designated'].includes(p.dogAccess||''))&&p.kind==='organization'&&!libraryStore.library.places.some(l=>l.id===p.id||l.source.id===p.id)).map(p=>({id:p.id,title:p.title,type:'point' as const,pointKind:'ownerPlace' as const,lat:p.point.lat,lng:p.point.lng,zone_type:p.category,visibility:'public' as const})):[])]}
         picked={communityEditing ? communityPoint||mapCenter : mode === 'risk' ? pickedPoint : candidate?{lng:candidate.point[0],lat:candidate.point[1]}:mapSelection||pickedPoint}
         routePoints={savedRoutePreview?savedRoutePreview.path.coordinates:agentWalkPreview?agentWalkPreview.path:calculationState==='preview'&&walkResult?walkResult.path:routePoints}
         routeStops={savedRoutePreview?savedRoutePreview.planning?.stops.map(s=>s.point)||[]:agentWalkPreview?agentWalkPreview.snaps.map(s=>s.point):routeFlow==='planning'||routeFlow==='plan-review'?activeStops.map(s=>s.point):[]}
@@ -838,7 +845,7 @@ export function ProductionMapWorkspace({
         selectedFeatureId={selectedLibraryPlace?.id||selectedSearchPoint?.id}
         onSelectFeature={id=>{
           if(routeFocused||agentWalkPreview||savedRoutePreview)return;
-          const found=visibleMapPlaces.find(p=>p.id===id);if(workspaceTab==='places'&&found){chooseMapPlace(found,document.querySelector<HTMLElement>(`.map-place-row[data-place-id="${CSS.escape(id)}"]`)||document.activeElement as HTMLElement);return;}
+          const found=[...visibleMapPlaces,...discoveredMapPlaces].find(p=>p.id===id);if(workspaceTab==='places'&&found){chooseMapPlace(found,document.querySelector<HTMLElement>(`[data-place-id="${CSS.escape(id)}"]`)||document.activeElement as HTMLElement);return;}
           const place=libraryStore.library.places.find(p=>p.id===id);if(place){chooseLibraryPlace(place);return;}
           const feature=features.find(f=>f.id===id);const zone=zones.find(z=>z.id===id);
           if(feature)chooseSearchResult({id,title:feature.title,accuracyMeters:feature.type==='point'?Math.max(500,feature.radiusMeters||500):undefined,kind:feature.type==='route'?'route':'place',point:feature.type==='route'?routeStart(feature):{lat:Number(feature.lat),lng:Number(feature.lng)}});
@@ -908,7 +915,7 @@ export function ProductionMapWorkspace({
       <fieldset><legend>Показывать на карте</legend>{(['routes','places','risks'] as const).map(k=><label className="map-layer-option" key={k}><input type="checkbox" checked={layers[k]} onChange={e=>setLayers(v=>({...v,[k]:e.target.checked}))}/>{k==='routes'?'Маршруты':k==='places'?'Места':'Опасности'}</label>)}<label className="map-layer-option"><input type="checkbox" checked={walkersVisible} onChange={e=>setWalkersVisible(e.target.checked)}/>Гуляют рядом</label></fieldset>
       {community.error&&<p role="alert">{community.error}<button type="button" onClick={()=>void community.reload()}>Повторить</button></p>}
       <button type="button" className="secondary" disabled={routeFlow!=='idle'} onClick={()=>{setPanel(null);startRisk();}}>Мои зоны</button>
-     </>:searchOpen?<>
+     </>:searchOpen&&!query.trim()&&!searchRequest?<PlaceDiscoveryPanel discovery={discovery} onChoose={chooseDiscoveredPlace} savedIds={new Set(libraryStore.library.places.flatMap(place=>[place.id,place.source.id]))}/>:searchOpen?<>
       <div className="map-category-list">{[['park','Парки'],['dog_park','Площадки'],['cafe','Кафе'],['veterinary','Ветклиники'],['pet','Зоомагазины']].map(([key,label])=><button type="button" className="chip" key={key} onClick={()=>searchCategory(key,label)}>{label}</button>)}</div>
       <label className="map-layer-option"><input type="checkbox" checked={dogOnly} onChange={e=>setDogOnly(e.target.checked)}/>Можно с собакой</label>
       {searchRequest?.category&&<p className="hint">В пределах 3 км от центра карты</p>}

@@ -1,1 +1,4244 @@
-{"regions":[]}
+{
+  "license": "ODbL-1.0",
+  "attribution": "© OpenStreetMap contributors",
+  "regions": [
+    {
+      "id": "yaroslavl-city",
+      "title": "Ярославль",
+      "bounds": {
+        "south": 57.54,
+        "west": 39.73,
+        "north": 57.75,
+        "east": 40.05
+      },
+      "updatedAt": "2026-09-28T15:52:30Z",
+      "sourceUrl": "https://www.openstreetmap.org/copyright",
+      "places": [
+        {
+          "id": "osm-node-539576663",
+          "title": "Дежавю",
+          "detail": "улица Свободы, 52, Ярославль",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6266126,
+            "lng": 39.8620587
+          }
+        },
+        {
+          "id": "osm-node-560507754",
+          "title": "Канис",
+          "detail": "",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.6410716,
+            "lng": 39.864021
+          }
+        },
+        {
+          "id": "osm-node-569199472",
+          "title": "Босфор",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6314066,
+            "lng": 39.8893067
+          }
+        },
+        {
+          "id": "osm-node-569282364",
+          "title": "Трактир на набережной",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6269086,
+            "lng": 39.8983548
+          }
+        },
+        {
+          "id": "osm-node-570715542",
+          "title": "Столовая \"Соцпитание\"",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.624111,
+            "lng": 39.8929404
+          }
+        },
+        {
+          "id": "osm-node-577479259",
+          "title": "Власьевский",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.625716,
+            "lng": 39.872417
+          }
+        },
+        {
+          "id": "osm-node-583229728",
+          "title": "Старый двор",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6046845,
+            "lng": 39.8311612
+          }
+        },
+        {
+          "id": "osm-node-619725463",
+          "title": "Дарьял",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6415793,
+            "lng": 39.8797595
+          }
+        },
+        {
+          "id": "osm-node-628855513",
+          "title": "Миллион друзей",
+          "detail": "",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.6245758,
+            "lng": 39.8534999
+          }
+        },
+        {
+          "id": "osm-node-628855549",
+          "title": "Честный стейк",
+          "detail": "проспект Ленина, 26",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6334347,
+            "lng": 39.8582057
+          }
+        },
+        {
+          "id": "osm-node-628855555",
+          "title": "Капуцин",
+          "detail": "проспект Толбухина, 62",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6295957,
+            "lng": 39.8590607
+          }
+        },
+        {
+          "id": "osm-node-675466511",
+          "title": "Пенаты",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6346376,
+            "lng": 39.8835072
+          }
+        },
+        {
+          "id": "osm-node-708578557",
+          "title": "Столовая",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5928752,
+            "lng": 39.8786576
+          }
+        },
+        {
+          "id": "osm-node-723871628",
+          "title": "Которосль",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6200921,
+            "lng": 39.8511926
+          }
+        },
+        {
+          "id": "osm-node-723872037",
+          "title": "Салат",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6196654,
+            "lng": 39.8745774
+          }
+        },
+        {
+          "id": "osm-node-725884198",
+          "title": "Славянское",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5831962,
+            "lng": 39.825666
+          }
+        },
+        {
+          "id": "osm-node-862765744",
+          "title": "Углич",
+          "detail": "проспект Ленина, 46, Ярославль",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6295438,
+            "lng": 39.84761
+          }
+        },
+        {
+          "id": "osm-node-890086776",
+          "title": "Наши люди",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.669112,
+            "lng": 40.0143584
+          }
+        },
+        {
+          "id": "osm-node-890219072",
+          "title": "Якорь",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6218135,
+            "lng": 39.896624
+          }
+        },
+        {
+          "id": "osm-node-890219095",
+          "title": "Столовая",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6234594,
+            "lng": 39.8935734
+          }
+        },
+        {
+          "id": "osm-node-907816183",
+          "title": "Баккара",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6244492,
+            "lng": 39.8849499
+          }
+        },
+        {
+          "id": "osm-node-907817552",
+          "title": "Web",
+          "detail": "Комсомольская улица, 14",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6238862,
+            "lng": 39.8856901
+          }
+        },
+        {
+          "id": "osm-node-914254961",
+          "title": "Клюква",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6374349,
+            "lng": 39.8675062
+          }
+        },
+        {
+          "id": "osm-node-915251611",
+          "title": "Кафе-бар",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6314195,
+            "lng": 39.8632854
+          }
+        },
+        {
+          "id": "osm-node-915263314",
+          "title": "Хлебопекарня семейная",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6259368,
+            "lng": 39.8489322
+          }
+        },
+        {
+          "id": "osm-node-928106647",
+          "title": "Иоанн Васильевич",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6227151,
+            "lng": 39.8915759
+          }
+        },
+        {
+          "id": "osm-node-931459523",
+          "title": "Тарзан",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6295951,
+            "lng": 39.8830368
+          }
+        },
+        {
+          "id": "osm-node-1053596770",
+          "title": "Облака",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6521108,
+            "lng": 39.9473028
+          }
+        },
+        {
+          "id": "osm-node-1056108679",
+          "title": "\"Волна\"",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.653196,
+            "lng": 39.9453062
+          }
+        },
+        {
+          "id": "osm-node-1058488700",
+          "title": "ОЧАГ",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6475592,
+            "lng": 39.9581035
+          }
+        },
+        {
+          "id": "osm-node-1072661683",
+          "title": "Амур",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6096672,
+            "lng": 39.864296
+          }
+        },
+        {
+          "id": "osm-node-1141467366",
+          "title": "Кафе-бар Олимп",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5949507,
+            "lng": 39.8728772
+          }
+        },
+        {
+          "id": "osm-node-1153372520",
+          "title": "Старый клуб",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5748522,
+            "lng": 39.9237183
+          }
+        },
+        {
+          "id": "osm-node-1157486183",
+          "title": "Кофейный салон \"ПроКофей\"",
+          "detail": "Большая Октябрьская улица, 100/62",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6216687,
+            "lng": 39.8678182
+          }
+        },
+        {
+          "id": "osm-node-1176878365",
+          "title": "Мишутка",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6246518,
+            "lng": 39.8700537
+          }
+        },
+        {
+          "id": "osm-node-1176878601",
+          "title": "Смирнов клуб",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.624586,
+            "lng": 39.8699875
+          }
+        },
+        {
+          "id": "osm-node-1180241991",
+          "title": "Пиццерия Академия",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6405591,
+            "lng": 39.8856394
+          }
+        },
+        {
+          "id": "osm-node-1198640738",
+          "title": "Атлантида",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5856527,
+            "lng": 39.8447293
+          }
+        },
+        {
+          "id": "osm-node-1227126322",
+          "title": "Столовая №3",
+          "detail": "улица Писемского, 56",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5886374,
+            "lng": 39.8603655
+          }
+        },
+        {
+          "id": "osm-node-1234714003",
+          "title": "Ташир",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5916107,
+            "lng": 39.8673141
+          }
+        },
+        {
+          "id": "osm-node-1234969104",
+          "title": "Скорость",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5968892,
+            "lng": 39.8710587
+          }
+        },
+        {
+          "id": "osm-node-1234969119",
+          "title": "Ташир",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5766375,
+            "lng": 39.8436626
+          }
+        },
+        {
+          "id": "osm-node-1234995405",
+          "title": "Шеш-Беш",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5999129,
+            "lng": 39.875183
+          }
+        },
+        {
+          "id": "osm-node-1234995444",
+          "title": "Торговый ряд",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.624783,
+            "lng": 39.891358
+          }
+        },
+        {
+          "id": "osm-node-1234995498",
+          "title": "Пиццерия",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6236622,
+            "lng": 39.888702
+          }
+        },
+        {
+          "id": "osm-node-1235159979",
+          "title": "Столовая",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5886533,
+            "lng": 39.8512915
+          }
+        },
+        {
+          "id": "osm-node-1235159981",
+          "title": "Южная Ночь",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5805671,
+            "lng": 39.8571012
+          }
+        },
+        {
+          "id": "osm-node-1260995190",
+          "title": "Вечный зов",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.7263358,
+            "lng": 39.8172378
+          }
+        },
+        {
+          "id": "osm-node-1332159299",
+          "title": "Бристоль",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6867662,
+            "lng": 39.778899
+          }
+        },
+        {
+          "id": "osm-node-1350983470",
+          "title": "Свои да наши",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6790572,
+            "lng": 39.7902707
+          }
+        },
+        {
+          "id": "osm-node-1377899687",
+          "title": "Тещины блины",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.639456,
+            "lng": 39.872428
+          }
+        },
+        {
+          "id": "osm-node-1396813956",
+          "title": "Traveler's Coffe",
+          "detail": "улица Кирова, 13/31",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.625434,
+            "lng": 39.886217
+          }
+        },
+        {
+          "id": "osm-node-1459442026",
+          "title": "ПП4",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5462211,
+            "lng": 39.7789783
+          }
+        },
+        {
+          "id": "osm-node-1459442027",
+          "title": "ПП2",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5501761,
+            "lng": 39.79711
+          }
+        },
+        {
+          "id": "osm-node-1459442028",
+          "title": "ПП3",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5412868,
+            "lng": 39.7854907
+          }
+        },
+        {
+          "id": "osm-node-1459443091",
+          "title": "ПП1",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5544302,
+            "lng": 39.8113673
+          }
+        },
+        {
+          "id": "osm-node-1459580625",
+          "title": "Столовая",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5763424,
+            "lng": 39.9328996
+          }
+        },
+        {
+          "id": "osm-node-1472042014",
+          "title": "Купец",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6785248,
+            "lng": 39.7953981
+          }
+        },
+        {
+          "id": "osm-node-1523044805",
+          "title": "Духан",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6324469,
+            "lng": 39.885494
+          }
+        },
+        {
+          "id": "osm-node-1558272115",
+          "title": "Комбат",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6309951,
+            "lng": 39.888662
+          }
+        },
+        {
+          "id": "osm-node-1633049297",
+          "title": "Шинок",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6004935,
+            "lng": 39.8760951
+          }
+        },
+        {
+          "id": "osm-node-1633657253",
+          "title": "Персона",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6316007,
+            "lng": 39.8910079
+          }
+        },
+        {
+          "id": "osm-node-1636424778",
+          "title": "Ковчег",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6250888,
+            "lng": 39.8798881
+          }
+        },
+        {
+          "id": "osm-node-1636864754",
+          "title": "Фудзияма",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6270216,
+            "lng": 39.8829278
+          }
+        },
+        {
+          "id": "osm-node-1641904585",
+          "title": "Rocacoffe",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6324274,
+            "lng": 39.8847288
+          }
+        },
+        {
+          "id": "osm-node-1641908092",
+          "title": "Хмель&Гриль",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6326685,
+            "lng": 39.8852226
+          }
+        },
+        {
+          "id": "osm-node-1680826507",
+          "title": "Traveler's Coffee",
+          "detail": "Комсомольская улица, 20",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6233735,
+            "lng": 39.8863843
+          }
+        },
+        {
+          "id": "osm-node-1680826511",
+          "title": "Traveler's Coffee",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6257734,
+            "lng": 39.8760239
+          }
+        },
+        {
+          "id": "osm-node-1680826513",
+          "title": "Победа",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6216969,
+            "lng": 39.8684744
+          }
+        },
+        {
+          "id": "osm-node-1727431344",
+          "title": "Sa Pa",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.631545,
+            "lng": 39.8795377
+          }
+        },
+        {
+          "id": "osm-node-1747302146",
+          "title": "Золотое руно",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.634157,
+            "lng": 39.8773803
+          }
+        },
+        {
+          "id": "osm-node-1792691800",
+          "title": "Traveler's Coffee",
+          "detail": "Советская улица, 21",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6326292,
+            "lng": 39.8863669
+          }
+        },
+        {
+          "id": "osm-node-1847086292",
+          "title": "Самолёт",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6354515,
+            "lng": 39.8890151
+          }
+        },
+        {
+          "id": "osm-node-2017125188",
+          "title": "Столовая",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6587435,
+            "lng": 39.8119363
+          }
+        },
+        {
+          "id": "osm-node-2074775866",
+          "title": "Алёшины лепешки",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6228717,
+            "lng": 39.8905741
+          }
+        },
+        {
+          "id": "osm-node-2074775872",
+          "title": "Я люблю тебя, жизнь",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6235645,
+            "lng": 39.8902561
+          }
+        },
+        {
+          "id": "osm-node-2122126788",
+          "title": "Частная сыроварня Марии Коваль",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6302373,
+            "lng": 39.8909672
+          }
+        },
+        {
+          "id": "osm-node-2295777439",
+          "title": "Пиццерия Академия",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6245506,
+            "lng": 39.8966791
+          }
+        },
+        {
+          "id": "osm-node-2295783202",
+          "title": "Кофе Макс",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6322107,
+            "lng": 39.8935409
+          }
+        },
+        {
+          "id": "osm-node-2367308739",
+          "title": "Пиццерия Академия",
+          "detail": "Первомайская улица, 19",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6286868,
+            "lng": 39.8866901
+          }
+        },
+        {
+          "id": "osm-node-2370259121",
+          "title": "Манеки",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.625383,
+            "lng": 39.8748775
+          }
+        },
+        {
+          "id": "osm-node-2575958733",
+          "title": "ПНИ",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6215496,
+            "lng": 39.8752474
+          }
+        },
+        {
+          "id": "osm-node-2619576627",
+          "title": "Встреча",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6252474,
+            "lng": 39.836494
+          }
+        },
+        {
+          "id": "osm-node-2624593038",
+          "title": "Аркадия",
+          "detail": "Угличская улица, 4/6, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6278433,
+            "lng": 39.8611281
+          }
+        },
+        {
+          "id": "osm-node-2709112690",
+          "title": "4stars",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.627925,
+            "lng": 39.8351248
+          }
+        },
+        {
+          "id": "osm-node-2749504220",
+          "title": "Мельник",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6235893,
+            "lng": 39.8574218
+          }
+        },
+        {
+          "id": "osm-node-2820207044",
+          "title": "Рыжий таракан",
+          "detail": "",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.6541661,
+            "lng": 39.9478619
+          }
+        },
+        {
+          "id": "osm-node-3045972936",
+          "title": "Волжская жемчужина",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.626177,
+            "lng": 39.9016527
+          }
+        },
+        {
+          "id": "osm-node-3393598344",
+          "title": "Шишка",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5705902,
+            "lng": 39.9343465
+          }
+        },
+        {
+          "id": "osm-node-3428382143",
+          "title": "Pizzapan",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6925506,
+            "lng": 39.7793418
+          }
+        },
+        {
+          "id": "osm-node-3654425985",
+          "title": "Бульвар",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6258645,
+            "lng": 39.8974969
+          }
+        },
+        {
+          "id": "osm-node-3654425986",
+          "title": "Волжская башня",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6250321,
+            "lng": 39.9018316
+          }
+        },
+        {
+          "id": "osm-node-3658286116",
+          "title": "Шоколадница",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6276398,
+            "lng": 39.8713434
+          }
+        },
+        {
+          "id": "osm-node-3687547958",
+          "title": "Природа",
+          "detail": "Большая Октябрьская улица, 68/10",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.6204493,
+            "lng": 39.8538656
+          }
+        },
+        {
+          "id": "osm-node-3759909540",
+          "title": "Ювента",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.6353151,
+            "lng": 39.8478137
+          }
+        },
+        {
+          "id": "osm-node-3829018965",
+          "title": "Академия, сеть пиццерий",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6256834,
+            "lng": 39.8817639
+          }
+        },
+        {
+          "id": "osm-node-3829018967",
+          "title": "Кофеварка",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.630969,
+            "lng": 39.8858473
+          }
+        },
+        {
+          "id": "osm-node-3948186934",
+          "title": "Мили",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6312622,
+            "lng": 39.8413124
+          }
+        },
+        {
+          "id": "osm-node-3978329277",
+          "title": "Барбос",
+          "detail": "",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.7258628,
+            "lng": 39.8291438
+          }
+        },
+        {
+          "id": "osm-node-4005920493",
+          "title": "Япончик",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5830018,
+            "lng": 39.838665
+          }
+        },
+        {
+          "id": "osm-node-4047058652",
+          "title": "Рога и копыта",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6223145,
+            "lng": 39.891142
+          }
+        },
+        {
+          "id": "osm-node-4093098900",
+          "title": "Кафе",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.7324886,
+            "lng": 39.7696413
+          }
+        },
+        {
+          "id": "osm-node-4145520090",
+          "title": "Surf Coffee",
+          "detail": "улица Свободы",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6255515,
+            "lng": 39.873412
+          }
+        },
+        {
+          "id": "osm-node-4147713831",
+          "title": "Русская трапеза",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6740396,
+            "lng": 39.8212843
+          }
+        },
+        {
+          "id": "osm-node-4171872189",
+          "title": "Джузеппе",
+          "detail": "Республиканская улица",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6254051,
+            "lng": 39.8779941
+          }
+        },
+        {
+          "id": "osm-node-4173397017",
+          "title": "АндерСон",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6282118,
+            "lng": 39.8781576
+          }
+        },
+        {
+          "id": "osm-node-4173397018",
+          "title": "The Печь",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6264314,
+            "lng": 39.8773724
+          }
+        },
+        {
+          "id": "osm-node-4173398024",
+          "title": "ME100",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6270435,
+            "lng": 39.8835713
+          }
+        },
+        {
+          "id": "osm-node-4173398026",
+          "title": "Jazz Modern",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6272146,
+            "lng": 39.8789269
+          }
+        },
+        {
+          "id": "osm-node-4173420703",
+          "title": "Поплавок",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6209843,
+            "lng": 39.9000202
+          }
+        },
+        {
+          "id": "osm-node-4173420815",
+          "title": "Лукоморье",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6231254,
+            "lng": 39.8902073
+          }
+        },
+        {
+          "id": "osm-node-4173976430",
+          "title": "Cafe №1",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6230381,
+            "lng": 39.8814417
+          }
+        },
+        {
+          "id": "osm-node-4173985398",
+          "title": "Багет, паштет и желтый плед",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6235961,
+            "lng": 39.8820213
+          }
+        },
+        {
+          "id": "osm-node-4174045409",
+          "title": "Кавказская Пленница",
+          "detail": "Южный переулок, 1, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6216022,
+            "lng": 39.8834352
+          }
+        },
+        {
+          "id": "osm-node-4178557790",
+          "title": "Фреш",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6219637,
+            "lng": 39.8821626
+          }
+        },
+        {
+          "id": "osm-node-4178557990",
+          "title": "Папа Карло",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6356113,
+            "lng": 39.8655767
+          }
+        },
+        {
+          "id": "osm-node-4178623489",
+          "title": "Арбуз",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6257104,
+            "lng": 39.883518
+          }
+        },
+        {
+          "id": "osm-node-4197575394",
+          "title": "Кафе",
+          "detail": "Центральная улица, 9",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6165534,
+            "lng": 39.7980368
+          }
+        },
+        {
+          "id": "osm-node-4201639492",
+          "title": "Sweet Pepper",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6260752,
+            "lng": 39.8890305
+          }
+        },
+        {
+          "id": "osm-node-4201639792",
+          "title": "Дом актера",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6258451,
+            "lng": 39.888964
+          }
+        },
+        {
+          "id": "osm-node-4207055495",
+          "title": "Корма для животных",
+          "detail": "Центральная улица, 6Б",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.6161622,
+            "lng": 39.7969648
+          }
+        },
+        {
+          "id": "osm-node-4221065511",
+          "title": "Русская охота",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6176926,
+            "lng": 39.8649363
+          }
+        },
+        {
+          "id": "osm-node-4222219992",
+          "title": "Столовая",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5691441,
+            "lng": 39.8949602
+          }
+        },
+        {
+          "id": "osm-node-4228920228",
+          "title": "кафе Сенат",
+          "detail": "улица Павлова",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5841693,
+            "lng": 39.8450086
+          }
+        },
+        {
+          "id": "osm-node-4236995590",
+          "title": "ветклиника",
+          "detail": "",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.5845828,
+            "lng": 39.838679
+          }
+        },
+        {
+          "id": "osm-node-4236997089",
+          "title": "кафе Лоза",
+          "detail": "улица Менделеева",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5832418,
+            "lng": 39.840155
+          }
+        },
+        {
+          "id": "osm-node-4236997090",
+          "title": "ватклиника",
+          "detail": "улица Гагарина, 28",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.5846054,
+            "lng": 39.8386852
+          }
+        },
+        {
+          "id": "osm-node-4271055716",
+          "title": "Булочная24Кофейня",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6252471,
+            "lng": 39.8773888
+          }
+        },
+        {
+          "id": "osm-node-4370146244",
+          "title": "Брюгге",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6231274,
+            "lng": 39.8818741
+          }
+        },
+        {
+          "id": "osm-node-4418454594",
+          "title": "Свои да наши",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6265149,
+            "lng": 39.874409
+          }
+        },
+        {
+          "id": "osm-node-4427334494",
+          "title": "Bon Appetit",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.607488,
+            "lng": 39.8643493
+          }
+        },
+        {
+          "id": "osm-node-4427692193",
+          "title": "Котокафе \"КОфеТерий\"",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6338367,
+            "lng": 39.8803087
+          }
+        },
+        {
+          "id": "osm-node-4457981470",
+          "title": "Bazar",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6238415,
+            "lng": 39.8864704
+          }
+        },
+        {
+          "id": "osm-node-4490603627",
+          "title": "МуЧаЧос",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.625682,
+            "lng": 39.8897424
+          }
+        },
+        {
+          "id": "osm-node-4909160725",
+          "title": "Турист",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6434279,
+            "lng": 39.8817064
+          }
+        },
+        {
+          "id": "osm-node-4910920643",
+          "title": "Столовая",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6403235,
+            "lng": 39.8837372
+          }
+        },
+        {
+          "id": "osm-node-4985343020",
+          "title": "Черная кошка",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6333715,
+            "lng": 39.8820207
+          }
+        },
+        {
+          "id": "osm-node-5020986331",
+          "title": "Ванильное небо",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6326545,
+            "lng": 39.8946375
+          }
+        },
+        {
+          "id": "osm-node-5041577042",
+          "title": "Тёплая встреча",
+          "detail": "улица Свердлова, 25Г, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6301264,
+            "lng": 39.8715328
+          }
+        },
+        {
+          "id": "osm-node-5041589749",
+          "title": "Столовая № 2",
+          "detail": "улица Некрасова, 41А, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.632397,
+            "lng": 39.8726539
+          }
+        },
+        {
+          "id": "osm-node-5098654775",
+          "title": "Ягодка",
+          "detail": "улица Урицкого, 3, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6877017,
+            "lng": 39.806529
+          }
+        },
+        {
+          "id": "osm-node-5159862422",
+          "title": "Огни",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6313905,
+            "lng": 39.8893091
+          }
+        },
+        {
+          "id": "osm-node-5209569821",
+          "title": "Погребок",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6374952,
+            "lng": 39.8405979
+          }
+        },
+        {
+          "id": "osm-node-5589870726",
+          "title": "Утро",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6265068,
+            "lng": 39.8730701
+          }
+        },
+        {
+          "id": "osm-node-5618684621",
+          "title": "Сладости & радости",
+          "detail": "Советская улица, 2",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6283534,
+            "lng": 39.8931428
+          }
+        },
+        {
+          "id": "osm-node-5870045085",
+          "title": "Ветеринарная клиника доктора Седова",
+          "detail": "Большая Октябрьская улица, 65 литА",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.6187359,
+            "lng": 39.8684333
+          }
+        },
+        {
+          "id": "osm-node-5899845586",
+          "title": "Нефтяников",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5785976,
+            "lng": 39.8355311
+          }
+        },
+        {
+          "id": "osm-node-6059661085",
+          "title": "Просто кофе",
+          "detail": "улица Трефолева, 17/14",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6274953,
+            "lng": 39.8884515
+          }
+        },
+        {
+          "id": "osm-node-6079161186",
+          "title": "The Тёлки",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6266101,
+            "lng": 39.8685846
+          }
+        },
+        {
+          "id": "osm-node-6079240485",
+          "title": "Хорошие Люди",
+          "detail": "Депутатская улица, 5",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6248086,
+            "lng": 39.889625
+          }
+        },
+        {
+          "id": "osm-node-6110476485",
+          "title": "Пелеменная на Свободе",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6252366,
+            "lng": 39.8818841
+          }
+        },
+        {
+          "id": "osm-node-6110525088",
+          "title": "Штолле",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6321269,
+            "lng": 39.8848948
+          }
+        },
+        {
+          "id": "osm-node-6110528885",
+          "title": "Кабачок",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6310919,
+            "lng": 39.8862568
+          }
+        },
+        {
+          "id": "osm-node-6110730587",
+          "title": "Кумушка",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6239129,
+            "lng": 39.8911821
+          }
+        },
+        {
+          "id": "osm-node-6110767286",
+          "title": "Za мясо",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.626085,
+            "lng": 39.8890948
+          }
+        },
+        {
+          "id": "osm-node-6110777386",
+          "title": "Полтора питбуля",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6262832,
+            "lng": 39.8902662
+          }
+        },
+        {
+          "id": "osm-node-6110807685",
+          "title": "Штолле",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6249609,
+            "lng": 39.8893775
+          }
+        },
+        {
+          "id": "osm-node-6110933886",
+          "title": "Куба либре",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6257712,
+            "lng": 39.8884643
+          }
+        },
+        {
+          "id": "osm-node-6110938485",
+          "title": "Русский чай",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6255081,
+            "lng": 39.8867887
+          }
+        },
+        {
+          "id": "osm-node-6139819668",
+          "title": "Овсянка",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6264495,
+            "lng": 39.8911969
+          }
+        },
+        {
+          "id": "osm-node-6176616581",
+          "title": "Оджах (Очаг)",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.618177,
+            "lng": 39.8537459
+          }
+        },
+        {
+          "id": "osm-node-6209960068",
+          "title": "Лапша на ушах",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6333503,
+            "lng": 39.8580036
+          }
+        },
+        {
+          "id": "osm-node-6218950086",
+          "title": "Лапша на ушах",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6333501,
+            "lng": 39.8579789
+          }
+        },
+        {
+          "id": "osm-node-6330211537",
+          "title": "Кафе виртуальной реальности 360°",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6266115,
+            "lng": 39.8889128
+          }
+        },
+        {
+          "id": "osm-node-6341325469",
+          "title": "Кофешка",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6300372,
+            "lng": 39.869087
+          }
+        },
+        {
+          "id": "osm-node-6376267787",
+          "title": "33 удовольствия",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6907498,
+            "lng": 39.7620642
+          }
+        },
+        {
+          "id": "osm-node-6474815928",
+          "title": "Четыре лапы",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.6977605,
+            "lng": 39.7586523
+          }
+        },
+        {
+          "id": "osm-node-6474815933",
+          "title": "Четыре лапы",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.690553,
+            "lng": 39.778576
+          }
+        },
+        {
+          "id": "osm-node-6474816754",
+          "title": "Четыре Лапы",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.5765205,
+            "lng": 39.8431395
+          }
+        },
+        {
+          "id": "osm-node-6474816755",
+          "title": "Четыре лапы",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.670035,
+            "lng": 39.8374666
+          }
+        },
+        {
+          "id": "osm-node-6474816756",
+          "title": "Четыре лапы",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.6403625,
+            "lng": 39.9649038
+          }
+        },
+        {
+          "id": "osm-node-6474816757",
+          "title": "Четыре лапы",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.6274191,
+            "lng": 39.8716861
+          }
+        },
+        {
+          "id": "osm-node-6474816758",
+          "title": "Четыре лапы",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.6790518,
+            "lng": 39.7906206
+          }
+        },
+        {
+          "id": "osm-node-6536734304",
+          "title": "Coffee Like",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.630197,
+            "lng": 39.869011
+          }
+        },
+        {
+          "id": "osm-node-6536734305",
+          "title": "Coffee Like",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.625884,
+            "lng": 39.874275
+          }
+        },
+        {
+          "id": "osm-node-6536734306",
+          "title": "Coffee Like",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.625142,
+            "lng": 39.882746
+          }
+        },
+        {
+          "id": "osm-node-6536734307",
+          "title": "Coffee Like",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.637906,
+            "lng": 39.883654
+          }
+        },
+        {
+          "id": "osm-node-6536734308",
+          "title": "Coffee Like",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.625653,
+            "lng": 39.885917
+          }
+        },
+        {
+          "id": "osm-node-6570297539",
+          "title": "Четыре лапы",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.59036,
+            "lng": 39.9004018
+          }
+        },
+        {
+          "id": "osm-node-6570303885",
+          "title": "Dosty Pizza",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6316136,
+            "lng": 39.8537797
+          }
+        },
+        {
+          "id": "osm-node-6570742056",
+          "title": "Шафран",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6349777,
+            "lng": 39.8884257
+          }
+        },
+        {
+          "id": "osm-node-6581664800",
+          "title": "Coffee Like",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.627745,
+            "lng": 39.867421
+          }
+        },
+        {
+          "id": "osm-node-6609905385",
+          "title": "Bazar",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.625351,
+            "lng": 39.8792008
+          }
+        },
+        {
+          "id": "osm-node-6764534801",
+          "title": "Эребуни",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6935754,
+            "lng": 39.7727551
+          }
+        },
+        {
+          "id": "osm-node-6782490981",
+          "title": "NEM PHO",
+          "detail": "проспект Ленина, 11/74, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6407865,
+            "lng": 39.877659
+          }
+        },
+        {
+          "id": "osm-node-6813748058",
+          "title": "ЯрДом",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.7028527,
+            "lng": 39.7575745
+          }
+        },
+        {
+          "id": "osm-node-6823422375",
+          "title": "Бургерная",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6259724,
+            "lng": 39.8814321
+          }
+        },
+        {
+          "id": "osm-node-6936938063",
+          "title": "Бута",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6840269,
+            "lng": 39.7991309
+          }
+        },
+        {
+          "id": "osm-node-6944332042",
+          "title": "Добрый доктор",
+          "detail": "",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.6607139,
+            "lng": 39.8442001
+          }
+        },
+        {
+          "id": "osm-node-6982763473",
+          "title": "Яршаурма",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6380073,
+            "lng": 39.8839316
+          }
+        },
+        {
+          "id": "osm-node-7056598953",
+          "title": "Ilko bar",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6962466,
+            "lng": 39.7680528
+          }
+        },
+        {
+          "id": "osm-node-7098138095",
+          "title": "Площадка для собак без названия",
+          "detail": "",
+          "category": "площадка для собак",
+          "group": "dogParks",
+          "point": {
+            "lat": 57.6796769,
+            "lng": 39.7640173
+          }
+        },
+        {
+          "id": "osm-node-7102166186",
+          "title": "Любимый кувшин",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6230335,
+            "lng": 39.8896067
+          }
+        },
+        {
+          "id": "osm-node-7124740185",
+          "title": "Теремок",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.6987099,
+            "lng": 39.7643544
+          }
+        },
+        {
+          "id": "osm-node-7125727747",
+          "title": "Бульон",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6425398,
+            "lng": 39.8537865
+          }
+        },
+        {
+          "id": "osm-node-7128281157",
+          "title": "Зоогалерея",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.6261668,
+            "lng": 39.8499851
+          }
+        },
+        {
+          "id": "osm-node-7130252149",
+          "title": "Солянка",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6937476,
+            "lng": 39.7689051
+          }
+        },
+        {
+          "id": "osm-node-7208560964",
+          "title": "Coffee Like",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6290484,
+            "lng": 39.8496746
+          }
+        },
+        {
+          "id": "osm-node-7208560973",
+          "title": "Coffee Like",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6277466,
+            "lng": 39.8713321
+          }
+        },
+        {
+          "id": "osm-node-7250216989",
+          "title": "Краснодарский парень",
+          "detail": "Депутатская улица, 11",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6244028,
+            "lng": 39.8886098
+          }
+        },
+        {
+          "id": "osm-node-7318000220",
+          "title": "Плаза Лофт Кафе",
+          "detail": "Угличская улица, 39, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.632584,
+            "lng": 39.8290049
+          }
+        },
+        {
+          "id": "osm-node-7318000239",
+          "title": "Шаурма",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6738182,
+            "lng": 39.8074646
+          }
+        },
+        {
+          "id": "osm-node-7318000248",
+          "title": "Виномакс",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6888803,
+            "lng": 39.7774004
+          }
+        },
+        {
+          "id": "osm-node-7358522926",
+          "title": "Зоогалерея",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.6783568,
+            "lng": 39.8048399
+          }
+        },
+        {
+          "id": "osm-node-7765107786",
+          "title": "Grigio",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.626428,
+            "lng": 39.8864716
+          }
+        },
+        {
+          "id": "osm-node-7765127885",
+          "title": "Сказка. Еда и вино",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6250053,
+            "lng": 39.8744029
+          }
+        },
+        {
+          "id": "osm-node-7981524806",
+          "title": "Фарфор",
+          "detail": "Республиканская улица, 16А, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6387494,
+            "lng": 39.8818831
+          }
+        },
+        {
+          "id": "osm-node-7986853885",
+          "title": "Мятный Джо на Свободе",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6242218,
+            "lng": 39.8743603
+          }
+        },
+        {
+          "id": "osm-node-7986864786",
+          "title": "Мятный Джо на Депутатской",
+          "detail": "Депутатская улица, 2",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6251998,
+            "lng": 39.8899119
+          }
+        },
+        {
+          "id": "osm-node-8240662817",
+          "title": "Noodle Market",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.626502,
+            "lng": 39.8858193
+          }
+        },
+        {
+          "id": "osm-node-8311106367",
+          "title": "Суши Good",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.7085924,
+            "lng": 39.7737828
+          }
+        },
+        {
+          "id": "osm-node-8464423526",
+          "title": "Maneki",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6539285,
+            "lng": 39.9427583
+          }
+        },
+        {
+          "id": "osm-node-8464434630",
+          "title": "Суши мастер",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6539722,
+            "lng": 39.9428984
+          }
+        },
+        {
+          "id": "osm-node-8506502039",
+          "title": "Prospect",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6335071,
+            "lng": 39.8614293
+          }
+        },
+        {
+          "id": "osm-node-8820752341",
+          "title": "Академия",
+          "detail": "улица Блюхера, 48/5, Ярославль",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6868864,
+            "lng": 39.8055761
+          }
+        },
+        {
+          "id": "osm-node-8820814181",
+          "title": "Зоогалерея",
+          "detail": "улица Блюхера, 48/5, Ярославль",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.6867316,
+            "lng": 39.8058637
+          }
+        },
+        {
+          "id": "osm-node-8832041817",
+          "title": "Сайгон",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6820684,
+            "lng": 39.7889956
+          }
+        },
+        {
+          "id": "osm-node-8887384318",
+          "title": "Трапезная палата",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6250411,
+            "lng": 39.8958094
+          }
+        },
+        {
+          "id": "osm-node-8907731018",
+          "title": "Буфет №1",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6231973,
+            "lng": 39.8902953
+          }
+        },
+        {
+          "id": "osm-node-9271417271",
+          "title": "Napoleon",
+          "detail": "",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.6505902,
+            "lng": 39.9598642
+          }
+        },
+        {
+          "id": "osm-node-9396296779",
+          "title": "Огонь",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5741047,
+            "lng": 39.8683097
+          }
+        },
+        {
+          "id": "osm-node-9463137340",
+          "title": "Нэм Фо",
+          "detail": "улица Свердлова, 34, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6303914,
+            "lng": 39.8733948
+          }
+        },
+        {
+          "id": "osm-node-9465132368",
+          "title": "Вип Меню",
+          "detail": "улица Стачек, 54, Ярославль",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6089528,
+            "lng": 39.8356883
+          }
+        },
+        {
+          "id": "osm-node-9501435828",
+          "title": "Друзья",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6779927,
+            "lng": 39.7881578
+          }
+        },
+        {
+          "id": "osm-node-9721028917",
+          "title": "Пипяо",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6252446,
+            "lng": 39.8817037
+          }
+        },
+        {
+          "id": "osm-node-9721044617",
+          "title": "Хинкали хаус",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6229894,
+            "lng": 39.8818592
+          }
+        },
+        {
+          "id": "osm-node-9772662342",
+          "title": "Русский",
+          "detail": "улица Урицкого, 7А, Ярославль",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6851569,
+            "lng": 39.803354
+          }
+        },
+        {
+          "id": "osm-node-9812980817",
+          "title": "Жарим в кайф",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6261202,
+            "lng": 39.889224
+          }
+        },
+        {
+          "id": "osm-node-9813734817",
+          "title": "Арабуста",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6266886,
+            "lng": 39.8888738
+          }
+        },
+        {
+          "id": "osm-node-9858660536",
+          "title": "Жемчужина",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6780545,
+            "lng": 39.7851253
+          }
+        },
+        {
+          "id": "osm-node-9885921829",
+          "title": "Ханой",
+          "detail": "Волжская набережная, 4, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6342901,
+            "lng": 39.893044
+          }
+        },
+        {
+          "id": "osm-node-9919152855",
+          "title": "Coffee Like",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6324266,
+            "lng": 39.8883668
+          }
+        },
+        {
+          "id": "osm-node-10178024417",
+          "title": "Ханой 2",
+          "detail": "Большая Октябрьская улица, 45",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.621922,
+            "lng": 39.8787423
+          }
+        },
+        {
+          "id": "osm-node-10178419617",
+          "title": "Мамука",
+          "detail": "5/23",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6259174,
+            "lng": 39.8894387
+          }
+        },
+        {
+          "id": "osm-node-10189103834",
+          "title": "Мираж",
+          "detail": "улица Серго Орджоникидзе, 30А",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6540667,
+            "lng": 39.9649915
+          }
+        },
+        {
+          "id": "osm-node-10189103843",
+          "title": "Жадина говядина",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6541152,
+            "lng": 39.9651646
+          }
+        },
+        {
+          "id": "osm-node-10189104224",
+          "title": "Миллениум",
+          "detail": "Которосльная набережная, 51",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6168793,
+            "lng": 39.8702323
+          }
+        },
+        {
+          "id": "osm-node-10246257624",
+          "title": "Май",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6976551,
+            "lng": 39.7918958
+          }
+        },
+        {
+          "id": "osm-node-10760654976",
+          "title": "Моне",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6225882,
+            "lng": 39.857538
+          }
+        },
+        {
+          "id": "osm-node-10796619048",
+          "title": "Антикафе \"check in\"",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6253834,
+            "lng": 39.8862069
+          }
+        },
+        {
+          "id": "osm-node-10815434805",
+          "title": "Гастробар ХЛЕБ",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.624602,
+            "lng": 39.8699954
+          }
+        },
+        {
+          "id": "osm-node-10815442305",
+          "title": "Гастробар ХЛЕБ",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.624592,
+            "lng": 39.8699459
+          }
+        },
+        {
+          "id": "osm-node-11009891577",
+          "title": "Союз Писателей",
+          "detail": "улица Терешковой, 5",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.633847,
+            "lng": 39.8882301
+          }
+        },
+        {
+          "id": "osm-node-11138746332",
+          "title": "Nice",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6236866,
+            "lng": 39.8903972
+          }
+        },
+        {
+          "id": "osm-node-11143641796",
+          "title": "Дудук на Волге",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6360305,
+            "lng": 39.9038992
+          }
+        },
+        {
+          "id": "osm-node-11196316480",
+          "title": "Неля",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.7088136,
+            "lng": 39.7788819
+          }
+        },
+        {
+          "id": "osm-node-11294797828",
+          "title": "Райские сады",
+          "detail": "улица Свободы, 87А",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.626474,
+            "lng": 39.8528733
+          }
+        },
+        {
+          "id": "osm-node-11323217469",
+          "title": "Старик Хинкалыч",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6254109,
+            "lng": 39.8861024
+          }
+        },
+        {
+          "id": "osm-node-11804459279",
+          "title": "КОФЕ с собой",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6985312,
+            "lng": 39.7863802
+          }
+        },
+        {
+          "id": "osm-node-11972572107",
+          "title": "Восток",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6490779,
+            "lng": 39.9517717
+          }
+        },
+        {
+          "id": "osm-node-11999417694",
+          "title": "Буфет",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6379792,
+            "lng": 39.859819
+          }
+        },
+        {
+          "id": "osm-node-12037327076",
+          "title": "Зоозавр",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.7050834,
+            "lng": 39.7672984
+          }
+        },
+        {
+          "id": "osm-node-12059168165",
+          "title": "Surf Coffee",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6259613,
+            "lng": 39.889805
+          }
+        },
+        {
+          "id": "osm-node-12065147513",
+          "title": "Агапа",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6290475,
+            "lng": 39.8892411
+          }
+        },
+        {
+          "id": "osm-node-12077099955",
+          "title": "Манты",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6246834,
+            "lng": 39.8915099
+          }
+        },
+        {
+          "id": "osm-node-12077196316",
+          "title": "Пиросмани",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6312025,
+            "lng": 39.8793454
+          }
+        },
+        {
+          "id": "osm-node-12077196325",
+          "title": "Победа",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.634355,
+            "lng": 39.8709025
+          }
+        },
+        {
+          "id": "osm-node-12077196328",
+          "title": "Панини",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6324697,
+            "lng": 39.8709985
+          }
+        },
+        {
+          "id": "osm-node-12077196330",
+          "title": "Буланже",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6321871,
+            "lng": 39.8708791
+          }
+        },
+        {
+          "id": "osm-node-12302362354",
+          "title": "HandDog",
+          "detail": "",
+          "category": "зоомагазин",
+          "group": "shops",
+          "point": {
+            "lat": 57.5510411,
+            "lng": 39.8182914
+          }
+        },
+        {
+          "id": "osm-node-12430765487",
+          "title": "Bazar",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6276361,
+            "lng": 39.8701729
+          }
+        },
+        {
+          "id": "osm-node-12539884969",
+          "title": "Много рыбы",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6554821,
+            "lng": 39.9425174
+          }
+        },
+        {
+          "id": "osm-node-12593585114",
+          "title": "Кофе у медведя",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6225672,
+            "lng": 39.8903017
+          }
+        },
+        {
+          "id": "osm-node-12600049359",
+          "title": "Мидийное место",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6245253,
+            "lng": 39.8860842
+          }
+        },
+        {
+          "id": "osm-node-12786849501",
+          "title": "Закрома",
+          "detail": "улица Свободы, 42",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6259801,
+            "lng": 39.8721153
+          }
+        },
+        {
+          "id": "osm-node-12786867001",
+          "title": "Энцо",
+          "detail": "улица Свободы, 46/3",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6272807,
+            "lng": 39.87002
+          }
+        },
+        {
+          "id": "osm-node-12880634094",
+          "title": "Япончик",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6080901,
+            "lng": 39.8259632
+          }
+        },
+        {
+          "id": "osm-node-13296469473",
+          "title": "Кофе с молоком",
+          "detail": "1Б, Красный Бор",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6466449,
+            "lng": 39.9710108
+          }
+        },
+        {
+          "id": "osm-node-13421144401",
+          "title": "Собрание",
+          "detail": "Волжская набережная, 33",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6304179,
+            "lng": 39.8949782
+          }
+        },
+        {
+          "id": "osm-node-13447704601",
+          "title": "Лонжерон",
+          "detail": "проспект Октября, 92",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6596448,
+            "lng": 39.8446245
+          }
+        },
+        {
+          "id": "osm-node-13529498121",
+          "title": "Шашлычок",
+          "detail": "Большая Фёдоровская улица, 79, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6084933,
+            "lng": 39.8621852
+          }
+        },
+        {
+          "id": "osm-node-13684219431",
+          "title": "Лотос",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6370937,
+            "lng": 39.8910034
+          }
+        },
+        {
+          "id": "osm-node-13899196404",
+          "title": "Organic Coffee",
+          "detail": "Советская улица, 21",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6323354,
+            "lng": 39.8855059
+          }
+        },
+        {
+          "id": "osm-node-13899201702",
+          "title": "Organic Coffee",
+          "detail": "улица Кирова, 13",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6254197,
+            "lng": 39.8862951
+          }
+        },
+        {
+          "id": "osm-node-13899210303",
+          "title": "Organic Coffee",
+          "detail": "проспект Толбухина, 58/7",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6288053,
+            "lng": 39.8588948
+          }
+        },
+        {
+          "id": "osm-node-13996183745",
+          "title": "Милый чё",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6234254,
+            "lng": 39.8912671
+          }
+        },
+        {
+          "id": "osm-node-13996183753",
+          "title": "Баринъ",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6266209,
+            "lng": 39.8990712
+          }
+        },
+        {
+          "id": "osm-node-14002295701",
+          "title": "Столовая \"БАЗИLIK\"",
+          "detail": "Республиканская улица, 3 к5А",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6409543,
+            "lng": 39.8855043
+          }
+        },
+        {
+          "id": "osm-node-14017576502",
+          "title": "Весна",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.7426106,
+            "lng": 39.8401539
+          }
+        },
+        {
+          "id": "osm-node-14073182204",
+          "title": "BetLife",
+          "detail": "улица Кривова, 57",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.5845007,
+            "lng": 39.856955
+          }
+        },
+        {
+          "id": "osm-node-14073185302",
+          "title": "ДоДо Пицца",
+          "detail": "Московский проспект, 153",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.584741,
+            "lng": 39.8560372
+          }
+        },
+        {
+          "id": "osm-node-14075601101",
+          "title": "Созвездие",
+          "detail": "улица Тургенева, 22",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.6315104,
+            "lng": 39.8465368
+          }
+        },
+        {
+          "id": "osm-node-14081870302",
+          "title": "Столовая у Авторынка",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6492907,
+            "lng": 39.8603011
+          }
+        },
+        {
+          "id": "osm-node-14081871601",
+          "title": "Carmarket",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6492605,
+            "lng": 39.8601572
+          }
+        },
+        {
+          "id": "osm-node-14081876503",
+          "title": "Столовая",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6570781,
+            "lng": 39.8427722
+          }
+        },
+        {
+          "id": "osm-node-14081925402",
+          "title": "Маяк",
+          "detail": "проспект Октября, 91А",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6600193,
+            "lng": 39.8422118
+          }
+        },
+        {
+          "id": "osm-node-14082266201",
+          "title": "Нам покороче",
+          "detail": "улица Жукова, 31/17",
+          "category": "груминг",
+          "group": "grooming",
+          "point": {
+            "lat": 57.6354774,
+            "lng": 39.8296515
+          }
+        },
+        {
+          "id": "osm-node-14082409901",
+          "title": "Живое сердце",
+          "detail": "улица Белинского, 40",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.6332509,
+            "lng": 39.8339469
+          }
+        },
+        {
+          "id": "osm-node-14096549901",
+          "title": "Столовая",
+          "detail": "улица Андропова, 6",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6240958,
+            "lng": 39.8929486
+          }
+        },
+        {
+          "id": "osm-node-14096580501",
+          "title": "Хан Кебаб",
+          "detail": "улица Нахимсона, 5",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6251236,
+            "lng": 39.8926574
+          }
+        },
+        {
+          "id": "osm-node-14096622101",
+          "title": "Студия +86",
+          "detail": "Революционная улица, 5/24",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6237916,
+            "lng": 39.8926819
+          }
+        },
+        {
+          "id": "osm-node-14096682502",
+          "title": "Смородина",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6230373,
+            "lng": 39.8905167
+          }
+        },
+        {
+          "id": "osm-node-14129887001",
+          "title": "Fit Cafe",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5580931,
+            "lng": 39.9408815
+          }
+        },
+        {
+          "id": "osm-node-14132781401",
+          "title": "Фо Тэй",
+          "detail": "Малый Московский переулок, 1",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6121166,
+            "lng": 39.880373
+          }
+        },
+        {
+          "id": "osm-node-14133485002",
+          "title": "Цветной бульвар",
+          "detail": "Московский проспект, 10/15",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.611832,
+            "lng": 39.8812779
+          }
+        },
+        {
+          "id": "osm-node-14133555003",
+          "title": "Суши Мастер",
+          "detail": "Большая Фёдоровская улица, 29",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6099264,
+            "lng": 39.8760036
+          }
+        },
+        {
+          "id": "osm-node-14133806103",
+          "title": "Галерея суши",
+          "detail": "Большая Фёдоровская улица, 29",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.609891,
+            "lng": 39.8759999
+          }
+        },
+        {
+          "id": "osm-node-14133813501",
+          "title": "Мир Суши",
+          "detail": "Большая Фёдоровская улица, 29",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6098584,
+            "lng": 39.8758698
+          }
+        },
+        {
+          "id": "osm-node-14191356795",
+          "title": "Вафля",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.616898,
+            "lng": 39.8614609
+          }
+        },
+        {
+          "id": "osm-node-14222538525",
+          "title": "Phoviet",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6265381,
+            "lng": 39.837357
+          }
+        },
+        {
+          "id": "osm-way-31106566",
+          "title": "о. Даманский",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6184638,
+            "lng": 39.8995484
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-42745363",
+          "title": "сквер 950-летия Ярославля",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6324214,
+            "lng": 39.8579467
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-45819697",
+          "title": "\"Рабочий\" парк",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6107485,
+            "lng": 39.8241227
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-46095258",
+          "title": "парк 30-летия Победы",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.5537518,
+            "lng": 39.9423082
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-55888162",
+          "title": "Петропавловский парк",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6019743,
+            "lng": 39.8449009
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-74497167",
+          "title": "Очки",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6869593,
+            "lng": 39.780428
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-75718275",
+          "title": "Кафе",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5772248,
+            "lng": 39.8563195
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-75839775",
+          "title": "Бутусовский парк",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6292874,
+            "lng": 39.8719521
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-77624928",
+          "title": "Кафе",
+          "detail": "улица Полушкина Роща, 16 литАЯ, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.66539,
+            "lng": 39.8501993
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-81468114",
+          "title": "Площадка для собак без названия",
+          "detail": "",
+          "category": "площадка для собак",
+          "group": "dogParks",
+          "point": {
+            "lat": 57.6415647,
+            "lng": 39.9005339
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-81468119",
+          "title": "Велес",
+          "detail": "44А, Ярославль",
+          "category": "ветклиника",
+          "group": "vets",
+          "point": {
+            "lat": 57.6416217,
+            "lng": 39.9008737
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-86378319",
+          "title": "Студенческая столовая",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5887368,
+            "lng": 39.8513306
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-88435967",
+          "title": "Ёлки",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5720262,
+            "lng": 39.9240406
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-92034060",
+          "title": "Friends",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6298762,
+            "lng": 39.857192
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-92413964",
+          "title": "Рабочая столовая",
+          "detail": "улица Вспольинское Поле, 1Б",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6167139,
+            "lng": 39.8450468
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-103187793",
+          "title": "Афродита",
+          "detail": "проезд Матросова, 14",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5744007,
+            "lng": 39.8553989
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-105934720",
+          "title": "Пингвин",
+          "detail": "Тутаевское шоссе, 16, Ярославль",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6766777,
+            "lng": 39.8342546
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-106750615",
+          "title": "Рабочая столовая ЯФВО",
+          "detail": "Тверицкая набережная, 20Б, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6389382,
+            "lng": 39.9033557
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-107859568",
+          "title": "Чито-грито",
+          "detail": "улица Подзеленье, 7/1, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6213913,
+            "lng": 39.9001066
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-112658785",
+          "title": "Одесса",
+          "detail": "Магистральная улица, 62",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6411468,
+            "lng": 39.7828564
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-118481771",
+          "title": "Площадка для собак без названия",
+          "detail": "",
+          "category": "площадка для собак",
+          "group": "dogParks",
+          "point": {
+            "lat": 57.5753447,
+            "lng": 39.9174571
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-118594186",
+          "title": "Парк Ветеранов",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6329509,
+            "lng": 39.8363726
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-130558815",
+          "title": "Парк железнодорожников",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6276905,
+            "lng": 39.8363316
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-131003848",
+          "title": "Агдам",
+          "detail": "улица Белинского, 43",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6331803,
+            "lng": 39.8350758
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-132205194",
+          "title": "Шарм +",
+          "detail": "Центральная улица, 2А",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.7071044,
+            "lng": 39.8996706
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-135722550",
+          "title": "Парк Музея боевой славы",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6329328,
+            "lng": 39.8318378
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-135768292",
+          "title": "Площадка для собак без названия",
+          "detail": "",
+          "category": "площадка для собак",
+          "group": "dogParks",
+          "point": {
+            "lat": 57.6391326,
+            "lng": 39.9434351
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-141032776",
+          "title": "Афоня",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6235411,
+            "lng": 39.8914439
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-177473083",
+          "title": "Окружная",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.605812,
+            "lng": 39.7922199
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-178253247",
+          "title": "Летнее кафе Плакучая Ива",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6126109,
+            "lng": 39.8405217
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-181714144",
+          "title": "Сад Дружбы",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6318297,
+            "lng": 39.8918465
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-186358279",
+          "title": "Площадка для собак без названия",
+          "detail": "",
+          "category": "площадка для собак",
+          "group": "dogParks",
+          "point": {
+            "lat": 57.6469564,
+            "lng": 39.9393944
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-195764417",
+          "title": "На прудах",
+          "detail": "Ленинградский проспект, 75Б",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6857476,
+            "lng": 39.7827403
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-202315070",
+          "title": "Уча",
+          "detail": "",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6134211,
+            "lng": 39.8898275
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-205639576",
+          "title": "Парк села Серёново",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6977732,
+            "lng": 39.9533814
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-213413916",
+          "title": "Мажор",
+          "detail": "Старая Костромская улица, 3А, Ярославль",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5915428,
+            "lng": 39.8805135
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-259492393",
+          "title": "Мангал House",
+          "detail": "улица Труфанова, 10А",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.681088,
+            "lng": 39.7785122
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-267495322",
+          "title": "Небо",
+          "detail": "Большая Фёдоровская улица, 35, Ярославль",
+          "category": "ресторан",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6097239,
+            "lng": 39.8750828
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-275206227",
+          "title": "Стрелка",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6194611,
+            "lng": 39.9038925
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-295597532",
+          "title": "Парк ветеранов Великой отечественной войны",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6787121,
+            "lng": 39.8086589
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-319099498",
+          "title": "Мангал-House",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6933301,
+            "lng": 39.7697198
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-338175665",
+          "title": "Сквер на Доброхотова",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6556633,
+            "lng": 39.953514
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-352814487",
+          "title": "Крохинский лесопарк",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6143299,
+            "lng": 39.8650575
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-361848676",
+          "title": "Площадка для собак без названия",
+          "detail": "",
+          "category": "площадка для собак",
+          "group": "dogParks",
+          "point": {
+            "lat": 57.6038039,
+            "lng": 39.8262975
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-391856873",
+          "title": "Площадка для собак без названия",
+          "detail": "",
+          "category": "площадка для собак",
+          "group": "dogParks",
+          "point": {
+            "lat": 57.6884967,
+            "lng": 39.8120443
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-399223384",
+          "title": "Площадка для собак без названия",
+          "detail": "",
+          "category": "площадка для собак",
+          "group": "dogParks",
+          "point": {
+            "lat": 57.6948401,
+            "lng": 39.7939001
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-405956899",
+          "title": "Фабричный парк",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.7159247,
+            "lng": 39.7779984
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-461364495",
+          "title": "Drive Cafe",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.5422542,
+            "lng": 39.9523544
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-469717785",
+          "title": "Павловская роща",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6934624,
+            "lng": 39.810525
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-495052903",
+          "title": "Школьный парк",
+          "detail": "улица Чкалова, Ярославль",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6395055,
+            "lng": 39.8194561
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-523839115",
+          "title": "Сладкая вата",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6878801,
+            "lng": 39.7787105
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-525731304",
+          "title": "Роща",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.689904,
+            "lng": 39.7921443
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-539100026",
+          "title": "Ветерок",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6192508,
+            "lng": 39.8986096
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-539100128",
+          "title": "Dudki Dacha",
+          "detail": "улица Подзеленье, 1А, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6172217,
+            "lng": 39.8989308
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-539100133",
+          "title": "Якорь",
+          "detail": "улица Подзеленье, 3",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6217562,
+            "lng": 39.8964446
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-543045932",
+          "title": "Ковчег",
+          "detail": "",
+          "category": "площадка для собак",
+          "group": "dogParks",
+          "point": {
+            "lat": 57.6239918,
+            "lng": 39.9668214
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-544611241",
+          "title": "Квас",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6189731,
+            "lng": 39.8994874
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-544611242",
+          "title": "Баскин Робинс",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6193257,
+            "lng": 39.8997433
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-544611245",
+          "title": "Сладкий домик",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6192486,
+            "lng": 39.8997461
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-548297913",
+          "title": "Площадка для собак без названия",
+          "detail": "",
+          "category": "площадка для собак",
+          "group": "dogParks",
+          "point": {
+            "lat": 57.6427259,
+            "lng": 39.8380438
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-551406618",
+          "title": "Юбилейная площадь",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6340637,
+            "lng": 39.8592176
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-663286949",
+          "title": "парк им. Островского",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6789435,
+            "lng": 39.8199647
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-783548011",
+          "title": "Площадка для собак без названия",
+          "detail": "",
+          "category": "площадка для собак",
+          "group": "dogParks",
+          "point": {
+            "lat": 57.6431506,
+            "lng": 39.8194189
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-908373423",
+          "title": "Нефтяник",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.5844531,
+            "lng": 39.8504557
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-991862060",
+          "title": "Сквер на улице Юности",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6406507,
+            "lng": 39.8119752
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-1068267335",
+          "title": "Рождественский сад",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.630051,
+            "lng": 39.8937834
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-1121148515",
+          "title": "Озерная гривка",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6340025,
+            "lng": 39.9550116
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-1522686332",
+          "title": "парк Победы",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.7071271,
+            "lng": 39.8978865
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-1523081455",
+          "title": "Хлебница",
+          "detail": "Яковлевская улица, 5 к2, Ярославль",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6571838,
+            "lng": 39.9683857
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-way-1552691704",
+          "title": "Gard Coffee",
+          "detail": "",
+          "category": "кафе",
+          "group": "cafes",
+          "point": {
+            "lat": 57.6874985,
+            "lng": 39.7790964
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-relation-334985",
+          "title": "Тверицкий бор",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6459213,
+            "lng": 39.9308946
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-relation-1147456",
+          "title": "Парк 30-летия Победы",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6869593,
+            "lng": 39.780428
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-relation-1166251",
+          "title": "площадь Мира",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6279068,
+            "lng": 39.8465655
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-relation-2036118",
+          "title": "Власьевский сквер",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6265005,
+            "lng": 39.882772
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-relation-2711955",
+          "title": "Детский парк",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.638354,
+            "lng": 39.8689019
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-relation-6279026",
+          "title": "Парк 1000-летия Ярославля",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6169717,
+            "lng": 39.8712819
+          },
+          "pointIsCenter": true
+        },
+        {
+          "id": "osm-relation-7831141",
+          "title": "парк \"Юбилейный\" Ленинского района",
+          "detail": "",
+          "category": "парк",
+          "group": "parks",
+          "point": {
+            "lat": 57.6359829,
+            "lng": 39.8548457
+          },
+          "pointIsCenter": true
+        }
+      ]
+    }
+  ]
+}

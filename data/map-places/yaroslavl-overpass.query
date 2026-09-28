@@ -1,0 +1,7 @@
+[out:json][timeout:90];
+(
+  nwr[leisure~"^(park|dog_park)$"](57.54,39.73,57.75,40.05);
+  nwr[amenity~"^(veterinary|cafe|restaurant)$"](57.54,39.73,57.75,40.05);
+  nwr[shop~"^(pet|pet_grooming)$"](57.54,39.73,57.75,40.05);
+);
+out center tags;
