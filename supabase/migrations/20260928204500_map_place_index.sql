@@ -2,12 +2,13 @@
 create table if not exists public.map_place_regions (
   id text primary key check (id ~ '^[a-z0-9][a-z0-9-]{0,79}$'),
   title text not null check (char_length(title) between 1 and 180),
-  bounds public.geometry(Polygon,4326) not null,
+  bounds public.geometry(MultiPolygon,4326) not null,
   source_url text not null check (source_url ~ '^https://'),
   source_updated_at timestamptz not null,
   imported_at timestamptz not null default clock_timestamp(),
   place_count integer not null default 0 check (place_count >= 0)
 );
+alter table public.map_place_regions alter column bounds type public.geometry(MultiPolygon,4326) using public.st_multi(bounds);
 
 create table if not exists public.map_place_index (
   id text primary key check (id ~ '^osm-(node|way|relation)-[1-9][0-9]*$'),

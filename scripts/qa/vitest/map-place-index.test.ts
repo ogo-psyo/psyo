@@ -1,6 +1,7 @@
 import {describe,expect,it,vi} from 'vitest';
 import {queryMapPlaceIndex} from '@/lib/server/mapPlaceIndex';
 import {validateMapPlaceRegion} from '@/lib/mapPlaceIndexImport';
+import {normalizeOsmGeoJsonFeature,parseOsmPoly} from '@/lib/geofabrikPlaces';
 const bounds={south:55.7,west:37.5,north:55.8,east:37.7};
 const database=(data:unknown,error:unknown=null)=>({rpc:vi.fn(async()=>({data,error}))});
 describe('national map place index contract',()=>{
@@ -25,5 +26,12 @@ describe('national map place index contract',()=>{
     expect(validateMapPlaceRegion({...region,places:[region.places[0],region.places[0]]})).toBe(false);
     expect(validateMapPlaceRegion({...region,places:[{...region.places[0],point:{lat:59,lng:37.61}}]})).toBe(false);
     expect(validateMapPlaceRegion({...region,sourceUrl:'https://user:password@example.test'})).toBe(false);
+  });
+  it('turns real extract shapes into allowlisted public places and exact coverage',()=>{
+    const polygon=parseOsmPoly('region\n1\n 37 55\n 38 55\n 38 56\n 37 56\n 37 55\nEND\nEND\n');
+    expect(polygon.bounds).toEqual({south:55,west:37,north:56,east:38});
+    const place=normalizeOsmGeoJsonFeature({type:'Feature',geometry:{type:'Polygon',coordinates:[[[37.5,55.5],[37.7,55.5],[37.7,55.7],[37.5,55.5]]]},properties:{'@type':'way','@id':7,leisure:'dog_park',name:'Площадка',phone:'not indexed'}});
+    expect(place).toMatchObject({id:'osm-way-7',group:'dogParks',point:{lat:55.6,lng:37.6},pointIsCenter:true});
+    expect(place).not.toHaveProperty('phone');
   });
 });

@@ -25,6 +25,6 @@ export function normalizeOsmPlaces(elements: unknown[], bounds: PlaceBounds): Di
         const label = (v: unknown, max=240) => typeof v === 'string' ? v.trim().slice(0,max) : '';
         const title=label(tags['name:ru'])||label(tags.name)||`${category[0].toUpperCase()}${category.slice(1)} без названия`;
         const detail=[label(tags['addr:street']),label(tags['addr:housenumber']),label(tags['addr:city'])].filter(Boolean).join(', ');
-        return [{id,title,detail,category,group,point,...(['yes','no','leashed'].includes(String(tags.dog))?{dogAccess:String(tags.dog)}:{}),...(item.type!=='node'?{pointIsCenter:true}:{})}];
+        return [{id,title,detail,category,group,point,...(['yes','no','leashed','designated'].includes(String(tags.dog))?{dogAccess:String(tags.dog)}:{}),...(item.type!=='node'?{pointIsCenter:true}:{})}];
     });
 }

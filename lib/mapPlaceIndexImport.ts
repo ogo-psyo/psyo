@@ -1,15 +1,19 @@
 import {parsePlaceBounds,withinPlaceBounds,type DiscoveredPlace,type PlaceRegion} from './placeDiscovery';
+import type {MultiPolygonGeometry} from './geofabrikPlaces';
+
+export type MapPlaceImportRegion=PlaceRegion&{coverage?:MultiPolygonGeometry};
 
 const groups=new Set(['parks','dogParks','vets','shops','grooming','cafes']);
 const dogAccess=new Set(['yes','no','leashed','designated']);
-export function validateMapPlaceRegion(value:unknown):value is PlaceRegion{
+export function validateMapPlaceRegion(value:unknown):value is MapPlaceImportRegion{
   if(!value||typeof value!=='object'||Array.isArray(value))return false;
-  const region=value as Partial<PlaceRegion>;
+  const region=value as Partial<MapPlaceImportRegion>;
   if(typeof region.id!=='string'||!/^[a-z0-9][a-z0-9-]{0,79}$/.test(region.id)||typeof region.title!=='string'||!region.title.trim()||region.title.length>180||!region.bounds)return false;
   const bounds=parsePlaceBounds([region.bounds.south,region.bounds.west,region.bounds.north,region.bounds.east].join(','));
   if(!bounds||typeof region.updatedAt!=='string'||!Number.isFinite(Date.parse(region.updatedAt))||typeof region.sourceUrl!=='string')return false;
+  if(region.coverage&&(region.coverage.type!=='MultiPolygon'||!Array.isArray(region.coverage.coordinates)||!region.coverage.coordinates.length))return false;
   try{const source=new URL(region.sourceUrl);if(source.protocol!=='https:'||source.username||source.password)return false;}catch{return false;}
-  if(!Array.isArray(region.places)||region.places.length<1||region.places.length>25000)return false;
+  if(!Array.isArray(region.places)||region.places.length<1||region.places.length>250000)return false;
   const ids=new Set<string>();
   return region.places.every((raw:unknown)=>{
     if(!raw||typeof raw!=='object'||Array.isArray(raw))return false;const place=raw as Partial<DiscoveredPlace>;
