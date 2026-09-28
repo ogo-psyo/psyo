@@ -6,18 +6,13 @@ export function usePlaceDiscovery(bounds: PlaceBounds | null) {
     const [request, setRequest] = useState<{ bounds: PlaceBounds; category: PlaceCategory; revision: number } | null>(null);
     const [data, setData] = useState<DiscoveryResponse | null>(null);
     const [state, setState] = useState<'idle' | 'loading' | 'ready' | 'error' | 'quota' | 'coverage' | 'area'>('idle');
-    const firstRequest = useRef(false);
     const revision = useRef(0);
     const category = request?.category || 'all';
     function load(nextCategory: PlaceCategory = category) {
         if (!bounds) return;
+        setData(null); setState('loading');
         setRequest({ bounds, category: nextCategory, revision: ++revision.current });
     }
-    useEffect(() => {
-        if (!bounds || firstRequest.current) return;
-        firstRequest.current = true;
-        void Promise.resolve().then(() => setRequest({ bounds, category: 'all', revision: ++revision.current }));
-    }, [bounds]);
     useEffect(() => {
         if (!request) return;
         const controller = new AbortController();
@@ -38,5 +33,5 @@ export function usePlaceDiscovery(bounds: PlaceBounds | null) {
         return () => controller.abort();
     }, [request]);
     const moved = Boolean(bounds && request && Object.keys(bounds).some(k => Math.abs(bounds[k as keyof PlaceBounds] - request.bounds[k as keyof PlaceBounds]) > 0.0001));
-    return { data, state, category, load, moved, requestedBounds: request?.bounds };
+    return { data: moved ? null : data, state, category, load, moved, canLoad: Boolean(bounds), requestedBounds: request?.bounds };
 }
