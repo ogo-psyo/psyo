@@ -11,6 +11,7 @@ const required = [
   'GROQ_API_KEY',
   'GROQ_ASSISTANT_MODEL',
   'ASSISTANT_GROQ_ENABLED',
+  'TELEGRAM_DELIVERY_ENCRYPTION_KEY',
 ];
 
 const examplePath = join(root, '.env.example');

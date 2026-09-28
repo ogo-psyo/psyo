@@ -13,6 +13,7 @@ import {
   careRequestFingerprint,
   readCareIdempotencyKey,
 } from '@/lib/server/careHttp';
+import { safeScheduleReminderMutationResult } from '@/lib/server/reminderScheduler';
 
 export const runtime = 'nodejs';
 type Ctx = { params: Promise<{ id: string }> };
@@ -59,7 +60,8 @@ export async function PATCH(request: Request, ctx: Ctx) {
       p_patch: patch,
     });
     if (error) throw error;
-    return NextResponse.json(data);
+    const notification = await safeScheduleReminderMutationResult(data,{ownerId,supabase});
+    return NextResponse.json({ ...(data as Record<string,unknown>), notification });
   } catch (error) {
     return careMutationError(error);
   }

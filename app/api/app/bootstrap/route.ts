@@ -5,6 +5,7 @@ import { demoModeResponse, getSupabaseAdmin } from '@/lib/server/supabase';
 import { ensureProfile, getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { rc1Config } from '@/lib/rc1';
+import { telegramReminderReadiness } from '@/lib/server/telegramReminderReadiness';
 import { avatarConsentVersion } from '@/lib/server/avatarIdentity';
 
 export const runtime = 'nodejs';
@@ -23,6 +24,10 @@ function avatarCapabilities() {
     providerReady,
     consentVersion: avatarConsentVersion,
   };
+}
+
+function notificationCapabilities() {
+  return { telegramEnabled: telegramReminderReadiness().ready };
 }
 
 function demoBootstrap(): AppBootstrap {
@@ -61,7 +66,7 @@ export async function GET(request: Request) {
   const appSession = getAppSessionFromRequest(request);
   const supabase = auth.supabase ?? getSupabaseAdmin();
 
-  if (!supabase) return NextResponse.json({ ...demoBootstrap(), avatarCapabilities: avatarCapabilities(), ...demoModeResponse('Configure Supabase env to load real app state.') });
+  if (!supabase) return NextResponse.json({ ...demoBootstrap(), avatarCapabilities: avatarCapabilities(), notificationCapabilities:notificationCapabilities(), ...demoModeResponse('Configure Supabase env to load real app state.') });
   if (auth.user) await ensureProfile(auth.user);
 
   const ownerId = auth.user?.id ?? appSession?.ownerId;
@@ -73,6 +78,7 @@ export async function GET(request: Request) {
       user: null,
       message: 'Sign in to load private app state.',
       avatarCapabilities: avatarCapabilities(),
+      notificationCapabilities:notificationCapabilities(),
     });
   }
 
@@ -93,7 +99,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', connected: true, error: 'PET_NOT_FOUND_OR_NOT_OWNED' }, { status: 404 });
   }
 
-  if (!selectedPet) return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', connected: true, empty: true, pets: [], user: { id: ownerId, email: auth.user?.email ?? null }, avatarCapabilities: avatarCapabilities(), message: 'No pets yet.' });
+  if (!selectedPet) return NextResponse.json({ mode: auth.user ? 'user' : 'telegram', connected: true, empty: true, pets: [], user: { id: ownerId, email: auth.user?.email ?? null }, avatarCapabilities: avatarCapabilities(), notificationCapabilities:notificationCapabilities(), message: 'No pets yet.' });
 
   const petId = selectedPet.id;
   const [passportResult, socialResult, remindersResult, zonesResult, routesResult, wishlistResult, observationsResult, documentsResult] = await Promise.all([
@@ -134,5 +140,6 @@ export async function GET(request: Request) {
       createdAt: row.created_at,
     })),
     avatarCapabilities: avatarCapabilities(),
+    notificationCapabilities:notificationCapabilities(),
   });
 }

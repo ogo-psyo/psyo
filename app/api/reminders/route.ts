@@ -11,6 +11,7 @@ import {
   careRequestFingerprint,
   readCareIdempotencyKey,
 } from '@/lib/server/careHttp';
+import { safeScheduleReminderMutationResult } from '@/lib/server/reminderScheduler';
 
 export const runtime = 'nodejs';
 
@@ -89,7 +90,8 @@ export async function POST(request: Request) {
       ...(extended?{p_time_mode:body.timeMode||'flexible',p_details:details,p_completed_at:parsed.data.completedAt||null}:body.timeMode?{p_time_mode:body.timeMode}:{}),
     });
     if (error) throw error;
-    return NextResponse.json(data, { status: 201 });
+    const notification = await safeScheduleReminderMutationResult(data,{ownerId,supabase});
+    return NextResponse.json({ ...(data as Record<string,unknown>), notification }, { status: 201 });
   } catch (error) {
     return careMutationError(error);
   }

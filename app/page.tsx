@@ -471,6 +471,7 @@ export default function Home() {
   const [avatarConsent, setAvatarConsent] = useState(false);
   const [avatarComposerOpen, setAvatarComposerOpen] = useState(false);
   const [avatarCapabilities, setAvatarCapabilities] = useState({ identityEnabled: false, uploadsEnabled: false, generationEnabled: false, providerReady: false });
+  const [telegramNotificationsEnabled,setTelegramNotificationsEnabled]=useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [tab, setTabState] = useState<Tab>('today');
   const [noticeState, setNoticeState] = useState<{ tab: Tab; value: Notice }>({ tab: 'today', value: 'idle' });
@@ -584,6 +585,20 @@ export default function Home() {
   const [, setSelectedCalendarDate] = useState(() => dateInputValue(new Date()));
   const calendarAutoSelectedPetRef = useRef<string | null>(null);
   const [careLocation, setCareLocation] = useState<CareLocation>({view:'overview'});
+  const careDeepLinkId = useRef<string|null>(null);
+  useEffect(()=>{
+    if(careDeepLinkId.current)return;
+    const id=new URLSearchParams(window.location.search).get('careReminder');
+    if(!id||!/^[0-9a-f-]{36}$/i.test(id))return;
+    careDeepLinkId.current=id;
+    setTabState('calendar');
+    setCareLocation({view:'detail',id});
+    const url=new URL(window.location.href);url.searchParams.delete('careReminder');url.hash='calendar';window.history.replaceState({tab:'calendar'},'',url);
+  },[]);
+  const changeCareLocation=useCallback((next:CareLocation)=>{
+    if(next.view!=='detail')careDeepLinkId.current=null;
+    setCareLocation(next);
+  },[]);
   const [careView, setCareView] = useState<'active' | 'history'>('active');
   const [mapVisited, setMapVisited] = useState(false);
   const [agentSavedRouteSelection,setAgentSavedRouteSelection]=useState<{token:string;petId:string;route:OwnerRouteView}|null>(null);
@@ -1574,6 +1589,7 @@ export default function Home() {
       generationEnabled: payload?.avatarCapabilities?.generationEnabled === true,
       providerReady: payload?.avatarCapabilities?.providerReady === true,
     });
+    setTelegramNotificationsEnabled(payload?.notificationCapabilities?.telegramEnabled === true);
     const dbProfile = dbToProfile(payload, petId);
     if (dbProfile?.backendPetId && dbProfile.profileVersion !== undefined) {
       profileBaselines.current.set(`${dbProfile.backendPetId}:${dbProfile.profileVersion}`, dbProfile);
@@ -1702,7 +1718,7 @@ export default function Home() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData }),
+        body: JSON.stringify({ initData, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
       })
         .then((response) => response.json().then((payload) => ({ response, payload })))
         .then(({ response, payload }) => {
@@ -2191,7 +2207,7 @@ export default function Home() {
 
   useEffect(() => {
     setHabitCheckinError('');
-    setCareLocation({view:'overview'});
+    setCareLocation(current=>careDeepLinkId.current&&current.view==='detail'&&current.id===careDeepLinkId.current?current:{view:'overview'});
     if (!profile.backendPetId || isGuestMode()) return;
     const controller = new AbortController();
     void loadRealModules(profile.backendPetId, controller.signal);
@@ -2889,6 +2905,11 @@ export default function Home() {
     finally{if(reminderOperation.current?.token===operation.token){reminderOperation.current=null;setReminderMutationBusy(null);}}
   }
   function reportReminderError(message:string){const operation=reminderOperation.current;if(operation)setReminderIssue({petId:operation.petId,scope:operation.scope,message});}
+  function reportNotificationScheduling(reminder:ReminderView,notification:unknown){
+    if(!telegramNotificationsEnabled||!reminder.reminderPreference||reminder.reminderPreference==='off')return;
+    const state=notification&&typeof notification==='object'?'state' in notification?String((notification as {state?:unknown}).state):'':'';
+    if(state!=='scheduled')setReminderIssue({petId:reminder.petId,scope:'notification',message:'Дело сохранено, но сообщение бота не запланировалось. Открой дело и сохрани срок ещё раз.'});
+  }
 
   async function createCareEvent(draft:CareDraft){
     return performReminderWrite('create',async isCurrent=>{
@@ -2907,7 +2928,7 @@ export default function Home() {
       const result=await response.json().catch(()=>({}));if(!isCurrent())return false;
       const saved=response.ok&&result.mode!=='demo'?reminderReceipt(result.reminder,petId):null;
       if(!saved)throw new Error('INVALID_REMINDER_RECEIPT');
-      setReminders(current=>[saved,...current.filter(item=>item.id!==saved.id)]);finishCareMutation(scope);return true;
+      setReminders(current=>[saved,...current.filter(item=>item.id!==saved.id)]);finishCareMutation(scope);reportNotificationScheduling(saved,result.notification);return true;
     });
   }
 
@@ -3436,7 +3457,7 @@ export default function Home() {
       const response=await fetch(`/api/reminders/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json','Idempotency-Key':careMutationKey(scope),...authHeaders()},body:JSON.stringify(serverPatch)});
       const result=await response.json().catch(()=>({}));if(!isCurrent())return false;
       const saved=response.ok&&result.mode!=='demo'?reminderReceipt(result.reminder,petId,id):null;if(!saved)throw new Error('INVALID_REMINDER_RECEIPT');
-      setReminders(current=>current.map(item=>item.id===id?saved:item));finishCareMutation(scope);return true;
+      setReminders(current=>current.map(item=>item.id===id?saved:item));finishCareMutation(scope);reportNotificationScheduling(saved,result.notification);return true;
     });
   }
 
@@ -3488,6 +3509,7 @@ export default function Home() {
       const updated=payload.mode!=='demo'?reminderReceipt(payload.reminder,reminder.petId,id):null;
       if(!updated||!['active','done'].includes(updated.status))throw new Error('INVALID_REMINDER_RECEIPT');
       setReminders(current => current.map(item => item.id === id ? updated : item));
+      reportNotificationScheduling(updated,payload.notification);
       if (updated.status === 'done') setWishlist(current => current.map(item => item.reminderId === id && item.status === 'wanted' ? {...item,status:'bought'} : item));
       if (payload.historyOccurrence?.reminderId===id && Number.isFinite(Date.parse(payload.historyOccurrence.completedAt)) && Number.isFinite(Date.parse(payload.historyOccurrence.dueAt))) {
         setReminderHistory((current) => ({
@@ -4645,7 +4667,8 @@ export default function Home() {
           onRetry={() => loadSocialSurface().catch(() => setNearbyState('error'))}
         />}
 
-        {hasDog && tab === 'calendar' && <CareWorkspace key={profile.backendPetId||activePetId||'guest'} location={careLocation} onLocationChange={setCareLocation}
+        {hasDog && tab === 'calendar' && <CareWorkspace key={profile.backendPetId||activePetId||'guest'} location={careLocation} onLocationChange={changeCareLocation}
+          notificationsEnabled={telegramNotificationsEnabled}
           observationUndo={refresh=>recentlyDeletedObservation&&<div role="status"><span>Наблюдение убрано.</span><button type="button" className="text-button" disabled={observationMutationBusy} onClick={async()=>{await restoreObservation();refresh();}}>Вернуть</button>{observationIssue&&<p role="alert">{observationIssue.message}</p>}</div>}
           observations={{petKey:profile.backendPetId||activePetId||'guest',guest:isGuestMode(),entries:observations,
             read:async(from,to,before,signal)=>{

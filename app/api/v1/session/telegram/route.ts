@@ -4,12 +4,15 @@ import { createAppSessionToken, setAppSessionCookie } from '@/lib/server/appSess
 import { ensureTelegramOwner } from '@/lib/server/telegramOwner';
 import type { TelegramSessionResponse } from '@/packages/contracts';
 import { problem } from '@/packages/contracts';
+import { bindTelegramDeliveryTarget } from '@/lib/server/reminderService';
+import { telegramReminderReadiness } from '@/lib/server/telegramReminderReadiness';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const initData = String(body?.initData || '');
+  const timeZone = body?.timeZone;
 
   if (!initData) {
     const payload = problem('INIT_DATA_REQUIRED', 400, 'Telegram initData is required', 'Open Псё from Telegram Mini App and send the raw initData string to the BFF.');
@@ -32,10 +35,17 @@ export async function POST(request: Request) {
     const psyoUserId = buildPsyoUserId(verified.user.id);
     let owner: Awaited<ReturnType<typeof ensureTelegramOwner>> | null = null;
     let ownerError: string | null = null;
+    let deliveryTargetError: string | null = null;
     try {
       owner = await ensureTelegramOwner(psyoUserId);
     } catch (error) {
       ownerError = error instanceof Error ? error.message : 'Telegram owner could not be created';
+    }
+    const reminderReadiness=telegramReminderReadiness();
+    if(reminderReadiness.enabled&&!reminderReadiness.ready)deliveryTargetError='Telegram reminder delivery is enabled but not fully configured';
+    if (owner && reminderReadiness.ready) {
+      try { await bindTelegramDeliveryTarget({ ownerId:owner.id, chatId:verified.user.id, timeZone }); }
+      catch (error) { deliveryTargetError = error instanceof Error ? error.message : 'Telegram delivery target could not be saved'; }
     }
     const signed = createAppSessionToken({
       psyoUserId,
@@ -60,10 +70,12 @@ export async function POST(request: Request) {
       readiness: {
         service: 'IdentityService',
         state: 'partial',
-        persisted: ['signed HttpOnly app session cookie', ...(owner ? ['Telegram Supabase Auth owner'] : [])],
+        persisted: ['signed HttpOnly app session cookie', ...(owner ? ['Telegram Supabase Auth owner'] : []), ...(owner && reminderReadiness.ready && !deliveryTargetError ? ['encrypted Telegram reminder delivery target'] : [])],
         localOnly: [],
-        blockedPromises: owner ? [] : [`Telegram owner could not be created in Supabase Auth${ownerError ? `: ${ownerError}` : ''}`],
-        privacyState: 'raw Telegram ID is processed only during server-side validation and is not returned to the client',
+        blockedPromises: [...(owner ? [] : [`Telegram owner could not be created in Supabase Auth${ownerError ? `: ${ownerError}` : ''}`]), ...(deliveryTargetError ? [`Telegram reminder delivery target unavailable: ${deliveryTargetError}`] : [])],
+        privacyState: reminderReadiness.ready && !deliveryTargetError
+          ? 'raw Telegram ID is encrypted as a server-only reminder delivery target and is not returned to the client'
+          : 'raw Telegram ID is processed only during server-side validation and is not returned to the client',
         qaState: 'contract route exists; production requires Telegram fixture smoke with fresh initData',
       },
     };

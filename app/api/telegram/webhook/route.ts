@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { rc1Config } from '@/lib/rc1';
 import { parsePlusInvoicePayload, plusExpiresAt } from '@/lib/server/billing';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
+import { handleTelegramReminderCallback } from '@/lib/server/telegramReminderActions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,11 @@ type TelegramUpdate = {
     invoice_payload?: string;
     currency?: string;
     total_amount?: number;
+  };
+  callback_query?: {
+    id:string;
+    data?:string;
+    message?:{message_id?:number;text?:string;chat?:{id?:number|string}};
   };
 };
 
@@ -124,6 +130,17 @@ export async function POST(request: Request) {
   }
 
   const update = (await request.json().catch(() => null)) as TelegramUpdate | null;
+  const callback = update?.callback_query;
+  if (callback?.id && callback.data && callback.message?.message_id && callback.message.chat?.id) {
+    await handleTelegramReminderCallback({
+      data:callback.data,
+      callbackQueryId:callback.id,
+      chatId:callback.message.chat.id,
+      messageId:callback.message.message_id,
+      messageText:callback.message.text,
+    });
+    return NextResponse.json({ok:true});
+  }
   const preCheckout = update?.pre_checkout_query;
   if (preCheckout?.id) {
     const payload = parsePlusInvoicePayload(String(preCheckout.invoice_payload || ''));

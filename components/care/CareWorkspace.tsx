@@ -16,8 +16,9 @@ const domains=Object.keys(careDomains) as CareDomain[];
 const parse=(d:string)=>new Date(`${d}T12:00:00`);
 const dateLabel=(d:string)=>parse(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
 const repeatLabels={none:'Без повтора',daily:'Каждый день',weekly:'Каждую неделю',monthly:'Каждый месяц',quarterly:'Раз в три месяца',yearly:'Каждый год'};
-export type CareLocation={view:'overview'}|{view:'domain';domain:CareDomain}|{view:'calendar';day:string;month:string};
+export type CareLocation={view:'overview'}|{view:'domain';domain:CareDomain}|{view:'calendar';day:string;month:string}|{view:'detail';id:string};
 export type CareWorkspaceProps={
+ notificationsEnabled?:boolean;
  observationUndo?:(refresh:()=>void)=>ReactNode;
  location?:CareLocation;onLocationChange?:(location:CareLocation)=>void;observations?:CalendarObservationSource;
  daily?:ReactNode;regular?:ReactNode;regularForDomain?:(domain:CareDomain)=>ReactNode;
@@ -39,7 +40,6 @@ export function CareWorkspace(p:CareWorkspaceProps){
  const [filter,setFilter]=useState<CareDomain|'all'|'free'|'observations'>('all');
  const [search,setSearch]=useState('');
  const journal=useCalendarObservations(p.observations,month,view==='calendar');
- useEffect(()=>{if(p.location?.view==='calendar'){setView('calendar');setSelected(p.location.day);setMonth(parse(p.location.month));}},[p.location]);
  function calendar(day:string,nextMonth:Date=month){setSearch('');setSelected(day);setMonth(nextMonth);p.onLocationChange?.({view:'calendar',day,month:localDay(nextMonth)});}
  const [detail,setDetail]=useState<ReminderRecord|null>(null);
  const [draft,setDraft]=useState<CareDraft>(()=>newCareDraft());
@@ -49,6 +49,14 @@ export function CareWorkspace(p:CareWorkspaceProps){
  const [error,setError]=useState('');
  const [saving,setSaving]=useState(false);
  const lock=useRef(false);
+ useEffect(()=>{
+  const location=p.location;
+  if(location?.view==='calendar'){setView('calendar');setSelected(location.day);setMonth(parse(location.month));return;}
+  if(location?.view==='detail'){
+   const linked=p.items.find(item=>item.id===location.id);
+   if(linked){setDetail(linked);setReturnView('calendar');setView('detail');}
+  }
+ },[p.location,p.items]);
  useEffect(()=>{if(detail&&!p.items.some(r=>r.id===detail.id)&&!busy){setDetail(null);setView(returnView);}},[p.items,detail,p.busy,returnView]);
  const effective=view==='form'?'form':p.editingItem?'external':view;
  const busy=p.busy||saving;
@@ -81,7 +89,7 @@ export function CareWorkspace(p:CareWorkspaceProps){
  const add=<div className="cw-add"><button type="button" className="primary" onClick={()=>start('plan',view==='domain'?domain:null)}>Запланировать</button><button type="button" className="text-button" onClick={()=>start('done',view==='domain'?domain:null)}>Уже сделали</button></div>;
  const title=view==='domain'&&domain?careDomains[domain].title:'Забота';
  if((p.loading||p.loadError)&&view!=='calendar')return <ExactPage viewKey="care" onBack={p.onBack}><div className="cw"><h1>Забота</h1>{p.loading?<p role="status">Загружаю дела…</p>:<><p role="alert">Не удалось загрузить дела. Сохранённые записи не потеряны.</p><button type="button" className="primary" onClick={p.onRetry}>Повторить</button></>}{p.daily}{p.regular}</div></ExactPage>;
- if(effective==='external')return <ExactPage viewKey="care-edit" onBack={()=>p.onCloseEdit()}><div className="cw"><h1>Изменить дело</h1><CareForm key={p.editingItem!.id} initial={editCareDraft(p.editingItem!)} busy={busy} error={issue} editing onSave={d=>run(()=>p.onUpdate(p.editingItem!.id,d),p.onCloseEdit)} onCancel={p.onCloseEdit}/></div></ExactPage>;
+ if(effective==='external')return <ExactPage viewKey="care-edit" onBack={()=>p.onCloseEdit()}><div className="cw"><h1>Изменить дело</h1><CareForm key={p.editingItem!.id} initial={editCareDraft(p.editingItem!)} busy={busy} error={issue} editing notificationsEnabled={p.notificationsEnabled} onSave={d=>run(()=>p.onUpdate(p.editingItem!.id,d),p.onCloseEdit)} onCancel={p.onCloseEdit}/></div></ExactPage>;
  return <ExactPage viewKey={`care:${view}`} onBack={view==='overview'||view==='calendar'?p.onBack:back}><div className="cw">
  {(view==='overview'||view==='calendar'||view==='domain')&&<><h1>{title}</h1>{view!=='domain'&&<p className="cw-lead">Для {p.dogName?inflectPetName(p.dogName,'gent'):'твоей собаки'} — сегодня и дальше.</p>}{view!=='domain'&&tabs}</>}
  {view==='overview'&&<>
@@ -115,8 +123,8 @@ export function CareWorkspace(p:CareWorkspaceProps){
   </section>}
   {!p.loading&&!p.loadError&&!journal.loading&&!journal.error&&!calendarCare.length&&!calendarNotes.length&&<p className="cw-empty">{query?'По этому запросу записей нет.':'На эту дату записей нет.'}</p>}{!p.loading&&!p.loadError&&add}
  </>}
- {view==='form'&&<><h1>{editingId?'Изменить дело':draft.mode==='done'?'Уже сделали':'Новое дело'}</h1><CareForm key={editingId||'new'} initial={draft} busy={busy} error={issue} editing={!!editingId} onChange={setDraft} onCancel={back} onSave={d=>{setDraft(d);return run(()=>editingId?p.onUpdate(editingId,d):p.onCreate(d),()=>{draftCache.current=null;setDetail(null);go(returnView);});}}/></>}
- {view==='detail'&&chosen&&<><span className="cw-meta">{domainOf(chosen)?careDomains[domainOf(chosen)!].title:'Своё дело'}</span><h1>{chosen.title}</h1><section className="cw-detail"><p>{chosen.status==='done'?`Сделано ${dateLabel(eventDay(chosen))}`:reminderTiming(chosen)}</p>{chosen.status==='done'&&<p className="cw-meta">Планировали: {dateLabel(localDay(new Date(chosen.dueAt)))}</p>}{chosen.note&&<p className="cw-note">{chosen.note}</p>}<p>{repeatLabels[chosen.recurrence||'none']}</p>{chosen.recurrence&&chosen.recurrence!=='none'&&<p className="cw-meta">{chosen.recurrenceBasis==='completed'?'После выполнения':'От плановой даты'}</p>}<p className="cw-meta">{chosen.reminderPreference&&chosen.reminderPreference!=='off'?'Напоминание сохранено, но сообщения бота пока недоступны.':'Без сообщения от бота'}</p></section>
+ {view==='form'&&<><h1>{editingId?'Изменить дело':draft.mode==='done'?'Уже сделали':'Новое дело'}</h1><CareForm key={editingId||'new'} initial={draft} busy={busy} error={issue} editing={!!editingId} notificationsEnabled={p.notificationsEnabled} onChange={setDraft} onCancel={back} onSave={d=>{setDraft(d);return run(()=>editingId?p.onUpdate(editingId,d):p.onCreate(d),()=>{draftCache.current=null;setDetail(null);go(returnView);});}}/></>}
+ {view==='detail'&&chosen&&<><span className="cw-meta">{domainOf(chosen)?careDomains[domainOf(chosen)!].title:'Своё дело'}</span><h1>{chosen.title}</h1><section className="cw-detail"><p>{chosen.status==='done'?`Сделано ${dateLabel(eventDay(chosen))}`:reminderTiming(chosen)}</p>{chosen.status==='done'&&<p className="cw-meta">Планировали: {dateLabel(localDay(new Date(chosen.dueAt)))}</p>}{chosen.note&&<p className="cw-note">{chosen.note}</p>}<p>{repeatLabels[chosen.recurrence||'none']}</p>{chosen.recurrence&&chosen.recurrence!=='none'&&<p className="cw-meta">{chosen.recurrenceBasis==='completed'?'После выполнения':'От плановой даты'}</p>}<p className="cw-meta">{chosen.reminderPreference&&chosen.reminderPreference!=='off'?(p.notificationsEnabled?'Бот напомнит в Telegram.':'Напоминание сохранено, но сообщения бота пока недоступны.'):'Без сообщения от бота'}</p></section>
   {alert}<div className="cw-detail-actions">{chosen.status==='done'?<button type="button" className="secondary" disabled={busy} onClick={()=>void run(()=>p.onUndo(chosen),()=>go(returnView))}>Отменить отметку выполнения</button>:<><button type="button" className="primary" disabled={busy} onClick={()=>{setActual(localDay(new Date()));go('complete');}}>Уже сделано</button><button type="button" className="secondary" onClick={()=>{setDraft(editCareDraft(chosen));go('reschedule');}}>Перенести</button><button type="button" className="secondary" onClick={()=>{setEditingId(chosen.id);setDraft(editCareDraft(chosen));go('form');}}>Изменить</button></>}
   <button type="button" className="text-button" onClick={()=>p.onExport(chosen)}>В календарь телефона</button><button type="button" className="text-button" disabled={busy} onClick={()=>p.onDelete(chosen)}>Удалить дело</button></div>
  </>}
@@ -125,7 +133,7 @@ export function CareWorkspace(p:CareWorkspaceProps){
  {(view==='overview'||view==='calendar'||view==='domain')&&alert}
  </div></ExactPage>;
 }
-function CareForm({initial,busy,error,editing,onSave,onCancel,onChange}:{initial:CareDraft;busy:boolean;error?:string;editing?:boolean;onSave:(d:CareDraft)=>Promise<void>;onCancel:()=>void;onChange?:(d:CareDraft)=>void}){
+function CareForm({initial,busy,error,editing,onSave,onCancel,onChange,notificationsEnabled}:{initial:CareDraft;busy:boolean;error?:string;editing?:boolean;onSave:(d:CareDraft)=>Promise<void>;onCancel:()=>void;onChange?:(d:CareDraft)=>void;notificationsEnabled?:boolean}){
  const [d,setD]=useState(initial);const [choosing,setChoosing]=useState(false);
  function change(patch:Partial<CareDraft>){const next={...d,...patch};setD(next);onChange?.(next);}
  function submit(e:FormEvent){e.preventDefault();if(!busy)void onSave(d);}
@@ -139,7 +147,7 @@ function CareForm({initial,busy,error,editing,onSave,onCancel,onChange}:{initial
  <label className="cw-checkbox"><input type="checkbox" checked={d.hasTime} onChange={e=>change({hasTime:e.target.checked})}/>Указать время</label>
  {d.hasTime&&<><label>Время<input type="time" required value={d.time} onChange={e=>change({time:e.target.value})}/></label><label>Точность<select aria-label="Точность" value={d.precision} onChange={e=>change({precision:e.target.value as CareDraft['precision']})}><option value="exact">Точное время</option><option value="approximate">Примерно</option></select></label></>}
  {d.mode==='plan'&&<><label>Повтор<select aria-label="Повтор" value={d.recurrence} onChange={e=>change({recurrence:e.target.value as CareDraft['recurrence']})}>{Object.entries(repeatLabels).map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></label>{d.recurrence!=='none'&&<fieldset className="cw-filters"><legend>Следующий раз</legend>{(['planned','completed'] as const).map(b=><button type="button" key={b} aria-pressed={d.recurrenceBasis===b} onClick={()=>change({recurrenceBasis:b})}>{b==='planned'?'От плановой даты':'После выполнения'}</button>)}</fieldset>}
- <label>Напомнить<select aria-label="Напомнить" value={d.reminderPreference} onChange={e=>change({reminderPreference:e.target.value as CareDraft['reminderPreference']})}><option value="off">Без напоминания</option><option value="day">В этот день</option><option value="before">Накануне</option></select></label>{d.reminderPreference!=='off'&&<p className="cw-meta" role="status">Сообщения бота пока недоступны. Дело останется в календаре.</p>}</>}
+ <label>Напомнить<select aria-label="Напомнить" value={d.reminderPreference} onChange={e=>change({reminderPreference:e.target.value as CareDraft['reminderPreference']})}><option value="off">Без напоминания</option><option value="day">В этот день</option><option value="before">Накануне</option></select></label>{d.reminderPreference!=='off'&&<p className="cw-meta" role="status">{notificationsEnabled?'Бот пришлёт сообщение в Telegram.':'Сообщения бота пока недоступны. Дело останется в календаре.'}</p>}</>}
  <label>Заметка<textarea rows={2} maxLength={2000} value={d.note} onChange={e=>change({note:e.target.value})} placeholder="Если нужно что-то уточнить"/></label>
  {error&&<p className="cw-error" role="alert">{error}</p>}<button type="submit" className="primary" disabled={busy||!d.title.trim()}>{busy?'Сохраняю…':editing?'Сохранить изменения':d.mode==='done'?'Сохранить в историю':'Сохранить дело'}</button><button type="button" className="text-button" onClick={onCancel}>Назад</button>
  </fieldset></form>;

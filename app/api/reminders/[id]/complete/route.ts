@@ -5,6 +5,7 @@ import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
 import { careError, careMutationError, careRequestFingerprint, readCareIdempotencyKey } from '@/lib/server/careHttp';
 import { linkRecommendationOutcome } from '@/lib/server/recommendations/domainOutcomeLink';
+import { safeScheduleReminderMutationResult } from '@/lib/server/reminderScheduler';
 
 export const runtime = 'nodejs';
 type Ctx = { params: Promise<{ id: string }> };
@@ -31,6 +32,7 @@ export async function POST(request: Request, ctx: Ctx) {
       p_completed_at: completedAt,
     });
     if (error) throw error;
+    const notification = await safeScheduleReminderMutationResult(data,{ownerId,supabase});
     const recommendationId = typeof body.recommendationId === 'string' ? body.recommendationId.trim() : '';
     const recommendationOutcome = recommendationId && process.env.RECOMMENDATIONS_FOUNDATION_ENABLED === 'true'
       ? await linkRecommendationOutcome({
@@ -39,8 +41,8 @@ export async function POST(request: Request, ctx: Ctx) {
       })
       : undefined;
     return NextResponse.json(recommendationOutcome
-      ? { ...(data as Record<string, unknown>), recommendationOutcome }
-      : data);
+      ? { ...(data as Record<string, unknown>), recommendationOutcome, notification }
+      : { ...(data as Record<string,unknown>), notification });
   } catch (error) {
     return careMutationError(error);
   }

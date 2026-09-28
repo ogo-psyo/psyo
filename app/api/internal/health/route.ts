@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { rc1Config } from '@/lib/rc1';
 import { agentProviderReady } from '@/lib/server/agent/providerConfig';
+import { telegramReminderReadiness } from '@/lib/server/telegramReminderReadiness';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const reminderReadiness=telegramReminderReadiness();
   return NextResponse.json({
     ok: true,
     service: 'psyo-bff',
@@ -19,6 +21,8 @@ export async function GET() {
       appUrl: Boolean(process.env.NEXT_PUBLIC_APP_URL),
       telegramBot: Boolean(process.env.TELEGRAM_BOT_TOKEN),
       telegramWebhookSecret: Boolean(process.env.TELEGRAM_WEBHOOK_SECRET),
+      telegramReminderEncryption: Boolean(process.env.TELEGRAM_DELIVERY_ENCRYPTION_KEY),
+      telegramRemindersReady: reminderReadiness.ready,
       supabaseUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
       supabaseServerKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY),
       sessionSecret: Boolean(process.env.PSYO_SESSION_SIGNING_KEY || process.env.SESSION_SECRET || process.env.PSYO_ID_PEPPER),

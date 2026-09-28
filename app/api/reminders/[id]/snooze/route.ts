@@ -4,6 +4,7 @@ import { getRequestAuth } from '@/lib/server/auth';
 import { getAppSessionFromRequest } from '@/lib/server/appSession';
 import { getSupabaseAdmin } from '@/lib/server/supabase';
 import { careError, careMutationError, careRequestFingerprint, readCareIdempotencyKey } from '@/lib/server/careHttp';
+import { safeScheduleReminderMutationResult } from '@/lib/server/reminderScheduler';
 
 export const runtime = 'nodejs';
 type Ctx = { params: Promise<{ id: string }> };
@@ -30,7 +31,8 @@ export async function POST(request: Request, ctx: Ctx) {
       p_snoozed_until: snoozedUntil,
     });
     if (error) throw error;
-    return NextResponse.json(data);
+    const notification = await safeScheduleReminderMutationResult(data,{ownerId,supabase});
+    return NextResponse.json({ ...(data as Record<string,unknown>), notification });
   } catch (error) {
     return careMutationError(error);
   }
