@@ -71,6 +71,8 @@ export type DogProfile = {
   neighborhood: string;
   bio: string;
   age: string;
+  birthDate: string;
+  homeArrivalDate: string;
   lifeStage: string;
   sex: string;
   neutered: string;
@@ -127,6 +129,8 @@ export const defaultProfile: DogProfile = {
   neighborhood: '',
   bio: '',
   age: '',
+  birthDate: '',
+  homeArrivalDate: '',
   lifeStage: '',
   sex: '',
   neutered: '',

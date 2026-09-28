@@ -16,6 +16,7 @@ import { CandidateCard } from '@/components/social/CandidateCard';
 import { CityCommunities, type CityCommunity } from '@/components/social/CityCommunities';
 import { RequestsPanel, type SocialRequestView } from '@/components/social/RequestsPanel';
 import { SocialProfileSheet } from '@/components/social/SocialProfileSheet';
+import { WeightHistoryCard } from '@/components/profile/WeightHistoryCard';
 import {
   anchorCards,
   avatarStyles,
@@ -52,6 +53,7 @@ import { buildTodayCareView } from '@/lib/today';
 import { normalizeOwnerRoutes, removeOwnerRoute, upsertOwnerRoute, type OwnerRouteView } from '@/lib/mapUi';
 import type { CandidateGroup, CoarseLocation, SocialProfile, SocialScenario } from '@/lib/socialCore';
 import type { ActionSuggestion } from '@/packages/contracts';
+import { buildWeightHistory, formatProfileDate, parseWeightKg } from '@/lib/weightHistory';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
 type Notice = 'idle' | 'saved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
@@ -63,7 +65,7 @@ type WishlistView = { id: string; petId: string; title: string; category: string
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; created_at?: string };
 type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; photo_urls?: string[] };
 type AuthSession = { access_token: string; user: { email?: string } };
-type ObservationView = { id: string; petId?: string; mood: string; appetite: string; stool: string; energy: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
+type ObservationView = { id: string; petId?: string; type?: string; value?: string; observedAt?: string; metadata?: Record<string, unknown>; mood: string; appetite: string; stool: string; energy: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
 type ObservationDraft = Pick<ObservationView, 'mood' | 'appetite' | 'stool' | 'energy' | 'note'>;
 type SocialInviteView = { token: string; scenario: SocialScenario; petName: string | null; expiresAt: string };
 type Tab = 'today' | 'calendar' | 'assistant' | 'nearby' | 'map' | 'card' | 'profile' | 'things';
@@ -354,6 +356,13 @@ function dbToProfile(payload: any): Partial<DogProfile> | null {
   const pet = payload.pet;
   const passport = payload.passport ?? {};
   const social = payload.social ?? {};
+  const latestWeight = Array.isArray(payload.observations)
+    ? payload.observations.find((observation: unknown) => {
+      const candidate = observation && typeof observation === 'object' ? observation as Record<string, unknown> : {};
+      return candidate.type === 'weight' && parseWeightKg(candidate.value) !== null;
+    }) as Record<string, unknown> | undefined
+    : undefined;
+  const latestWeightKg = parseWeightKg(latestWeight?.value);
   return {
     backendPetId: pet.id,
     avatarImageUrl: pet.avatar_url || '',
@@ -365,7 +374,9 @@ function dbToProfile(payload: any): Partial<DogProfile> | null {
     breedCustom: pet.custom_breed || '',
     lifeStage: pet.life_stage || '',
     sex: pet.sex || '',
-    weight: pet.weight_kg ? `${pet.weight_kg} кг` : '',
+    birthDate: pet.birth_date || '',
+    homeArrivalDate: pet.home_arrival_date || '',
+    weight: latestWeightKg !== null ? `${latestWeightKg} кг` : pet.weight_kg ? `${pet.weight_kg} кг` : '',
     microchip: passport.microchip || '',
     vetClinic: passport.vet_clinic || '',
     diet: passport.diet || '',
@@ -939,7 +950,7 @@ export default function Home() {
       setOwnerRoutes(normalizeOwnerRoutes(payload.routes));
       if (Array.isArray(payload.observations)) {
         const bootObservations = payload.observations.map(normalizeObservation).filter(Boolean) as ObservationView[];
-        if (bootObservations.length) setObservations(bootObservations.slice(0, 12));
+        if (bootObservations.length) setObservations(bootObservations.slice(0, 100));
       }
       setNotice('loaded');
       window.setTimeout(() => setNotice('idle'), 1400);
@@ -961,7 +972,7 @@ export default function Home() {
     setHeroNameDraft(local.dogName || '');
     try {
       const savedObservations = JSON.parse(window.localStorage.getItem(observationsStorageKey) || '[]');
-      if (Array.isArray(savedObservations)) setObservations(savedObservations.map(normalizeObservation).filter(Boolean).slice(0, 12) as ObservationView[]);
+      if (Array.isArray(savedObservations)) setObservations(savedObservations.map(normalizeObservation).filter(Boolean).slice(0, 100) as ObservationView[]);
     } catch {}
     observationsLoadedRef.current = true;
     const supabase = getSupabaseBrowser();
@@ -1066,6 +1077,8 @@ export default function Home() {
     return breedCatalog.filter((breed) => breed.groupId === profile.breedGroupId || breed.id === 'mixed' || breed.id === 'custom');
   }, [breedSearch, profile.breedGroupId]);
   const breedLabel = useMemo(() => getBreedLabel(profile), [profile]);
+  const weightMeasurements = useMemo(() => buildWeightHistory(observations), [observations]);
+  const profileObservations = useMemo(() => observations.filter((observation) => observation.type !== 'weight'), [observations]);
   const avatarPrompt = useMemo(() => buildAvatarPrompt(profile), [profile]);
   const hasPhoto = profile.photos.length > 0;
   const avatarReady = avatarState === 'ready';
@@ -1350,6 +1363,10 @@ export default function Home() {
     return {
       id: String(raw.id || guestId('observation')),
       petId: raw.petId || raw.pet_id ? String(raw.petId || raw.pet_id) : undefined,
+      type,
+      value,
+      observedAt: Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString(),
+      metadata,
       mood: String(raw.mood || metadata.mood || (type === 'mood' ? value : '') || defaultObservationDraft.mood),
       appetite: String(raw.appetite || metadata.appetite || (type === 'appetite' ? value : '') || defaultObservationDraft.appetite),
       stool: String(raw.stool || metadata.stool || (type === 'stool' ? value : '') || defaultObservationDraft.stool),
@@ -1366,7 +1383,7 @@ export default function Home() {
   }
 
   async function loadObservations() {
-    const params = new URLSearchParams({ limit: '12' });
+    const params = new URLSearchParams({ limit: '100' });
     if (profile.backendPetId) params.set('petId', profile.backendPetId);
     const response = await fetch(`/api/observations?${params.toString()}`, { headers: authHeaders() });
     if (!response.ok) return;
@@ -1377,8 +1394,55 @@ export default function Home() {
     setObservations((current) => {
       const byId = new Map<string, ObservationView>();
       [...remote.map((item) => ({ ...item, syncStatus: 'saved' as const })), ...current].forEach((item) => byId.set(item.id, item));
-      return Array.from(byId.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 12);
+      return Array.from(byId.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 100);
     });
+  }
+
+  async function submitWeightMeasurement(measurement: { valueKg: number; date: string }) {
+    const petId = profile.backendPetId || (isGuestMode() ? ensureGuestPetId() : undefined);
+    const observedAt = new Date(`${measurement.date}T12:00:00`).toISOString();
+    const value = String(measurement.valueKg);
+    const draft: ObservationView = {
+      id: guestId('weight'),
+      petId,
+      type: 'weight',
+      value,
+      observedAt,
+      metadata: { unit: 'kg' },
+      mood: defaultObservationDraft.mood,
+      appetite: defaultObservationDraft.appetite,
+      stool: defaultObservationDraft.stool,
+      energy: defaultObservationDraft.energy,
+      createdAt: observedAt,
+      syncStatus: 'local',
+    };
+
+    if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) {
+      setObservations((current) => [draft, ...current].slice(0, 100));
+      updateProfile({ weight: `${measurement.valueKg} кг` });
+      return;
+    }
+
+    const mutationScope = `observation:weight:${profile.backendPetId}:${measurement.date}:${value}`;
+    const response = await fetch('/api/observations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(mutationScope), ...authHeaders() },
+      body: JSON.stringify({
+        petId: profile.backendPetId,
+        type: 'weight',
+        value,
+        observedAt,
+        source: 'manual',
+        metadata: { unit: 'kg' },
+      }),
+    });
+    if (!response.ok) throw new Error('WEIGHT_SAVE_FAILED');
+    const payload = await response.json().catch(() => ({}));
+    const saved = normalizeObservation(payload?.observation || payload);
+    if (!saved) throw new Error('WEIGHT_RESPONSE_INVALID');
+    setObservations((current) => [{ ...saved, syncStatus: 'saved' as const }, ...current.filter((item) => item.id !== saved.id)].slice(0, 100));
+    updateProfile({ weight: `${measurement.valueKg} кг` });
+    finishCareMutation(mutationScope);
   }
 
   async function loadReminderHistory(reminderId: string) {
@@ -3054,6 +3118,10 @@ export default function Home() {
                 <span>{selectedBreed.emoji} {breedLabel}</span>
                 <h3>{profile.dogName || 'Про него'}</h3>
                 <p>{profile.bio || `Запишем ${missingProfileFields[0]?.toLowerCase() || 'важное'}, чтобы не держать в голове.`}</p>
+                {(profile.birthDate || profile.homeArrivalDate) && <div className="profile-life-dates">
+                  {profile.birthDate && <span><small>Родился</small><b>{formatProfileDate(profile.birthDate)}</b></span>}
+                  {profile.homeArrivalDate && <span><small>Дома с</small><b>{formatProfileDate(profile.homeArrivalDate)}</b></span>}
+                </div>}
               </div>
             </div>
             <div className="smart-profile-readiness" aria-label="Заполнение профиля">
@@ -3062,13 +3130,15 @@ export default function Home() {
             </div>
           </section>
 
+          <WeightHistoryCard measurements={weightMeasurements} onAdd={submitWeightMeasurement} />
+
           <section className="profile-observation-timeline" aria-label="История наблюдений собаки">
             <div className="section-title">
               <div><span className="eyebrow">динамика</span><h3>Наблюдения в профиле</h3></div>
               <button className="secondary" onClick={() => setTab('today')}>Записать</button>
             </div>
-            {observations.length === 0 ? <article className="empty-state"><b>История пока пустая</b><p>Записи с главной появятся здесь: настроение, аппетит, стул, энергия и заметки владельца.</p></article> : <div>
-              {observations.slice(0, 6).map((item) => <article key={item.id}>
+            {profileObservations.length === 0 ? <article className="empty-state"><b>История пока пустая</b><p>Записи с главной появятся здесь: настроение, аппетит, стул, энергия и заметки владельца.</p></article> : <div>
+              {profileObservations.slice(0, 6).map((item) => <article key={item.id}>
                 {editingObservationId === item.id ? <ObservationEditor
                   draft={observationEditDraft}
                   busy={observationMutationBusy}
@@ -3091,6 +3161,8 @@ export default function Home() {
             <div className="profile-panel-head"><span>01</span><div><b>Быстрый портрет</b><p>Отвечай как в чате: пару тапов уже дают полезную карточку.</p></div></div>
             <div className="smart-field-grid">
               <label className="field-wide">Имя<input value={profile.dogName} onChange={(event) => updateProfile({ dogName: event.target.value })} placeholder="Имя собаки" /></label>
+              <label>Дата рождения<input type="date" value={profile.birthDate} onChange={(event) => updateProfile({ birthDate: event.target.value })} /></label>
+              <label>Дома с<input type="date" value={profile.homeArrivalDate} onChange={(event) => updateProfile({ homeArrivalDate: event.target.value })} /></label>
             </div>
             <div className="choice-bubble-stack">
               <ChoiceBubbles label="Возраст" value={profile.lifeStage} options={lifeStageOptions} onChange={(value) => updateProfile({ lifeStage: value })} />

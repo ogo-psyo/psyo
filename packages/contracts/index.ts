@@ -79,6 +79,8 @@ export type CreatePetCommand = {
   breedCustom?: string;
   sex?: string;
   lifeStage?: string;
+  birthDate?: string;
+  homeArrivalDate?: string;
   weight?: string | number;
   isPublic?: boolean;
   microchip?: string;
@@ -110,6 +112,8 @@ export type PetProfileDto = {
   species: 'dog';
   breedId?: string;
   breedGroupId?: string;
+  birthDate?: string;
+  homeArrivalDate?: string;
   publicSlug?: string;
   createdAt?: IsoDateTime;
   updatedAt?: IsoDateTime;

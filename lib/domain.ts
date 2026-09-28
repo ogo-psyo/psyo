@@ -18,6 +18,8 @@ export type Pet = {
   customBreed?: string;
   sex?: string;
   lifeStage?: string;
+  birthDate?: string;
+  homeArrivalDate?: string;
   weightKg?: number;
   avatarUrl?: string;
   photoUrls: string[];
