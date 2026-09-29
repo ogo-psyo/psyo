@@ -37,7 +37,7 @@ export function ConnectedHome(props: {
   </section></ExactPage>;
 }
 
-export type ToolDestination = 'diary' | 'calendar' | 'health' | 'habits' | 'things' | 'passport' | 'card' | 'library' | 'connections' | 'documents';
+export type ToolDestination = 'diary' | 'calendar' | 'things' | 'passport' | 'card' | 'library' | 'connections' | 'documents';
 export function ConnectedTools({ onOpen }: { onOpen: (destination: ToolDestination) => void }) {
   return <ExactPage viewKey="all"><section data-connected-tools>
     <h1 data-assistant-heading>Все разделы</h1>

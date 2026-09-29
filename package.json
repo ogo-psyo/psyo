@@ -48,6 +48,7 @@
     "qa:map-layout:smoke": "node scripts/qa/map-responsive-layout.smoke.mjs",
     "qa:observations:visual": "node scripts/qa/structured-observations-ui.smoke.mjs",
     "qa:care-calendar:visual": "node scripts/qa/care-calendar-ui.smoke.mjs",
+    "qa:health-design:smoke": "node scripts/qa/health-weight-design.smoke.mjs",
     "qa:identity:isolation": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/qa/check-telegram-initdata-contract.mjs && node scripts/qa/check-owner-isolation-foundation.mjs && node scripts/qa/smoke-owner-isolation-fixtures.mjs",
     "qa:profile-ui": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/qa/profile-ui.behavior.test.ts"
   },

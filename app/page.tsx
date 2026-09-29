@@ -44,6 +44,7 @@ import { CoreOnboarding } from '@/components/onboarding/CoreOnboarding';
 import type { DogModuleSummary } from '@/components/home/AllFunctionsHub';
 import { HabitScreen, type HabitDraft, type HabitView } from '@/components/habits/HabitScreen';
 import { ExactProfile, type ExactProfileView } from '@/components/exact/ExactProfile';
+import { ExactHealth } from '@/components/exact/ExactHealth';
 import { ExactRecords } from '@/components/exact/ExactRecords';
 import { RecommendationCard } from '@/components/recommendations/RecommendationCard';
 import { type ProfileSurface } from '@/components/profile/ProfileMemoryWorkspace';
@@ -76,6 +77,7 @@ import type { CandidateGroup, CoarseLocation, SocialProfile, SocialScenario, Wal
 import type { ActionSuggestion } from '@/packages/contracts';
 import type { Recommendation, RecommendationAction, RecommendationLifecycleCommand } from '@/packages/recommendations/contracts';
 import { loadMainRecommendation, RecommendationRequestError, transitionRecommendation } from '@/lib/recommendations/client';
+import { buildWeightHistory, parseWeightKg } from '@/lib/weightHistory';
 
 type AvatarState = 'idle' | 'rendering' | 'ready';
 type Notice = 'profileDeleted' | 'accountDeleted' | 'localCleared' | 'documentSaved' | 'idle' | 'saved' | 'mapSaved' | 'copied' | 'loaded' | 'sharing' | 'downloaded' | 'applied';
@@ -86,7 +88,7 @@ type ReminderHistoryItem = { id: string; eventType?: string; payload?: { dueAt?:
 type ZoneView = { id: string; pet_id?: string; petId?: string; type: string; title: string; note?: string; approximate_lat?: number | string | null; approximate_lng?: number | string | null; radius_meters?: number; radiusMeters?: number; visibility?: 'private' | 'shared' | 'public'; share_token?: string | null; created_at?: string };
 type PetSwitchOption = { id: string; name: string; breed_id?: string; breed_group_id?: string; avatar_url?: string; avatar_source?: 'none' | 'uploaded' | 'generated'; active_avatar_asset_id?: string | null; photo_urls?: string[] };
 type AuthSession = { access_token: string; user: { email?: string } };
-type ObservationView = { id: string; type?: string; value?: string; petId?: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
+type ObservationView = { id: string; type?: string; value?: string; observedAt?: string; metadata?: Record<string, unknown>; petId?: string; mood?: string; appetite?: string; stool?: string; energy?: string; note?: string; createdAt: string; syncStatus?: 'local' | 'saved' };
 type ObservationDraft = { mood: string; appetite: string; stool: string; energy: string; note?: string };
 type DocumentView = { id: string; petId: string; kind: string; title: string; clinic?: string | null; documentDate?: string | null; originalName: string; mimeType: string; sizeBytes: number; createdAt: string };
 type SocialInviteView = { token: string; scenario: SocialScenario; petName: string | null; expiresAt: string };
@@ -378,6 +380,13 @@ function dbToProfile(payload: any, preferredPetId?: string): Partial<DogProfile>
   if ((!payload?.connected && payload?.mode !== 'demo') || !pet) return null;
   const passport = payload.passport ?? {};
   const social = payload.social ?? {};
+  const latestWeight = Array.isArray(payload.observations)
+    ? payload.observations.find((observation: unknown) => {
+      const candidate = observation && typeof observation === 'object' ? observation as Record<string, unknown> : {};
+      return candidate.type === 'weight' && parseWeightKg(candidate.value) !== null;
+    }) as Record<string, unknown> | undefined
+    : undefined;
+  const latestWeightKg = parseWeightKg(latestWeight?.value);
   const avatarSource = pet.avatar_source || pet.avatarSource || (pet.avatar_url || pet.avatarUrl ? 'uploaded' : 'none');
   const activeAvatarAssetId = pet.active_avatar_asset_id || pet.activeAvatarAssetId;
   const avatarImageUrl = avatarSource === 'none'
@@ -397,7 +406,9 @@ function dbToProfile(payload: any, preferredPetId?: string): Partial<DogProfile>
     breedCustom: pet.custom_breed || pet.customBreed || '',
     lifeStage: pet.life_stage || pet.lifeStage || '',
     sex: pet.sex || '',
-    weight: pet.weight_kg || pet.weightKg ? `${pet.weight_kg || pet.weightKg} кг` : '',
+    birthDate: pet.birth_date || pet.birthDate || '',
+    homeArrivalDate: pet.home_arrival_date || pet.homeArrivalDate || '',
+    weight: latestWeightKg !== null ? `${latestWeightKg} кг` : pet.weight_kg || pet.weightKg ? `${pet.weight_kg || pet.weightKg} кг` : '',
     microchip: passport.microchip || '',
     vetClinic: passport.vet_clinic || passport.vetClinic || '',
     diet: passport.diet || '',
@@ -1765,7 +1776,7 @@ export default function Home() {
   }, [ownerRoutes, profile.backendPetId, profileHydrated, reminders, session?.access_token, telegramSession.mode, wishlist, zones]);
   useEffect(() => {
     if (!observationsLoadedRef.current) return;
-    try { window.localStorage.setItem(observationsStorageKey(profile.backendPetId), JSON.stringify(observations.slice(0, 24))); } catch {}
+    try { window.localStorage.setItem(observationsStorageKey(profile.backendPetId), JSON.stringify(observations.slice(0, 100))); } catch {}
   }, [observations, profile.backendPetId]);
   useEffect(() => {
     if (!profile.backendPetId || (!session?.access_token && !telegramSession.ownerId)) return;
@@ -1789,6 +1800,7 @@ export default function Home() {
     return breedCatalog.filter((breed) => breed.groupId === profile.breedGroupId || breed.id === 'mixed' || breed.id === 'custom');
   }, [breedSearch, profile.breedGroupId]);
   const breedLabel = useMemo(() => getBreedLabel(profile), [profile]);
+  const weightMeasurements = useMemo(() => buildWeightHistory(observations), [observations]);
   const avatarReady = avatarState === 'ready';
   const hasDog = Boolean(profile.dogName.trim());
   const activePrimaryRoute: PrimaryRoute = ['calendar', 'habits', 'health', 'card', 'diary', 'things'].includes(tab) ? 'all' : tab as PrimaryRoute;
@@ -2128,6 +2140,8 @@ export default function Home() {
     return {
       id: id || guestId('observation'),
       petId: raw.petId || raw.pet_id ? String(raw.petId || raw.pet_id) : undefined,
+      observedAt: Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString(),
+      metadata,
       mood: metric('mood'),
       appetite: metric('appetite'),
       stool: metric('stool'),
@@ -2407,6 +2421,41 @@ export default function Home() {
       setObservationDraft(defaultObservationDraft);finishCareMutation(scope);
       return saved;
     });
+  }
+
+  async function submitWeightMeasurement(measurement: { valueKg: number; date: string }) {
+    const guest = isGuestMode();
+    const petId = profile.backendPetId || (guest ? ensureGuestPetId() : undefined);
+    if (!petId) throw new Error('PET_REQUIRED');
+    const observedAt = new Date(`${measurement.date}T12:00:00`).toISOString();
+    const value = String(measurement.valueKg);
+    if (guest) {
+      const local: ObservationView = {
+        id: guestId('weight'), petId, type: 'weight', value, observedAt,
+        metadata: { unit: 'kg' }, createdAt: observedAt, syncStatus: 'local',
+      };
+      setObservations(current => [local, ...current].slice(0, 100));
+      updateProfile({ weight: `${measurement.valueKg} кг` });
+      return;
+    }
+    if (!session?.access_token && !telegramSession.ownerId) throw new Error('AUTH_REQUIRED');
+    const scope = `observation:weight:${petId}:${measurement.date}:${value}`;
+    const saved = await writeObservation(scope, async current => {
+      const response = await fetch('/api/observations', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': careMutationKey(scope), ...authHeaders() },
+        body: JSON.stringify({ petId, type: 'weight', value, observedAt, source: 'manual', metadata: { unit: 'kg' } }),
+      });
+      const payload = await response.json();
+      if (!current()) return null;
+      if (!response.ok || payload.mode === 'demo') throw new Error('WEIGHT_SAVE_FAILED');
+      const record = observationReceipt(payload.observation || payload, petId);
+      setObservations(currentEntries => [record, ...currentEntries.filter(item => item.id !== record.id)].slice(0, 100));
+      updateProfile({ weight: `${measurement.valueKg} кг` });
+      finishCareMutation(scope);
+      return record;
+    });
+    if (!saved) throw new Error('WEIGHT_SAVE_FAILED');
   }
 
   async function transcribeVoiceObservation(audio: Blob) {
@@ -4590,7 +4639,17 @@ export default function Home() {
           onSaved={record => { const entry=normalizeObservation(record); if(entry) setObservations(current=>[entry,...current.filter(item=>item.id!==entry.id)]); setExactRecordId(record.id); setExactAgentObservationId(null); }}
           onOpen={record => { setExactRecordId(record.id); setExactAgentObservationId(null); }}
         /></ExactPage>}
-        {hasDog && tab === 'health' && !exactAgentObservationId && <ExactRecords onHistory={openObservationCalendar} selectedId={exactRecordId} onSelect={setExactRecordId}
+        {hasDog && tab === 'health' && !exactAgentObservationId && !observationCaptureOpen && !exactRecordId && !editingObservationId && <ExactHealth
+          profile={profile}
+          measurements={weightMeasurements}
+          onAddWeight={submitWeightMeasurement}
+          onObserve={() => { setExactRecordId(null); setEditingObservationId(null); setObservationCaptureOpen(true); }}
+          onHistory={() => openObservationCalendar()}
+          onCare={() => setTab('calendar')}
+          onEditProfile={() => { setExactProfileDraft({ ...profile }); setExactProfileView('editprofile'); setTab('profile'); }}
+          onBack={() => closeSecondaryFlow('all')}
+        />}
+        {hasDog && tab === 'health' && !exactAgentObservationId && (observationCaptureOpen || Boolean(exactRecordId) || Boolean(editingObservationId)) && <ExactRecords selectedId={exactRecordId} onSelect={setExactRecordId}
           key={profile.backendPetId || activePetId}
           dogName={profile.dogName || 'Собака'}
           entries={observations}

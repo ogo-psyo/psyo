@@ -11,6 +11,7 @@ import { AgeField } from '@/components/system/AgeField';
 import { BreedField } from '@/components/system/BreedField';
 import { breedInputValue, breedProfilePatch } from '@/lib/breedSearch';
 import { ExactProfileFields } from './ExactProfileFields';
+import { formatProfileDate } from '@/lib/weightHistory';
 
 export type ExactProfileView = 'profile' | 'editprofile' | 'memory' | 'documents' | 'document' | 'identity';
 type Props = Omit<ComponentProps<typeof ProfileMemoryWorkspace>, 'onDeleteDocument'> & {
@@ -69,12 +70,17 @@ export function ExactProfile(props: Props) {
   </ExactPage>;
   return <ExactPage viewKey="profile">
     <div className="profile-top"><button type="button" className="initial" aria-label={props.imageUrl ? "Изменить фото собаки" : "Добавить фото собаки"} onClick={() => props.onView('identity')}>{props.imageUrl ? <img className="exact-profile-initial" src={props.imageUrl} alt="" /> : profile.dogName.charAt(0)}</button><div><h1>{profile.dogName}</h1><p>{[profile.age || profile.lifeStage, props.breedLabel].filter(Boolean).join(' · ')}</p></div></div>
+    {(profile.birthDate || profile.homeArrivalDate) && <div className="profile-life-dates">
+      {profile.birthDate && <span><small>Родился</small><b>{formatProfileDate(profile.birthDate)}</b></span>}
+      {profile.homeArrivalDate && <span><small>Дома с</small><b>{formatProfileDate(profile.homeArrivalDate)}</b></span>}
+    </div>}
     {!props.imageUrl && <button type="button" className="text-button" onClick={() => props.onView('identity')}>Добавить фото</button>}
     <button type="button" className="text-button" onClick={() => { if (!props.draft) props.onDraft({ ...profile }); props.onView('editprofile'); }}>Изменить сведения</button>
     <div className="list section-gap">
       <ExactRow title="Документы" detail="Хранятся отдельно от разговора" icon="file" onClick={() => props.onView('documents')} />
       <ExactRow title="Память помощника" detail="Что учитывать в разговорах" icon="memory" onClick={() => props.onView('memory')} />
       <ExactRow title="Прогулки и места" detail="Сохранённое вами" icon="map" onClick={props.onLibrary} />
+      <ExactRow title="Здоровье" detail="Наблюдения и динамика" icon="heart" onClick={props.onOpenHealth} />
       <ExactRow title="Уход" detail="Дела, наблюдения и привычки" icon="clock" onClick={props.onOpenPlan} />
       <ExactRow title="Памятка для других" detail="Выбрать сведения и управлять ссылкой" icon="file" onClick={props.onOpenCard} />
       <ExactRow title="Настройки" detail="Мои собаки, аккаунт и приватность" icon="profile" onClick={props.onOpenSettings} />

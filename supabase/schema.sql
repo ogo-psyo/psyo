@@ -26,6 +26,8 @@ create table if not exists public.pets (
   custom_breed text,
   sex text,
   life_stage text,
+  birth_date date,
+  home_arrival_date date,
   weight_kg numeric,
   avatar_url text,
   photo_urls text[] not null default '{}',
