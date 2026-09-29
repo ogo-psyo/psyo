@@ -4,6 +4,19 @@ export const placeCategories = {
     shops: 'Зоомагазины', grooming: 'Груминг', cafes: 'Кафе и рестораны',
 } as const;
 export type PlaceCategory = keyof typeof placeCategories;
+const categoryQueryAliases: Record<Exclude<PlaceCategory, 'all'>, string[]> = {
+    parks: ['парк', 'парки', 'сквер', 'скверы'],
+    dogParks: ['площадка', 'площадки', 'площадка для собак', 'площадки для собак', 'собачья площадка', 'собачьи площадки'],
+    vets: ['ветклиника', 'ветклиники', 'ветеринарная клиника', 'ветеринарные клиники'],
+    shops: ['зоомагазин', 'зоомагазины'],
+    grooming: ['груминг', 'грумер', 'грумеры'],
+    cafes: ['кафе', 'ресторан', 'рестораны', 'кафе и рестораны'],
+};
+export function placeCategoryFromQuery(raw: string): Exclude<PlaceCategory, 'all'> | null {
+    const normalized = raw.toLocaleLowerCase('ru-RU').replaceAll('ё', 'е').replace(/\s+/g, ' ').trim().replace(/\s+(рядом|поблизости)$/u, '');
+    return (Object.entries(categoryQueryAliases) as [Exclude<PlaceCategory, 'all'>, string[]][])
+        .find(([, aliases]) => aliases.includes(normalized))?.[0] || null;
+}
 export type PlaceBounds = { south: number; west: number; north: number; east: number };
 export type DiscoveredPlace = {
     id: string; title: string; detail: string; category: string;

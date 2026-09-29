@@ -9,7 +9,7 @@ import {isMapSearchPlace,type MapSearchPlace} from '@/lib/mapSearchPlace';
 import { MapPlacesPanel, type MapPlaceChoice } from '@/components/map/MapPlacesPanel';
 import { PlaceDiscoveryPanel } from '@/components/map/PlaceDiscoveryPanel';
 import { usePlaceDiscovery } from '@/components/map/usePlaceDiscovery';
-import { dogAccessLabel, type DiscoveredPlace } from '@/lib/placeDiscovery';
+import { dogAccessLabel, placeCategories, placeCategoryFromQuery, type DiscoveredPlace, type PlaceCategory } from '@/lib/placeDiscovery';
 import { useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowCounterClockwise,
@@ -66,7 +66,7 @@ type SearchResult = {
   point: { lat: number; lng: number } | null;
 };
 
-const quickPlaceCategories=[['park','Парки'],['dog_park','Площадки'],['cafe','Кафе'],['veterinary','Ветклиники'],['pet','Зоомагазины']] as const;
+const quickPlaceCategories:[Exclude<PlaceCategory,'all'>,string][]=[['parks','Парки'],['dogParks','Площадки'],['cafes','Кафе'],['vets','Ветклиники'],['shops','Зоомагазины']];
 
 type ProductionMapWorkspaceProps = {
   active?: boolean;
@@ -208,7 +208,7 @@ export function ProductionMapWorkspace({
   const navigateRequested = useEffectEvent(() => { setExactTools(false); setWorkspaceTab(requestedScreen === 'library' ? 'saved' : 'places');setPanel(requestedScreen==='library'?'saved':null);setSearchOpen(false); if(navigationToken) { setSavedRoutePreview(null); setAgentWalkPreview(null); setFolded(true); onModeChange('view'); } });
   useEffect(() => { navigateRequested(); }, [requestedScreen, navigationToken]);
   const [query, setQuery] = useState('');
-  const [searchRequest, setSearchRequest] = useState<{query:string;lat:number;lng:number;revision:number;category?:string;bounds?:MapBounds} | null>(null);
+  const [searchRequest, setSearchRequest] = useState<{query:string;lat:number;lng:number;revision:number;bounds?:MapBounds} | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const returnCameraRef = useRef<{lat:number;lng:number;zoom?:number}|null>(null);
   const savedRevisionRef = useRef(savedRevision);
@@ -497,10 +497,15 @@ export function ProductionMapWorkspace({
     });
   }, [localSearchResults,remoteSearchResults,libraryStore.library.places]);
 
-  function searchCategory(category:string,label:string){setQuery(label);setPanel('places');setSearchOpen(true);setSelectedSearchPoint(null);setAgentPlaces([]);setSearchRequest({query:label,category,...mapCenter,revision:Date.now()});}
+  function searchCategory(category:Exclude<PlaceCategory,'all'>){
+    setQuery('');setPanel('places');setSearchOpen(true);setSelectedSearchPoint(null);setAgentPlaces([]);
+    setSearchRequest(null);setRemoteSearchResults([]);setSearchState('idle');discovery.load(category);
+  }
 
   function searchArea() {
     if (query.trim().length < 2) return;
+    const category=placeCategoryFromQuery(query);
+    if(category){searchCategory(category);return;}
     setPanel('places');setAgentPlaces([]);
     setSelectedSearchPoint(null); setSearchOpen(true);
     setSearchRequest({query:query.trim(),...mapCenter,revision:Date.now(),bounds:mapBounds||undefined});
@@ -510,7 +515,6 @@ export function ProductionMapWorkspace({
     const controller = new AbortController();
     setSearchState('loading'); setRemoteSearchResults([]);
     const params = new URLSearchParams({q:searchRequest.query,lat:searchRequest.lat.toFixed(3),lng:searchRequest.lng.toFixed(3)});
-    if(searchRequest.category)params.set('category',searchRequest.category);
     if(searchRequest.bounds)params.set('bounds',[searchRequest.bounds.south,searchRequest.bounds.west,searchRequest.bounds.north,searchRequest.bounds.east].join(','));
     (async () => {
       try {
@@ -894,7 +898,7 @@ export function ProductionMapWorkspace({
   const closePanel=()=>{setPanel(null);setSelectedMark(null);setCommunityPoint(null);setSearchOpen(false);setSelectedSearchPoint(null);setMapSelection(null);setSavedRoutePreview(null);setAgentWalkPreview(null);if(routeFocused)foldRoute();if(mode==='risk')onModeChange('view');};
   const openTab=(tab:'places'|'saved'|'walks')=>{setPanel(tab);setWorkspaceTab(tab);setSelectedMark(null);setSearchOpen(false);setSelectedSearchPoint(null);if(routeFocused)foldRoute();if(tab==='saved')openCollection(collection?.id||'saved');};
   const displayedPanel=communityEditing||panel==='layers'||Boolean(searchOpen)||Boolean(selectedSearchPoint)||Boolean(mapSelection)||routeFocused||Boolean(savedRoutePreview||agentWalkPreview)||Boolean(panel)||mode==='risk';
-  const title=communityEditing?'':panel==='layers'?'Слои':searchOpen?'Поиск':selectedSearchPoint?'Место':routeFocused?'Маршрут':panel==='saved'?'Сохранённое':panel==='walks'?'Прогулки':mode==='risk'?'Мои зоны':'Места';
+  const title=communityEditing?'':panel==='layers'?'Слои':searchOpen&&!query.trim()&&discovery.category!=='all'?placeCategories[discovery.category]:searchOpen?'Поиск':selectedSearchPoint?'Место':routeFocused?'Маршрут':panel==='saved'?'Сохранённое':panel==='walks'?'Прогулки':mode==='risk'?'Мои зоны':'Места';
   const filteredResults=searchResults.filter(p=>!dogOnly||['yes','leashed','designated'].includes(p.dogAccess||''));
   return <ExactPage active={active} viewKey="map" onBack={displayedPanel?closePanel:undefined}>
    <section className="map-refresh production-map-workspace" data-production-map-workspace data-production-journey="map" data-route-flow={routeFlow}>
@@ -917,10 +921,9 @@ export function ProductionMapWorkspace({
       <fieldset><legend>Показывать на карте</legend>{(['routes','places','risks'] as const).map(k=><label className="map-layer-option" key={k}><input type="checkbox" checked={layers[k]} onChange={e=>setLayers(v=>({...v,[k]:e.target.checked}))}/>{k==='routes'?'Маршруты':k==='places'?'Места':'Опасности'}</label>)}<label className="map-layer-option"><input type="checkbox" checked={walkersVisible} onChange={e=>setWalkersVisible(e.target.checked)}/>Гуляют рядом</label></fieldset>
       {community.error&&<p role="alert">{community.error}<button type="button" onClick={()=>void community.reload()}>Повторить</button></p>}
       <button type="button" className="secondary" disabled={routeFlow!=='idle'} onClick={()=>{setPanel(null);startRisk();}}>Мои зоны</button>
-     </>:searchOpen&&!query.trim()&&!searchRequest?<><PlaceDiscoveryPanel discovery={discovery} onChoose={chooseDiscoveredPlace} savedIds={new Set(libraryStore.library.places.flatMap(place=>[place.id,place.source.id]))}/>{discovery.state==='coverage'&&<section className="map-place-fallback" aria-label="Поиск мест вне каталога"><p className="hint">Собственный список для этого города ещё готовится. Категории можно искать рядом с центром карты через OpenStreetMap.</p><div className="map-category-list">{quickPlaceCategories.map(([key,label])=><button type="button" className="chip" key={key} onClick={()=>searchCategory(key,label)}>{label}</button>)}</div><label className="map-layer-option"><input type="checkbox" checked={dogOnly} onChange={e=>setDogOnly(e.target.checked)}/>Можно с собакой</label></section>}</>:searchOpen?<>
-      <div className="map-category-list">{quickPlaceCategories.map(([key,label])=><button type="button" className="chip" key={key} onClick={()=>searchCategory(key,label)}>{label}</button>)}</div>
+     </>:searchOpen&&!query.trim()&&!searchRequest?<><PlaceDiscoveryPanel discovery={discovery} onChoose={chooseDiscoveredPlace} savedIds={new Set(libraryStore.library.places.flatMap(place=>[place.id,place.source.id]))}/>{discovery.state==='coverage'&&<section className="map-place-fallback" aria-label="Поиск мест вне каталога"><p className="hint">Для этой области каталог ещё не подключён. Используйте поиск по названию или адресу.</p></section>}</>:searchOpen?<>
+      <div className="map-category-list">{quickPlaceCategories.map(([key,label])=><button type="button" className="chip" key={key} onClick={()=>searchCategory(key)}>{label}</button>)}</div>
       <label className="map-layer-option"><input type="checkbox" checked={dogOnly} onChange={e=>setDogOnly(e.target.checked)}/>Можно с собакой</label>
-      {searchRequest?.category&&<p className="hint">В пределах 3 км от центра карты</p>}
       <div className="list" id="map-refresh-results" role="listbox" aria-label="Результаты поиска">{filteredResults.map((result,index)=><button id={`map-result-${index}`} role="option" aria-selected={activeSearchIndex===index} type="button" className="list-row" key={result.id} onClick={event=>{chooseSearchResult(result,event.currentTarget);setSearchOpen(false);}}><span className="grow"><strong>{result.title}</strong><small>{result.detail}</small></span></button>)}</div>
       {searchState==='loading'&&<p role="status">Ищу организации и места…</p>}{['error','quota'].includes(searchState)&&<p role="alert">Поиск временно недоступен. <button type="button" onClick={searchArea}>Повторить</button></p>}{searchState==='ready'&&!filteredResults.length&&<p>Ничего не найдено{dogOnly?' с подтверждённым допуском собак':''}.</p>}
      </>:selectedSearchPoint?selectedPlacePanel:routeFocused?<section className="production-route-controller" data-route-controller aria-label={routeTitle}>
